@@ -36,28 +36,21 @@ import re
 from statistics import mode, StatisticsError
 from collections import defaultdict
 
-def check_single_list(list_name, symbols):
+def check_single_list(display_name, symbols, max_name_len):
     """
     Checks alignment for a single, pre-filtered list of symbols.
 
     Args:
-        list_name (str): The base name of the list being checked.
+        display_name (str): The cleaned-up name of the list for display.
         symbols (list): A list of (address, name) tuples, sorted by address.
+        max_name_len (int): The max length of list names for column formatting.
 
     Returns:
         bool: True if an anomaly is found, False otherwise.
     """
     if len(symbols) < 2:
-        # Not enough symbols to find a gap, so it's trivially correct.
         return False
 
-    # Create a cleaner display name for the output by stripping the common prefix.
-    display_name = list_name
-    prefix_to_strip = '_u_boot_list_2_'
-    if list_name.startswith(prefix_to_strip):
-        display_name = list_name[len(prefix_to_strip):]
-
-    # Calculate the size difference between each consecutive symbol
     gaps = []
     for i in range(len(symbols) - 1):
         addr1, name1 = symbols[i]
@@ -65,22 +58,25 @@ def check_single_list(list_name, symbols):
         gap = addr2 - addr1
         gaps.append({'gap': gap, 'prev_sym': name1, 'next_sym': name2})
 
-    # Determine the most common gap size (the mode).
     try:
         expected_gap = mode(g['gap'] for g in gaps)
-        print(f"Checking list '{display_name}' ({len(symbols)} symbols): expected size 0x{expected_gap:x}", file=sys.stderr)
+        # Print the concise, column-formatted check line
+        name_col = f"{display_name}"
+        symbols_col = f"{len(symbols)}"
+        size_col = f"{expected_gap:x}"
+        print(f"{name_col:<{max_name_len + 2}}  {symbols_col:<12}  {size_col}", file=sys.stderr)
+
     except StatisticsError:
-        print(f"!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
+        print(f"\n!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
         print("  Error: Could not determine a common element size. All gaps are unique.", file=sys.stderr)
         for g in gaps:
             print(f"  - Gap of 0x{g['gap']:x} bytes between {g['prev_sym']} and {g['next_sym']}", file=sys.stderr)
-        return True # Anomaly found
+        return True
 
-    # Check for any gaps that don't match the expected size
     anomaly_found = False
     for g in gaps:
         if g['gap'] != expected_gap:
-            if not anomaly_found: # Print header only once
+            if not anomaly_found:
                 print(f"\n!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
             anomaly_found = True
             print(f"  - Inconsistent gap found between symbols:", file=sys.stderr)
@@ -97,16 +93,9 @@ def check_single_list(list_name, symbols):
 def discover_and_check_all_lists(elf_path):
     """
     Runs `nm`, discovers all linker lists, and checks each one for alignment.
-
-    Args:
-        elf_path (str): The path to the U-Boot ELF executable.
-
-    Returns:
-        int: An exit code (0 for success, 2 for error, 3 for anomaly).
     """
     print(f"Auto-discovering and checking all linker lists in: {elf_path}", file=sys.stderr)
 
-    # We use `nm -n` to sort symbols numerically by address.
     cmd = ['nm', '-n', elf_path]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -114,37 +103,25 @@ def discover_and_check_all_lists(elf_path):
         print("Error: The 'nm' command was not found. Please ensure binutils is installed.", file=sys.stderr)
         return 2
     except subprocess.CalledProcessError as e:
-        print(f"Error: Failed to execute 'nm' on '{elf_path}'.", file=sys.stderr)
-        print(f"  Return Code: {e.returncode}\n  Stderr:\n{e.stderr}", file=sys.stderr)
+        print(f"Error: Failed to execute 'nm' on '{elf_path}'.\n  Return Code: {e.returncode}\n  Stderr:\n{e.stderr}", file=sys.stderr)
         return 2
 
-    # Discover all linker lists and group their symbols
-    # The pattern is <list_base_name>[_info]_2_<entry_name>
     discovered_lists = defaultdict(list)
-
     for line in proc.stdout.splitlines():
-        # Look for symbols in the data section that start with the list prefix
         if ' D _u_boot_list_' not in line:
             continue
-
         try:
             parts = line.strip().split()
-            address = int(parts[0], 16)
-            name = parts[-1]
+            address, name = int(parts[0], 16), parts[-1]
             base_name = None
-
-            # Split the name to find the base list name. This is more robust than a single regex.
             if '_info_2_' in name:
                 base_name = name.rsplit('_info_2_', 1)[0]
             elif '_2_' in name:
                 base_name = name.rsplit('_2_', 1)[0]
-
             if base_name:
                 discovered_lists[base_name].append((address, name))
-
         except (ValueError, IndexError):
             print(f"Warning: Could not parse line: {line}", file=sys.stderr)
-            continue
 
     if not discovered_lists:
         print("Success: No U-Boot linker lists found to check.", file=sys.stderr)
@@ -152,11 +129,22 @@ def discover_and_check_all_lists(elf_path):
 
     print(f"\nDiscovered {len(discovered_lists)} unique linker lists. Now checking each...", file=sys.stderr)
 
+    display_names = {}
+    prefix_to_strip = '_u_boot_list_2_'
+    for list_name in discovered_lists.keys():
+        display_name = list_name[len(prefix_to_strip):] if list_name.startswith(prefix_to_strip) else list_name
+        display_names[list_name] = display_name
+
+    max_name_len = max(len(name) for name in display_names.values()) if display_names else 0
+
+    print(f"\n{'List Name':<{max_name_len + 2}}  {'# Symbols':<12}  {'Struct Size (hex)'}", file=sys.stderr)
+    print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
+
     overall_anomaly_found = False
-    # Check each discovered list, sorted by name for deterministic output
     for list_name in sorted(discovered_lists.keys()):
         symbols = discovered_lists[list_name]
-        if check_single_list(list_name, symbols):
+        display_name = display_names[list_name]
+        if check_single_list(display_name, symbols, max_name_len):
             overall_anomaly_found = True
 
     if overall_anomaly_found:
@@ -169,8 +157,7 @@ def discover_and_check_all_lists(elf_path):
 def main():
     """ Main entry point of the script. """
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <path_to_u-boot_elf_file>", file=sys.stderr)
-        print(f"Example: {sys.argv[0]} u-boot", file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} <path_to_u-boot_elf_file>\nExample: {sys.argv[0]} u-boot", file=sys.stderr)
         sys.exit(1)
 
     elf_file = sys.argv[1]
