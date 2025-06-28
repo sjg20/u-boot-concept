@@ -11,6 +11,14 @@ config FS_LEGACY
 	  which can talk to one filesystem at a time, with the filesystem being
 	  re-mounted on each operation.
 
+config SPL_FS_LEGACY
+	bool
+	depends on SPL
+	help
+	  Enables legacy support for filesystems in SPL. This provides an
+	  interface which can talk to one filesystem at a time, with the
+	  filesystem being re-mounted on each operation.
+
 source "fs/btrfs/Kconfig"
 
 source "fs/cbfs/Kconfig"
