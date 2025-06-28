@@ -26,11 +26,11 @@ from statistics import mode, StatisticsError
 from collections import defaultdict
 
 def eprint(*args, **kwargs):
-    """Print to stderr"""
+    '''Print to stderr'''
     print(*args, file=sys.stderr, **kwargs)
 
 def check_single_list(name, symbols, max_name_len):
-    """Check alignment for a single list and return its findings
+    '''Check alignment for a single list and return its findings
 
     Args:
         name (str): The cleaned-up name of the list for display
@@ -39,7 +39,7 @@ def check_single_list(name, symbols, max_name_len):
 
     Returns:
         tuple: (problem_count, list_of_output_lines)
-    """
+    '''
     lines = []
     if len(symbols) < 2:
         return 0, []
@@ -60,8 +60,8 @@ def check_single_list(name, symbols, max_name_len):
     except StatisticsError:
         lines.append(f"\n!!! PROBLEM DETECTED IN LIST '{name}' !!!")
         lines.append(
-            "  Error: Could not determine a common element size. "
-            "All gaps are unique")
+            '  Error: Could not determine a common element size. '
+            'All gaps are unique')
         for g in gaps:
             lines.append(
                 f"  - Gap of 0x{g['gap']:x} bytes between {g['prev_sym']} "
@@ -78,14 +78,14 @@ def check_single_list(name, symbols, max_name_len):
     return problem_count, lines
 
 def run_nm_and_get_lists(elf_path):
-    """Run `nm` and parse the output to discover all linker lists"""
+    '''Run `nm` and parse the output to discover all linker lists'''
     cmd = ['nm', '-n', elf_path]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
     except FileNotFoundError:
         eprint(
-            "Error: The 'nm' command was not found. "
-            "Please ensure binutils is installed")
+            'Error: The "nm" command was not found. '
+            'Please ensure binutils is installed')
         return None
     except subprocess.CalledProcessError as e:
         eprint(
@@ -108,12 +108,12 @@ def run_nm_and_get_lists(elf_path):
                 base_name = match.group('base_name')
                 lists[base_name].append((address, name))
         except (ValueError, IndexError):
-            eprint(f"Warning: Could not parse line: {line}")
+            eprint(f'Warning: Could not parse line: {line}')
 
     return lists
 
 def collect_data(lists):
-    """Collect alignment check data for all lists"""
+    '''Collect alignment check data for all lists'''
     names = {}
     prefix_to_strip = '_u_boot_list_2_'
     for list_name in lists.keys():
@@ -143,7 +143,7 @@ def collect_data(lists):
     }
 
 def show_output(results, verbose):
-    """Print the collected results to stderr based on verbosity"""
+    '''Print the collected results to stderr based on verbosity'''
     total_problems = results['total_problems']
     if total_problems == 0 and not verbose:
         return
@@ -162,13 +162,13 @@ def show_output(results, verbose):
             f"{results['total_symbols']:>12}")
 
     if total_problems > 0:
-        eprint(f"\nFAILURE: Found {total_problems} alignment problems")
+        eprint(f'\nFAILURE: Found {total_problems} alignment problems')
     elif verbose:
-        eprint(f"\nSUCCESS: All discovered lists have consistent alignment")
+        eprint('\nSUCCESS: All discovered lists have consistent alignment')
 
 def main():
-    """Main entry point of the script, returns an exit code"""
-    epilog_text = """
+    '''Main entry point of the script, returns an exit code'''
+    epilog_text = '''
 Auto-discover all linker-generated lists in a U-Boot ELF file
 (e.g., for drivers, commands, etc.) and verify their integrity. Check
 that all elements in a given list are separated by a consistent number of
@@ -177,9 +177,9 @@ bytes.
 Problems typically indicate that the linker has inserted alignment padding
 between two elements in a list, which can break U-Boot's assumption that the
 list is a simple, contiguous array of same-sized structs.
-"""
+'''
     parser = argparse.ArgumentParser(
-        description="Check alignment of all U-Boot linker lists in an ELF file.",
+        description='Check alignment of all U-Boot linker lists in an ELF file.',
         epilog=epilog_text,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -196,7 +196,7 @@ list is a simple, contiguous array of same-sized structs.
 
     if not lists:
         if args.verbose:
-            eprint("Success: No U-Boot linker lists found to check")
+            eprint('Success: No U-Boot linker lists found to check')
         return 0
 
     results = collect_data(lists)
@@ -204,5 +204,5 @@ list is a simple, contiguous array of same-sized structs.
 
     return 3 if results['total_problems'] > 0 else 0
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
