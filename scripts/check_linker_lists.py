@@ -79,13 +79,7 @@ def check_single_list(display_name, symbols, max_name_len):
             if not anomaly_found:
                 print(f"\n!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
             anomaly_found = True
-            print(f"  - Inconsistent gap found between symbols:", file=sys.stderr)
-            print(f"    -> {g['prev_sym']}", file=sys.stderr)
-            print(f"    -> {g['next_sym']}", file=sys.stderr)
-            print(f"    Expected gap: 0x{expected_gap:x}", file=sys.stderr)
-            print(f"    Actual gap:   0x{g['gap']:x}", file=sys.stderr)
-            padding = abs(g['gap'] - expected_gap)
-            print(f"    This indicates {padding} bytes of unexpected linker padding.", file=sys.stderr)
+            print(f"  - Inconsistent gap before symbol: {g['next_sym']}", file=sys.stderr)
 
     return anomaly_found
 
