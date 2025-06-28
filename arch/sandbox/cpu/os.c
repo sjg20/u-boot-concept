@@ -100,7 +100,7 @@ off_t os_lseek(int fd, off_t offset, int whence)
 
 int os_open(const char *pathname, int os_flags)
 {
-	int flags;
+	int flags, ret;
 
 	switch (os_flags & OS_O_MASK) {
 	case OS_O_RDONLY:
@@ -127,7 +127,11 @@ int os_open(const char *pathname, int os_flags)
 	 */
 	flags |= O_CLOEXEC;
 
-	return open(pathname, flags, 0644);
+	ret = open(pathname, flags, 0644);
+	if (ret == -1)
+		return -errno;
+
+	return ret;
 }
 
 int os_close(int fd)
@@ -172,7 +176,7 @@ int os_write_file(const char *fname, const void *buf, int size)
 	fd = os_open(fname, OS_O_WRONLY | OS_O_CREAT | OS_O_TRUNC);
 	if (fd < 0) {
 		printf("Cannot open file '%s'\n", fname);
-		return -EIO;
+		return fd;
 	}
 	if (os_write(fd, buf, size) != size) {
 		printf("Cannot write to file '%s'\n", fname);
@@ -206,7 +210,7 @@ int os_read_file(const char *fname, void **bufp, int *sizep)
 	fd = os_open(fname, OS_O_RDONLY);
 	if (fd < 0) {
 		printf("Cannot open file '%s'\n", fname);
-		return -EIO;
+		return fd;
 	}
 	size = os_filesize(fd);
 	if (size < 0) {
@@ -242,7 +246,7 @@ int os_map_file(const char *pathname, int os_flags, void **bufp, int *sizep)
 	ifd = os_open(pathname, os_flags);
 	if (ifd < 0) {
 		printf("Cannot open file '%s'\n", pathname);
-		return -EIO;
+		return ifd;
 	}
 	size = os_filesize(ifd);
 	if (size < 0) {
@@ -741,6 +745,25 @@ int os_get_filesize(const char *fname, long long *size)
 		return ret;
 	*size = buf.st_size;
 	return 0;
+}
+
+int os_get_filetype(const char *fname)
+{
+	struct stat buf;
+	int ret;
+
+	ret = stat(fname, &buf);
+	if (ret)
+		return -errno;
+
+	if (buf.st_mode & S_IFREG)
+		return OS_FILET_REG;
+	if (buf.st_mode & S_IFDIR)
+		return OS_FILET_DIR;
+	if (buf.st_mode & S_IFLNK)
+		return OS_FILET_LNK;
+
+	return OS_FILET_UNKNOWN;
 }
 
 void os_putc(int ch)

@@ -2,7 +2,7 @@
 
 #include <command.h>
 #include <env.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <pxe_utils.h>
 #include <vsprintf.h>
 
@@ -35,7 +35,7 @@ static int sysboot_read_file(struct pxe_context *ctx, const char *file_path,
 	ret = fs_set_blk_dev(info->ifname, info->dev_part_str, info->fstype);
 	if (ret)
 		return ret;
-	ret = fs_read(file_path, addr, 0, 0, &len_read);
+	ret = fs_legacy_read(file_path, addr, 0, 0, &len_read);
 	if (ret)
 		return ret;
 	*sizep = len_read;

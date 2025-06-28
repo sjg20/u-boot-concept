@@ -5,7 +5,7 @@
  */
 
 #include <command.h>
-#include <fs.h>
+#include <fs_cmd.h>
 #include <log.h>
 #include <vsprintf.h>
 

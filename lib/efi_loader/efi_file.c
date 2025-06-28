@@ -12,7 +12,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <part.h>
 
 /* GUID for file system information */
@@ -484,8 +484,8 @@ static efi_status_t file_read(struct file_handle *fh, u64 *buffer_size,
 
 	if (set_blk_dev(fh))
 		return EFI_DEVICE_ERROR;
-	if (fs_read(fh->path, map_to_sysmem(buffer), fh->offset,
-		    *buffer_size, &actread))
+	if (fs_legacy_read(fh->path, map_to_sysmem(buffer), fh->offset,
+			   *buffer_size, &actread))
 		return EFI_DEVICE_ERROR;
 
 	*buffer_size = actread;

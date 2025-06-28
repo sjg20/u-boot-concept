@@ -2,7 +2,10 @@
 #ifndef _EROFS_H_
 #define _EROFS_H_
 
+struct blk_desc;
 struct disk_partition;
+struct fs_dirent;
+struct fs_dir_stream;
 
 int erofs_opendir(const char *filename, struct fs_dir_stream **dirsp);
 int erofs_readdir(struct fs_dir_stream *dirs, struct fs_dirent **dentp);

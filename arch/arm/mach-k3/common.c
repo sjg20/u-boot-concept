@@ -23,7 +23,7 @@
 #include <asm/hardware.h>
 #include <asm/io.h>
 #include <fs_loader.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <efi_loader.h>
 #include <env.h>
 #include <elf.h>

@@ -107,7 +107,8 @@ static int scsi_file_op(enum dfu_op op, struct dfu_entity *dfu, u64 offset, void
 
 	switch (op) {
 	case DFU_OP_READ:
-		ret = fs_read(dfu->name, (size_t)buf, offset, *len, &size);
+		ret = fs_legacy_read(dfu->name, (size_t)buf, offset, *len,
+				     &size);
 		if (ret) {
 			puts("dfu: fs_read error!\n");
 			return ret;

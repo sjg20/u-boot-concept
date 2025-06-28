@@ -10,7 +10,7 @@
 #include <asm/unaligned.h>
 #include <div64.h>
 #include <errno.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <linux/types.h>
 #include <asm/byteorder.h>
 #include <linux/compat.h>

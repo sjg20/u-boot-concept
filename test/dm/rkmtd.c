@@ -10,7 +10,7 @@
 
 #include <blk.h>
 #include <dm.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <rkmtd.h>
 #include <asm/test.h>
 #include <dm/device-internal.h>

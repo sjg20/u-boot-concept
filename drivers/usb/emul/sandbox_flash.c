@@ -342,7 +342,7 @@ static int sandbox_flash_probe(struct udevice *dev)
 	int ret;
 
 	priv->fd = os_open(plat->pathname, OS_O_RDWR);
-	if (priv->fd != -1) {
+	if (priv->fd >= 0) {
 		ret = os_get_filesize(plat->pathname, &info->file_size);
 		if (ret)
 			return log_msg_ret("sz", ret);

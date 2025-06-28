@@ -10,7 +10,7 @@
 #include <env.h>
 #include <errno.h>
 #include <blk.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <fs_loader.h>
 #include <log.h>
 #include <asm/global_data.h>
@@ -181,8 +181,9 @@ static int fw_get_filesystem_firmware(struct udevice *dev)
 	if (!firmwarep)
 		return -ENOMEM;
 
-	ret = fs_read(firmwarep->name, (ulong)map_to_sysmem(firmwarep->data),
-			firmwarep->offset, firmwarep->size, &actread);
+	ret = fs_legacy_read(firmwarep->name,
+			     (ulong)map_to_sysmem(firmwarep->data),
+			     firmwarep->offset, firmwarep->size, &actread);
 
 	if (ret) {
 		debug("Error: %d Failed to read %s from flash %lld != %zu.\n",

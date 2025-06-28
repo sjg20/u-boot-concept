@@ -46,7 +46,7 @@
 #include <ublio.h>
 #endif
 #else
-#include <fs.h>
+#include <fs_legacy.h>
 #include <fs_internal.h>
 
 static struct exfat_ctxt {

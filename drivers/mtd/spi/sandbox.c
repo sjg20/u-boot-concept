@@ -171,7 +171,7 @@ static int sandbox_sf_probe(struct udevice *dev)
 		memset(sandbox_sf_0xff, 0xff, sizeof(sandbox_sf_0xff));
 
 	sbsf->fd = os_open(pdata->filename, 02);
-	if (sbsf->fd == -1) {
+	if (sbsf->fd < 0) {
 		printf("%s: unable to open file '%s'\n", __func__,
 		       pdata->filename);
 		ret = -EIO;

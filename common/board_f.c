@@ -23,7 +23,7 @@
 #include <env_internal.h>
 #include <event.h>
 #include <fdtdec.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <hang.h>
 #include <i2c.h>
 #include <init.h>

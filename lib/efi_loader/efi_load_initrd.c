@@ -8,7 +8,7 @@
 #include <efi_loader.h>
 #include <efi_load_initrd.h>
 #include <efi_variable.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <malloc.h>
 #include <mapmem.h>
 

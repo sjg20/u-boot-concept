@@ -8,7 +8,7 @@
  */
 
 #include <command.h>
-#include <fs.h>
+#include <fs_cmd.h>
 #include <erofs.h>
 
 static int do_erofs_ls(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])

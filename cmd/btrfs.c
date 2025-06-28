@@ -5,7 +5,7 @@
 
 #include <command.h>
 #include <btrfs.h>
-#include <fs.h>
+#include <fs_legacy.h>
 
 int do_btrsubvol(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {

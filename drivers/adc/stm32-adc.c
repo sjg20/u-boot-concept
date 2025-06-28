@@ -318,7 +318,7 @@ static int stm32_adc_chan_of_init(struct udevice *dev)
 	int ret;
 	bool legacy = false;
 
-	num_channels = dev_get_child_count(dev);
+	num_channels = dev_read_child_count(dev);
 	/* If no channels have been found, fallback to channels legacy properties. */
 	if (!num_channels) {
 		legacy = true;

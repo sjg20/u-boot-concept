@@ -6,7 +6,7 @@
 
 #include <log.h>
 #include <malloc.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <i2c.h>
 #include <mmc.h>
 #include <tpm-v1.h>

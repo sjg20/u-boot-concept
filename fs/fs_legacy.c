@@ -19,7 +19,7 @@
 #include <part.h>
 #include <ext4fs.h>
 #include <fat.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <sandboxfs.h>
 #include <semihostingfs.h>
 #include <time.h>
@@ -483,7 +483,11 @@ int fs_set_blk_dev(const char *ifname, const char *dev_part_str, int fstype)
 
 		if (!fs_dev_desc && !info->null_dev_desc_ok)
 			continue;
+		if (fs_partition.fs_type &&
+		    fs_partition.fs_type != info->fstype)
+			continue;
 
+		log_debug("probe %s\n", info->name);
 		if (!info->probe(fs_dev_desc, &fs_partition)) {
 			fs_type = info->fstype;
 			fs_dev_part = part;
@@ -638,8 +642,8 @@ static int _fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
 	return ret;
 }
 
-int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
-	    loff_t *actread)
+int fs_legacy_read(const char *filename, ulong addr, loff_t offset, loff_t len,
+		   loff_t *actread)
 {
 	return _fs_read(filename, addr, offset, len, 0, actread);
 }
@@ -1141,7 +1145,7 @@ int fs_read_alloc(const char *fname, ulong size, uint align, struct abuf *buf)
 		return log_msg_ret("buf", -ENOMEM);
 	buf->size--;
 
-	ret = fs_read(fname, abuf_addr(buf), 0, size, &bytes_read);
+	ret = fs_legacy_read(fname, abuf_addr(buf), 0, size, &bytes_read);
 	if (ret) {
 		abuf_uninit(buf);
 		return log_msg_ret("read", ret);

@@ -9,7 +9,7 @@
 #include <command.h>
 #include <env.h>
 #include <errno.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <fdt_support.h>
 #include <image.h>
 #include <log.h>
@@ -295,7 +295,7 @@ static int splash_load_fs(struct splash_location *location, u32 bmp_load_addr)
 	}
 
 	splash_select_fs_dev(location);
-	res = fs_read(splash_file, bmp_load_addr, 0, 0, &actread);
+	res = fs_legacy_read(splash_file, bmp_load_addr, 0, 0, &actread);
 
 out:
 	if (location->ubivol != NULL)

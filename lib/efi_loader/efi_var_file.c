@@ -8,7 +8,7 @@
 #define LOG_CATEGORY LOGC_EFI
 
 #include <charset.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
@@ -170,8 +170,8 @@ efi_status_t efi_var_from_file(void)
 	ret = efi_set_blk_dev_to_system_partition();
 	if (ret != EFI_SUCCESS)
 		goto error;
-	r = fs_read(EFI_VAR_FILE_NAME, map_to_sysmem(buf), 0, EFI_VAR_BUF_SIZE,
-		    &len);
+	r = fs_legacy_read(EFI_VAR_FILE_NAME, map_to_sysmem(buf), 0,
+			   EFI_VAR_BUF_SIZE, &len);
 	if (r || len < sizeof(struct efi_var_file)) {
 		log_err("Failed to load EFI variables\n");
 		goto error;

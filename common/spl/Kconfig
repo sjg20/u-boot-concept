@@ -725,6 +725,7 @@ config SPL_ETH
 config SPL_FS_EXT4
 	bool "Support EXT filesystems"
 	select SPL_CRC16 if EXT4_WRITE
+	select SPL_FS_LEGACY
 	help
 	  Enable support for EXT2/3/4 filesystems with SPL. This permits
 	  U-Boot (or Linux in Falcon mode) to be loaded from an EXT
@@ -734,6 +735,7 @@ config SPL_FS_EXT4
 config SPL_FS_SQUASHFS
 	bool "Support SquashFS filesystems"
 	select FS_SQUASHFS
+	select SPL_FS_LEGACY
 	help
 	  Enable support for SquashFS filesystems with SPL. This permits
 	  U-Boot (or Linux in Falcon mode) to be loaded from a SquashFS
@@ -743,6 +745,7 @@ config SPL_FS_SQUASHFS
 config SPL_FS_FAT
 	bool "Support FAT filesystems"
 	select FS_FAT
+	select SPL_FS_LEGACY
 	help
 	  Enable support for FAT and VFAT filesystems with SPL. This
 	  permits U-Boot (or Linux in Falcon mode) to be loaded from a FAT

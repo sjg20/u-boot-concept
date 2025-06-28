@@ -8,7 +8,7 @@
 #include <spl.h>
 #include <spl_load.h>
 #include <image.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <asm/cache.h>
 #include <asm/io.h>
 
@@ -32,8 +32,8 @@ static ulong spl_fit_read(struct spl_load_info *load, ulong file_offset,
 		return ret;
 	}
 
-	ret = fs_read(dev->filename, virt_to_phys(buf), file_offset, size,
-		      &actlen);
+	ret = fs_legacy_read(dev->filename, virt_to_phys(buf), file_offset,
+			     size, &actlen);
 	if (ret < 0) {
 		printf("spl: error reading image %s. Err - %d\n",
 		       dev->filename, ret);

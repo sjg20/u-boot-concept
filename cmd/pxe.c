@@ -5,7 +5,7 @@
  */
 
 #include <command.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <net.h>
 #include <net6.h>
 #include <malloc.h>
