@@ -31,6 +31,7 @@ static const char *const virtio_drv_name[VIRTIO_ID_MAX_NUM] = {
 	[VIRTIO_ID_BLOCK]	= VIRTIO_BLK_DRV_NAME,
 	[VIRTIO_ID_RNG]		= VIRTIO_RNG_DRV_NAME,
 	[VIRTIO_ID_FS]		= VIRTIO_FS_DRV_NAME,
+	[VIRTIO_ID_SCSI]	= VIRTIO_SCSI_DRV_NAME,
 };
 
 int virtio_get_config(struct udevice *vdev, unsigned int offset,
