@@ -77,7 +77,7 @@ def check_single_list(display_name, symbols, max_name_len):
     for g in gaps:
         if g['gap'] != expected_gap:
             anomaly_count += 1
-            print(f"  - Inconsistent gap (0x{g['gap']:x}) before symbol: {g['next_sym']}", file=sys.stderr)
+            print(f"  - Bad gap (0x{g['gap']:x}) before symbol: {g['next_sym']}", file=sys.stderr)
 
     return anomaly_count
 
@@ -125,14 +125,23 @@ def discover_and_check_all_lists(elf_path):
 
     max_name_len = max(len(name) for name in display_names.values()) if display_names else 0
 
-    print(f"\n{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
+    print(f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
     print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
 
     total_anomalies = 0
+    total_symbols = 0
     for list_name in sorted(discovered_lists.keys()):
         symbols = discovered_lists[list_name]
+        total_symbols += len(symbols)
         display_name = display_names[list_name]
         total_anomalies += check_single_list(display_name, symbols, max_name_len)
+
+    # Print footer
+    print(f"{'-' * (max_name_len + 2)}  {'-' * 12}", file=sys.stderr)
+    footer_name_col = f"{len(discovered_lists)} lists"
+    footer_symbols_col = f"{total_symbols}"
+    print(f"{footer_name_col:<{max_name_len + 2}}  {footer_symbols_col:>12}", file=sys.stderr)
+
 
     if total_anomalies > 0:
         print(f"\nFAILURE: Found {total_anomalies} alignment anomalies.", file=sys.stderr)
