@@ -77,7 +77,7 @@ def check_single_list(display_name, symbols, max_name_len):
     for g in gaps:
         if g['gap'] != expected_gap:
             anomaly_found = True
-            print(f"  - Inconsistent gap before symbol: {g['next_sym']}", file=sys.stderr)
+            print(f"  - Inconsistent gap (0x{g['gap']:x}) before symbol: {g['next_sym']}", file=sys.stderr)
 
     return anomaly_found
 
