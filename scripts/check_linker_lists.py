@@ -26,8 +26,7 @@ from statistics import mode, StatisticsError
 from collections import defaultdict
 
 def check_single_list(display_name, symbols, max_name_len):
-    """
-    Check alignment for a single list and return its findings.
+    """Check alignment for a single list and return its findings.
 
     Args:
         display_name (str): The cleaned-up name of the list for display.
@@ -72,9 +71,9 @@ def check_single_list(display_name, symbols, max_name_len):
 
 
 def discover_and_check_all_lists(elf_path, verbose):
-    """
-    Run `nm`, discover all linker lists, check each one, and print output
-    only if problems are found or verbose mode is enabled.
+    """Run `nm`, discover all linker lists, and check each one.
+
+    Print output only if problems are found or verbose mode is enabled.
     """
     cmd = ['nm', '-n', elf_path]
     try:
