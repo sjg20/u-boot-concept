@@ -166,22 +166,6 @@ def show_output(results, verbose):
     elif verbose:
         eprint(f"\nSUCCESS: All discovered lists have consistent alignment")
 
-def process_elf_file(elf_path, verbose):
-    """Orchestrate the checking of the ELF file"""
-    lists = run_nm_and_get_lists(elf_path)
-    if lists is None:
-        return 2  # Error running nm
-
-    if not lists:
-        if verbose:
-            eprint("Success: No U-Boot linker lists found to check")
-        return 0
-
-    results = collect_data(lists)
-    show_output(results, verbose)
-
-    return 3 if results['total_problems'] > 0 else 0
-
 def main():
     """Main entry point of the script"""
     epilog_text = """
@@ -206,7 +190,19 @@ list is a simple, contiguous array of same-sized structs.
 
     args = parser.parse_args()
 
-    exit_code = process_elf_file(args.elf_path, args.verbose)
+    lists = run_nm_and_get_lists(args.elf_path)
+    if lists is None:
+        sys.exit(2)  # Error running nm
+
+    if not lists:
+        if args.verbose:
+            eprint("Success: No U-Boot linker lists found to check")
+        sys.exit(0)
+
+    results = collect_data(lists)
+    show_output(results, args.verbose)
+
+    exit_code = 3 if results['total_problems'] > 0 else 0
     sys.exit(exit_code)
 
 if __name__ == "__main__":
