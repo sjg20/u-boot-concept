@@ -9,6 +9,9 @@
 #ifndef _LINUX_VIRTIO_BLK_H
 #define _LINUX_VIRTIO_BLK_H
 
+#include <compiler.h>
+#include "virtio_types.h"
+
 /* Feature bits */
 #define VIRTIO_BLK_F_SIZE_MAX	1	/* Indicates maximum segment size */
 #define VIRTIO_BLK_F_SEG_MAX	2	/* Indicates maximum # of segments */
