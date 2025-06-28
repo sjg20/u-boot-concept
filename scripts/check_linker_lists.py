@@ -183,7 +183,7 @@ def show_output(results, verbose):
     if total_problems > 0:
         eprint(f'\nFAILURE: Found {total_problems} alignment problems')
     elif verbose:
-        eprint(f'\nSUCCESS: All discovered lists have consistent alignment')
+        eprint('\nSUCCESS: All discovered lists have consistent alignment')
 
 def main():
     '''Main entry point of the script, returns an exit code'''
