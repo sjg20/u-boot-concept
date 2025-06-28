@@ -46,10 +46,10 @@ def check_single_list(display_name, symbols, max_name_len):
         max_name_len (int): The max length of list names for column formatting.
 
     Returns:
-        bool: True if an anomaly is found, False otherwise.
+        int: The number of anomalies found in this list.
     """
     if len(symbols) < 2:
-        return False
+        return 0
 
     gaps = []
     for i in range(len(symbols) - 1):
@@ -71,23 +71,26 @@ def check_single_list(display_name, symbols, max_name_len):
         print("  Error: Could not determine a common element size. All gaps are unique.", file=sys.stderr)
         for g in gaps:
             print(f"  - Gap of 0x{g['gap']:x} bytes between {g['prev_sym']} and {g['next_sym']}", file=sys.stderr)
-        return True
+        return len(gaps)
 
-    anomaly_found = False
+    anomaly_count = 0
+    first_anomaly_printed = False
     for g in gaps:
         if g['gap'] != expected_gap:
-            anomaly_found = True
+            if not first_anomaly_printed:
+                # This check ensures the "ANOMALY DETECTED" header is printed only once per list
+                print(f"!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
+                first_anomaly_printed = True
+            anomaly_count += 1
             print(f"  - Inconsistent gap (0x{g['gap']:x}) before symbol: {g['next_sym']}", file=sys.stderr)
 
-    return anomaly_found
+    return anomaly_count
 
 
 def discover_and_check_all_lists(elf_path):
     """
     Runs `nm`, discovers all linker lists, and checks each one for alignment.
     """
-    print(f"Auto-discovering and checking all linker lists in: {elf_path}", file=sys.stderr)
-
     cmd = ['nm', '-n', elf_path]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -119,8 +122,6 @@ def discover_and_check_all_lists(elf_path):
         print("Success: No U-Boot linker lists found to check.", file=sys.stderr)
         return 0
 
-    print(f"\nDiscovered {len(discovered_lists)} unique linker lists. Now checking each...", file=sys.stderr)
-
     display_names = {}
     prefix_to_strip = '_u_boot_list_2_'
     for list_name in discovered_lists.keys():
@@ -132,18 +133,17 @@ def discover_and_check_all_lists(elf_path):
     print(f"\n{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
     print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
 
-    overall_anomaly_found = False
+    total_anomalies = 0
     for list_name in sorted(discovered_lists.keys()):
         symbols = discovered_lists[list_name]
         display_name = display_names[list_name]
-        if check_single_list(display_name, symbols, max_name_len):
-            overall_anomaly_found = True
+        total_anomalies += check_single_list(display_name, symbols, max_name_len)
 
-    if overall_anomaly_found:
-        print(f"\nFAILURE: Exiting with status 3 due to alignment anomalies found.", file=sys.stderr)
+    if total_anomalies > 0:
+        print(f"\nFAILURE: Found {total_anomalies} alignment anomalies.", file=sys.stderr)
         return 3
 
-    print(f"\nSUCCESS: All {len(discovered_lists)} discovered linker lists have consistent alignment.", file=sys.stderr)
+    print(f"\nSUCCESS: All discovered linker lists have consistent alignment.", file=sys.stderr)
     return 0
 
 def main():
