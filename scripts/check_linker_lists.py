@@ -51,7 +51,7 @@ def check_single_list(list_name, symbols):
         # Not enough symbols to find a gap, so it's trivially correct.
         return False
 
-    print(f"\n--- Checking list '{list_name}' ({len(symbols)} symbols)...", file=sys.stderr)
+    print(f"\nChecking list '{list_name}' ({len(symbols)} symbols)...", file=sys.stderr)
 
     # Calculate the size difference between each consecutive symbol
     gaps = []
@@ -64,7 +64,7 @@ def check_single_list(list_name, symbols):
     # Determine the most common gap size (the mode).
     try:
         expected_gap = mode(g['gap'] for g in gaps)
-        print(f"--- Determined expected element size (mode) = {expected_gap} bytes (0x{expected_gap:x})", file=sys.stderr)
+        print(f"Determined expected element size (mode) = {expected_gap} bytes (0x{expected_gap:x})", file=sys.stderr)
     except StatisticsError:
         print(f"!!! ANOMALY DETECTED IN LIST '{list_name}' !!!", file=sys.stderr)
         print("  Error: Could not determine a common element size. All gaps are unique.", file=sys.stderr)
@@ -100,7 +100,7 @@ def discover_and_check_all_lists(elf_path):
     Returns:
         int: An exit code (0 for success, 2 for error, 3 for anomaly).
     """
-    print(f"--- Auto-discovering and checking all linker lists in: {elf_path}", file=sys.stderr)
+    print(f"Auto-discovering and checking all linker lists in: {elf_path}", file=sys.stderr)
 
     # We use `nm -n` to sort symbols numerically by address.
     cmd = ['nm', '-n', elf_path]
@@ -117,11 +117,10 @@ def discover_and_check_all_lists(elf_path):
     # Discover all linker lists and group their symbols
     # The pattern is <list_base_name>[_info]_2_<entry_name>
     discovered_lists = defaultdict(list)
-    list_name_pattern = re.compile(r'^(_u_boot_list_\d+_\w+)')
 
     for line in proc.stdout.splitlines():
         # Look for symbols in the data section that start with the list prefix
-        if not ' D _u_boot_list_' in line:
+        if ' D _u_boot_list_' not in line:
             continue
 
         try:
@@ -147,7 +146,7 @@ def discover_and_check_all_lists(elf_path):
         print("Success: No U-Boot linker lists found to check.", file=sys.stderr)
         return 0
 
-    print(f"\n--- Discovered {len(discovered_lists)} unique linker lists. Now checking each...", file=sys.stderr)
+    print(f"\nDiscovered {len(discovered_lists)} unique linker lists. Now checking each...", file=sys.stderr)
 
     overall_anomaly_found = False
     # Check each discovered list, sorted by name for deterministic output
@@ -157,10 +156,10 @@ def discover_and_check_all_lists(elf_path):
             overall_anomaly_found = True
 
     if overall_anomaly_found:
-        print(f"\n--- FAILURE: Exiting with status 3 due to alignment anomalies found.", file=sys.stderr)
+        print(f"\nFAILURE: Exiting with status 3 due to alignment anomalies found.", file=sys.stderr)
         return 3
 
-    print(f"\n--- SUCCESS: All {len(discovered_lists)} discovered linker lists have consistent alignment.", file=sys.stderr)
+    print(f"\nSUCCESS: All {len(discovered_lists)} discovered linker lists have consistent alignment.", file=sys.stderr)
     return 0
 
 def main():
