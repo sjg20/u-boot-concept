@@ -8,24 +8,12 @@
 # number of bytes. It is designed to detect anomalies caused by linker-inserted
 # alignment padding.
 #
-# It works by:
-# 1. Executing `nm -n` once on the provided ELF file to get a list of all
-#    symbols sorted by their virtual address.
-# 2. Automatically discovering all unique linker list base names (e.g.,
-#    '_u_boot_list_2_driver') from the symbol names.
-# 3. For each discovered list:
-#    a. It filters the symbols belonging to that list.
-#    b. It calculates the address difference (gap) between consecutive symbols.
-#    c. It determines the most common gap size (the mode), which is assumed
-#       to be the correct size of the list's struct element.
-#    d. It compares every gap to this mode. If any gap is different, it
-#       reports an anomaly.
-#
-# The script will exit with a non-zero code if an anomaly is found in *any* list.
+# By default, it produces no output if no anomalies are found.
+# Use the -v flag to force output even on success.
 #
 # Exit Codes:
-#   0: Success. No alignment anomalies were found in any list.
-#   1: Usage Error. The script was not called with the correct argument.
+#   0: Success. No alignment anomalies were found.
+#   1: Usage Error. The script was not called with the correct arguments.
 #   2: Execution Error. Failed to run `nm` or the ELF file was not found.
 #   3: Anomaly Found. An inconsistent gap was detected in at least one list.
 #
@@ -38,7 +26,7 @@ from collections import defaultdict
 
 def check_single_list(display_name, symbols, max_name_len):
     """
-    Checks alignment for a single, pre-filtered list of symbols.
+    Checks alignment for a single list and returns its findings.
 
     Args:
         display_name (str): The cleaned-up name of the list for display.
@@ -46,10 +34,11 @@ def check_single_list(display_name, symbols, max_name_len):
         max_name_len (int): The max length of list names for column formatting.
 
     Returns:
-        int: The number of anomalies found in this list.
+        tuple: (anomaly_count, list_of_output_lines)
     """
+    output_lines = []
     if len(symbols) < 2:
-        return 0
+        return 0, []
 
     gaps = []
     for i in range(len(symbols) - 1):
@@ -60,31 +49,31 @@ def check_single_list(display_name, symbols, max_name_len):
 
     try:
         expected_gap = mode(g['gap'] for g in gaps)
-        # Print the concise, column-formatted check line
         name_col = f"{display_name}"
         symbols_col = f"{len(symbols)}"
         size_col = f"0x{expected_gap:x}"
-        print(f"{name_col:<{max_name_len + 2}}  {symbols_col:>12}  {size_col:>17}", file=sys.stderr)
+        output_lines.append(f"{name_col:<{max_name_len + 2}}  {symbols_col:>12}  {size_col:>17}")
 
     except StatisticsError:
-        print(f"\n!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
-        print("  Error: Could not determine a common element size. All gaps are unique.", file=sys.stderr)
+        output_lines.append(f"\n!!! ANOMALY DETECTED IN LIST '{display_name}' !!!")
+        output_lines.append("  Error: Could not determine a common element size. All gaps are unique.")
         for g in gaps:
-            print(f"  - Gap of 0x{g['gap']:x} bytes between {g['prev_sym']} and {g['next_sym']}", file=sys.stderr)
-        return len(gaps)
+            output_lines.append(f"  - Gap of 0x{g['gap']:x} bytes between {g['prev_sym']} and {g['next_sym']}")
+        return len(gaps), output_lines
 
     anomaly_count = 0
     for g in gaps:
         if g['gap'] != expected_gap:
             anomaly_count += 1
-            print(f"  - Bad gap (0x{g['gap']:x}) before symbol: {g['next_sym']}", file=sys.stderr)
+            output_lines.append(f"  - Bad gap (0x{g['gap']:x}) before symbol: {g['next_sym']}")
 
-    return anomaly_count
+    return anomaly_count, output_lines
 
 
-def discover_and_check_all_lists(elf_path):
+def discover_and_check_all_lists(elf_path, verbose):
     """
-    Runs `nm`, discovers all linker lists, and checks each one for alignment.
+    Runs `nm`, discovers all linker lists, checks each one, and prints output
+    only if anomalies are found or verbose mode is enabled.
     """
     cmd = ['nm', '-n', elf_path]
     try:
@@ -114,7 +103,8 @@ def discover_and_check_all_lists(elf_path):
             print(f"Warning: Could not parse line: {line}", file=sys.stderr)
 
     if not discovered_lists:
-        print("Success: No U-Boot linker lists found to check.", file=sys.stderr)
+        if verbose:
+            print("Success: No U-Boot linker lists found to check.", file=sys.stderr)
         return 0
 
     display_names = {}
@@ -125,39 +115,53 @@ def discover_and_check_all_lists(elf_path):
 
     max_name_len = max(len(name) for name in display_names.values()) if display_names else 0
 
-    print(f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
-    print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
-
+    # --- Data Collection Phase ---
     total_anomalies = 0
     total_symbols = 0
+    all_output_lines = []
     for list_name in sorted(discovered_lists.keys()):
         symbols = discovered_lists[list_name]
         total_symbols += len(symbols)
         display_name = display_names[list_name]
-        total_anomalies += check_single_list(display_name, symbols, max_name_len)
+        anomaly_count, output_lines = check_single_list(display_name, symbols, max_name_len)
+        total_anomalies += anomaly_count
+        all_output_lines.extend(output_lines)
 
-    # Print footer
-    print(f"{'-' * (max_name_len + 2)}  {'-' * 12}", file=sys.stderr)
-    footer_name_col = f"{len(discovered_lists)} lists"
-    footer_symbols_col = f"{total_symbols}"
-    print(f"{footer_name_col:<{max_name_len + 2}}  {footer_symbols_col:>12}", file=sys.stderr)
+    # --- Output Phase ---
+    if total_anomalies > 0 or verbose:
+        print(f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
+        print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
+        for line in all_output_lines:
+            print(line, file=sys.stderr)
 
+        # Print footer
+        print(f"{'-' * (max_name_len + 2)}  {'-' * 12}", file=sys.stderr)
+        footer_name_col = f"{len(discovered_lists)} lists"
+        footer_symbols_col = f"{total_symbols}"
+        print(f"{footer_name_col:<{max_name_len + 2}}  {footer_symbols_col:>12}", file=sys.stderr)
 
     if total_anomalies > 0:
         print(f"\nFAILURE: Found {total_anomalies} alignment anomalies.", file=sys.stderr)
         return 3
 
-    print(f"\nSUCCESS: All discovered linker lists have consistent alignment.", file=sys.stderr)
+    if verbose:
+        print(f"\nSUCCESS: All discovered linker lists have consistent alignment.", file=sys.stderr)
+
     return 0
 
 def main():
     """ Main entry point of the script. """
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <path_to_u-boot_elf_file>\nExample: {sys.argv[0]} u-boot", file=sys.stderr)
+    args = sys.argv[1:]
+    verbose = '-v' in args
+    if verbose:
+        args.remove('-v')
+
+    if len(args) != 1:
+        print(f"Usage: {sys.argv[0]} [-v] <path_to_u-boot_elf_file>\nExample: {sys.argv[0]} -v u-boot", file=sys.stderr)
         sys.exit(1)
 
-    elf_file = sys.argv[1]
-    exit_code = discover_and_check_all_lists(elf_file)
+    elf_file = args[0]
+    exit_code = discover_and_check_all_lists(elf_file, verbose)
     sys.exit(exit_code)
 
 if __name__ == "__main__":
