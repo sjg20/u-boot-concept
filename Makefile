@@ -1139,6 +1139,10 @@ define deprecated
 
 endef
 
+# Check linker lists are consistent
+quiet_cmd_llcheck = LLCHK   $2
+cmd_llcheck = $(srctree)/scripts/check_linker_lists.py $2
+
 # Timestamp file to make sure that binman always runs
 .binman_stamp: $(INPUTS-y) FORCE
 ifeq ($(CONFIG_BINMAN),y)
@@ -1837,6 +1841,7 @@ ifeq ($(CONFIG_KALLSYMS),y)
 	$(call cmd,smap)
 	$(call cmd,u-boot__) common/system_map.o
 endif
+	$(call cmd,llcheck,u-boot)
 
 ifeq ($(CONFIG_RISCV),y)
 	@tools/prelink-riscv $@
