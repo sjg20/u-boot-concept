@@ -21,6 +21,7 @@
 import sys
 import subprocess
 import re
+import argparse
 from statistics import mode, StatisticsError
 from collections import defaultdict
 
@@ -151,17 +152,29 @@ def discover_and_check_all_lists(elf_path, verbose):
 
 def main():
     """ Main entry point of the script. """
-    args = sys.argv[1:]
-    verbose = '-v' in args
-    if verbose:
-        args.remove('-v')
+    epilog_text = """
+This script auto-discovers all linker-generated lists in a U-Boot ELF file
+(e.g., for drivers, commands, etc.) and verifies their integrity. It checks
+that all elements in a given list are separated by a consistent number of
+bytes.
 
-    if len(args) != 1:
-        print(f"Usage: {sys.argv[0]} [-v] <path_to_u-boot_elf_file>\nExample: {sys.argv[0]} -v u-boot", file=sys.stderr)
-        sys.exit(1)
+Anomalies typically indicate that the linker has inserted alignment padding
+between two elements in a list, which can break U-Boot's assumption that the
+list is a simple, contiguous array of same-sized structs.
+"""
+    parser = argparse.ArgumentParser(
+        description="Check alignment of all U-Boot linker lists in an ELF file.",
+        epilog=epilog_text,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument('elf_path', metavar='path_to_elf_file',
+                        help='Path to the U-Boot ELF file to check.')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Print detailed output even on success.')
 
-    elf_file = args[0]
-    exit_code = discover_and_check_all_lists(elf_file, verbose)
+    args = parser.parse_args()
+
+    exit_code = discover_and_check_all_lists(args.elf_path, args.verbose)
     sys.exit(exit_code)
 
 if __name__ == "__main__":
