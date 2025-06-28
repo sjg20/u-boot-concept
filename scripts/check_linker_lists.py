@@ -57,8 +57,6 @@ def check_single_list(list_name, symbols):
     if list_name.startswith(prefix_to_strip):
         display_name = list_name[len(prefix_to_strip):]
 
-    print(f"\nChecking list '{display_name}' ({len(symbols)} symbols)...", file=sys.stderr)
-
     # Calculate the size difference between each consecutive symbol
     gaps = []
     for i in range(len(symbols) - 1):
@@ -70,12 +68,12 @@ def check_single_list(list_name, symbols):
     # Determine the most common gap size (the mode).
     try:
         expected_gap = mode(g['gap'] for g in gaps)
-        print(f"Determined expected element size (mode) = {expected_gap} bytes (0x{expected_gap:x})", file=sys.stderr)
+        print(f"Checking list '{display_name}' ({len(symbols)} symbols): expected size 0x{expected_gap:x}", file=sys.stderr)
     except StatisticsError:
         print(f"!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
         print("  Error: Could not determine a common element size. All gaps are unique.", file=sys.stderr)
         for g in gaps:
-            print(f"  - Gap of {g['gap']:>4} (0x{g['gap']:x}) bytes between {g['prev_sym']} and {g['next_sym']}", file=sys.stderr)
+            print(f"  - Gap of 0x{g['gap']:x} bytes between {g['prev_sym']} and {g['next_sym']}", file=sys.stderr)
         return True # Anomaly found
 
     # Check for any gaps that don't match the expected size
@@ -88,8 +86,8 @@ def check_single_list(list_name, symbols):
             print(f"  - Inconsistent gap found between symbols:", file=sys.stderr)
             print(f"    -> {g['prev_sym']}", file=sys.stderr)
             print(f"    -> {g['next_sym']}", file=sys.stderr)
-            print(f"    Expected gap: {expected_gap:>4} (0x{expected_gap:x}) bytes", file=sys.stderr)
-            print(f"    Actual gap:   {g['gap']:>4} (0x{g['gap']:x}) bytes", file=sys.stderr)
+            print(f"    Expected gap: 0x{expected_gap:x}", file=sys.stderr)
+            print(f"    Actual gap:   0x{g['gap']:x}", file=sys.stderr)
             padding = abs(g['gap'] - expected_gap)
             print(f"    This indicates {padding} bytes of unexpected linker padding.", file=sys.stderr)
 
