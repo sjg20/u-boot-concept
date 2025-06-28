@@ -35,6 +35,7 @@ enum uclass_id {
 	UCLASS_USB_EMUL,	/* sandbox USB bus device emulator */
 	UCLASS_AXI_EMUL,	/* sandbox AXI bus device emulator */
 	UCLASS_FFA_EMUL,	/* sandbox FF-A device emulator */
+	UCLASS_VIRTIO_EMUL,	/* Emulator for a virtIO transport device */
 
 	/* U-Boot uclasses start here - in alphabetical order */
 	UCLASS_ACPI_PMC,	/* (x86) Power-management controller (PMC) */
