@@ -98,4 +98,16 @@ config VIRTIO_FS
 	  A specification for the protocol is available at
 	  https://docs.oasis-open.org/virtio/virtio/v1.3/virtio-v1.3.html
 
+config VIRTIO_SCSI
+	bool "SCSI driver for virtio devices"
+	depends on SCSI
+	select VIRTIO
+	default y
+	help
+	  This driver provides support for virtio-based paravirtual SCSI. It
+	  allows access to storage devices using the
+
+	  A specification for the protocol is available at
+	  https://docs.oasis-open.org/virtio/virtio/v1.3/virtio-v1.3.html
+
 endmenu
