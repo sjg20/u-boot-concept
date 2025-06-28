@@ -1044,6 +1044,14 @@ void board_init_f(ulong boot_flags)
 	gd->flags &= ~GD_FLG_HAVE_CONSOLE;
 	gd->boardf = &boardf;
 
+	void *start = ll_entry_start(struct driver, driver);
+	void *end = ll_entry_end(struct driver, driver);
+
+	printf("diff %lx\n", end - start);
+	ulong count = (end - start) / sizeof(struct driver);
+	printf("count %lx expect diff %lx\n", count,
+	       count * sizeof(struct driver));
+
 	const int n_ents = ll_entry_count(struct driver, driver);
 	printf("hi %d\n", n_ents);
 	if (abs(n_ents) > 100)
