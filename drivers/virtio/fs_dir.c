@@ -183,7 +183,7 @@ int virtio_fs_setup_dir(struct udevice *fsdev, const char *path,
 		log_debug("got inode %lld\n", inode);
 	}
 
-	ret = dir_add_probe(fsdev, DM_DRIVER_REF(virtio_fs_dir), path, &dir);
+	ret = dir_add_probe(fsdev, DM_DRIVER_GET(virtio_fs_dir), path, &dir);
 	if (ret)
 		goto no_add;
 
