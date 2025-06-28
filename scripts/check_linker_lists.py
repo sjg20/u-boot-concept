@@ -85,6 +85,9 @@ def discover_and_check_all_lists(elf_path, verbose):
         print(f"Error: Failed to execute 'nm' on '{elf_path}'.\n  Return Code: {e.returncode}\n  Stderr:\n{e.stderr}", file=sys.stderr)
         return 2
 
+    # A pattern to find the base name of a U-Boot list symbol.
+    # It captures the part before '(_info)?_2_'.
+    list_name_pattern = re.compile(r'^(?P<base_name>_u_boot_list_\d+_\w+)(?:_info)?_2_')
     discovered_lists = defaultdict(list)
     for line in proc.stdout.splitlines():
         if ' D _u_boot_list_' not in line:
@@ -92,12 +95,10 @@ def discover_and_check_all_lists(elf_path, verbose):
         try:
             parts = line.strip().split()
             address, name = int(parts[0], 16), parts[-1]
-            base_name = None
-            if '_info_2_' in name:
-                base_name = name.rsplit('_info_2_', 1)[0]
-            elif '_2_' in name:
-                base_name = name.rsplit('_2_', 1)[0]
-            if base_name:
+
+            match = list_name_pattern.match(name)
+            if match:
+                base_name = match.group('base_name')
                 discovered_lists[base_name].append((address, name))
         except (ValueError, IndexError):
             print(f"Warning: Could not parse line: {line}", file=sys.stderr)
