@@ -34,6 +34,7 @@ enum uclass_id {
 	UCLASS_PCI_EMUL_PARENT,	/* parent for PCI device emulators */
 	UCLASS_USB_EMUL,	/* sandbox USB bus device emulator */
 	UCLASS_AXI_EMUL,	/* sandbox AXI bus device emulator */
+	UCLASS_FFA_EMUL,	/* sandbox FF-A device emulator */
 
 	/* U-Boot uclasses start here - in alphabetical order */
 	UCLASS_ACPI_PMC,	/* (x86) Power-management controller (PMC) */
@@ -63,7 +64,6 @@ enum uclass_id {
 	UCLASS_ETH_PHY,		/* Ethernet PHY device */
 	UCLASS_EXTCON,		/* External Connector Class */
 	UCLASS_FFA,		/* Arm Firmware Framework for Armv8-A */
-	UCLASS_FFA_EMUL,		/* sandbox FF-A device emulator */
 	UCLASS_FIRMWARE,	/* Firmware */
 	UCLASS_FPGA,		/* FPGA device */
 	UCLASS_FUZZING_ENGINE,	/* Fuzzing engine */
