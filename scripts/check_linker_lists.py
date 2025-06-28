@@ -53,12 +53,9 @@ def check_single_list(name, symbols, max_name_len):
 
     try:
         expected_gap = mode(g['gap'] for g in gaps)
-        name_col = f"{name}"
-        symbols_col = f"{len(symbols)}"
-        size_col = f"0x{expected_gap:x}"
         lines.append(
-            f"{name_col:<{max_name_len + 2}}  {symbols_col:>12}  "
-            f"{size_col:>17}")
+            f"{name:<{max_name_len + 2}}  {len(symbols):>12}  "
+            f"{f'0x{expected_gap:x}':>17}")
 
     except StatisticsError:
         lines.append(f"\n!!! PROBLEM DETECTED IN LIST '{name}' !!!")
@@ -80,12 +77,8 @@ def check_single_list(name, symbols, max_name_len):
 
     return problem_count, lines
 
-
-def discover_and_check_all_lists(elf_path, verbose):
-    """Run `nm`, discover all linker lists, and check each one
-
-    Print output only if problems are found or verbose mode is enabled
-    """
+def run_nm_and_get_lists(elf_path):
+    """Run `nm` and parse the output to discover all linker lists"""
     cmd = ['nm', '-n', elf_path]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -93,15 +86,13 @@ def discover_and_check_all_lists(elf_path, verbose):
         eprint(
             "Error: The 'nm' command was not found. "
             "Please ensure binutils is installed")
-        return 2
+        return None
     except subprocess.CalledProcessError as e:
         eprint(
             f"Error: Failed to execute 'nm' on '{elf_path}'.\n"
             f"  Return Code: {e.returncode}\n  Stderr:\n{e.stderr}")
-        return 2
+        return None
 
-    # A pattern to find the base name of a U-Boot list symbol
-    # It captures the part before '(_info)?_2_'
     list_name_pattern = re.compile(
         r'^(?P<base_name>_u_boot_list_\d+_\w+)(?:_info)?_2_')
     lists = defaultdict(list)
@@ -119,11 +110,10 @@ def discover_and_check_all_lists(elf_path, verbose):
         except (ValueError, IndexError):
             eprint(f"Warning: Could not parse line: {line}")
 
-    if not lists:
-        if verbose:
-            eprint("Success: No U-Boot linker lists found to check")
-        return 0
+    return lists
 
+def collect_data(lists):
+    """Collect alignment check data for all lists"""
     names = {}
     prefix_to_strip = '_u_boot_list_2_'
     for list_name in lists.keys():
@@ -133,7 +123,6 @@ def discover_and_check_all_lists(elf_path, verbose):
 
     max_name_len = max(len(name) for name in names.values()) if names else 0
 
-    # --- Data Collection Phase ---
     total_problems = 0
     total_symbols = 0
     all_lines = []
@@ -145,30 +134,53 @@ def discover_and_check_all_lists(elf_path, verbose):
         total_problems += problem_count
         all_lines.extend(lines)
 
-    # --- Output Phase ---
-    if total_problems > 0 or verbose:
-        header = (f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  "
-                  f"{'Struct Size (hex)':>17}")
-        eprint(header)
-        eprint(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}")
-        for line in all_lines:
-            eprint(line)
+    return {
+        'total_problems': total_problems,
+        'total_symbols': total_symbols,
+        'all_lines': all_lines,
+        'max_name_len': max_name_len,
+        'list_count': len(lists),
+    }
 
-        # Print footer
-        eprint(f"{'-' * (max_name_len + 2)}  {'-' * 12}")
-        name_col = f"{len(lists)} lists"
-        symbols_col = f"{total_symbols}"
-        eprint(f"{name_col:<{max_name_len + 2}}  {symbols_col:>12}")
+def show_output(results, verbose):
+    """Print the collected results to stderr based on verbosity"""
+    total_problems = results['total_problems']
+    if total_problems == 0 and not verbose:
+        return
+
+    max_name_len = results['max_name_len']
+    header = (f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  "
+                f"{'Struct Size (hex)':>17}")
+    eprint(header)
+    eprint(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}")
+    for line in results['all_lines']:
+        eprint(line)
+
+    # Print footer
+    eprint(f"{'-' * (max_name_len + 2)}  {'-' * 12}")
+    eprint(f"{f'{results['list_count']} lists':<{max_name_len + 2}}  "
+            f"{results['total_symbols']:>12}")
 
     if total_problems > 0:
         eprint(f"\nFAILURE: Found {total_problems} alignment problems")
-        return 3
+    elif verbose:
+        eprint(f"\nSUCCESS: All discovered lists have consistent alignment")
 
-    if verbose:
-        eprint(
-            f"\nSUCCESS: All discovered linker lists have consistent alignment")
+def process_elf_file(elf_path, verbose):
+    """Orchestrate the checking of the ELF file"""
+    lists = run_nm_and_get_lists(elf_path)
+    if lists is None:
+        return 2  # Error running nm
 
-    return 0
+    if not lists:
+        if verbose:
+            eprint("Success: No U-Boot linker lists found to check")
+        return 0
+
+    results = collect_data(lists)
+    show_output(results, verbose)
+
+    return 3 if results['total_problems'] > 0 else 0
 
 def main():
     """Main entry point of the script"""
@@ -194,7 +206,7 @@ list is a simple, contiguous array of same-sized structs.
 
     args = parser.parse_args()
 
-    exit_code = discover_and_check_all_lists(args.elf_path, args.verbose)
+    exit_code = process_elf_file(args.elf_path, args.verbose)
     sys.exit(exit_code)
 
 if __name__ == "__main__":
