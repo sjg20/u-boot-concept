@@ -325,7 +325,7 @@ static int sandbox_dir_open_file(struct udevice *dir, const char *leaf,
 	if (size < 0)
 		return log_msg_ret("sos", ret);
 
-	ret = file_add_probe(dir, DM_DRIVER_GET(sandbox_file), leaf, size,
+	ret = file_add_probe(dir, DM_DRIVER_REF(sandbox_file), leaf, size,
 			     oflags, &dev);
 	if (ret) {
 		os_close(fd);
