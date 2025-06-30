@@ -12,6 +12,9 @@
 
 struct udevice;
 
+#define CMD_BUF_SIZE	32
+#define SENSE_BUF_LEN	96
+
 /**
  * struct scsi_cmd - information about a SCSI command to be processed
  *
@@ -34,8 +37,8 @@ struct udevice;
  * @dma_dir: Direction of data structure
  */
 struct scsi_cmd {
-	unsigned char cmd[16];
-	unsigned char sense_buf[64]
+	unsigned char cmd[CMD_BUF_SIZE];
+	unsigned char sense_buf[SENSE_BUF_LEN]
 		__attribute__((aligned(ARCH_DMA_MINALIGN)));
 	unsigned char status;
 	unsigned char target;
