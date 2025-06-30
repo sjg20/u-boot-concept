@@ -1203,6 +1203,7 @@ F:	include/file.h
 F:	include/fpga.h
 F:	include/fs.h
 F:	include/iovec.h
+F:	include/linux/fuse.h
 F:	test/dm/fpga.c
 
 FLATTENED DEVICE TREE
@@ -1853,6 +1854,7 @@ F:	include/video*.h
 
 VirtIO
 M:	Bin Meng <bmeng.cn@gmail.com>
+M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	drivers/virtio/
 F:	cmd/virtio.c

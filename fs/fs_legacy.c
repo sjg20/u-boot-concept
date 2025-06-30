@@ -35,6 +35,7 @@
 #include <squashfs.h>
 #include <erofs.h>
 #include <exfat.h>
+#include <virtio_fs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -406,6 +407,28 @@ static struct fstype_info fstypes[] = {
 		.rename = exfat_fs_rename,
 	},
 #endif
+#if CONFIG_IS_ENABLED(VIRTIO_FS)
+	{
+		.fstype = FS_TYPE_VIRTIO,
+		.name = "virtio",
+		.null_dev_desc_ok = true,
+		.probe = virtio_fs_compat_probe,
+		.opendir = virtio_fs_compat_opendir,
+		.readdir = virtio_fs_compat_readdir,
+		.ls = fs_ls_generic,
+		.read = virtio_fs_compat_read,
+		.size = virtio_fs_compat_size,
+		.close = fs_close_unsupported,
+		.closedir = virtio_fs_compat_closedir,
+		.exists = fs_exists_unsupported,
+		.uuid = fs_uuid_unsupported,
+		.write = fs_write_unsupported,
+		.ln = fs_ln_unsupported,
+		.unlink = fs_unlink_unsupported,
+		.mkdir = fs_mkdir_unsupported,
+		.rename = fs_rename_unsupported,
+	},
+#endif
 	{
 		.fstype = FS_TYPE_ANY,
 		.name = "unsupported",
@@ -693,7 +716,15 @@ struct fs_dirent *fs_readdir(struct fs_dir_stream *dirs)
 	struct fs_dirent *dirent;
 	int ret;
 
-	fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	/*
+	 * If this is not a block device we can assume it is virtiofs, since we
+	 * cannot reach this code otherwise. Sandbox uses its own 'ls' method.
+	 */
+	if (dirs->desc)
+		fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	else
+		fs_type = FS_TYPE_VIRTIO;
+
 	info = fs_get_info(fs_type);
 
 	ret = info->readdir(dirs, &dirent);
@@ -713,7 +744,15 @@ void fs_closedir(struct fs_dir_stream *dirs)
 	if (!dirs)
 		return;
 
-	fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	/*
+	 * If this is not a block device we can assume it is virtiofs, since we
+	 * cannot reach this code otherwise. Sandbox uses its own 'ls' method.
+	 */
+	if (dirs->desc)
+		fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	else
+		fs_type = FS_TYPE_VIRTIO;
+
 	info = fs_get_info(fs_type);
 
 	info->closedir(dirs);

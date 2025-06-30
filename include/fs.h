@@ -96,4 +96,16 @@ int fs_unmount(struct udevice *dev);
  */
 int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp);
 
+/**
+ * fs_split_path() - Get a list of subdirs in a filename
+ *
+ * For example, '/path/to/fred' returns an alist containing allocated strings
+ * 'path' and 'to', with \*leafp pointing to the 'f'
+ *
+ * @fname: Filename to parse
+ * @subdirp: Returns an allocating string containing the subdirs, or "/" if none
+ * @leafp: Returns a pointer to the leaf filename, within @fname
+ */
+int fs_split_path(const char *fname, char **subdirp, const char **leafp);
+
 #endif

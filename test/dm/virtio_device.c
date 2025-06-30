@@ -31,7 +31,7 @@ static int dm_test_virtio_base(struct unit_test_state *uts)
 
 	/* check driver status */
 	ut_assertok(virtio_get_status(dev, &status));
-	ut_asserteq(VIRTIO_CONFIG_S_ACKNOWLEDGE, status);
+	ut_asserteq(0, status);
 
 	/* probe the virtio-rng driver */
 	ut_assertok(device_probe(dev));

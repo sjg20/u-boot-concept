@@ -85,4 +85,17 @@ config VIRTIO_RNG
 	help
 	  This is the virtual random number generator driver. It can be used
 	  with QEMU based targets.
+
+config VIRTIO_FS
+	bool "virtio filesystem driver"
+	depends on VIRTIO && FS
+	default y
+	help
+	  Provides support for virtio-fs which provides access to host files
+	  within the guest OS. This needs a user-space helper (virtiofsd) when
+	  running QEMU - see https://virtio-fs.gitlab.io/ for details.
+
+	  A specification for the protocol is available at
+	  https://docs.oasis-open.org/virtio/virtio/v1.3/virtio-v1.3.html
+
 endmenu

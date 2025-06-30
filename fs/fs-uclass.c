@@ -13,6 +13,31 @@
 #include <fs.h>
 #include <dm/device-internal.h>
 
+int fs_split_path(const char *fname, char **subdirp, const char **leafp)
+{
+	char *subdir, *p;
+
+	if (!*fname)
+		return log_msg_ret("fsp", -EINVAL);
+
+	/* allocate space for the whole filename, for simplicity */
+	subdir = strdup(fname);
+	if (!subdir)
+		return log_msg_ret("fsp", -ENOMEM);
+
+	p = strrchr(subdir, '/');
+	if (p) {
+		*leafp = p + 1;
+		*p = '\0';
+	} else {
+		*leafp = fname;
+		strcpy(subdir, "/");
+	}
+	*subdirp = subdir;
+
+	return 0;
+}
+
 int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp)
 {
 	struct fs_ops *ops = fs_get_ops(dev);
