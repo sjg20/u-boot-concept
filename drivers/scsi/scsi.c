@@ -264,8 +264,7 @@ static int scsi_buffer_aligned(struct udevice *dev, struct bounce_buffer *state)
 /* copy src to dest, skipping leading and trailing blanks
  * and null terminate the string
  */
-static void scsi_ident_cpy(unsigned char *dest, unsigned char *src,
-			   unsigned int len)
+static void scsi_ident_cpy(char *dest, const char *src, uint len)
 {
 	int start, end;
 
@@ -451,10 +450,10 @@ static int scsi_count_luns(struct udevice *dev, uint target)
 static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 			   struct blk_desc *dev_desc)
 {
-	unsigned char perq, modi;
 	lbaint_t capacity;
 	unsigned long blksz;
 	struct scsi_cmd *pccb = (struct scsi_cmd *)&tempccb;
+	const struct scsi_inquiry_resp *resp;
 	int count, err;
 
 	pccb->target = target;
@@ -476,21 +475,22 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 		scsi_print_error(pccb);
 		return -ENODEV;
 	}
-	perq = tempbuff[0];
-	modi = tempbuff[1];
-	if ((perq & SCSIRF_TYPE_MASK) == SCSIRF_TYPE_UNKNOWN)
+	resp = (const struct scsi_inquiry_resp *)tempbuff;
+	if ((resp->type & SCSIRF_TYPE_MASK) == SCSIRF_TYPE_UNKNOWN)
 		return -ENODEV; /* skip unknown devices */
-	if (modi & SCSIRF_FLAGS_REMOVABLE) /* drive is removable */
+	if (resp->flags & SCSIRF_FLAGS_REMOVABLE) /* drive is removable */
 		dev_desc->removable = true;
 	/* get info for this device */
-	scsi_ident_cpy((unsigned char *)dev_desc->vendor,
-		       &tempbuff[8], 8);
-	scsi_ident_cpy((unsigned char *)dev_desc->product,
-		       &tempbuff[16], 16);
-	scsi_ident_cpy((unsigned char *)dev_desc->revision,
-		       &tempbuff[32], 4);
+	scsi_ident_cpy(dev_desc->vendor, resp->vendor, sizeof(resp->vendor));
+	scsi_ident_cpy(dev_desc->product, resp->product, sizeof(resp->product));
+	scsi_ident_cpy(dev_desc->revision, resp->revision,
+		       sizeof(resp->revision));
 	dev_desc->target = pccb->target;
 	dev_desc->lun = pccb->lun;
+	dev_desc->type = resp->type;
+
+	/* this is about to be overwritten by the code below */
+	resp = NULL;
 
 	for (count = 0; count < 3; count++) {
 		pccb->datalen = 0;
@@ -501,10 +501,8 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 			break;
 	}
 	if (err) {
-		if (dev_desc->removable) {
-			dev_desc->type = perq;
+		if (dev_desc->removable)
 			goto removable;
-		}
 		scsi_print_error(pccb);
 		return -EINVAL;
 	}
@@ -515,7 +513,7 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 	dev_desc->lba = capacity;
 	dev_desc->blksz = blksz;
 	dev_desc->log2blksz = LOG2(dev_desc->blksz);
-	dev_desc->type = perq;
+
 removable:
 	return 0;
 }
