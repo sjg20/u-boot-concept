@@ -473,6 +473,8 @@ static inline struct efi_mem_desc *efi_get_next_mem_desc(
  *	to U-Boot
  * @info_size: Size of the info list @info in bytes
  * @next_hdr: Pointer to where to put the next header when adding to the list
+ * @jump_addr: Address to jump to to start U-Boot
+ * @x86_cs32: x86 code-segment to use for U-Boot
  */
 struct efi_priv {
 	efi_handle_t parent_image;
@@ -496,6 +498,8 @@ struct efi_priv {
 	struct efi_info_hdr *info;
 	unsigned int info_size;
 	void *next_hdr;
+	ulong jump_addr;
+	int x86_cs32;
 };
 
 /*
@@ -664,13 +668,13 @@ void efi_putc(struct efi_priv *priv, const char ch);
 int efi_store_memory_map(struct efi_priv *priv);
 
 /**
- * efi_call_exit_boot_services() - Handle the exit-boot-service procedure
+ * efi_stub_exit_boot_services() - Handle the exit-boot-service procedure
  *
  * Tell EFI we don't want their boot services anymore
  *
  * Return: 0 if OK, non-zero on error
  */
-int efi_call_exit_boot_services(void);
+int efi_stub_exit_boot_services(void);
 
 /**
  * efi_get_mmap() - Get the memory map from EFI

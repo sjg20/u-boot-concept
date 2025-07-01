@@ -31,8 +31,6 @@
 #error "This file needs to be ported for use on architectures"
 #endif
 
-static bool use_uart;
-
 struct __packed desctab_info {
 	uint16_t limit;
 	uint64_t addr;
@@ -67,7 +65,7 @@ void putc(const char ch)
 	if (ch == '\n')
 		putc('\r');
 
-	if (use_uart) {
+	if (use_hw_uart) {
 		struct ns16550 *com_port = (struct ns16550 *)0x3f8;
 
 		while ((inb((ulong)&com_port->lsr) & UART_LSR_THRE) == 0)
@@ -90,29 +88,6 @@ static void _debug_uart_putc(int ch)
 }
 
 DEBUG_UART_FUNCS
-
-void *memcpy(void *dest, const void *src, size_t size)
-{
-	unsigned char *dptr = dest;
-	const unsigned char *ptr = src;
-	const unsigned char *end = src + size;
-
-	while (ptr < end)
-		*dptr++ = *ptr++;
-
-	return dest;
-}
-
-void *memset(void *inptr, int ch, size_t size)
-{
-	char *ptr = inptr;
-	char *end = ptr + size;
-
-	while (ptr < end)
-		*ptr++ = ch;
-
-	return ptr;
-}
 
 static void jump_to_uboot(ulong cs32, ulong addr, ulong info)
 {
@@ -226,152 +201,22 @@ static int get_codeseg32(void)
 	return cs32;
 }
 
-/**
- * setup_info_table() - sets up a table containing information from EFI
- *
- * We must call exit_boot_services() before jumping out of the stub into U-Boot
- * proper, so that U-Boot has full control of peripherals, memory, etc.
- *
- * Once we do this, we cannot call any boot-services functions so we must find
- * out everything we need to before doing that.
- *
- * Set up a struct efi_info_hdr table which can hold various records (e.g.
- * struct efi_entry_memmap) with information obtained from EFI.
- *
- * @priv: Pointer to our private information which contains the list
- * @size: Size of the table to allocate
- * Return: 0 if OK, non-zero on error
- */
-static int setup_info_table(struct efi_priv *priv, int size)
+efi_status_t arch_efi_main_init(struct efi_priv *priv,
+				struct efi_boot_services *boot)
 {
-	struct efi_info_hdr *info;
-	efi_status_t ret;
-
-	/* Get some memory for our info table */
-	priv->info_size = size;
-	info = efi_malloc(priv, priv->info_size, &ret);
-	if (ret) {
-		printhex2(ret);
-		puts(" No memory for info table: ");
-		return ret;
-	}
-
-	memset(info, '\0', sizeof(*info));
-	info->version = EFI_TABLE_VERSION;
-	info->hdr_size = sizeof(*info);
-	priv->info = info;
-	priv->next_hdr = (char *)info + info->hdr_size;
-
-	return 0;
-}
-
-/**
- * add_entry_addr() - Add a new entry to the efi_info list
- *
- * This adds an entry, consisting of a tag and two lots of data. This avoids the
- * caller having to coalesce the data first
- *
- * @priv: Pointer to our private information which contains the list
- * @type: Type of the entry to add
- * @ptr1: Pointer to first data block to add
- * @size1: Size of first data block in bytes (can be 0)
- * @ptr2: Pointer to second data block to add
- * @size2: Size of second data block in bytes (can be 0)
- */
-static void add_entry_addr(struct efi_priv *priv, enum efi_entry_t type,
-			   void *ptr1, int size1, void *ptr2, int size2)
-{
-	struct efi_entry_hdr *hdr = priv->next_hdr;
-
-	hdr->type = type;
-	hdr->size = size1 + size2;
-	hdr->addr = 0;
-	hdr->link = ALIGN(sizeof(*hdr) + hdr->size, 16);
-	priv->next_hdr += hdr->link;
-	memcpy(hdr + 1, ptr1, size1);
-	memcpy((void *)(hdr + 1) + size1, ptr2, size2);
-	priv->info->total_size = (ulong)priv->next_hdr - (ulong)priv->info;
-}
-
-/**
- * efi_main() - Start an EFI image
- *
- * This function is called by our EFI start-up code. It handles running
- * U-Boot. If it returns, EFI will continue.
- */
-efi_status_t EFIAPI efi_main(efi_handle_t image,
-			     struct efi_system_table *sys_table)
-{
-	struct efi_priv local_priv, *priv = &local_priv;
-	struct efi_boot_services *boot = sys_table->boottime;
-	struct efi_entry_memmap map;
-	struct efi_gop *gop;
-	struct efi_entry_gopmode mode;
-	struct efi_entry_systable table;
-	efi_guid_t efi_gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
-	efi_status_t ret;
 	int cs32;
-
-	ret = efi_init(priv, "Payload", image, sys_table);
-	if (ret) {
-		printhex2(ret);
-		puts(" efi_init() failed\n");
-		return ret;
-	}
-	efi_set_priv(priv);
 
 	cs32 = get_codeseg32();
 	if (cs32 < 0)
 		return EFI_UNSUPPORTED;
+	priv->x86_cs32 = cs32;
 
-	ret = efi_store_memory_map(priv);
-	if (ret)
-		return ret;
+	priv->jump_addr = CONFIG_TEXT_BASE;
 
-	ret = setup_info_table(priv, priv->memmap_size + 128);
-	if (ret)
-		return ret;
+	return 0;
+}
 
-	ret = boot->locate_protocol(&efi_gop_guid, NULL, (void **)&gop);
-	if (ret) {
-		puts(" GOP unavailable\n");
-	} else {
-		mode.fb_base = gop->mode->fb_base;
-		mode.fb_size = gop->mode->fb_size;
-		mode.info_size = gop->mode->info_size;
-		add_entry_addr(priv, EFIET_GOP_MODE, &mode, sizeof(mode),
-			       gop->mode->info,
-			       sizeof(struct efi_gop_mode_info));
-	}
-
-	table.sys_table = (ulong)sys_table;
-	add_entry_addr(priv, EFIET_SYS_TABLE, &table, sizeof(table), NULL, 0);
-
-	ret = efi_call_exit_boot_services();
-	if (ret)
-		return ret;
-
-	/* The EFI UART won't work now, switch to a debug one */
-	use_uart = true;
-
-	map.version = priv->memmap_version;
-	map.desc_size = priv->memmap_desc_size;
-	add_entry_addr(priv, EFIET_MEMORY_MAP, &map, sizeof(map),
-		       priv->memmap_desc, priv->memmap_size);
-	add_entry_addr(priv, EFIET_END, NULL, 0, 0, 0);
-
-	memcpy((void *)CONFIG_TEXT_BASE, _binary_u_boot_bin_start,
-	       (ulong)_binary_u_boot_bin_end -
-	       (ulong)_binary_u_boot_bin_start);
-
-#ifdef DEBUG
-	puts("EFI table at ");
-	printhex8((ulong)priv->info);
-	puts(" size ");
-	printhex8(priv->info->total_size);
-#endif
-	putc('\n');
-	jump_to_uboot(cs32, CONFIG_TEXT_BASE, (ulong)priv->info);
-
-	return EFI_LOAD_ERROR;
+void arch_efi_jump_to_payload(struct efi_priv *priv)
+{
+	jump_to_uboot(priv->x86_cs32, priv->jump_addr, (ulong)priv->info);
 }

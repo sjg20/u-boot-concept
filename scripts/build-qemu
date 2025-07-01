@@ -20,7 +20,7 @@ import sys
 import shlex
 import time
 
-from build_helper import Helper
+import build_helper
 
 OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 OUR1_PATH = os.path.dirname(OUR_PATH)
@@ -40,54 +40,22 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Build and/or run U-Boot with QEMU',
         formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('-a', '--arch', default='arm', choices=['arm', 'x86'],
-                        help='Select architecture (arm, x86) Default: arm')
-    parser.add_argument('-B', '--no-build', action='store_true',
-                        help="Don't build; assume a build exists")
-    parser.add_argument('-C', '--enable-console', action='store_true',
-                        help="Enable linux console (x86 only)")
-    parser.add_argument('-d', '--disk',
-                        help='Root disk image file to use with QEMU')
+    build_helper.add_common_args(parser)
     parser.add_argument('-D', '--share-dir', metavar='DIR',
                         help='Directory to share into the guest via virtiofs')
     parser.add_argument('-e', '--sct-run', action='store_true',
                         help='Run UEFI Self-Certification Test (SCT)')
     parser.add_argument('-E', '--use-tianocore', action='store_true',
                         help='Run Tianocore (OVMF) instead of U-Boot')
-    parser.add_argument('-I', '--initrd',
-                        help='Initial ramdisk to run using -initrd')
-    parser.add_argument(
-        '-k', '--kvm', action='store_true',
-        help='Use KVM (Kernel-based Virtual Machine) for acceleration')
-    parser.add_argument('-K', '--kernel',
-                        help='Kernel to run using -kernel')
-    parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
-                        help='Run a specified Operating System')
     parser.add_argument('-Q', '--use-qboot', action='store_true',
                         help='Run qboot instead of U-Boot')
-    parser.add_argument('-r', '--run', action='store_true',
-                        help='Run QEMU with the built/specified image')
     parser.add_argument('-x', '--xpl', action='store_true',
                         help='Use xPL image rather than U-Boot proper')
     parser.add_argument(
-        '-R', '--release', default='24.04.1',
-        help='Select OS release version (e.g, 24.04) Default: 24.04.1')
-    parser.add_argument(
-        '-s', '--serial-only', action='store_true',
-        help='Use serial console only (no graphical display for QEMU)')
-    parser.add_argument(
         '-S', '--sct-seq',
         help='SCT sequence-file to be written into the SCT image if -e')
-    parser.add_argument(
-        '-t', '--root',
-        help='Pass the given root device to linux via root=xxx')
-    parser.add_argument(
-        '-U', '--uuid',
-        help='Pass the given root device to linux via root=/dev/disk/by-uuid/')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
-    parser.add_argument('-w', '--word-32bit', action='store_true',
-                        help='Use 32-bit version for the build/architecture')
 
     return parser.parse_args()
 
@@ -99,9 +67,8 @@ class BuildQemu:
         """Set up arguments and configure paths"""
         self.args = args
 
-        self.helper = Helper()
+        self.helper = build_helper.Helper(args)
         self.helper.read_settings()
-        self.imagedir = Path(self.helper.get_setting('image_dir', '~/dev'))
         self.ubdir = Path(self.helper.get_setting('build_dir', '/tmp/b'))
         self.sctdir = Path(self.helper.get_setting('sct_dir', '~/dev/efi/sct'))
         self.tiano = Path(self.helper.get_setting('tianocore_dir',
@@ -109,7 +76,6 @@ class BuildQemu:
         self.qboot = Path(self.helper.get_setting('qboot_dir', '~/dev/qboot'))
         self.mnt = Path(self.helper.get_setting('sct_mnt', '/mnt/sct'))
 
-        self.bitness = 32 if args.word_32bit else 64
         self.qemu_extra = []
         self.mem = '512M'  # Default QEMU memory
 
@@ -175,31 +141,22 @@ class BuildQemu:
             self.qemu_extra.extend(['-machine', 'virt'])
             if not args.kvm:
                 self.qemu_extra.extend(['-accel', 'tcg'])
-            os_arch = 'arm'
-            if self.bitness == 64:
+            if self.helper.bitness == 64:
                 if args.xpl:
                     self.board = 'qemu_arm64_spl'
                 else:
                     self.board = 'qemu_arm64'
                 self.qemu = 'qemu-system-aarch64'
                 self.qemu_extra.extend(['-cpu', 'cortex-a57'])
-                os_arch = 'arm64'
         elif args.arch == 'x86':
             self.board = 'qemu-x86'
             default_bios = 'u-boot.rom'
             self.qemu = 'qemu-system-i386'
-            os_arch = 'i386'  # For OS image naming
-            if self.bitness == 64:
+            if self.helper.bitness == 64:
                 self.board = 'qemu-x86_64'
                 self.qemu = 'qemu-system-x86_64'
-                os_arch = 'amd64'
         else:
             raise ValueError(f"Invalid arch '{args.arch}'")
-
-        self.os_path = None
-        if args.os == 'ubuntu':
-            img_name = (f'{args.os}-{args.release}-desktop-{os_arch}.iso')
-            self.os_path = self.imagedir / args.os / img_name
 
         self.build_dir = self.ubdir / self.board
         self.bios = (bios_override if bios_override
@@ -302,8 +259,6 @@ class BuildQemu:
         if not self.bios.exists():
             tout.fatal(f"Error: BIOS file '{self.bios}' not found")
 
-        cmdline = []
-
         qemu_cmd = [str(self.qemu)]
         if self.bios:
             qemu_cmd.extend(['-bios', str(self.bios)])
@@ -324,29 +279,10 @@ class BuildQemu:
         if not any(item.startswith('-serial') for item in self.qemu_extra):
             qemu_cmd.extend(['-serial', 'mon:stdio'])
 
-        if self.args.kernel:
-            qemu_cmd.extend(['-kernel', self.args.kernel])
-        if self.args.initrd:
-            qemu_cmd.extend(['-initrd', self.args.initrd])
-
-        if self.args.enable_console:
-            cmdline.append('console=ttyS0,115200,8n1')
-        if self.args.root:
-            cmdline.append(f'root={self.args.root}')
-        if self.args.uuid:
-            cmdline.append(f'root=/dev/disk/by-uuid/{self.args.uuid}')
-
-        if cmdline:
-            qemu_cmd.extend(['-append'] + [' '.join(cmdline)])
+        self.helper.add_qemu_args(self.args, qemu_cmd)
 
         # Add other parameters gathered from options
         qemu_cmd.extend(self.qemu_extra)
-        if self.os_path:
-            if not self.os_path.exists():
-                tout.error(f'OS image {self.os_path} specified but not found')
-            qemu_cmd.extend([
-                '-drive',
-                f'if=virtio,file={self.os_path},format=raw,id=hd0,readonly=on'])
 
         if self.img_fname:
             if self.img_fname.exists():
@@ -450,8 +386,7 @@ class BuildQemu:
 
 
 def main():
-    """Parses arguments and initiates the BuildQemu process
-    """
+    """Parse arguments and start the program"""
     args = parse_args()
     tout.init(tout.INFO if args.verbose else tout.WARNING)
 
