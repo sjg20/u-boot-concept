@@ -4,6 +4,8 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_CATEGORY	UCLASS_PARTITION
+
 #include <blk.h>
 #include <command.h>
 #include <env.h>
@@ -276,33 +278,42 @@ void dev_print(struct blk_desc *desc)
 	}
 }
 
-void part_init(struct blk_desc *desc)
+int part_init(struct blk_desc *desc)
 {
 	struct part_driver *drv =
 		ll_entry_start(struct part_driver, part_driver);
 	const int n_ents = ll_entry_count(struct part_driver, part_driver);
 	struct part_driver *entry;
+	int ret;
 
 	blkcache_invalidate(desc->uclass_id, desc->devnum);
 
 	if (desc->part_type != PART_TYPE_UNKNOWN) {
 		for (entry = drv; entry != drv + n_ents; entry++) {
-			if (entry->part_type == desc->part_type && !entry->test(desc))
-				return;
+			if (entry->part_type != desc->part_type)
+				continue;
+			ret = entry->test(desc);
+			log_debug("try '%s': ret=%d\n", entry->name, ret);
+			if (ret == -EIO)
+				return ret;
 		}
 	}
 
 	desc->part_type = PART_TYPE_UNKNOWN;
 	for (entry = drv; entry != drv + n_ents; entry++) {
-		int ret;
-
 		ret = entry->test(desc);
-		debug("%s: try '%s': ret=%d\n", __func__, entry->name, ret);
+		log_debug("try '%s': ret=%d\n", entry->name, ret);
+		if (ret == -EIO)
+			return ret;
 		if (!ret) {
 			desc->part_type = entry->part_type;
 			break;
 		}
 	}
+	if (ret)
+		return -ENOENT;
+
+	return 0;
 }
 
 static void print_part_header(const char *type, struct blk_desc *desc)

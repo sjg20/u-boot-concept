@@ -855,7 +855,8 @@ static int blk_post_probe(struct udevice *dev)
 	if (CONFIG_IS_ENABLED(PARTITIONS) && blk_enabled()) {
 		struct blk_desc *desc = dev_get_uclass_plat(dev);
 
-		part_init(desc);
+		if (part_init(desc) == -EIO)
+			log_warning("Error reading from device\n");
 
 		if (desc->part_type != PART_TYPE_UNKNOWN &&
 		    part_create_block_devices(dev))

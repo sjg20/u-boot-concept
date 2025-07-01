@@ -232,7 +232,15 @@ int part_get_info_whole_disk(struct blk_desc *desc,
 			     struct disk_partition *info);
 
 void part_print(struct blk_desc *desc);
-void part_init(struct blk_desc *desc);
+
+/**
+ * part_init() - Try to find a partition table on a block device
+ *
+ * @desc: Block descriptor to check
+ * Return 0 if found, -ENOENT if not, -EIO if a read failed
+ */
+int part_init(struct blk_desc *desc);
+
 void dev_print(struct blk_desc *desc);
 
 /**
@@ -370,7 +378,7 @@ static inline int part_get_info_whole_disk(struct blk_desc *desc,
 					   struct disk_partition *info)
 { return -1; }
 static inline void part_print(struct blk_desc *desc) {}
-static inline void part_init(struct blk_desc *desc) {}
+static inline int part_init(struct blk_desc *desc) { return 0; }
 static inline void dev_print(struct blk_desc *desc) {}
 static inline int blk_get_device_by_str(const char *ifname, const char *dev_str,
 					struct blk_desc **desc)
@@ -488,7 +496,8 @@ struct part_driver {
 	 * @test.desc:		Block device descriptor
 	 * @test.Return:
 	 * 0 if the block device appears to contain this partition type,
-	 * -ve if not
+	 * -ENOENT if not, -EIO if there was an I/O error, other value if some
+	 * other error occurred
 	 */
 	int (*test)(struct blk_desc *desc);
 };
