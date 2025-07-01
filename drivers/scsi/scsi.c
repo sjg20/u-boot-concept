@@ -492,7 +492,7 @@ static int do_scsi_scan_one(struct udevice *dev, int id, int lun, bool verbose)
 	* to make sure that there won't be a lot of
 	* block devices created
 	*/
-	snprintf(str, sizeof(str), "id%dlun%d", id, lun);
+	snprintf(str, sizeof(str), "id%xlun%x", id, lun);
 	name = strdup(str);
 	if (!name)
 		return log_msg_ret("nam", -ENOMEM);
