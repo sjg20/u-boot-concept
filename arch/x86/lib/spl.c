@@ -261,6 +261,12 @@ static int spl_board_load_image(struct spl_image_info *spl_image,
 
 	if (spl_image->load_addr != spl_get_image_pos()) {
 		/* Copy U-Boot from ROM */
+		log_debug("copy to %lx-%lx from %lx-%lx size %lx\n",
+			  spl_image->load_addr,
+		          spl_image->load_addr + spl_get_image_size(),
+			  spl_get_image_pos(),
+			  spl_get_image_pos() + spl_get_image_size(),
+			  spl_get_image_size());
 		memcpy((void *)spl_image->load_addr,
 		       (void *)spl_get_image_pos(), spl_get_image_size());
 	}
@@ -281,7 +287,7 @@ void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
 	int ret;
 
-	log_debug("Jumping to 64-bit U-Boot\n");
+	log_debug("Jumping to 64-bit U-Boot at %lx\n", spl_image->entry_point);
 	ret = cpu_jump_to_64bit_uboot(spl_image->entry_point);
 	debug("ret=%d\n", ret);
 	hang();
