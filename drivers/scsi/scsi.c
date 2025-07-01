@@ -22,7 +22,10 @@
 
 static struct scsi_cmd tempccb;	/* temporary scsi command buffer */
 
-DEFINE_CACHE_ALIGN_BUFFER(u8, tempbuff, 512);	/* temporary data buffer */
+/* temporary data buffer */
+#define TEMPBUFF_SIZE	512
+
+DEFINE_CACHE_ALIGN_BUFFER(u8, tempbuff, TEMPBUFF_SIZE);
 
 /* almost the maximum amount of the scsi_ext command.. */
 #define SCSI_MAX_BLK 0xFFFF
@@ -404,7 +407,7 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 	pccb->target = target;
 	pccb->lun = lun;
 	pccb->pdata = tempbuff;
-	pccb->datalen = 512;
+	pccb->datalen = TEMPBUFF_SIZE;
 	pccb->dma_dir = DMA_FROM_DEVICE;
 	scsi_setup_inquiry(pccb);
 	if (scsi_exec(dev, pccb)) {
