@@ -18,6 +18,7 @@
 #include <ide.h>
 #include "part_mac.h"
 #include <part.h>
+#include <linux/err.h>
 
 /* stdlib.h causes some compatibility problems; should fixe these! -- wd */
 #ifndef __ldiv_t_defined
@@ -41,8 +42,14 @@ static int part_test_mac(struct blk_desc *desc)
 	ALLOC_CACHE_ALIGN_BUFFER(mac_driver_desc_t, ddesc, 1);
 	ALLOC_CACHE_ALIGN_BUFFER(mac_partition_t, mpart, 1);
 	ulong i, n;
+	long ret;
 
-	if (part_mac_read_ddb(desc, ddesc)) {
+	ret = part_mac_read_ddb(desc, ddesc);
+	if (ret && ret != -1)
+		return ret;
+
+	if (ret)
+	{
 		/*
 		 * error reading Driver Descriptor Block,
 		 * or no valid Signature
@@ -151,7 +158,13 @@ static void part_print_mac(struct blk_desc *desc)
  */
 static int part_mac_read_ddb(struct blk_desc *desc, mac_driver_desc_t *ddb_p)
 {
-	if (blk_dread(desc, 0, 1, (ulong *)ddb_p) != 1) {
+	long ret;
+
+	ret = blk_dread(desc, 0, 1, (ulong *)ddb_p);
+	if (IS_ERR_VALUE(ret))
+		return ret;
+
+	if (ret != 1) {
 		debug("** Can't read Driver Descriptor Block **\n");
 		return (-1);
 	}

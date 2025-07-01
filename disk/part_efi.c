@@ -28,6 +28,7 @@
 #include <dm/ofnode.h>
 #include <linux/compiler.h>
 #include <linux/ctype.h>
+#include <linux/err.h>
 #include <linux/printk.h>
 #include <u-boot/crc.h>
 
@@ -315,10 +316,14 @@ static int __maybe_unused part_get_info_efi(struct blk_desc *desc, int part,
 static int part_test_efi(struct blk_desc *desc)
 {
 	ALLOC_CACHE_ALIGN_BUFFER_PAD(legacy_mbr, legacymbr, 1, desc->blksz);
+	long ret;
 
 	/* Read legacy MBR from block 0 and validate it */
-	if ((blk_dread(desc, 0, 1, (ulong *)legacymbr) != 1)
-		|| (is_pmbr_valid(legacymbr) != 1)) {
+	ret = blk_dread(desc, 0, 1, (ulong *)legacymbr);
+	if (IS_ERR_VALUE(ret))
+		return ret;
+
+	if (ret != 1 || is_pmbr_valid(legacymbr) != 1) {
 		/*
 		 * TegraPT is compatible with EFI part, but it
 		 * cannot pass the Protective MBR check. Skip it
@@ -330,8 +335,9 @@ static int part_test_efi(struct blk_desc *desc)
 			    desc->uclass_id == UCLASS_MMC &&
 			    !desc->devnum)
 				return 0;
-		return -1;
+		return -ENOENT;
 	}
+
 	return 0;
 }
 

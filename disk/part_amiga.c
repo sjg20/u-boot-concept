@@ -227,7 +227,7 @@ static int part_test_amiga(struct blk_desc *desc)
     else
     {
 	PRINTF("part_test_amiga: no RDB found\n");
-	return -1;
+	return -ENOENT;
     }
 
 }
