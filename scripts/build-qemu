@@ -52,7 +52,7 @@ def parse_args():
     parser.add_argument('-x', '--xpl', action='store_true',
                         help='Use xPL image rather than U-Boot proper')
     parser.add_argument(
-        '-S', '--sct-seq',
+        '--sct-seq',
         help='SCT sequence-file to be written into the SCT image if -e')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
