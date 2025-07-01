@@ -205,6 +205,8 @@ enum scsi_resp_t {
 	SCSIRF_TYPE_UNKNOWN	= 0x1f,
 
 	SCSIRF_FLAGS_REMOVABLE	= BIT(8),
+
+	EFLAGS_TPGS_MASK	= 0x30,	/* LUN is sent in the transport layer */
 };
 
 /**
@@ -215,7 +217,8 @@ enum scsi_resp_t {
  * @version; command version
  * @data_format; data format
  * @additional_len; additional data length
- * @spare[3]; spare bytes
+ * @eflags: extra flags
+ * @spare[2]; spare bytes
  * @vendor[8]; vendor information
  * @product[16]; production information
  * @revision[4]; revision information
@@ -226,7 +229,8 @@ struct scsi_inquiry_resp {
 	u8 version;
 	u8 data_format;
 	u8 additional_len;
-	u8 spare[3];
+	u8 eflags;
+	u8 spare[2];
 	char vendor[8];
 	char product[16];
 	char revision[4];
