@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0+
 
+include:
+  - local: '.gitlab-ci-release.yml'
+
 variables:
   DEFAULT_TAG: ""
   MIRROR_DOCKER: docker.io
