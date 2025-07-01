@@ -17,6 +17,7 @@
 #include <part.h>
 #include <pci.h>
 #include <scsi.h>
+#include <asm/unaligned.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 
@@ -384,6 +385,58 @@ static void scsi_init_dev_desc_priv(struct blk_desc *dev_desc)
 }
 
 /**
+ * scsi_count_luns() - Count the number of LUNs on a given target
+ *
+ * @dev: SCSI device
+ * @target: Target to look up
+ * Return: Number of LUNs on this target, or 0 if None, or -ve on error
+ */
+static int scsi_count_luns(struct udevice *dev, uint target)
+{
+	struct scsi_cmd *pccb = (struct scsi_cmd *)&tempccb;
+	uint rec_count;
+	int ret, i, max_lun;
+	u8 *luns;
+
+	memset(pccb->cmd, '\0', sizeof(pccb->cmd));
+	pccb->cmd[0] = SCSI_REPORT_LUNS;
+	pccb->target = target;
+	pccb->lun = 0;
+
+	/* Select Report: 0x00 for all LUNs */
+	pccb->cmd[2] = 0;
+	put_unaligned_be32(TEMPBUFF_SIZE, &pccb->cmd[6]);
+
+	pccb->cmdlen = 12;
+	pccb->pdata = tempbuff;
+	pccb->datalen = TEMPBUFF_SIZE;
+	pccb->dma_dir = DMA_FROM_DEVICE;
+
+	ret = scsi_exec(dev, pccb);
+	if (ret == -ENODEV) {
+		/* target doesn't exist, return 0 */
+		return 0;
+	}
+	if (ret) {
+		scsi_print_error(pccb);
+		return -EINVAL;
+	}
+
+	/* find the maximum LUN */
+	rec_count = get_unaligned_be32(tempbuff) / 8;
+	luns = &tempbuff[8];
+
+	max_lun = -1;
+	for (i = 0; i < rec_count; i++, luns += 8) {
+		int lun = get_unaligned_be16(luns) & 0x3fff;
+
+		max_lun = max(max_lun, lun);
+	}
+
+	return max_lun + 1;
+}
+
+/**
  * scsi_detect_dev - Detect scsi device
  *
  * @target: target id
@@ -539,9 +592,7 @@ static int do_scsi_scan_one(struct udevice *dev, int id, int lun, bool verbose)
 int scsi_scan_dev(struct udevice *dev, bool verbose)
 {
 	struct scsi_plat *uc_plat; /* scsi controller plat */
-	int ret;
-	int i;
-	int lun;
+	int ret, i;
 
 	/* probe SCSI controller driver */
 	ret = device_probe(dev);
@@ -551,9 +602,25 @@ int scsi_scan_dev(struct udevice *dev, bool verbose)
 	/* Get controller plat */
 	uc_plat = dev_get_uclass_plat(dev);
 
-	for (i = 0; i <= uc_plat->max_id; i++)
-		for (lun = 0; lun <= uc_plat->max_lun; lun++)
+	log_debug("max_id %lx max_lun %lx\n", uc_plat->max_id,
+		  uc_plat->max_lun);
+
+	for (i = 0; i <= uc_plat->max_id; i++) {
+		uint lun_count, lun;
+
+		/* try to count the number of LUNs */
+		ret = scsi_count_luns(dev, i);
+		if (ret < 0)
+			lun_count = uc_plat->max_lun + 1;
+		else
+			lun_count = ret;
+		if (!lun_count)
+			continue;
+		log_debug("Target %x: scanning up to LUN %x\n", i,
+			  lun_count - 1);
+		for (lun = 0; lun < lun_count; lun++)
 			do_scsi_scan_one(dev, i, lun, verbose);
+	}
 
 	return 0;
 }
