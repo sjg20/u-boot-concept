@@ -69,6 +69,7 @@ struct blk_desc {
 	bool	lba48;
 	unsigned char	atapi;		/* Use ATAPI protocol */
 	unsigned char	bb;		/* Use bounce buffer */
+	bool no_lun;			/* Don't put LUN in the message */
 	lbaint_t	lba;		/* number of blocks */
 	unsigned long	blksz;		/* block size */
 	int		log2blksz;	/* for convenience: log2(blksz) */

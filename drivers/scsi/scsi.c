@@ -41,7 +41,7 @@ static void scsi_setup_cmd(const struct blk_desc *desc, struct scsi_cmd *pccb,
 			   uint cmd)
 {
 	pccb->cmd[0] = cmd;
-	pccb->cmd[1] = pccb->lun << 5;
+	pccb->cmd[1] = desc->no_lun ? 0 : pccb->lun << 5;
 }
 
 #ifdef CONFIG_SYS_64BIT_LBA
@@ -487,6 +487,9 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 		return -ENODEV; /* skip unknown devices */
 	if (resp->flags & SCSIRF_FLAGS_REMOVABLE) /* drive is removable */
 		desc->removable = true;
+	if (resp->eflags & EFLAGS_TPGS_MASK)
+		desc->no_lun = true;
+
 	/* get info for this device */
 	scsi_ident_cpy(desc->vendor, resp->vendor, sizeof(resp->vendor));
 	scsi_ident_cpy(desc->product, resp->product, sizeof(resp->product));
@@ -568,6 +571,7 @@ static int do_scsi_scan_one(struct udevice *dev, int id, int lun, bool verbose)
 	bdesc->removable = bd.removable;
 	bdesc->type = bd.type;
 	bdesc->bb = bd.bb;
+	bdesc->no_lun = bd.no_lun;
 	memcpy(&bdesc->vendor, &bd.vendor, sizeof(bd.vendor));
 	memcpy(&bdesc->product, &bd.product, sizeof(bd.product));
 	memcpy(&bdesc->revision, &bd.revision,	sizeof(bd.revision));
