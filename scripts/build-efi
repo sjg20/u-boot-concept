@@ -113,15 +113,6 @@ class BuildEfi:
         if self.args.kvm:
             extra.extend(['-enable-kvm', '-cpu', 'host'])
 
-        img_fname = Path(self.args.disk) if self.args.disk else None
-        if img_fname:
-            if img_fname.exists():
-                extra.extend([
-                    '-drive',
-                    f'if=virtio,file={img_fname},format=raw,id=hd1'])
-            else:
-                tout.warning(f"Disk image '{img_fname}' not found")
-
         print(f'Running {qemu}{serial_msg}')
 
         # Use 512MB since U-Boot EFI likes to have 256MB to play with
