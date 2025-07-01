@@ -475,6 +475,23 @@ CONFIG_GENERATE_SMBIOS_TABLE option. The easiest way to provide the values to
 use is via the device tree. For details see
 :download:`smbios.txt <../../device-tree-bindings/sysinfo/smbios.txt>`.
 
+Memory Map
+----------
+
+The x86 memory map is fairly varied between devices, but the following table
+shows a few common elements:
+
+========   ========================   ==========================================
+Addr       Config                     Usage
+========   ========================   ==========================================
+       0   -                          Bottom of stack for first phase (e.g. SPL)
+   10000   CONFIG_SYS_CAR_ADDR        Stack grows down from here
+   10000   CONFIG_BLOBLIST_ADDR       Blob list
+   80000   PAGETABLE_BASE             Base address of page tables (24K)
+   f0000   CONFIG_ROM_TABLE_ADDR      Base address of ROM tables
+========   ========================   ==========================================
+
+
 TODO List
 ---------
 - Audio
