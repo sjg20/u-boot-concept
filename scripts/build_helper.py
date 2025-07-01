@@ -43,6 +43,7 @@ class Helper:
                 self.os_arch = 'amd64'
             else:
                 self.os_arch = 'i386'
+        self.img_fname = Path(args.disk) if args.disk else None
 
     def read_settings(self):
         """Get settings from the settings file"""
@@ -159,6 +160,14 @@ sct_mnt = /mnt/sct
                 cmd.extend([
                     '-drive',
                     f'if=virtio,file={os_path},format=raw,id=hd0,readonly=on'])
+
+        if self.img_fname:
+            if self.img_fname.exists():
+                cmd.extend([
+                    '-drive',
+                    f'if=virtio,file={self.img_fname},format=raw,id=hd1'])
+            else:
+                tout.warning(f"Disk image '{self.img_fname}' not found")
 
 
 def add_common_args(parser):
