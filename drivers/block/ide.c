@@ -13,6 +13,7 @@
 #include <ide.h>
 #include <log.h>
 #include <part.h>
+#include <scsi.h>
 #include <watchdog.h>
 #include <asm/io.h>
 #include <linux/delay.h>
@@ -476,7 +477,7 @@ static void atapi_inquiry(struct blk_desc *desc)
 	desc->lba = 0;
 	desc->blksz = 0;
 	desc->log2blksz = LOG2_INVALID(typeof(desc->log2blksz));
-	desc->type = iobuf[0] & 0x1f;
+	desc->type = iobuf[0] & SCSIRF_TYPE_MASK;
 
 	if (iobuf[1] & 0x80)
 		desc->removable = 1;

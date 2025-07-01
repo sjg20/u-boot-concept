@@ -8,6 +8,7 @@
 
 #include <asm/cache.h>
 #include <bouncebuf.h>
+#include <linux/bitops.h>
 #include <linux/dma-direction.h>
 
 struct udevice;
@@ -197,6 +198,13 @@ enum scsi_cmd_phase {
 	SCSIPH_START,
 	SCSIPH_DATA,
 	SCSIPH_STATUS,
+};
+
+enum scsi_resp_t {
+	SCSIRF_TYPE_MASK	= 0x1f,
+	SCSIRF_TYPE_UNKNOWN	= 0x1f,
+
+	SCSIRF_FLAGS_REMOVABLE	= BIT(8),
 };
 
 /**

@@ -478,9 +478,9 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 	}
 	perq = tempbuff[0];
 	modi = tempbuff[1];
-	if ((perq & 0x1f) == 0x1f)
+	if ((perq & SCSIRF_TYPE_MASK) == SCSIRF_TYPE_UNKNOWN)
 		return -ENODEV; /* skip unknown devices */
-	if ((modi & 0x80) == 0x80) /* drive is removable */
+	if (modi & SCSIRF_FLAGS_REMOVABLE) /* drive is removable */
 		dev_desc->removable = true;
 	/* get info for this device */
 	scsi_ident_cpy((unsigned char *)dev_desc->vendor,
