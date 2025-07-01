@@ -1,0 +1,28 @@
+stages:
+  - release
+
+create_release_candidate:
+  stage: release
+  script:
+    - export RC_INDEX=$(( ($(date +%-d) - 1) / 14 + 1 ))
+    - export RC_VERSION=$(date +%Y.%m)-rc${RC_INDEX}
+    - git tag "$RC_VERSION"
+    - git push origin "$RC_VERSION"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_REF_NAME == "master"'
+      when: on_success
+
+create_final_release:
+  stage: release
+  script:
+    - export RELEASE_VERSION=$(date +%Y.%m)
+    - |
+      if [ $(date +%m) -eq $(( ($(date +%m) / 2) * 2 )) ] && [ $(date +%u) -eq 1 ] && [ $(date +%d) -le 7 ]; then
+        git tag "$RELEASE_VERSION"
+        git push origin "$RELEASE_VERSION"
+      else
+        echo "Not first Monday of even month. Skipping final release."
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_REF_NAME == "master"'
+      when: on_success
