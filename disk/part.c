@@ -14,6 +14,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <part.h>
+#include <scsi.h>
 #include <ubifs_uboot.h>
 #include <dm/uclass.h>
 
@@ -221,7 +222,7 @@ void dev_print(struct blk_desc *desc)
 	puts ("            Type: ");
 	if (desc->removable)
 		puts ("Removable ");
-	switch (desc->type & 0x1F) {
+	switch (desc->type & SCSIRF_TYPE_MASK) {
 	case DEV_TYPE_HARDDISK:
 		puts ("Hard Disk");
 		break;
@@ -235,7 +236,7 @@ void dev_print(struct blk_desc *desc)
 		puts ("Tape");
 		break;
 	default:
-		printf("# %02X #", desc->type & 0x1F);
+		printf("# %02X #", desc->type & SCSIRF_TYPE_MASK);
 		break;
 	}
 	puts ("\n");
