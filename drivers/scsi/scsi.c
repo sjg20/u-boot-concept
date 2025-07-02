@@ -167,8 +167,6 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 			to_read = min_t(lbaint_t, to_read, max_blks);
 			pccb->datalen = desc->blksz * to_read;
 			scsi_setup_read16(desc, pccb, start, to_read);
-			start += to_read;
-			blks -= to_read;
 		} else
 #endif
 		if (to_read > max_blks) {
@@ -176,14 +174,10 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 			pccb->datalen = desc->blksz * to_read;
 			smallblks = to_read;
 			scsi_setup_read_ext(desc, pccb, start, smallblks);
-			start += to_read;
-			blks -= to_read;
 		} else {
 			pccb->datalen = desc->blksz * to_read;
 			smallblks = (unsigned short)to_read;
 			scsi_setup_read_ext(desc, pccb, start, smallblks);
-			start += to_read;
-			blks = 0;
 		}
 		debug("scsi_read_ext: startblk " LBAF
 		      ", blccnt %x buffer %lX\n",
@@ -192,6 +186,10 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 			scsi_print_error(pccb);
 			break;
 		}
+
+		/* update ready for the next read */
+		start += to_read;
+		blks -= to_read;
 		buf_addr += pccb->datalen;
 	} while (blks);
 	debug("scsi_read_ext: end startblk " LBAF
@@ -243,14 +241,10 @@ static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 			pccb->datalen = desc->blksz * to_write;
 			smallblks = to_write;
 			scsi_setup_write_ext(desc, pccb, start, to_write);
-			start += to_write;
-			blks -= to_write;
 		} else {
 			pccb->datalen = desc->blksz * to_write;
 			smallblks = (unsigned short)to_write;
 			scsi_setup_write_ext(desc, pccb, start, smallblks);
-			start += to_write;
-			blks = 0;
 		}
 		debug("%s: startblk " LBAF ", blccnt %x buffer %lx\n",
 		      __func__, start, smallblks, buf_addr);
@@ -258,7 +252,11 @@ static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 			scsi_print_error(pccb);
 			break;
 		}
+
+		/* update ready for the next write */
 		buf_addr += pccb->datalen;
+		start += to_write;
+		blks -= to_write;
 	} while (blks);
 	debug("%s: end startblk " LBAF ", blccnt %x buffer %lX\n",
 	      __func__, start, smallblks, buf_addr);
