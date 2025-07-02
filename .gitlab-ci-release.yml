@@ -1,10 +1,14 @@
 stages:
   - release
 
+# Job to create a Release Candidate (RC)
 create_release_candidate:
   stage: release
   script:
+    # Calculate the RC index based on the current day of the month:
+    # Days 1–14 = RC 1, Days 15–31 = RC 2, etc.
     - export RC_INDEX=$(( ($(date +%-d) - 1) / 14 + 1 ))
+    # Construct the RC version tag in the format YYYY.MM-rcX (e.g., 2025.07-rc1)
     - export RC_VERSION=$(date +%Y.%m)-rc${RC_INDEX}
     - git tag "$RC_VERSION"
     - git push origin "$RC_VERSION"
@@ -12,10 +16,17 @@ create_release_candidate:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_REF_NAME == "master"'
       when: on_success
 
+# Job to create a Final Release
 create_final_release:
   stage: release
   script:
+    # Construct the release version tag in the format YYYY.MM (e.g., 2025.07)
     - export RELEASE_VERSION=$(date +%Y.%m)
+
+    # Check if today is the first Monday of an even-numbered month
+    # 1. Check if the month is even (e.g., 02, 04, 06...)
+    # 2. Check if today is Monday (1 = Monday in `date +%u`)
+    # 3. Check if today is within the first 7 days of the month
     - |
       if [ $(date +%m) -eq $(( ($(date +%m) / 2) * 2 )) ] && [ $(date +%u) -eq 1 ] && [ $(date +%d) -le 7 ]; then
         git tag "$RELEASE_VERSION"
@@ -23,6 +34,8 @@ create_final_release:
       else
         echo "Not first Monday of even month. Skipping final release."
       fi
+    
+    # This rule ensures the job runs only on scheduled pipelines and the master branch
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_REF_NAME == "master"'
       when: on_success
