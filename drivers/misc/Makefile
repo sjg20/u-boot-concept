@@ -57,14 +57,6 @@ obj-$(CONFIG_NPCM_HOST) += npcm_host_intf.o
 obj-$(CONFIG_NUVOTON_NCT6102D) += nuvoton_nct6102d.o
 obj-$(CONFIG_P2SB) += p2sb-uclass.o
 obj-$(CONFIG_$(PHASE_)PWRSEQ) += pwrseq-uclass.o
-ifdef CONFIG_QFW
-obj-y += qfw.o
-obj-$(CONFIG_QFW_ACPI) += qfw_acpi.o
-obj-$(CONFIG_QFW_PIO) += qfw_pio.o
-obj-$(CONFIG_QFW_MMIO) += qfw_mmio.o
-obj-$(CONFIG_QFW_SMBIOS) += qfw_smbios.o
-obj-$(CONFIG_SANDBOX) += qfw_sandbox.o
-endif
 obj-$(CONFIG_$(PHASE_)ROCKCHIP_EFUSE) += rockchip-efuse.o
 obj-$(CONFIG_$(PHASE_)ROCKCHIP_OTP) += rockchip-otp.o
 obj-$(CONFIG_$(PHASE_)ROCKCHIP_IODOMAIN) += rockchip-io-domain.o
