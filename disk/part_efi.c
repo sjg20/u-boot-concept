@@ -240,10 +240,10 @@ static void __maybe_unused part_print_efi(struct blk_desc *desc)
 		if (!is_pte_valid(&gpt_pte[i]))
 			continue;
 
-		printf("%3d\t0x%08llx\t0x%08llx\t\"%s\"\n", (i + 1),
-			le64_to_cpu(gpt_pte[i].starting_lba),
-			le64_to_cpu(gpt_pte[i].ending_lba),
-			print_efiname(&gpt_pte[i]));
+		printf("%3x\t0x%08llx\t0x%08llx\t\"%s\"\n", (i + 1),
+		       le64_to_cpu(gpt_pte[i].starting_lba),
+		       le64_to_cpu(gpt_pte[i].ending_lba),
+		       print_efiname(&gpt_pte[i]));
 		printf("\tattrs:\t0x%016llx\n", gpt_pte[i].attributes.raw);
 		uuid = (unsigned char *)gpt_pte[i].partition_type_guid.b;
 		if (IS_ENABLED(CONFIG_PARTITION_TYPE_GUID))

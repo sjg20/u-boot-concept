@@ -54,7 +54,7 @@ static void print_one_part(dos_partition_t *p, lbaint_t ext_part_sector,
 	lbaint_t lba_start = ext_part_sector + get_unaligned_le32(p->start4);
 	lbaint_t lba_size  = get_unaligned_le32(p->size4);
 
-	printf("%3d\t%-10" LBAFlength "u\t%-10" LBAFlength
+	printf("%3x\t%-10" LBAFlength "u\t%-10" LBAFlength
 		"u\t%08x-%02x\t%02x%s%s\n",
 		part_num, lba_start, lba_size, disksig, part_num, p->sys_ind,
 		(is_extended(p->sys_ind) ? " Extd" : ""),
