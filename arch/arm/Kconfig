@@ -53,7 +53,7 @@ config POSITION_INDEPENDENT
 config INIT_SP_RELATIVE
 	bool "Specify the early stack pointer relative to the .bss section"
 	depends on ARM64
-	default n if ARCH_QEMU
+	default n if ARCH_QEMU_ARM
 	default y if POSITION_INDEPENDENT
 	help
 	  U-Boot typically uses a hard-coded value for the stack pointer
@@ -1045,7 +1045,7 @@ config ARCH_OWL
 	select SYS_RELOC_GD_ENV_ADDR
 	imply CMD_DM
 
-config ARCH_QEMU
+config ARCH_QEMU_ARM
 	bool "QEMU Virtual Platform"
 	select DM
 	select DM_SERIAL

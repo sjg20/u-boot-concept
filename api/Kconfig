@@ -14,7 +14,7 @@ config SYS_MMC_MAX_DEVICE
 config EXAMPLES
 	bool "Compile API examples"
 	depends on !SANDBOX
-	default y if ARCH_QEMU
+	default y if ARCH_QEMU_ARM
 	help
 	  U-Boot provides an API for standalone applications. Examples are
 	  provided in directory examples/.
