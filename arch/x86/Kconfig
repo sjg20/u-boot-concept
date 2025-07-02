@@ -119,7 +119,6 @@ source "board/advantech/Kconfig"
 source "board/congatec/Kconfig"
 source "board/coreboot/Kconfig"
 source "board/dfi/Kconfig"
-source "board/emulation/Kconfig"
 source "board/google/Kconfig"
 source "board/intel/Kconfig"
 
