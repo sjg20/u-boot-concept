@@ -138,14 +138,14 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	/* Setup device */
 	pccb->target = desc->target;
 	pccb->lun = desc->lun;
-	buf_addr = map_to_sysmem(buffer);
-	start = blknr;
-	blks = blkcnt;
 	if (uc_plat->max_bytes_per_req)
 		max_blks = uc_plat->max_bytes_per_req / desc->blksz;
 	else
 		max_blks = SCSI_MAX_BLK;
 
+	start = blknr;	/* start block# for each read */
+	blks = blkcnt;	/* number of blocks remaining to read */
+	buf_addr = map_to_sysmem(buffer);
 	debug("\nscsi_read: dev %d startblk " LBAF
 	      ", blccnt " LBAF " buffer %lx\n",
 	      desc->devnum, start, blks, (unsigned long)buffer);
@@ -213,14 +213,14 @@ static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	/* Setup device */
 	pccb->target = desc->target;
 	pccb->lun = desc->lun;
-	buf_addr = map_to_sysmem(buffer);
-	start = blknr;
-	blks = blkcnt;
 	if (uc_plat->max_bytes_per_req)
 		max_blks = uc_plat->max_bytes_per_req / desc->blksz;
 	else
 		max_blks = SCSI_MAX_BLK;
 
+	start = blknr;
+	blks = blkcnt;
+	buf_addr = map_to_sysmem(buffer);
 	debug("\n%s: dev %d startblk " LBAF ", blccnt " LBAF " buffer %lx\n",
 	      __func__, desc->devnum, start, blks, (unsigned long)buffer);
 	do {
