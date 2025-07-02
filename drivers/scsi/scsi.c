@@ -145,7 +145,7 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	/* Setup device */
 	pccb->target = desc->target;
 	pccb->lun = desc->lun;
-	buf_addr = (unsigned long)buffer;
+	buf_addr = map_to_sysmem(buffer);
 	start = blknr;
 	blks = blkcnt;
 	if (uc_plat->max_bytes_per_req)
@@ -160,7 +160,7 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 		ulong to_read;	/* number of blocks to read on this iteration */
 
 		to_read = blks;
-		pccb->pdata = (unsigned char *)buf_addr;
+		pccb->pdata = map_sysmem(buf_addr, 0);
 		pccb->dma_dir = DMA_FROM_DEVICE;
 #ifdef CONFIG_SYS_64BIT_LBA
 		if (start > SCSI_LBA48_READ) {
@@ -222,7 +222,7 @@ static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	/* Setup device */
 	pccb->target = desc->target;
 	pccb->lun = desc->lun;
-	buf_addr = (unsigned long)buffer;
+	buf_addr = map_to_sysmem(buffer);
 	start = blknr;
 	blks = blkcnt;
 	if (uc_plat->max_bytes_per_req)
@@ -236,7 +236,7 @@ static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 		ulong to_write;	 /* # blocks to write on this iteration */
 
 		to_write = blks;
-		pccb->pdata = (unsigned char *)buf_addr;
+		pccb->pdata = map_sysmem(buf_addr, 0);
 		pccb->dma_dir = DMA_TO_DEVICE;
 		if (to_write > max_blks) {
 			to_write = max_blks;
