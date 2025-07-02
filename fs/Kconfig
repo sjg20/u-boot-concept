@@ -6,7 +6,7 @@ menu "File systems"
 
 config FS
 	bool "Support for filesystems"
-	default y if SANDBOX || VENDOR_EMULATION || ARCH_QEMU_ARM
+	default y if SANDBOX || ARCH_QEMU_X86 || ARCH_QEMU_ARM
 	depends on EXPERT
 	help
 	  Provides an interface for filesystems, allowing them to be
@@ -15,14 +15,14 @@ config FS
 config DIR
 	bool "Support for directories"
 	depends on FS
-	default y if SANDBOX || VENDOR_EMULATION || ARCH_QEMU_ARM
+	default y if SANDBOX || ARCH_QEMU_X86 || ARCH_QEMU_ARM
 	help
 	  Provides an interface for directories within filesystems, allowing
 	  them to be listed.
 
 config FILE
 	bool "Support for files"
-	default y if SANDBOX || VENDOR_EMULATION || ARCH_QEMU_ARM
+	default y if SANDBOX || ARCH_QEMU_X86 || ARCH_QEMU_ARM
 	help
 	  Provides an interface for files, allowing them to be opened, read,
 	  written and modified. Files are children of a filesystem device
