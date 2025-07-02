@@ -318,7 +318,7 @@ config GENERATE_ACPI_TABLE
 	bool "Generate an ACPI (Advanced Configuration and Power Interface) table"
 	depends on ACPI
 	select BLOBLIST
-	select QFW if QEMU
+	select QFW if ARCH_QEMU_X86
 	help
 	  The Advanced Configuration and Power Interface (ACPI) specification
 	  provides an open standard for device configuration and management

@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2015, Bin Meng <bmeng.cn@gmail.com>
 
-config QEMU
+config ARCH_QEMU_X86
 	bool
 	select ARCH_EARLY_INIT_R
 	imply AHCI_PCI
@@ -14,7 +14,7 @@ config QEMU
 	imply USB_EHCI_HCD
 	imply VIDEO_VESA
 
-if QEMU
+if ARCH_QEMU_X86
 
 config SYS_CAR_ADDR
 	hex

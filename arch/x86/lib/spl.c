@@ -299,7 +299,7 @@ void spl_board_init(void)
 #ifndef CONFIG_TPL
 	preloader_console_init();
 #endif
-	if (IS_ENABLED(CONFIG_QEMU))
+	if (IS_ENABLED(CONFIG_ARCH_QEMU_X86))
 		qemu_chipset_init();
 
 	if (CONFIG_IS_ENABLED(UPL_OUT))
