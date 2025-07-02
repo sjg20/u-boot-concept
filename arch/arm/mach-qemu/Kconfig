@@ -1,4 +1,4 @@
-if ARCH_QEMU
+if ARCH_QEMU_ARM
 
 config SYS_VENDOR
 	default "emulation"
