@@ -177,14 +177,18 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 		      start, smallblks, buf_addr);
 		if (scsi_exec(bdev, pccb)) {
 			scsi_print_error(pccb);
-			blkcnt -= blks;
 			break;
 		}
 		buf_addr += pccb->datalen;
-	} while (blks != 0);
+	} while (blks);
 	debug("scsi_read_ext: end startblk " LBAF
 	      ", blccnt %x buffer %lX\n", start, smallblks, buf_addr);
-	return blkcnt;
+
+	/* Report an I/O error if nothing was read */
+	if (blks == blkcnt)
+		return -EIO;
+
+	return blkcnt - blks;
 }
 
 /*******************************************************************************
@@ -235,14 +239,18 @@ static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 		      __func__, start, smallblks, buf_addr);
 		if (scsi_exec(bdev, pccb)) {
 			scsi_print_error(pccb);
-			blkcnt -= blks;
 			break;
 		}
 		buf_addr += pccb->datalen;
-	} while (blks != 0);
+	} while (blks);
 	debug("%s: end startblk " LBAF ", blccnt %x buffer %lX\n",
 	      __func__, start, smallblks, buf_addr);
-	return blkcnt;
+
+	/* Report an I/O error if nothing was written */
+	if (blks == blkcnt)
+		return -EIO;
+
+	return blkcnt - blks;
 }
 
 #if IS_ENABLED(CONFIG_BOUNCE_BUFFER)
