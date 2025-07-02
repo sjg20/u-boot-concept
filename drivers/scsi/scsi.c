@@ -37,20 +37,12 @@ static void scsi_print_error(struct scsi_cmd *pccb)
 	/* Dummy function that could print an error for debugging */
 }
 
-#ifdef CONFIG_SYS_64BIT_LBA
 void scsi_setup_read16(struct scsi_cmd *pccb, lbaint_t start,
 		       unsigned long blocks)
 {
 	pccb->cmd[0] = SCSI_READ16;
 	pccb->cmd[1] = pccb->lun << 5;
-	pccb->cmd[2] = (unsigned char)(start >> 56) & 0xff;
-	pccb->cmd[3] = (unsigned char)(start >> 48) & 0xff;
-	pccb->cmd[4] = (unsigned char)(start >> 40) & 0xff;
-	pccb->cmd[5] = (unsigned char)(start >> 32) & 0xff;
-	pccb->cmd[6] = (unsigned char)(start >> 24) & 0xff;
-	pccb->cmd[7] = (unsigned char)(start >> 16) & 0xff;
-	pccb->cmd[8] = (unsigned char)(start >> 8) & 0xff;
-	pccb->cmd[9] = (unsigned char)start & 0xff;
+	put_unaligned_be64(start, &pccb->cmd[2]);
 	pccb->cmd[10] = 0;
 	pccb->cmd[11] = (unsigned char)(blocks >> 24) & 0xff;
 	pccb->cmd[12] = (unsigned char)(blocks >> 16) & 0xff;
@@ -65,7 +57,6 @@ void scsi_setup_read16(struct scsi_cmd *pccb, lbaint_t start,
 	      pccb->cmd[6], pccb->cmd[7], pccb->cmd[8], pccb->cmd[9],
 	      pccb->cmd[11], pccb->cmd[12], pccb->cmd[13], pccb->cmd[14]);
 }
-#endif
 
 static void scsi_setup_inquiry(struct scsi_cmd *pccb)
 {
@@ -153,17 +144,15 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	do {
 		pccb->pdata = (unsigned char *)buf_addr;
 		pccb->dma_dir = DMA_FROM_DEVICE;
-#ifdef CONFIG_SYS_64BIT_LBA
-		if (start > SCSI_LBA48_READ) {
+		if (IS_ENABLED(CONFIG_SYS_64BIT_LBA) &&
+		    start > SCSI_LBA48_READ) {
 			unsigned long blocks;
 			blocks = min_t(lbaint_t, blks, max_blks);
 			pccb->datalen = desc->blksz * blocks;
 			scsi_setup_read16(pccb, start, blocks);
 			start += blocks;
 			blks -= blocks;
-		} else
-#endif
-		if (blks > max_blks) {
+		} else if (blks > max_blks) {
 			pccb->datalen = desc->blksz * max_blks;
 			smallblks = max_blks;
 			scsi_setup_read_ext(pccb, start, smallblks);
