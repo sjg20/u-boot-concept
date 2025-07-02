@@ -35,6 +35,7 @@ obj-$(CONFIG_$(PHASE_)TIMER) += timer/
 obj-$(CONFIG_$(PHASE_)VIRTIO) += virtio/
 obj-$(CONFIG_$(PHASE_)DM_MAILBOX) += mailbox/
 obj-$(CONFIG_$(PHASE_)REMOTEPROC) += remoteproc/
+obj-$(CONFIG_QFW) += qfw/
 obj-$(CONFIG_$(PHASE_)SYSINFO) += sysinfo/
 obj-$(CONFIG_$(PHASE_)SM) += sm/
 obj-$(CONFIG_$(PHASE_)TPM) += tpm/
