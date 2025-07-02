@@ -1047,6 +1047,7 @@ config ARCH_OWL
 
 config ARCH_QEMU_ARM
 	bool "QEMU Virtual Platform"
+	select MACH_QEMU
 	select DM
 	select DM_SERIAL
 	select OF_CONTROL
