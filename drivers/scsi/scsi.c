@@ -489,6 +489,9 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 		desc->removable = true;
 	if (resp->eflags & EFLAGS_TPGS_MASK)
 		desc->no_lun = true;
+	/* check for SPC-3 or greater */
+	if (resp->version > 4)
+		desc->no_lun = true;
 
 	/* get info for this device */
 	scsi_ident_cpy(desc->vendor, resp->vendor, sizeof(resp->vendor));
