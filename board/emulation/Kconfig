@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2015, Bin Meng <bmeng.cn@gmail.com>
 
-if VENDOR_EMULATION
+if ARCH_QEMU_X86
 
 choice
 	prompt "Mainboard model"
