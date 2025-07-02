@@ -126,13 +126,13 @@ static void scsi_setup_write_ext(const struct blk_desc *desc,
 static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 		       void *buffer)
 {
+	struct scsi_cmd *pccb = (struct scsi_cmd *)&tempccb;
 	struct blk_desc *desc = dev_get_uclass_plat(dev);
 	struct udevice *bdev = dev->parent;
 	struct scsi_plat *uc_plat = dev_get_uclass_plat(bdev);
 	lbaint_t start, blks, max_blks;
-	uintptr_t buf_addr;
 	unsigned short smallblks = 0;
-	struct scsi_cmd *pccb = (struct scsi_cmd *)&tempccb;
+	uintptr_t buf_addr;
 
 	/* Setup device */
 	pccb->target = desc->target;
@@ -201,13 +201,13 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 			const void *buffer)
 {
+	struct scsi_cmd *pccb = (struct scsi_cmd *)&tempccb;
 	struct blk_desc *desc = dev_get_uclass_plat(dev);
 	struct udevice *bdev = dev->parent;
 	struct scsi_plat *uc_plat = dev_get_uclass_plat(bdev);
 	lbaint_t start, blks, max_blks;
-	uintptr_t buf_addr;
 	unsigned short smallblks;
-	struct scsi_cmd *pccb = (struct scsi_cmd *)&tempccb;
+	uintptr_t buf_addr;
 
 	/* Setup device */
 	pccb->target = desc->target;
