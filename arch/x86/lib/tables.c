@@ -46,7 +46,7 @@ struct table_info {
 };
 
 /* QEMU's tables include quite a bit of empty space */
-#ifdef CONFIG_QEMU
+#ifdef CONFIG_ARCH_QEMU_X86
 #define ACPI_SIZE	(192 << 10)
 #else
 #define ACPI_SIZE	SZ_64K
