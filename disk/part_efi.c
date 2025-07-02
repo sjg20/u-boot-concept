@@ -240,7 +240,7 @@ static void __maybe_unused part_print_efi(struct blk_desc *desc)
 		if (!is_pte_valid(&gpt_pte[i]))
 			continue;
 
-		printf("%3d\t0x%08llx\t0x%08llx\t\"%s\"\n", (i + 1),
+		printf("%3x\t0x%08llx\t0x%08llx\t\"%s\"\n", (i + 1),
 			le64_to_cpu(gpt_pte[i].starting_lba),
 			le64_to_cpu(gpt_pte[i].ending_lba),
 			print_efiname(&gpt_pte[i]));
