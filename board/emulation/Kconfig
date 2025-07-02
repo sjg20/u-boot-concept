@@ -73,6 +73,9 @@ config SYS_SOC
 
 endif
 
+source "board/emulation/qemu-arm/Kconfig"
+source "board/emulation/qemu-sbsa/Kconfig"
+
 endif  # ARCH_QEMU_ARM
 
 
