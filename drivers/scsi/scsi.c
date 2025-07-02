@@ -149,27 +149,30 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	      ", blccnt " LBAF " buffer %lx\n",
 	      desc->devnum, start, blks, (unsigned long)buffer);
 	do {
+		ulong to_read;	/* number of blocks to read on this iteration */
+
+		to_read = blks;
 		pccb->pdata = (unsigned char *)buf_addr;
 		pccb->dma_dir = DMA_FROM_DEVICE;
 		if (IS_ENABLED(CONFIG_SYS_64BIT_LBA) &&
 		    start > SCSI_LBA48_READ) {
-			unsigned long blocks;
-			blocks = min_t(lbaint_t, blks, max_blks);
-			pccb->datalen = desc->blksz * blocks;
-			scsi_setup_read16(desc, pccb, start, blocks);
-			start += blocks;
-			blks -= blocks;
-		} else if (blks > max_blks) {
-			pccb->datalen = desc->blksz * max_blks;
-			smallblks = max_blks;
+			to_read = min_t(lbaint_t, to_read, max_blks);
+			pccb->datalen = desc->blksz * to_read;
+			scsi_setup_read16(desc, pccb, start, to_read);
+			start += to_read;
+			blks -= to_read;
+		} else if (to_read > max_blks) {
+			to_read = max_blks;
+			pccb->datalen = desc->blksz * to_read;
+			smallblks = to_read;
 			scsi_setup_read_ext(desc, pccb, start, smallblks);
-			start += max_blks;
-			blks -= max_blks;
+			start += to_read;
+			blks -= to_read;
 		} else {
-			pccb->datalen = desc->blksz * blks;
-			smallblks = (unsigned short)blks;
+			pccb->datalen = desc->blksz * to_read;
+			smallblks = (unsigned short)to_read;
 			scsi_setup_read_ext(desc, pccb, start, smallblks);
-			start += blks;
+			start += to_read;
 			blks = 0;
 		}
 		debug("scsi_read_ext: startblk " LBAF
@@ -220,19 +223,23 @@ static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	debug("\n%s: dev %d startblk " LBAF ", blccnt " LBAF " buffer %lx\n",
 	      __func__, desc->devnum, start, blks, (unsigned long)buffer);
 	do {
+		ulong to_write;	 /* # blocks to write on this iteration */
+
+		to_write = blks;
 		pccb->pdata = (unsigned char *)buf_addr;
 		pccb->dma_dir = DMA_TO_DEVICE;
-		if (blks > max_blks) {
-			pccb->datalen = desc->blksz * max_blks;
-			smallblks = max_blks;
-			scsi_setup_write_ext(desc, pccb, start, smallblks);
-			start += max_blks;
-			blks -= max_blks;
+		if (to_write > max_blks) {
+			to_write = max_blks;
+			pccb->datalen = desc->blksz * to_write;
+			smallblks = to_write;
+			scsi_setup_write_ext(desc, pccb, start, to_write);
+			start += to_write;
+			blks -= to_write;
 		} else {
-			pccb->datalen = desc->blksz * blks;
-			smallblks = (unsigned short)blks;
+			pccb->datalen = desc->blksz * to_write;
+			smallblks = (unsigned short)to_write;
 			scsi_setup_write_ext(desc, pccb, start, smallblks);
-			start += blks;
+			start += to_write;
 			blks = 0;
 		}
 		debug("%s: startblk " LBAF ", blccnt %x buffer %lx\n",
