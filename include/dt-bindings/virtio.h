@@ -14,6 +14,7 @@
 #define VIRTIO_ID_NET		1 /* virtio net */
 #define VIRTIO_ID_BLOCK		2 /* virtio block */
 #define VIRTIO_ID_RNG		4 /* virtio rng */
+#define VIRTIO_ID_SCSI		8
 #define VIRTIO_ID_MAX_NUM	27
 #define VIRTIO_ID_FS		26 /* virtio filesystem */
 

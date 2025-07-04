@@ -20,6 +20,7 @@
 #include <vsprintf.h>
 #include <asm/unaligned.h>
 #include <linux/compiler.h>
+#include <linux/err.h>
 #include "part_dos.h"
 #include <part.h>
 
@@ -53,7 +54,7 @@ static void print_one_part(dos_partition_t *p, lbaint_t ext_part_sector,
 	lbaint_t lba_start = ext_part_sector + get_unaligned_le32(p->start4);
 	lbaint_t lba_size  = get_unaligned_le32(p->size4);
 
-	printf("%3d\t%-10" LBAFlength "u\t%-10" LBAFlength
+	printf("%3x\t%-10" LBAFlength "u\t%-10" LBAFlength
 		"u\t%08x-%02x\t%02x%s%s\n",
 		part_num, lba_start, lba_size, disksig, part_num, p->sys_ind,
 		(is_extended(p->sys_ind) ? " Extd" : ""),
@@ -103,12 +104,14 @@ static int part_test_dos(struct blk_desc *desc)
 #ifndef CONFIG_XPL_BUILD
 	ALLOC_CACHE_ALIGN_BUFFER(legacy_mbr, mbr,
 			DIV_ROUND_UP(desc->blksz, sizeof(legacy_mbr)));
+	long ret;
 
-	if (blk_dread(desc, 0, 1, (ulong *)mbr) != 1)
-		return -1;
+	ret = blk_dread(desc, 0, 1, (ulong *)mbr);
+	if (IS_ERR_VALUE(ret))
+		return ret;
 
 	if (test_block_type((unsigned char *)mbr) != DOS_MBR)
-		return -1;
+		return -ENOENT;
 
 	if (desc->sig_type == SIG_TYPE_NONE && mbr->unique_mbr_signature) {
 		desc->sig_type = SIG_TYPE_MBR;
@@ -118,10 +121,10 @@ static int part_test_dos(struct blk_desc *desc)
 	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, buffer, desc->blksz);
 
 	if (blk_dread(desc, 0, 1, (ulong *)buffer) != 1)
-		return -1;
+		return -EIO;
 
 	if (test_block_type(buffer) != DOS_MBR)
-		return -1;
+		return -ENOENT;
 #endif
 
 	return 0;

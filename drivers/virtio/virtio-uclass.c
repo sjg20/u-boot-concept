@@ -31,6 +31,7 @@ static const char *const virtio_drv_name[VIRTIO_ID_MAX_NUM] = {
 	[VIRTIO_ID_BLOCK]	= VIRTIO_BLK_DRV_NAME,
 	[VIRTIO_ID_RNG]		= VIRTIO_RNG_DRV_NAME,
 	[VIRTIO_ID_FS]		= VIRTIO_FS_DRV_NAME,
+	[VIRTIO_ID_SCSI]	= VIRTIO_SCSI_DRV_NAME,
 };
 
 int virtio_get_config(struct udevice *vdev, unsigned int offset,
@@ -226,8 +227,8 @@ static int virtio_uclass_post_probe(struct udevice *udev)
 
 	name = virtio_drv_name[uc_priv->device];
 	if (!name) {
-		debug("(%s): underlying virtio device driver unavailable\n",
-		      udev->name);
+		debug("(%s): underlying virtio device driver (type %#x) unavailable\n",
+		      udev->name, uc_priv->device);
 		return 0;
 	}
 
@@ -306,6 +307,7 @@ static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 		WARN_ON(f >= 64);
 		driver_features |= (1ULL << f);
 	}
+	log_debug("driver_features %016llx\n", driver_features);
 
 	/* Some drivers have a separate feature table for virtio v1.0 */
 	if (uc_priv->feature_table_legacy) {

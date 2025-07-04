@@ -26,6 +26,8 @@ from u_boot_pylib import tools
 from u_boot_pylib import tout
 import fs_helper
 
+MODERN_PCI = 'disable-legacy=on,disable-modern=off'
+
 
 class Helper:
     def __init__(self, args):
@@ -43,6 +45,7 @@ class Helper:
                 self.os_arch = 'amd64'
             else:
                 self.os_arch = 'i386'
+        self.img_fname = Path(args.disk) if args.disk else None
 
     def read_settings(self):
         """Get settings from the settings file"""
@@ -160,6 +163,19 @@ sct_mnt = /mnt/sct
                     '-drive',
                     f'if=virtio,file={os_path},format=raw,id=hd0,readonly=on'])
 
+        if self.img_fname:
+            if self.img_fname.exists():
+                iface = 'none' if args.scsi else 'virtio'
+                if args.scsi:
+                    cmd.extend([
+                        '-device',
+                        f'virtio-scsi-pci,id=scsi0,{MODERN_PCI}',
+                        '-device', 'scsi-hd,bus=scsi0.0,drive=hd0'])
+                cmd.extend([
+                    '-drive',
+                    f'if={iface},file={self.img_fname},format=raw,id=hd0'])
+            else:
+                tout.warning(f"Disk image '{self.img_fname}' not found")
 
 def add_common_args(parser):
     """Add some arguments which are common to build-efi/qemu scripts
@@ -191,6 +207,9 @@ def add_common_args(parser):
         help='Select OS release version (e.g, 24.04) Default: 24.04.1')
     parser.add_argument('-s', '--serial-only', action='store_true',
                         help='Run QEMU with serial only (no display)')
+    parser.add_argument(
+        '-S', '--scsi', action='store_true',
+        help='Attach root disk using virtio-sci instead of virtio-blk')
     parser.add_argument(
         '-t', '--root',
         help='Pass the given root device to linux via root=xxx')

@@ -52,7 +52,7 @@ def parse_args():
     parser.add_argument('-x', '--xpl', action='store_true',
                         help='Use xPL image rather than U-Boot proper')
     parser.add_argument(
-        '-S', '--sct-seq',
+        '--sct-seq',
         help='SCT sequence-file to be written into the SCT image if -e')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
@@ -127,7 +127,6 @@ class BuildQemu:
                     f'{bios_override}')
 
         self.seq_fname = Path(args.sct_seq) if args.sct_seq else None
-        self.img_fname = Path(args.disk) if args.disk else None
 
         # arch-specific setup
         if args.arch == 'arm':
@@ -283,14 +282,6 @@ class BuildQemu:
 
         # Add other parameters gathered from options
         qemu_cmd.extend(self.qemu_extra)
-
-        if self.img_fname:
-            if self.img_fname.exists():
-                qemu_cmd.extend([
-                    '-drive',
-                    f'if=virtio,file={self.img_fname},format=raw,id=hd1'])
-            else:
-                tout.warning(f"Disk image '{self.img_fname}' not found")
 
         sock = Path('/tmp/virtiofs.sock')
         proc = None

@@ -9,6 +9,7 @@
 #include <part.h>
 #include <asm/cache.h>
 #include <asm/unaligned.h>
+#include <linux/err.h>
 #include "part_iso.h"
 
 /* #define	ISO_PART_DEBUG */
@@ -56,13 +57,17 @@ int part_get_info_iso_verb(struct blk_desc *desc, int part_num,
 	iso_pri_rec_t *ppr = (iso_pri_rec_t	*)tmpbuf;	/* primary desc */
 	iso_val_entry_t *pve = (iso_val_entry_t *)tmpbuf;
 	iso_init_def_entry_t *pide;
+	long ret;
 
 	if (desc->blksz != CD_SECTSIZE && desc->blksz != 512)
 		return -1;
 
 	/* the first sector (sector 0x10) must be a primary volume desc */
 	blkaddr=PVD_OFFSET;
-	if (iso_dread(desc, PVD_OFFSET, 1, (ulong *)tmpbuf) != 1)
+	ret = iso_dread(desc, PVD_OFFSET, 1, (ulong *)tmpbuf);
+	if (IS_ERR_VALUE(ret))
+		return ret;
+	if (ret != 1)
 		return -1;
 	if(ppr->desctype!=0x01) {
 		if(verb)
@@ -217,7 +222,7 @@ static void part_print_iso(struct blk_desc *desc)
 	printf("Part   Start     Sect x Size Type\n");
 	i=1;
 	do {
-		printf(" %2d %8" LBAFlength "u %8" LBAFlength "u %6ld %.32s\n",
+		printf(" %2x %8" LBAFlength "u %8" LBAFlength "u %6ld %.32s\n",
 		       i, info.start, info.size, info.blksz, info.type);
 		i++;
 	} while (part_get_info_iso_verb(desc, i, &info, 0) != -1);
@@ -226,8 +231,15 @@ static void part_print_iso(struct blk_desc *desc)
 static int part_test_iso(struct blk_desc *desc)
 {
 	struct disk_partition info;
+	int ret;
 
-	return part_get_info_iso_verb(desc, 1, &info, 0);
+	ret = part_get_info_iso_verb(desc, 1, &info, 0);
+	if (ret == -1)
+		return -ENOENT;
+	else if (ret)
+		return ret;
+
+	return 0;
 }
 
 U_BOOT_PART_TYPE(iso) = {

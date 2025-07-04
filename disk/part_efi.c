@@ -28,6 +28,7 @@
 #include <dm/ofnode.h>
 #include <linux/compiler.h>
 #include <linux/ctype.h>
+#include <linux/err.h>
 #include <linux/printk.h>
 #include <u-boot/crc.h>
 
@@ -239,10 +240,10 @@ static void __maybe_unused part_print_efi(struct blk_desc *desc)
 		if (!is_pte_valid(&gpt_pte[i]))
 			continue;
 
-		printf("%3d\t0x%08llx\t0x%08llx\t\"%s\"\n", (i + 1),
-			le64_to_cpu(gpt_pte[i].starting_lba),
-			le64_to_cpu(gpt_pte[i].ending_lba),
-			print_efiname(&gpt_pte[i]));
+		printf("%3x\t0x%08llx\t0x%08llx\t\"%s\"\n", (i + 1),
+		       le64_to_cpu(gpt_pte[i].starting_lba),
+		       le64_to_cpu(gpt_pte[i].ending_lba),
+		       print_efiname(&gpt_pte[i]));
 		printf("\tattrs:\t0x%016llx\n", gpt_pte[i].attributes.raw);
 		uuid = (unsigned char *)gpt_pte[i].partition_type_guid.b;
 		if (IS_ENABLED(CONFIG_PARTITION_TYPE_GUID))
@@ -315,10 +316,14 @@ static int __maybe_unused part_get_info_efi(struct blk_desc *desc, int part,
 static int part_test_efi(struct blk_desc *desc)
 {
 	ALLOC_CACHE_ALIGN_BUFFER_PAD(legacy_mbr, legacymbr, 1, desc->blksz);
+	long ret;
 
 	/* Read legacy MBR from block 0 and validate it */
-	if ((blk_dread(desc, 0, 1, (ulong *)legacymbr) != 1)
-		|| (is_pmbr_valid(legacymbr) != 1)) {
+	ret = blk_dread(desc, 0, 1, (ulong *)legacymbr);
+	if (IS_ERR_VALUE(ret))
+		return ret;
+
+	if (ret != 1 || is_pmbr_valid(legacymbr) != 1) {
 		/*
 		 * TegraPT is compatible with EFI part, but it
 		 * cannot pass the Protective MBR check. Skip it
@@ -330,8 +335,9 @@ static int part_test_efi(struct blk_desc *desc)
 			    desc->uclass_id == UCLASS_MMC &&
 			    !desc->devnum)
 				return 0;
-		return -1;
+		return -ENOENT;
 	}
+
 	return 0;
 }
 
