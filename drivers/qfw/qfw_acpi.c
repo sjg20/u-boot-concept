@@ -6,17 +6,18 @@
 
 #define LOG_CATEGORY UCLASS_QFW
 
-#include <acpi/acpi_table.h>
+#include <abuf.h>
 #include <bloblist.h>
 #include <errno.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <qfw.h>
-#include <tables_csum.h>
 #include <stdio.h>
-#include <linux/sizes.h>
+#include <tables_csum.h>
+#include <acpi/acpi_table.h>
 #include <asm/byteorder.h>
 #include <asm/global_data.h>
+#include <linux/sizes.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -160,16 +161,86 @@ static int bios_linker_add_checksum(struct udevice *dev,
 	return 0;
 }
 
+int qfw_read_table(struct udevice *dev, const char *fname, ulong addr)
+{
+	struct fw_file *file;
+	u32 size;
+	int ret;
+
+	/* make sure fw_list is loaded */
+	ret = qfw_read_firmware_list(dev);
+	if (ret) {
+		printf("error: can't read firmware file list\n");
+		return -EINVAL;
+	}
+
+	file = qfw_find_file(dev, fname);
+	if (!file) {
+		printf("error: can't find %s\n", fname);
+		return -ENOTSUPP;
+	}
+
+	size = be32_to_cpu(file->cfg.size);
+	qfw_read_entry(dev, be16_to_cpu(file->cfg.select), size,
+		       map_sysmem(addr, size));
+
+	return 0;
+}
+
+int qfw_get_table(struct udevice *dev, const char *fname, struct abuf *loader)
+{
+	struct fw_file *file;
+	u32 size;
+	int ret;
+
+	/* make sure fw_list is loaded */
+	ret = qfw_read_firmware_list(dev);
+	if (ret) {
+		printf("error: can't read firmware file list\n");
+		return -EINVAL;
+	}
+
+	file = qfw_find_file(dev, fname);
+	if (!file) {
+		printf("error: can't find etc/table-loader\n");
+		return -ENOTSUPP;
+	}
+
+	size = be32_to_cpu(file->cfg.size);
+	if (!abuf_init_size(loader, size)) {
+		printf("error: table-loader out of memory\n");
+		return -ENOMEM;
+	}
+
+	qfw_read_entry(dev, be16_to_cpu(file->cfg.select), size, loader->data);
+
+	return 0;
+}
+
+int qfw_get_table_loader(struct udevice *dev, struct abuf *loader)
+{
+	int ret;
+
+	ret = qfw_get_table(dev, "etc/table-loader", loader);
+	if (ret)
+		return ret;
+	if ((loader->size % sizeof(struct bios_linker_entry)) != 0) {
+		printf("error: table-loader maybe corrupted\n");
+		abuf_uninit(loader);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /* This function loads and patches ACPI tables provided by QEMU */
 ulong write_acpi_tables(ulong addr)
 {
 	int i, ret;
-	struct fw_file *file;
-	struct bios_linker_entry *table_loader;
 	struct bios_linker_entry *entry;
-	uint32_t size;
 	struct udevice *dev;
 	struct acpi_ctx *ctx;
+	struct abuf loader;
 
 	ctx = malloc(sizeof(*ctx));
 	if (!ctx) {
@@ -177,48 +248,24 @@ ulong write_acpi_tables(ulong addr)
 		return addr;
 	}
 
-	acpi_setup_ctx(ctx, addr);
-
 	ret = qfw_get_dev(&dev);
 	if (ret) {
 		printf("error: no qfw\n");
-		return addr;
+		return -ENOENT;
 	}
+	ret = qfw_get_table_loader(dev, &loader);
+	if (ret)
+		return addr;
 
-	/* make sure fw_list is loaded */
-	ret = qfw_read_firmware_list(dev);
-	if (ret) {
-		printf("error: can't read firmware file list\n");
-		return addr;
-	}
-
-	file = qfw_find_file(dev, "etc/table-loader");
-	if (!file) {
-		printf("error: can't find etc/table-loader\n");
-		return addr;
-	}
-
-	size = be32_to_cpu(file->cfg.size);
-	if ((size % sizeof(*entry)) != 0) {
-		printf("error: table-loader maybe corrupted\n");
-		return addr;
-	}
-
-	table_loader = malloc(size);
-	if (!table_loader) {
-		printf("error: no memory for table-loader\n");
-		return addr;
-	}
+	acpi_setup_ctx(ctx, addr);
 
 	/* QFW always puts tables at high addresses */
-	gd->arch.table_start_high = (ulong)table_loader;
-	gd->arch.table_end_high = (ulong)table_loader;
+	gd->arch.table_start_high = abuf_addr(&loader);
+	gd->arch.table_end_high = abuf_addr(&loader);
 
-	qfw_read_entry(dev, be16_to_cpu(file->cfg.select), size, table_loader);
-
-	for (i = 0; i < (size / sizeof(*entry)); i++) {
+	for (i = 0; i < loader.size / sizeof(*entry); i++) {
 		log_content("entry %d: addr %lx\n", i, addr);
-		entry = table_loader + i;
+		entry = ((struct bios_linker_entry *)loader.data) + i;
 		switch (le32_to_cpu(entry->command)) {
 		case BIOS_LINKER_LOADER_COMMAND_ALLOCATE:
 			log_content("   - %s\n", entry->alloc.file);
@@ -246,6 +293,8 @@ ulong write_acpi_tables(ulong addr)
 out:
 	if (ret) {
 		struct fw_cfg_file_iter iter;
+		struct fw_file *file;
+
 		for (file = qfw_file_iter_init(dev, &iter);
 		     !qfw_file_iter_end(&iter);
 		     file = qfw_file_iter_next(&iter)) {
@@ -256,13 +305,17 @@ out:
 		}
 	}
 
-	free(table_loader);
+	abuf_uninit(&loader);
 
 	if (!ctx->rsdp) {
 		printf("error: no RSDP found\n");
 		return addr;
 	}
 	struct acpi_rsdp *rsdp = ctx->rsdp;
+
+	ret = acpi_write_bgrt(ctx);
+
+	ctx->current = acpi_get_end();
 
 	rsdp->length = sizeof(*rsdp);
 	rsdp->xsdt_address = 0;

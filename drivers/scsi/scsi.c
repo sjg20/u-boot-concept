@@ -467,6 +467,7 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 	const struct scsi_inquiry_resp *resp;
 	int count, err;
 
+	log_info("scan target %x lun %x dev %s\n", target, lun, dev->name);
 	pccb->target = target;
 	pccb->lun = lun;
 	pccb->pdata = tempbuff;
@@ -487,8 +488,10 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 		return -ENODEV;
 	}
 	resp = (const struct scsi_inquiry_resp *)tempbuff;
-	if ((resp->type & SCSIRF_TYPE_MASK) == SCSIRF_TYPE_UNKNOWN)
+	if ((resp->type & SCSIRF_TYPE_MASK) == SCSIRF_TYPE_UNKNOWN) {
+		log_warning("unknown device\n");
 		return -ENODEV; /* skip unknown devices */
+	}
 	if (resp->flags & SCSIRF_FLAGS_REMOVABLE) /* drive is removable */
 		desc->removable = true;
 	if (resp->eflags & EFLAGS_TPGS_MASK)
@@ -532,6 +535,8 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 	desc->log2blksz = LOG2(desc->blksz);
 
 removable:
+	log_info("removeable: %s\n", dev->name);
+
 	return 0;
 }
 

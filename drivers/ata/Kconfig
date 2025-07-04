@@ -8,6 +8,10 @@ config AHCI
 	  operations at present. The block device interface has not been converted
 	  to driver model.
 
+config AHCI_PCI
+	bool "Support AHCI on PCI"
+	default y if PCI && AHCI
+
 config SATA
 	bool "Support SATA controllers"
 	select BLK

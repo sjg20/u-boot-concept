@@ -10,6 +10,7 @@
 
 #include <dm.h>
 #include <log.h>
+#include <video.h>
 #include <u-boot/uuid.h>
 #include <acpi/acpigen.h>
 #include <acpi/acpi_device.h>

@@ -29,9 +29,22 @@
 static const char *const virtio_drv_name[VIRTIO_ID_MAX_NUM] = {
 	[VIRTIO_ID_NET]		= VIRTIO_NET_DRV_NAME,
 	[VIRTIO_ID_BLOCK]	= VIRTIO_BLK_DRV_NAME,
+	[VIRTIO_ID_CONSOLE]     = VIRTIO_CONSOLE_DRV_NAME,
 	[VIRTIO_ID_RNG]		= VIRTIO_RNG_DRV_NAME,
-	[VIRTIO_ID_FS]		= VIRTIO_FS_DRV_NAME,
+	[VIRTIO_ID_BALLOON]	= VIRTIO_BALLOON_DRV_NAME,
+	[VIRTIO_ID_IOMEM]	= VIRTIO_IOMEM_DRV_NAME,
 	[VIRTIO_ID_SCSI]	= VIRTIO_SCSI_DRV_NAME,
+	[VIRTIO_ID_9P]		= VIRTIO_9P_DRV_NAME,
+	[VIRTIO_ID_GPU]		= VIRTIO_GPU_DRV_NAME,
+	[VIRTIO_ID_INPUT]	= VIRTIO_INPUT_DRV_NAME,
+	[VIRTIO_ID_VSOCK]	= VIRTIO_VSOCK_DRV_NAME,
+	[VIRTIO_ID_CRYPTO]	= VIRTIO_CRYPTO_DRV_NAME,
+	[VIRTIO_ID_I2C]		= VIRTIO_I2C_DRV_NAME,
+	[VIRTIO_ID_FS]		= VIRTIO_FS_DRV_NAME,
+	[VIRTIO_ID_PMEM]	= VIRTIO_PMEM_DRV_NAME,
+	[VIRTIO_ID_VIDENC]	= VIRTIO_VIDEO_ENC_DRV_NAME,
+	[VIRTIO_ID_VIDDEC]	= VIRTIO_VIDEO_DEC_DRV_NAME,
+	[VIRTIO_ID_SND]		= VIRTIO_SND_DRV_NAME,
 };
 
 int virtio_get_config(struct udevice *vdev, unsigned int offset,
@@ -187,6 +200,29 @@ int virtio_init(void)
 {
 	/* Enumerate all known virtio devices */
 	return uclass_probe_all(UCLASS_VIRTIO);
+}
+
+void virtio_list(void)
+{
+	struct udevice *dev;
+	struct uclass *uc;
+
+	printf("%-20s  %-14s  %s\n", "Name", "Type", "Driver");
+	printf("--------------------  --------------  ---------------\n");
+	uclass_id_foreach_dev(UCLASS_VIRTIO, dev, uc) {
+		struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
+		const char *typename = NULL;	/* skip the 'virtio-' prefix */
+		struct udevice *child;
+
+		if (uc_priv->device < VIRTIO_ID_MAX_NUM)
+			typename = virtio_drv_name[uc_priv->device];
+
+		device_find_first_child(dev, &child);
+
+		printf("%-21.21s %2x: %-11.11s %s\n", dev->name,
+		       uc_priv->device, typename ? typename + 7 : "(unknown)",
+		       child ? child->name : "(none)");
+	}
 }
 
 static int virtio_uclass_pre_probe(struct udevice *udev)
@@ -411,7 +447,7 @@ U_BOOT_DRIVER(virtio_bootdev) = {
 };
 
 BOOTDEV_HUNTER(virtio_bootdev_hunter) = {
-	.prio		= BOOTDEVP_4_SCAN_FAST,
+	.prio		= BOOTDEVP_2_INTERNAL_FAST,
 	.uclass		= UCLASS_VIRTIO,
 	.hunt		= virtio_bootdev_hunt,
 	.drv		= DM_DRIVER_REF(virtio_bootdev),

@@ -9,6 +9,7 @@
 #include <bloblist.h>
 #include <env_internal.h>
 #include <malloc.h>
+#include <asm/acpi.h>
 #include <asm/e820.h>
 #include <asm/arch/qemu.h>
 #include <asm/global_data.h>
@@ -20,7 +21,9 @@ unsigned int install_e820_map(unsigned int max_entries,
 			      struct e820_entry *entries)
 {
 	u64 high_mem_size;
+	// ulong nvs, nvs_size;
 	struct e820_ctx ctx;
+	// int ret;
 
 	e820_init(&ctx, entries, max_entries);
 
@@ -44,6 +47,11 @@ unsigned int install_e820_map(unsigned int max_entries,
 	e820_to_addr(&ctx, E820_RAM, qemu_get_low_memory_size());
 	e820_add(&ctx, E820_RESERVED, CONFIG_PCIE_ECAM_BASE,
 		 CONFIG_PCIE_ECAM_SIZE);
+
+	// printf("nvs\n");
+	// ret = acpi_find_nvs(&nvs, &nvs_size);
+	// if (!ret)
+	// 	e820_add(&ctx, E820_NVS, nvs, nvs_size);
 
 	high_mem_size = qemu_get_high_memory_size();
 	if (high_mem_size)

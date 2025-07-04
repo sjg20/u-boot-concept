@@ -5722,6 +5722,7 @@ static int e1000_eth_bind(struct udevice *dev)
 {
 	char name[20];
 
+	printf("here\n");
 	/*
 	 * A simple way to number the devices. When device tree is used this
 	 * is unnecessary, but when the device is just discovered on the PCI

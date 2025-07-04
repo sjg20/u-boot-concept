@@ -7,4 +7,4 @@ obj-y += car.o
 endif
 obj-y += dram.o
 obj-y += qemu.o
-obj-$(CONFIG_QFW) += cpu.o e820.o
+obj-$(CONFIG_QFW) += acpi.o cpu.o e820.o

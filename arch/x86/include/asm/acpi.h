@@ -38,4 +38,13 @@ void *acpi_find_wakeup_vector(struct acpi_fadt *fadt);
  */
 void enter_acpi_mode(int pm1_cnt);
 
+/**
+ * acpi_find_nvs() - Find the non-volatile-sleeping region in ACPI tables
+ *
+ * @addrp: Returns the address of the region on success
+ * @sizep: Returns the size of the region on success
+ * Return: 0 if OK, -ENOENT if not found
+ */
+int acpi_find_nvs(ulong *addrp, ulong *sizep);
+
 #endif /* __ASM_ACPI_H__ */

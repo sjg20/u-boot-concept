@@ -33,6 +33,11 @@ void bdinfo_print_str(const char *name, const char *str)
 	printf("%-12s= %s\n", name, str);
 }
 
+void bdinfo_print_num_32(const char *name, u32 value)
+{
+	printf("%-12s= 0x%08x\n", name, value);
+}
+
 void bdinfo_print_num_l(const char *name, ulong value)
 {
 	printf("%-12s= 0x%0*lx\n", name, 2 * (int)sizeof(value), value);

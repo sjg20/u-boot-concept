@@ -61,6 +61,7 @@ void qemu_chipset_init(void)
 	u16 xbcs;
 	int pam, i;
 
+	log_info("here\n");
 	i440fx = is_i440fx();
 
 	/*
@@ -121,6 +122,7 @@ int checkcpu(void)
 
 int arch_early_init_r(void)
 {
+	log_info("chipset init\n");
 	qemu_chipset_init();
 
 	return 0;

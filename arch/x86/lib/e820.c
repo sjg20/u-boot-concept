@@ -3,6 +3,7 @@
  * Copyright (C) 2015, Bin Meng <bmeng.cn@gmail.com>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_ARCH
 
 #include <efi_loader.h>
@@ -115,6 +116,7 @@ void efi_add_known_memory(void)
 	u64 start;
 	int type;
 
+	log_info("e820\n");
 	num = install_e820_map(ARRAY_SIZE(e820), e820);
 
 	for (i = 0; i < num; ++i) {
@@ -152,6 +154,7 @@ void lmb_arch_add_memory(void)
 	unsigned int i, num;
 	u64 ram_top;
 
+	log_info("e820\n");
 	num = install_e820_map(ARRAY_SIZE(e820), e820);
 
 	ram_top = (u64)gd->ram_top & ~EFI_PAGE_MASK;

@@ -8,6 +8,7 @@
 #include <asm/io.h>
 #include <asm/tables.h>
 
+#if 0
 static struct acpi_rsdp *acpi_valid_rsdp(struct acpi_rsdp *rsdp)
 {
 	if (strncmp((char *)rsdp, RSDP_SIG, sizeof(RSDP_SIG) - 1) != 0)
@@ -26,15 +27,17 @@ static struct acpi_rsdp *acpi_valid_rsdp(struct acpi_rsdp *rsdp)
 
 	return rsdp;
 }
+#endif
 
 struct acpi_fadt *acpi_find_fadt(void)
 {
-	char *p, *end;
-	struct acpi_rsdp *rsdp = NULL;
-	struct acpi_rsdt *rsdt;
-	struct acpi_fadt *fadt = NULL;
-	int i;
+	// char *p, *end;
+	// struct acpi_rsdp *rsdp = NULL;
+	// struct acpi_rsdt *rsdt;
+	struct acpi_table_header *fadt = NULL;
+	// int i;
 
+#if 0
 	/* Find RSDP */
 	for (p = (char *)ROM_TABLE_ADDR; p < (char *)ROM_TABLE_END; p += 16) {
 		rsdp = acpi_valid_rsdp((struct acpi_rsdp *)p);
@@ -57,12 +60,14 @@ struct acpi_fadt *acpi_find_fadt(void)
 			break;
 		fadt = NULL;
 	}
+#endif
+	fadt = acpi_find_table("FACP");
 
 	if (!fadt)
 		return NULL;
 
 	debug("FADT found at %p\n", fadt);
-	return fadt;
+	return (struct acpi_fadt *)fadt;
 }
 
 void *acpi_find_wakeup_vector(struct acpi_fadt *fadt)

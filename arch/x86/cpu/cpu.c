@@ -228,6 +228,7 @@ static int last_stage_init(void)
 
 	if (IS_ENABLED(CONFIG_GENERATE_ACPI_TABLE)) {
 		fadt = acpi_find_fadt();
+		log_info("fadt %p\n", fadt);
 
 		/* Don't touch ACPI hardware on HW reduced platforms */
 		if (fadt && !(fadt->flags & ACPI_FADT_HW_REDUCED_ACPI)) {
@@ -236,6 +237,7 @@ static int last_stage_init(void)
 			 * to ACPI * mode, do it by ourselves, since SMI will
 			 * not be triggered.
 			 */
+			log_info("Entering ACPI mode\n");
 			enter_acpi_mode(fadt->pm1a_cnt_blk);
 		}
 	}
