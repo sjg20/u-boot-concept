@@ -18,6 +18,7 @@ Synopsis
     qfw table
     qfw arch
     qfw read <addr> <filename>
+    qfw e820
 
 Description
 -----------
@@ -39,6 +40,9 @@ must be updated to take account of the address to which the tables are copied.
 The *qfw arch* command shows some items marked as 'arch local' in QEMU.
 
 The *qfw read* command allowing a QEMU file to be read into memory.
+
+The *qfw e820* command shows the memory-map information provided by QEMU. It
+uses the x86 e820 format.
 
 kernel_addr
     address to which the file specified by the -kernel parameter of QEMU shall
@@ -197,6 +201,18 @@ provided size information:
     => md.b 1000 14
     00001000: 52 53 44 20 50 54 52 20 00 42 4f 43 48 53 20 00  RSD PTR .BOCHS .
     00001010: 40 1c 00 00                                      @...
+
+
+This shows dumping the E820 table, showing the emulated RAM as well as some
+reserved memory:
+
+::
+
+    => qfw e820
+            Addr        Size  Type
+      fd00000000   300000000  Reserved
+               0    20000000  RAM
+    =>
 
 
 Configuration

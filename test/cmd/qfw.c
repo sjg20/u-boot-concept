@@ -113,3 +113,21 @@ static int cmd_test_qfw_read(struct unit_test_state *uts)
 	return 0;
 }
 CMD_TEST(cmd_test_qfw_read, UTF_CONSOLE);
+
+/* Test 'qfw e820' command */
+static int cmd_test_qfw_e820(struct unit_test_state *uts)
+{
+	int ret;
+
+	ret = run_command("qfw e820", 0);
+	if (!IS_ENABLED(CONFIG_X86)) {
+		ut_asserteq(1, ret);
+		return 0;
+	}
+
+	ut_assertok(ret);
+	ut_assert_nextline("        Addr        Size  Type");
+
+	return 0;
+}
+CMD_TEST(cmd_test_qfw_e820, UTF_CONSOLE);
