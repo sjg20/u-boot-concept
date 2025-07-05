@@ -219,6 +219,21 @@ static int do_arch(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_read(struct cmd_tbl *cmdtp, int flag, int argc,
+		   char * const argv[])
+{
+	int ret;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	ret = qfw_load_file(qfw_dev, argv[1], hextoul(argv[0], NULL));
+	if (ret)
+		return CMD_RET_FAILURE;
+
+	return 0;
+}
+
 static struct cmd_tbl fwcfg_commands[] = {
 	U_BOOT_CMD_MKENT(list, 0, 1, qemu_fwcfg_do_list, "", ""),
 	U_BOOT_CMD_MKENT(cpus, 0, 1, qemu_fwcfg_do_cpus, "", ""),
@@ -226,6 +241,7 @@ static struct cmd_tbl fwcfg_commands[] = {
 	U_BOOT_CMD_MKENT(dump, 0, 1, do_dump, "", ""),
 	U_BOOT_CMD_MKENT(table, 0, 1, do_table, "", ""),
 	U_BOOT_CMD_MKENT(arch, 0, 1, do_arch, "", ""),
+	U_BOOT_CMD_MKENT(read, 2, 1, do_read, "", ""),
 };
 
 static int do_qemu_fw(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -261,4 +277,5 @@ U_BOOT_CMD(
 	"    - cpus                             : print online cpu number\n"
 	"    - load <kernel addr> <initrd addr> : load kernel and initrd (if any), and setup for zboot\n"
 	"    - table                            : show /etc/table-loader\n"
-	"    - arch                             : show arch-specific data");
+	"    - arch                             : show arch-specific data\n"
+	"    - read <addr> <filename>           : read a flle into memory");

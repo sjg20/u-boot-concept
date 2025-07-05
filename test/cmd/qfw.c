@@ -98,3 +98,18 @@ static int cmd_test_qfw_arch(struct unit_test_state *uts)
 	return 0;
 }
 CMD_TEST(cmd_test_qfw_arch, UTF_CONSOLE);
+
+/* Test 'qfw read' command */
+static int cmd_test_qfw_read(struct unit_test_state *uts)
+{
+	char *ptr = map_sysmem(0x1000, 0x100);
+
+	if (IS_ENABLED(CONFIG_SANDBOX))
+		return -EAGAIN;
+
+	ut_assertok(run_command("qfw read 1000 etc/acpi/rsdp", 0));
+	ut_asserteq_strn("RSD PTR ", ptr);
+
+	return 0;
+}
+CMD_TEST(cmd_test_qfw_read, UTF_CONSOLE);
