@@ -7,6 +7,7 @@
  */
 
 #include <config.h>
+#include <display_options.h>
 #include <init.h>
 #include <asm/global_data.h>
 
@@ -37,16 +38,16 @@ void arch_print_bdinfo(void)
 {
 	struct bd_info *bd = gd->bd;
 
-	bdinfo_print_mhz("busfreq", bd->bi_busfreq);
+	lprint_mhz("busfreq", bd->bi_busfreq);
 #if defined(CFG_SYS_MBAR)
-	bdinfo_print_num_l("mbar", bd->bi_mbar_base);
+	lprint_num_l("mbar", bd->bi_mbar_base);
 #endif
-	bdinfo_print_mhz("cpufreq", bd->bi_intfreq);
+	lprint_mhz("cpufreq", bd->bi_intfreq);
 	if (IS_ENABLED(CONFIG_PCI))
-		bdinfo_print_mhz("pcifreq", bd->bi_pcifreq);
+		lprint_mhz("pcifreq", bd->bi_pcifreq);
 #ifdef CONFIG_EXTRA_CLOCK
-	bdinfo_print_mhz("flbfreq", bd->bi_flbfreq);
-	bdinfo_print_mhz("inpfreq", bd->bi_inpfreq);
-	bdinfo_print_mhz("vcofreq", bd->bi_vcofreq);
+	lprint_mhz("flbfreq", bd->bi_flbfreq);
+	lprint_mhz("inpfreq", bd->bi_inpfreq);
+	lprint_mhz("vcofreq", bd->bi_vcofreq);
 #endif
 }

@@ -372,29 +372,6 @@ void relocate_code(ulong start_addr_sp, struct global_data *new_gd,
 	__attribute__ ((noreturn));
 #endif
 
-/* Print a numeric value (for use in arch_print_bdinfo()) */
-void bdinfo_print_num_l(const char *name, ulong value);
-void bdinfo_print_num_ll(const char *name, unsigned long long value);
-
-/* Print a string value (for use in arch_print_bdinfo()) */
-void bdinfo_print_str(const char *name, const char *str);
-
-/* Print a clock speed in MHz */
-void bdinfo_print_mhz(const char *name, unsigned long hz);
-
-/**
- * bdinfo_print_size - print size variables in bdinfo format
- * @name:	string to print before the size
- * @size:	size to print
- *
- * Helper function for displaying size variables as properly formatted bdinfo
- * entries. The size is printed as "xxx Bytes", "xxx KiB", "xxx MiB",
- * "xxx GiB", etc. as needed;
- *
- * For use in arch_print_bdinfo().
- */
-void bdinfo_print_size(const char *name, uint64_t size);
-
 /* Show arch-specific information for the 'bd' command */
 void arch_print_bdinfo(void);
 
