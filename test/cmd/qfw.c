@@ -60,3 +60,23 @@ static int cmd_test_qfw_dump(struct unit_test_state *uts)
 	return 0;
 }
 CMD_TEST(cmd_test_qfw_dump, UTF_CONSOLE);
+
+/* Test 'qfw table' command */
+static int cmd_test_qfw_table(struct unit_test_state *uts)
+{
+	if (IS_ENABLED(CONFIG_SANDBOX))
+		return -EAGAIN;
+
+	ut_assertok(run_command("qfw table", 0));
+	ut_assert_nextline("  0 alloc: align 10 zone fseg name 'etc/acpi/rsdp'");
+	ut_assert_nextline("  1 alloc: align 40 zone high name 'etc/acpi/tables'");
+
+	/*
+	 * we can't really test anything else as it may vary, so just check that
+	 * there is more output after this
+	 */
+	ut_asserteq(true, ut_check_console_end(uts));
+
+	return 0;
+}
+CMD_TEST(cmd_test_qfw_table, UTF_CONSOLE);
