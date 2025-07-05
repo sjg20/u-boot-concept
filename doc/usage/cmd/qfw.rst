@@ -17,6 +17,7 @@ Synopsis
     qfw load [kernel_addr [initrd_addr]]
     qfw table
     qfw arch
+    qfw read <addr> <filename>
 
 Description
 -----------
@@ -37,6 +38,8 @@ must be updated to take account of the address to which the tables are copied.
 
 The *qfw arch* command shows some items marked as 'arch local' in QEMU.
 
+The *qfw read* command allowing a QEMU file to be read into memory.
+
 kernel_addr
     address to which the file specified by the -kernel parameter of QEMU shall
     be loaded. Defaults to environment variable *loadaddr* and further to
@@ -46,6 +49,12 @@ initrd_addr
     address to which the file specified by the -initrd parameter of QEMU shall
     be loaded. Defaults to environment variable *ramdiskaddr* and further to
     the value of *CFG_RAMDISK_ADDR*.
+
+addr
+    address to which `filename` is read into memory
+
+filename
+    filename of file to read into memory (as shown by *qfw list*)
 
 Examples
 --------
@@ -163,6 +172,31 @@ This shows the *qfw table* command on an x86 target:
     smbios entrs= 0x00000000
     irq0 overr  = 0x00000001
     hpet        = 0x00000000
+
+This shows reading a named qfw file into memory then dumping it, using the
+provided size information:
+
+::
+
+    => qfw list
+        Addr     Size Sel Name
+    -------- -------- --- ------------
+           0        0  20 bios-geometry
+           0        0  21 bootorder
+    1ec3f000       14  22 etc/acpi/rsdp
+    1ec3f040    20000  23 etc/acpi/tables
+           0        4  24 etc/boot-fail-wait
+           0       28  25 etc/e820
+           0       18  26 etc/smbios/smbios-anchor
+           0      151  27 etc/smbios/smbios-tables
+           0        6  28 etc/system-states
+           0     1000  29 etc/table-loader
+           0        0  2a etc/tpm/log
+           0     2400  2b genroms/kvmvapic.bin
+    => qfw read 1000 etc/acpi/rsdp
+    => md.b 1000 14
+    00001000: 52 53 44 20 50 54 52 20 00 42 4f 43 48 53 20 00  RSD PTR .BOCHS .
+    00001010: 40 1c 00 00                                      @...
 
 
 Configuration
