@@ -570,6 +570,7 @@ endchoice
 
 config MACH_QEMU
 	bool
+	imply UNIT_TEST
 	help
 	  This should enabled for all QEMU targets, on all architectures. It
 	  controls features which are particular to running U-Boot on QEMU.
