@@ -314,7 +314,7 @@ static int do_ut(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	}
 	show_stats(&uts);
 	if (ret)
-		return ret;
+		return CMD_RET_FAILURE;
 	ut_uninit_state(&uts);
 
 	return 0;
