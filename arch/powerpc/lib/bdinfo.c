@@ -6,6 +6,7 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#include <display_options.h>
 #include <init.h>
 #include <asm/global_data.h>
 
@@ -38,12 +39,12 @@ void arch_print_bdinfo(void)
 {
 	struct bd_info *bd = gd->bd;
 
-	bdinfo_print_mhz("busfreq", bd->bi_busfreq);
+	lprint_mhz("busfreq", bd->bi_busfreq);
 #if defined(CONFIG_MPC8xx) || defined(CONFIG_E500)
-	bdinfo_print_num_l("immr_base", bd->bi_immr_base);
+	lprint_num_l("immr_base", bd->bi_immr_base);
 #endif
-	bdinfo_print_num_l("bootflags", bd->bi_bootflags);
-	bdinfo_print_mhz("intfreq", bd->bi_intfreq);
+	lprint_num_l("bootflags", bd->bi_bootflags);
+	lprint_mhz("intfreq", bd->bi_intfreq);
 #ifdef CONFIG_ENABLE_36BIT_PHYS
 	if (IS_ENABLED(CONFIG_PHYS_64BIT))
 		puts("addressing  = 36-bit\n");

@@ -242,3 +242,24 @@ int print_buffer(ulong addr, const void *data, uint width, uint count,
 
 	return 0;
 }
+
+void lprint_size(const char *name, uint64_t size)
+{
+	printf("%-12s= ", name);
+	print_size(size, "\n");
+}
+
+void lprint_str(const char *name, const char *str)
+{
+	printf("%-12s= %s\n", name, str);
+}
+
+void lprint_num_l(const char *name, ulong value)
+{
+	printf("%-12s= 0x%0*lx\n", name, 2 * (int)sizeof(value), value);
+}
+
+void lprint_num_ll(const char *name, unsigned long long value)
+{
+	printf("%-12s= 0x%.*llx\n", name, 2 * (int)sizeof(ulong), value);
+}

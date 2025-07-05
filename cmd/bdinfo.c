@@ -7,6 +7,7 @@
  */
 
 #include <command.h>
+#include <display_options.h>
 #include <dm.h>
 #include <env.h>
 #include <getopt.h>
@@ -21,27 +22,6 @@
 #include <display_options.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-void bdinfo_print_size(const char *name, uint64_t size)
-{
-	printf("%-12s= ", name);
-	print_size(size, "\n");
-}
-
-void bdinfo_print_str(const char *name, const char *str)
-{
-	printf("%-12s= %s\n", name, str);
-}
-
-void bdinfo_print_num_l(const char *name, ulong value)
-{
-	printf("%-12s= 0x%0*lx\n", name, 2 * (int)sizeof(value), value);
-}
-
-void bdinfo_print_num_ll(const char *name, unsigned long long value)
-{
-	printf("%-12s= 0x%.*llx\n", name, 2 * (int)sizeof(ulong), value);
-}
 
 static void print_eth(void)
 {
@@ -65,7 +45,7 @@ static void print_eth(void)
 	printf("IP addr     = %s\n", env_get("ipaddr"));
 }
 
-void bdinfo_print_mhz(const char *name, unsigned long hz)
+void lprint_mhz(const char *name, unsigned long hz)
 {
 	char buf[32];
 
@@ -78,9 +58,9 @@ static void print_bi_dram(const struct bd_info *bd)
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; ++i) {
 		if (bd->bi_dram[i].size) {
-			bdinfo_print_num_l("DRAM bank",	i);
-			bdinfo_print_num_ll("-> start",	bd->bi_dram[i].start);
-			bdinfo_print_num_ll("-> size",	bd->bi_dram[i].size);
+			lprint_num_l("DRAM bank",	i);
+			lprint_num_ll("-> start",	bd->bi_dram[i].start);
+			lprint_num_ll("-> size",	bd->bi_dram[i].size);
 		}
 	}
 }
@@ -101,12 +81,11 @@ static void show_video_info(void)
 			struct video_priv *upriv = dev_get_uclass_priv(dev);
 			struct video_uc_plat *plat = dev_get_uclass_plat(dev);
 
-			bdinfo_print_num_ll("FB base", (ulong)upriv->fb);
+			lprint_num_ll("FB base", (ulong)upriv->fb);
 			if (upriv->copy_fb) {
-				bdinfo_print_num_ll("FB copy",
-						    (ulong)upriv->copy_fb);
-				bdinfo_print_num_l(" copy size",
-						   plat->copy_size);
+				lprint_num_ll("FB copy",
+					      (ulong)upriv->copy_fb);
+				lprint_num_l(" copy size", plat->copy_size);
 			}
 			printf("%-12s= %dx%dx%d\n", "FB size", upriv->xsize,
 			       upriv->ysize, 1 << upriv->bpix);
@@ -126,34 +105,34 @@ static void print_serial(struct udevice *dev)
 	if (ret)
 		return;
 
-	bdinfo_print_num_l("serial addr", info.addr);
-	bdinfo_print_num_l(" width", info.reg_width);
-	bdinfo_print_num_l(" shift", info.reg_shift);
-	bdinfo_print_num_l(" offset", info.reg_offset);
-	bdinfo_print_num_l(" clock", info.clock);
+	lprint_num_l("serial addr", info.addr);
+	lprint_num_l(" width", info.reg_width);
+	lprint_num_l(" shift", info.reg_shift);
+	lprint_num_l(" offset", info.reg_offset);
+	lprint_num_l(" clock", info.clock);
 }
 
 static int bdinfo_print_all(struct bd_info *bd)
 {
 #ifdef DEBUG
-	bdinfo_print_num_l("bd address", (ulong)bd);
+	lprint_num_l("bd address", (ulong)bd);
 #endif
-	bdinfo_print_num_l("boot_params", (ulong)bd->bi_boot_params);
+	lprint_num_l("boot_params", (ulong)bd->bi_boot_params);
 	print_bi_dram(bd);
-	bdinfo_print_num_l("flashstart", (ulong)bd->bi_flashstart);
-	bdinfo_print_num_l("flashsize", (ulong)bd->bi_flashsize);
-	bdinfo_print_num_l("flashoffset", (ulong)bd->bi_flashoffset);
+	lprint_num_l("flashstart", (ulong)bd->bi_flashstart);
+	lprint_num_l("flashsize", (ulong)bd->bi_flashsize);
+	lprint_num_l("flashoffset", (ulong)bd->bi_flashoffset);
 	printf("baudrate    = %u bps\n", gd->baudrate);
-	bdinfo_print_num_l("relocaddr", gd->relocaddr);
-	bdinfo_print_num_l("reloc off", gd->reloc_off);
+	lprint_num_l("relocaddr", gd->relocaddr);
+	lprint_num_l("reloc off", gd->reloc_off);
 	printf("%-12s= %u-bit\n", "Build", (uint)sizeof(void *) * 8);
 	if (IS_ENABLED(CONFIG_CMD_NET) || IS_ENABLED(CONFIG_CMD_NET_LWIP))
 		print_eth();
-	bdinfo_print_num_l("fdt_blob", (ulong)map_to_sysmem(gd->fdt_blob));
+	lprint_num_l("fdt_blob", (ulong)map_to_sysmem(gd->fdt_blob));
 	if (IS_ENABLED(CONFIG_VIDEO))
 		show_video_info();
 #if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
-	bdinfo_print_num_l("multi_dtb_fit", (ulong)gd->multi_dtb_fit);
+	lprint_num_l("multi_dtb_fit", (ulong)gd->multi_dtb_fit);
 #endif
 	if (IS_ENABLED(CONFIG_LMB) && gd->fdt_blob) {
 		lmb_dump_all_force();
@@ -163,9 +142,9 @@ static int bdinfo_print_all(struct bd_info *bd)
 	print_serial(gd->cur_serial_dev);
 
 	if (IS_ENABLED(CONFIG_CMD_BDINFO_EXTRA)) {
-		bdinfo_print_num_ll("stack ptr", (ulong)&bd);
-		bdinfo_print_num_ll("ram_top ptr", (ulong)gd->ram_top);
-		bdinfo_print_num_l("malloc base", gd_malloc_start());
+		lprint_num_ll("stack ptr", (ulong)&bd);
+		lprint_num_ll("ram_top ptr", (ulong)gd->ram_top);
+		lprint_num_l("malloc base", gd_malloc_start());
 	}
 
 	arch_print_bdinfo();
