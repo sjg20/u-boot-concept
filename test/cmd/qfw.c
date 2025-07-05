@@ -80,3 +80,21 @@ static int cmd_test_qfw_table(struct unit_test_state *uts)
 	return 0;
 }
 CMD_TEST(cmd_test_qfw_table, UTF_CONSOLE);
+
+/* Test 'qfw arch' command */
+static int cmd_test_qfw_arch(struct unit_test_state *uts)
+{
+	/*
+	 * this test is really only useful on x86, which has some entries, but
+	 * since the implementation of the 'qfw arch' command is generic, we can
+	 * expect that it works on ARM too
+	 */
+	ut_assertok(run_command("qfw arch", 0));
+	if (IS_ENABLED(CONFIG_X86)) {
+		ut_assert_nextline("acpi tables = 0x00000000");
+		ut_asserteq(true, ut_check_console_end(uts));
+	}
+
+	return 0;
+}
+CMD_TEST(cmd_test_qfw_arch, UTF_CONSOLE);
