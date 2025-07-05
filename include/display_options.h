@@ -104,6 +104,7 @@ char *display_options_get_banner_priv(bool newlines, const char *build_tag,
 /* Print a numeric value (for use in arch_print_bdinfo()) */
 void lprint_num_l(const char *name, ulong value);
 void lprint_num_ll(const char *name, unsigned long long value);
+void lprint_num_32(const char *name, u32 value);
 
 /* Print a string value (for use in arch_print_bdinfo()) */
 void lprint_str(const char *name, const char *str);
