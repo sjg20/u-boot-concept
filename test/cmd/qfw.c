@@ -9,9 +9,12 @@
 #include <dm.h>
 #include <mapmem.h>
 #include <qfw.h>
+#include <asm/global_data.h>
 #include <dm/test.h>
 #include <test/cmd.h>
 #include <test/ut.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* Test 'qfw list' command */
 static int cmd_test_qfw_list(struct unit_test_state *uts)
@@ -38,3 +41,22 @@ static int cmd_test_qfw_list(struct unit_test_state *uts)
 	return 0;
 }
 CMD_TEST(cmd_test_qfw_list, UTF_CONSOLE);
+
+/* Test 'qfw dump' command */
+static int cmd_test_qfw_dump(struct unit_test_state *uts)
+{
+	if (IS_ENABLED(CONFIG_SANDBOX))
+		return -EAGAIN;
+
+	ut_assertok(run_command("qfw dump", 0));
+	ut_assert_nextline("signature   = QEMU");
+	ut_assert_nextlinen("id");
+	ut_assert_nextlinen("uuid        = 00000000-0000-0000-0000-000000000000");
+	ut_assert_nextline("ram_size    = %#.*lx", 2 * (int)sizeof(ulong),
+			   (ulong)gd->ram_size);
+	ut_assert_skip_to_linen("file dir le =");
+	ut_assert_console_end();
+
+	return 0;
+}
+CMD_TEST(cmd_test_qfw_dump, UTF_CONSOLE);

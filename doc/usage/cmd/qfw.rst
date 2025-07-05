@@ -11,6 +11,7 @@ Synopsis
 
 ::
 
+    qfw dump
     qfw list
     qfw cpus
     qfw load [kernel_addr [initrd_addr]]
@@ -21,6 +22,8 @@ Description
 The *qfw* command is used to retrieve information from the QEMU firmware.
 
 The *qfw list* sub-command displays the QEMU firmware files.
+
+The *qfw dump* sub-command displays the QEMU configuration entries.
 
 The *qfw cpus* sub-command displays the available CPUs.
 
@@ -62,6 +65,33 @@ QEMU firmware files are listed via the *qfw list* command:
 
 Where an address is shown, it indicates where the data is available for
 inspection, e.g. using the :doc:`md`.
+
+This shows the *qfw dump* command on an x86 target:
+
+::
+    signature   = QEMU
+    id          = 0x00000003
+    uuid        = dc8275a0-59c6-11f0-b383-0f1ea10dd2f7
+    ram_size    = 0x0000000020000000
+    nographic   = 0x00000000
+    nb cpus     = 0x00000004
+    machine id  = 0x00000000
+    kernel addr = 0x00100000
+    kernel size = 0x00e9e988
+    kernel cmdl = 0x00000000
+    initrd addr = 0x1b446000
+    initrd size = 0x04b91d57
+    boot device = 0x00000000
+    numa        = 0x00000000
+    boot menu   = 0x00000000
+    max cpus    = 0x00000004
+    kernel entry= 0x00000000
+    cmdline addr= 0x00020000
+    cmdline size= 0x0000000f
+    cmdline data= root=/dev/sda1
+    setup addr  = 0x00010000
+    setup size  = 0x00005000
+    file dir le = 0x0000000d
 
 The available CPUs can be shown via the *qfw cpus* command:
 
