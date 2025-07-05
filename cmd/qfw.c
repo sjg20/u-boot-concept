@@ -159,11 +159,58 @@ nomem:
 	return CMD_RET_FAILURE;
 }
 
+static int do_table(struct cmd_tbl *cmdtp, int flag, int argc,
+		    char * const argv[])
+{
+	struct bios_linker_entry *entry, *end;
+	struct abuf loader;
+	int ret, i;
+
+	ret = qfw_get_table_loader(qfw_dev, &loader);
+	if (ret) {
+		printf("Error %dE\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	for (entry = loader.data, end = loader.data + loader.size, i = 0;
+	     entry < end; entry++, i++) {
+		int cmd = le32_to_cpu(entry->command);
+		const char *zone_name;
+
+		if (!cmd)
+			continue;
+		printf("%3d ", i);
+		switch (cmd) {
+		case BIOS_LINKER_LOADER_COMMAND_ALLOCATE:
+			zone_name = entry->alloc.zone == 2 ? "fseg" :
+				 entry->alloc.zone == 1 ? "high" : "?";
+			printf("alloc: align %x zone %s name '%s'\n",
+			       entry->alloc.align, zone_name,
+			       entry->alloc.file);
+			break;
+		case BIOS_LINKER_LOADER_COMMAND_ADD_POINTER:
+			printf("add-ptr offset %x size %x dest '%s' src '%s'\n",
+			       entry->pointer.offset, entry->pointer.size,
+			       entry->pointer.dest_file,
+			       entry->pointer.src_file);
+			break;
+		case BIOS_LINKER_LOADER_COMMAND_ADD_CHECKSUM:
+			printf("add-chksum offset %x start %x length %x name '%s'\n",
+			       entry->cksum.offset, entry->cksum.start,
+			       entry->cksum.length,  entry->cksum.file);
+			break;
+		}
+	}
+
+	return 0;
+}
+
 static struct cmd_tbl fwcfg_commands[] = {
 	U_BOOT_CMD_MKENT(list, 0, 1, qemu_fwcfg_do_list, "", ""),
 	U_BOOT_CMD_MKENT(cpus, 0, 1, qemu_fwcfg_do_cpus, "", ""),
 	U_BOOT_CMD_MKENT(load, 2, 1, qemu_fwcfg_do_load, "", ""),
 	U_BOOT_CMD_MKENT(dump, 0, 1, do_dump, "", ""),
+	U_BOOT_CMD_MKENT(table, 0, 1, do_table, "", ""),
 };
 
 static int do_qemu_fw(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -198,4 +245,4 @@ U_BOOT_CMD(
 	"    - list                             : print firmware(s) currently loaded\n"
 	"    - cpus                             : print online cpu number\n"
 	"    - load <kernel addr> <initrd addr> : load kernel and initrd (if any), and setup for zboot\n"
-);
+	"    - table                            : show /etc/table-loader");
