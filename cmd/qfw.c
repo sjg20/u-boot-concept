@@ -205,12 +205,27 @@ static int do_table(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_arch(struct cmd_tbl *cmdtp, int flag, int argc,
+		   char * const argv[])
+{
+	if (!IS_ENABLED(CONFIG_X86))
+		return 0;
+
+	lprint_num_32("acpi tables", get_val(FW_CFG_ACPI_TABLES));
+	lprint_num_32("smbios entrs", get_val(FW_CFG_SMBIOS_ENTRIES));
+	lprint_num_32("irq0 overr", get_val(FW_CFG_IRQ0_OVERRIDE));
+	lprint_num_32("hpet", get_val(FW_CFG_HPET));
+
+	return 0;
+}
+
 static struct cmd_tbl fwcfg_commands[] = {
 	U_BOOT_CMD_MKENT(list, 0, 1, qemu_fwcfg_do_list, "", ""),
 	U_BOOT_CMD_MKENT(cpus, 0, 1, qemu_fwcfg_do_cpus, "", ""),
 	U_BOOT_CMD_MKENT(load, 2, 1, qemu_fwcfg_do_load, "", ""),
 	U_BOOT_CMD_MKENT(dump, 0, 1, do_dump, "", ""),
 	U_BOOT_CMD_MKENT(table, 0, 1, do_table, "", ""),
+	U_BOOT_CMD_MKENT(arch, 0, 1, do_arch, "", ""),
 };
 
 static int do_qemu_fw(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -245,4 +260,5 @@ U_BOOT_CMD(
 	"    - list                             : print firmware(s) currently loaded\n"
 	"    - cpus                             : print online cpu number\n"
 	"    - load <kernel addr> <initrd addr> : load kernel and initrd (if any), and setup for zboot\n"
-	"    - table                            : show /etc/table-loader");
+	"    - table                            : show /etc/table-loader\n"
+	"    - arch                             : show arch-specific data");

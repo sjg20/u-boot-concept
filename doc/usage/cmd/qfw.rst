@@ -16,6 +16,7 @@ Synopsis
     qfw cpus
     qfw load [kernel_addr [initrd_addr]]
     qfw table
+    qfw arch
 
 Description
 -----------
@@ -33,6 +34,8 @@ The *qfw load* command is used to load a kernel and an initial RAM disk.
 The *qfw table* command shows the instructions U-Boot uses to construct the
 ACPI tables. This is not as simple as a single blob of data, since some entries
 must be updated to take account of the address to which the tables are copied.
+
+The *qfw arch* command shows some items marked as 'arch local' in QEMU.
 
 kernel_addr
     address to which the file specified by the -kernel parameter of QEMU shall
@@ -149,6 +152,18 @@ This shows the *qfw table* command on an x86 target:
      13 add-chksum offset 1c49 start 1c40 length 34 name 'etc/acpi/tables'
      14 add-ptr offset 10 size 4 dest 'etc/acpi/rsdp' src 'etc/acpi/tables'
      15 add-chksum offset 8 start 0 length 14 name 'etc/acpi/rsdp'
+
+
+This shows the *qfw table* command on an x86 target:
+
+::
+
+    => qfw arch
+    acpi tables = 0x00000000
+    smbios entrs= 0x00000000
+    irq0 overr  = 0x00000001
+    hpet        = 0x00000000
+
 
 Configuration
 -------------
