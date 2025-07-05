@@ -5,6 +5,7 @@
  */
 
 #include <cpu_func.h>
+#include <display_options.h>
 #include <efi.h>
 #include <efi_api.h>
 #include <efi_stub.h>
@@ -271,9 +272,9 @@ void efi_show_bdinfo(void)
 
 	ret = efi_info_get(EFIET_SYS_TABLE, (void **)&table, &size);
 	if (!ret) {
-		bdinfo_print_num_l("efi_table", table->sys_table);
+		lprint_num_l("efi_table", table->sys_table);
 		sys_table = (struct efi_system_table *)(uintptr_t)
 			table->sys_table;
-		bdinfo_print_num_l(" revision", sys_table->fw_revision);
+		lprint_num_l(" revision", sys_table->fw_revision);
 	}
 }
