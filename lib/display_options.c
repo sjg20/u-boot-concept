@@ -263,3 +263,8 @@ void lprint_num_ll(const char *name, unsigned long long value)
 {
 	printf("%-12s= 0x%.*llx\n", name, 2 * (int)sizeof(ulong), value);
 }
+
+void lprint_num_32(const char *name, u32 value)
+{
+	printf("%-12s= 0x%08x\n", name, value);
+}
