@@ -464,4 +464,12 @@ int qfw_load_file(struct udevice *dev, const char *fname, ulong addr);
  */
 int qfw_get_file(struct udevice *dev, const char *fname, struct abuf *loader);
 
+/**
+ * cmd_qfw_e820() - Execute the 'qfw e820' command for x86
+ *
+ * @dev: UCLASS_QFW device
+ * Return: 0 on success (always), 1 if there is no E820 information
+ */
+int cmd_qfw_e820(struct udevice *dev);
+
 #endif
