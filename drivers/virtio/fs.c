@@ -372,6 +372,8 @@ static int virtio_fs_mount(struct udevice *dev)
 
 	if (uc_priv->mounted)
 		return log_msg_ret("vfi", -EISCONN);
+	if (IS_ENABLED(CONFIG_SANDBOX))
+		return log_msg_ret("vfs", -ENOENT);
 
 	ret = virtio_fs_init(dev);
 	if (ret)
