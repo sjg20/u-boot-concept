@@ -6,6 +6,8 @@
  * Ported from Linux drivers/virtio/virtio_pci*.c
  */
 
+#define LOG_CATEGORY	UCLASS_VIRTIO
+
 #include <dm.h>
 #include <log.h>
 #include <virtio_types.h>

@@ -5,6 +5,8 @@
  * VirtIO Sandbox transport driver, for testing purpose only
  */
 
+#define LOG_CATEGORY	UCLASS_VIRTIO
+
 #include <dm.h>
 #include <virtio_types.h>
 #include <virtio.h>
