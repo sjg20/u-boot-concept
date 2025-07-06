@@ -211,3 +211,79 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 
 	return 0;
 }
+
+static int qfw_locate_file(struct udevice *dev, const char *fname,
+			   enum fw_cfg_selector *selectp, ulong *sizep)
+{
+	struct fw_file *file;
+	int ret;
+
+	/* make sure fw_list is loaded */
+	ret = qfw_read_firmware_list(dev);
+	if (ret) {
+		printf("error: can't read firmware file list\n");
+		return -EINVAL;
+	}
+
+	file = qfw_find_file(dev, fname);
+	if (!file) {
+		printf("error: can't find %s\n", fname);
+		return -ENOENT;
+	}
+
+	*selectp = be16_to_cpu(file->cfg.select);
+	*sizep = be32_to_cpu(file->cfg.size);
+
+	return 0;
+}
+
+int qfw_load_file(struct udevice *dev, const char *fname, ulong addr)
+{
+	enum fw_cfg_selector select;
+	ulong size;
+	int ret;
+
+	ret = qfw_locate_file(dev, fname, &select, &size);
+	if (ret)
+		return ret;
+
+	qfw_read_entry(dev, select, size, map_sysmem(addr, size));
+
+	return 0;
+}
+
+int qfw_get_file(struct udevice *dev, const char *fname, struct abuf *loader)
+{
+	enum fw_cfg_selector select;
+	ulong size;
+	int ret;
+
+	ret = qfw_locate_file(dev, fname, &select, &size);
+	if (ret)
+		return ret;
+
+	if (!abuf_init_size(loader, size)) {
+		printf("error: table-loader out of memory\n");
+		return -ENOMEM;
+	}
+
+	qfw_read_entry(dev, select, size, loader->data);
+
+	return 0;
+}
+
+int qfw_get_table_loader(struct udevice *dev, struct abuf *loader)
+{
+	int ret;
+
+	ret = qfw_get_file(dev, "etc/table-loader", loader);
+	if (ret)
+		return ret;
+	if ((loader->size % sizeof(struct bios_linker_entry)) != 0) {
+		printf("error: table-loader maybe corrupted\n");
+		abuf_uninit(loader);
+		return -EINVAL;
+	}
+
+	return 0;
+}
