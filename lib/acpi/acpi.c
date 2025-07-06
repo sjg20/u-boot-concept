@@ -7,6 +7,7 @@
 
 #define LOG_CATEGORY	LOGC_ACPI
 
+#include <errno.h>
 #include <mapmem.h>
 #include <tables_csum.h>
 #include <acpi/acpi_table.h>
@@ -39,33 +40,74 @@ static bool acpi_valid_rsdp(struct acpi_rsdp *rsdp)
 	return true;
 }
 
-struct acpi_table_header *acpi_find_table(const char *sig)
+/**
+ * setup_search() - Set up for searching through the RSDT/XSDT
+ *
+ * Looks for XSDT first and uses those entries if available, else RSDT
+ *
+ * @rsdtp: Returns RSDT if present
+ * @xsdtp: Returns XSDT if present
+ * Return: number of entries in table, -ENOENT if there is no RSDP, -EINVAL if
+ *	the RSDP is invalid, -ENOTSYNC if both tables exist and their counts
+ *	disagree
+ */
+static int setup_search(struct acpi_rsdt **rsdtp, struct acpi_xsdt **xsdtp)
 {
 	struct acpi_rsdp *rsdp;
-	struct acpi_rsdt *rsdt;
-	struct acpi_xsdt *xsdt;
-	int len, i, count;
+	struct acpi_rsdt *rsdt = NULL;
+	struct acpi_xsdt *xsdt = NULL;
+	int len, count = 0;
+
 
 	rsdp = map_sysmem(gd_acpi_start(), 0);
-	if (!rsdp || !acpi_valid_rsdp(rsdp))
-		return NULL;
-
+	if (!rsdp)
+		return -ENOENT;
+	if (!acpi_valid_rsdp(rsdp))
+		return -EINVAL;
 	if (rsdp->xsdt_address) {
 		xsdt = nomap_sysmem(rsdp->xsdt_address, 0);
 		len = xsdt->header.length - sizeof(xsdt->header);
 		count = len / sizeof(u64);
-	} else {
-		if (!rsdp->rsdt_address)
-			return NULL;
+	}
+
+	if (rsdp->rsdt_address) {
+		int rcount;
+
 		rsdt = nomap_sysmem(rsdp->rsdt_address, 0);
 		len = rsdt->header.length - sizeof(rsdt->header);
-		count = len / sizeof(u32);
+		rcount = len / sizeof(u32);
+		if (xsdt) {
+			if (rcount != count)
+				return -ENOTSYNC;
+		} else {
+			count = rcount;
+		}
 	}
+	*rsdtp = rsdt;
+	*xsdtp = xsdt;
+
+	return count;
+}
+
+struct acpi_table_header *acpi_find_table(const char *sig)
+{
+	struct acpi_rsdt *rsdt;
+	struct acpi_xsdt *xsdt;
+	int i, count, ret;
+
+	ret = setup_search(&rsdt, &xsdt);
+	if (ret < 0) {
+		log_warning("acpi: Failed to find tables (err=%d)\n", ret);
+		return NULL;
+	}
+	if (!ret)
+		return NULL;
+	count = ret;
 
 	for (i = 0; i < count; i++) {
 		struct acpi_table_header *hdr;
 
-		if (rsdp->xsdt_address)
+		if (xsdt)
 			hdr = nomap_sysmem(xsdt->entry[i], 0);
 		else
 			hdr = nomap_sysmem(rsdt->entry[i], 0);
