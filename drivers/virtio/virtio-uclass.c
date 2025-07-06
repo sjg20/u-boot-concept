@@ -447,7 +447,7 @@ U_BOOT_DRIVER(virtio_bootdev) = {
 };
 
 BOOTDEV_HUNTER(virtio_bootdev_hunter) = {
-	.prio		= BOOTDEVP_4_SCAN_FAST,
+	.prio		= BOOTDEVP_2_INTERNAL_FAST,
 	.uclass		= UCLASS_VIRTIO,
 	.hunt		= virtio_bootdev_hunt,
 	.drv		= DM_DRIVER_REF(virtio_bootdev),
