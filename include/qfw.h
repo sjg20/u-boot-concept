@@ -366,4 +366,44 @@ void qemu_fwcfg_read_files(struct udevice *qfw_dev, const struct abuf *setup,
 int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 			    ulong initrd_addr);
 
+/**
+ * qfw_get_table_loader() - Obtain the table-loader contents
+ *
+ * Reads the etc/table-loader file from QFW and returns its contents, a list of
+ * struct bios_linker_entry records *
+ *
+ * Prints a message on failure
+ *
+ * @dev: UCLASS_QFW device
+ * @loader: returns abuf holding the data, alloced by this function. The caller
+ * must call abuf_uninit()
+ * Return 0 if OK, -ENOMEM if out of memory, -EINVAL if the tables are invalid,
+ * -ve on error
+ */
+int qfw_get_table_loader(struct udevice *dev, struct abuf *loader);
+
+/**
+ * qfw_load_file() - Read a file into memory
+ *
+ * Prints a message on failure
+ *
+ * @dev: UCLASS_QFW device
+ * @fname: Filename to load
+ * @addr: Address to load to
+ * Return: 0 on success, -ENOENT if filename not found, -EINVAL if the tables
+ * are invalid,-ve on error
+ */
+int qfw_load_file(struct udevice *dev, const char *fname, ulong addr);
+
+/*
+ * qfw_get_file() - Read a file from qfw
+ *
+ * @dev: UCLASS_QFW device
+ * @fname: Filename to load
+ * @loader: Returns abuf containing the file, allocated by this function
+ * Return 0 if OK, -ENOMEM if out of memory, -EINVAL if the tables are invalid,
+ * -ve on error
+ */
+int qfw_get_file(struct udevice *dev, const char *fname, struct abuf *loader);
+
 #endif
