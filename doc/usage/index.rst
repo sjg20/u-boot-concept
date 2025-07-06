@@ -129,6 +129,7 @@ Shell commands
    cmd/ums
    cmd/unbind
    cmd/ut
+   cmd/virtio
    cmd/wdt
    cmd/wget
    cmd/write
