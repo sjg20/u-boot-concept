@@ -28,6 +28,7 @@ enum {
 	HUNTER_MMC,		/* ID of MMC hunter */
 	HUNTER_SCSI	= 7,	/* ID of SCSI hunter */
 	HUNTER_USB	= 9,	/* ID of USB hunter */
+	HUNTER_VIRTIO,
 	HUNTER_COUNT	= 11,
 	HUNTER_MAX	= HUNTER_COUNT - 1,
 };

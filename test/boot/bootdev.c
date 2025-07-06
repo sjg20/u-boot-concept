@@ -398,7 +398,7 @@ static int bootdev_test_hunter(struct unit_test_state *uts)
 	ut_assert_nextline("   4        scsi             scsi_bootdev");
 	ut_assert_nextline("   4        spi_flash        sf_bootdev");
 	ut_assert_nextline("   5        usb              usb_bootdev");
-	ut_assert_nextline("   4        virtio           virtio_bootdev");
+	ut_assert_nextline("   2        virtio           virtio_bootdev");
 	ut_assert_nextline("(total hunters: %d)", HUNTER_COUNT);
 	ut_assert_console_end();
 
@@ -478,7 +478,7 @@ static int bootdev_test_cmd_hunt(struct unit_test_state *uts)
 	ut_assert_nextline("   4     *  scsi             scsi_bootdev");
 	ut_assert_nextline("   4     *  spi_flash        sf_bootdev");
 	ut_assert_nextline("   5     *  usb              usb_bootdev");
-	ut_assert_nextline("   4     *  virtio           virtio_bootdev");
+	ut_assert_nextline("   2     *  virtio           virtio_bootdev");
 	ut_assert_nextline("(total hunters: %d)", HUNTER_COUNT);
 	ut_assert_console_end();
 
@@ -503,8 +503,8 @@ static int bootdev_test_hunt_scan(struct unit_test_state *uts)
 	ut_assertok(bootflow_scan_first(NULL, NULL, &iter,
 					BOOTFLOWIF_SHOW | BOOTFLOWIF_HUNT |
 					BOOTFLOWIF_SKIP_GLOBAL, &bflow));
-	ut_asserteq(BIT(HUNTER_MMC) | BIT(HUNTER_SIMPLE_BUS),
-		    std->hunters_used);
+	ut_asserteq(BIT(HUNTER_MMC) | BIT(HUNTER_SIMPLE_BUS) |
+		    BIT(HUNTER_VIRTIO), std->hunters_used);
 
 	return 0;
 }
@@ -742,10 +742,11 @@ static int bootdev_test_next_prio(struct unit_test_state *uts)
 	ut_assert_nextline("Hunting with: simple_bus");
 	ut_assert_nextline("Found 2 extension board(s).");
 	ut_assert_nextline("Hunting with: mmc");
+	ut_assert_nextline("Hunting with: virtio");
 	ut_assert_console_end();
 
-	ut_asserteq(BIT(HUNTER_MMC) | BIT(HUNTER_SIMPLE_BUS),
-		    std->hunters_used);
+	ut_asserteq(BIT(HUNTER_MMC) | BIT(HUNTER_SIMPLE_BUS) |
+		    BIT(HUNTER_VIRTIO), std->hunters_used);
 
 	ut_assertok(bootdev_next_prio(&iter, &dev));
 	ut_asserteq_str("mmc1.bootdev", dev->name);
@@ -765,7 +766,6 @@ static int bootdev_test_next_prio(struct unit_test_state *uts)
 	 * this scans all bootdevs of priority BOOTDEVP_4_SCAN_FAST before it
 	 * starts looking at the devices, so we se virtio as well
 	 */
-	ut_assert_nextline("Hunting with: virtio");
 	ut_assert_nextlinen("SF: Detected m25p16");
 
 	ut_assertok(bootdev_next_prio(&iter, &dev));
