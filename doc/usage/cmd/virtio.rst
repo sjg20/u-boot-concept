@@ -13,6 +13,7 @@ Synopsis
 
     virtio scan
     virtio info
+    virtio list
     virtio device
     virtio part
     virtio read <addr> <blk#> <cnt>
@@ -47,6 +48,12 @@ virtio info
 
 This lists the available block devices (only), including the name, type and
 capacity.
+
+virtio list
+~~~~~~~~~~~
+
+This shows a list of QEMU devices along with U-Boot each attached to each. Note
+that QEMU devices that U-Boot doesn't support will not be assigned a driver.
 
 virtio device
 ~~~~~~~~~~~~~
@@ -146,6 +153,42 @@ warning indicates that device 1 does not have a valid filesystem.
     efi           0  [   ]   EFI block driver      |-- efi
     simple_bus    0  [   ]   cpu_bus               `-- cpus
     cpu           0  [   ]   cpu_qemu                  `-- cpu@0
+    =>
+
+This shows listing QEMU devices before and after scanning. Note that devices
+which show '(none)' in the Driver column are not supported by U-Boot.
+
+::
+
+    => virtio list
+    Name                  Type            Driver
+    --------------------  --------------  ---------------
+    virtio-pci.m#0         0: (unknown)   (none)
+    virtio-pci.m#1         0: (unknown)   (none)
+    virtio-pci.m#2         0: (unknown)   (none)
+    virtio-pci.m#3         0: (unknown)   (none)
+    virtio-pci.m#4         0: (unknown)   (none)
+    virtio-pci.m#5         0: (unknown)   (none)
+    virtio-pci.m#6         0: (unknown)   (none)
+    virtio-pci.m#7         0: (unknown)   (none)
+    virtio-pci.m#8         0: (unknown)   (none)
+    virtio-pci.m#9         0: (unknown)   (none)
+    virtio-pci.m#10        0: (unknown)   (none)
+    => virtio scan
+    => virtio list
+    Name                  Type            Driver
+    --------------------  --------------  ---------------
+    virtio-pci.m#0         5: balloon     (none)
+    virtio-pci.m#1         4: rng         (none)
+    virtio-pci.m#2        12: input-host  (none)
+    virtio-pci.m#3        12: input-host  (none)
+    virtio-pci.m#4        13: vsock       (none)
+    virtio-pci.m#5         3: serial      (none)
+    virtio-pci.m#6         8: scsi        virtio-scsi#6
+    virtio-pci.m#7         9: 9p          (none)
+    virtio-pci.m#8        1a: fs          virtio-fs#8
+    virtio-pci.m#9        10: gpu         (none)
+    virtio-pci.m#10        1: net         virtio-net#a
     =>
 
 This shows reading and displaying the partition table for device 0::
