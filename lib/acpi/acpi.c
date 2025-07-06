@@ -277,3 +277,28 @@ int acpi_add_table(struct acpi_ctx *ctx, void *table)
 
 	return 0;
 }
+
+void *acpi_get_end(void)
+{
+	const struct acpi_table_header *end;
+	struct acpi_rsdt *rsdt;
+	struct acpi_xsdt *xsdt;
+	int i, count;
+
+	count = setup_search(&rsdt, &xsdt);
+	if (!count)
+		return NULL;
+
+	end = xsdt ? &xsdt->header : &rsdt->header;
+	for (i = 0; i < count; i++) {
+		const struct acpi_table_header *hdr;
+
+		if (xsdt)
+			hdr = nomap_sysmem(xsdt->entry[i], 0);
+		else
+			hdr = nomap_sysmem(rsdt->entry[i], 0);
+		end = max(hdr, end);
+	}
+
+	return (void *)end + end->length;
+}

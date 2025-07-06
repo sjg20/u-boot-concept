@@ -853,3 +853,49 @@ static int dm_test_acpi_offsets(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_offsets, 0);
+
+/* Test finding the end of the ACPI tables */
+static int dm_test_acpi_get_end(struct unit_test_state *uts)
+{
+	struct acpi_ctx ctx;
+	ulong acpi_start, addr;
+	void *buf;
+	struct acpi_table_header *table1, *table2, *table3;
+	void *ptr;
+
+	/* Keep reference to original ACPI tables */
+	acpi_start = gd_acpi_start();
+
+	/* Setup new ACPI tables */
+	addr = 0;
+	buf = map_sysmem(addr, BUF_SIZE);
+	ut_assertok(setup_ctx_and_base_tables(uts, &ctx, addr));
+	table3 = dm_test_write_test_table(&ctx, 3);
+	table1 = dm_test_write_test_table(&ctx, 1);
+	table2 = dm_test_write_test_table(&ctx, 2);
+
+	ptr = acpi_get_end();
+	ut_asserteq(0x288 + 0x24, ptr - buf);
+
+	run_command("acpi list", 0);
+	ut_assert_nextline("Name              Base   Size  Detail");
+	ut_assert_nextlinen("--");
+	ut_assert_nextline("RSDP                 0     24  v02 U-BOOT");
+	ut_assert_nextline(
+		"RSDT                30     30  v01 U-BOOT U-BOOTBL 20250101 INTL 0");
+	ut_assert_nextline(
+		"XSDT                e0     3c  v01 U-BOOT U-BOOTBL 20250101 INTL 0");
+	ut_assert_nextline(
+		"TST3               240     24  v00 U-BOOT U-BOOTBL 20250101 INTL 0");
+	ut_assert_nextline(
+		"TST1               264     24  v00 U-BOOT U-BOOTBL 20250101 INTL 0");
+	ut_assert_nextline(
+		"TST2               288     24  v00 U-BOOT U-BOOTBL 20250101 INTL 0");
+
+	/* Restore previous ACPI tables */
+	gd_set_acpi_start(acpi_start);
+	unmap_sysmem(buf);
+
+	return 0;
+}
+DM_TEST(dm_test_acpi_get_end, 0);

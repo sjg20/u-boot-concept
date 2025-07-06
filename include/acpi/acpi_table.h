@@ -1288,6 +1288,16 @@ struct acpi_table_header *acpi_find_table(const char *sig);
  */
 void acpi_update_checksum(struct acpi_table_header *header);
 
+/**
+ * acpi_get_end() - Find the first place where an ACPI table can be added
+ *
+ * Searches for the last ACPI table in memory and returns the address
+ * immediately after it, where a new table coule added
+ *
+ * Return: Address at the end of all tables
+ */
+void *acpi_get_end(void);
+
 #endif /* !__ACPI__*/
 
 #include <asm/acpi_table.h>
