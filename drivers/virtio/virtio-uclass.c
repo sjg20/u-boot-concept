@@ -202,6 +202,29 @@ int virtio_init(void)
 	return uclass_probe_all(UCLASS_VIRTIO);
 }
 
+void virtio_list(void)
+{
+	struct udevice *dev;
+	struct uclass *uc;
+
+	printf("%-20s  %-14s  %s\n", "Name", "Type", "Driver");
+	printf("--------------------  --------------  ---------------\n");
+	uclass_id_foreach_dev(UCLASS_VIRTIO, dev, uc) {
+		struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
+		const char *typename = NULL;	/* skip the 'virtio-' prefix */
+		struct udevice *child;
+
+		if (uc_priv->device < VIRTIO_ID_MAX_NUM)
+			typename = virtio_drv_name[uc_priv->device];
+
+		device_find_first_child(dev, &child);
+
+		printf("%-21.21s %2x: %-11.11s %s\n", dev->name,
+		       uc_priv->device, typename ? typename + 7 : "(unknown)",
+		       child ? child->name : "(none)");
+	}
+}
+
 static int virtio_uclass_pre_probe(struct udevice *udev)
 {
 	struct dm_virtio_ops *ops;

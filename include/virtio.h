@@ -723,4 +723,9 @@ static inline void virtio_cwrite64(struct udevice *vdev,
 		_r;							\
 	})
 
+/**
+ * virtio_list() - list the available virtio devices and their status
+ */
+void virtio_list(void);
+
 #endif /* __VIRTIO_H__ */
