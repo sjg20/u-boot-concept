@@ -79,7 +79,7 @@ int qfw_register(struct udevice *dev)
 	if (be32_to_cpu(qemu) != QEMU_FW_CFG_SIGNATURE)
 		return -ENODEV;
 
-	qfw_read_entry_io(qdev, FW_CFG_ID, 1, &dma_enabled);
+	qfw_read_entry_io(qdev, FW_CFG_ID, sizeof(dma_enabled), &dma_enabled);
 	if (dma_enabled & FW_CFG_DMA_ENABLED)
 		qdev->dma_present = true;
 
