@@ -27,11 +27,24 @@
 #include <linux/bug.h>
 #include <linux/typecheck.h>
 
-#define VIRTIO_NET_DRV_NAME	"virtio-net"
-#define VIRTIO_BLK_DRV_NAME	"virtio-blk"
-#define VIRTIO_RNG_DRV_NAME	"virtio-rng"
-#define VIRTIO_FS_DRV_NAME	"virtio-fs"
-#define VIRTIO_SCSI_DRV_NAME	"virtio-scsi"
+#define VIRTIO_NET_DRV_NAME		"virtio-net"
+#define VIRTIO_BLK_DRV_NAME		"virtio-blk"
+#define VIRTIO_CONSOLE_DRV_NAME		"virtio-serial"
+#define VIRTIO_RNG_DRV_NAME		"virtio-rng"
+#define VIRTIO_BALLOON_DRV_NAME		"virtio-balloon"
+#define VIRTIO_IOMEM_DRV_NAME		"virtio-iomem"
+#define VIRTIO_SCSI_DRV_NAME		"virtio-scsi"
+#define VIRTIO_9P_DRV_NAME		"virtio-9p"
+#define VIRTIO_GPU_DRV_NAME		"virtio-gpu"
+#define VIRTIO_INPUT_DRV_NAME		"virtio-input-host"
+#define VIRTIO_VSOCK_DRV_NAME		"virtio-vsock"
+#define VIRTIO_CRYPTO_DRV_NAME		"virtio-crypto"
+#define VIRTIO_I2C_DRV_NAME		"virtio-i2c"
+#define VIRTIO_FS_DRV_NAME		"virtio-fs"
+#define VIRTIO_PMEM_DRV_NAME		"virtio-pmem"
+#define VIRTIO_VIDEO_ENC_DRV_NAME	"virtio-videnc"
+#define VIRTIO_VIDEO_DEC_DRV_NAME	"virtio-viddec"
+#define VIRTIO_SND_DRV_NAME		"virtio-sound"
 
 /* Status byte for guest to report progress, and synchronize features */
 
