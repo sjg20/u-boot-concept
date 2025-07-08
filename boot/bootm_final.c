@@ -6,7 +6,9 @@
  */
 
 #include <bootm.h>
+#include <dm/root.h>
 
 void bootm_final(enum bootm_final_t flags)
 {
+	dm_remove_devices_active();
 }
