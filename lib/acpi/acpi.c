@@ -121,6 +121,11 @@ struct acpi_table_header *acpi_find_table(const char *sig)
 		return NULL;
 	count = ret;
 
+	if (!strcmp("RSDT", sig))
+		return &rsdt->header;
+	if (!strcmp("XSDT", sig))
+		return &xsdt->header;
+
 	for (i = 0; i < count; i++) {
 		struct acpi_table_header *hdr;
 
@@ -203,6 +208,11 @@ int acpi_add_table(struct acpi_ctx *ctx, void *table)
 	int i, entries_num;
 	struct acpi_rsdt *rsdt;
 	struct acpi_xsdt *xsdt;
+
+	if (!ctx->rsdt && !ctx->xsdt) {
+		log_err("ACPI: Error: no RSDT / XSDT\n");
+		return -EINVAL;
+	}
 
 	/* On legacy x86 platforms the RSDT is mandatory while the XSDT is not.
 	 * On other platforms there might be no memory below 4GiB, thus RSDT is NULL.

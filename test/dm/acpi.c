@@ -809,6 +809,9 @@ static int dm_test_acpi_find_table(struct unit_test_state *uts)
 	ut_asserteq_ptr(table3, table);
 	ut_asserteq_strn("TST3", table->signature);
 
+	table = acpi_find_table("RSDT");
+	ut_asserteq_ptr(nomap_sysmem(rsdt, 0), table);
+
 	/* Find with XSDT only */
 	rsdp->rsdt_address = 0;
 	acpi_udpate_rsdp_checksum(rsdp);
