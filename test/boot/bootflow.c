@@ -1338,7 +1338,8 @@ static int bootflow_efi(struct unit_test_state *uts)
 	ut_assert_nextline_empty();
 	ut_assert_nextline("Starting kernel ...");
 	ut_assert_nextline_empty();
-	ut_assert_nextline("Exiting test app");
+	ut_assert_nextlinen("Timer summary in microseconds");
+	ut_assert_skip_to_line("Exiting test app");
 	ut_assert_nextline("Boot failed (err=-14)");
 
 	ut_assert_console_end();

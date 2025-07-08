@@ -6,11 +6,17 @@
  */
 
 #include <bootm.h>
+#include <bootstage.h>
 #include <dm/root.h>
 
 void bootm_final(enum bootm_final_t flags)
 {
 	printf("\nStarting kernel ...\n\n");
+
+	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_HANDOFF, "start_kernel");
+
+	if (IS_ENABLED(CONFIG_BOOTSTAGE_REPORT))
+		bootstage_report();
 
 	dm_remove_devices_active();
 }
