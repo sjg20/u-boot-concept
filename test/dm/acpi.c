@@ -783,9 +783,8 @@ static int dm_test_acpi_find_table(struct unit_test_state *uts)
 	acpi_start = gd_acpi_start();
 
 	/* Setup new ACPI tables */
-	buf = memalign(16, BUF_SIZE);
-	ut_assertnonnull(buf);
-	addr = map_to_sysmem(buf);
+	addr = 0x1000;
+	buf = map_sysmem(addr, BUF_SIZE);
 	ut_assertok(setup_ctx_and_base_tables(uts, &ctx, addr));
 	table3 = dm_test_write_test_table(&ctx, 3);
 	table1 = dm_test_write_test_table(&ctx, 1);
@@ -837,7 +836,6 @@ static int dm_test_acpi_find_table(struct unit_test_state *uts)
 	/* Restore previous ACPI tables */
 	gd_set_acpi_start(acpi_start);
 	unmap_sysmem(buf);
-	free(buf);
 
 	return 0;
 }
