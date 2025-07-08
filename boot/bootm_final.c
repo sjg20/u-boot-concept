@@ -19,5 +19,10 @@ void bootm_final(void)
 	bootstage_report();
 #endif
 
+	/*
+	 * Call remove function of all devices with a removal flag set.
+	 * This may be useful for last-stage operations, like cancelling
+	 * of DMA operation or releasing device internal buffers.
+	 */
 	dm_remove_devices_active();
 }
