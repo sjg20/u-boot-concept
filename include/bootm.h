@@ -17,6 +17,16 @@ struct cmd_tbl;
 #define BOOTM_ERR_UNIMPLEMENTED	(-3)
 
 /**
+ * enum bootm_final_t - flags to control bootm_final()
+ *
+ * @BOOTM_FINAL_FAKE: true to do everything except actually boot; it then
+ *	returns to the caller
+ */
+enum bootm_final_t {
+	BOOTM_FINAL_FAKE	= BIT(0),
+};
+
+/**
  * struct bootm_info() - information used when processing images to boot
  *
  * These mirror the first three arguments of the bootm command. They are
@@ -374,5 +384,12 @@ void zimage_dump(struct bootm_info *bmi, bool show_cmdline);
  * @cmdline: Command line to set
  */
 int bootm_boot_start(ulong addr, const char *cmdline);
+
+/**
+ * bootm_final() - Announce and do cleanup before boot
+ *
+ * @flags: Flags to control what this function does
+ */
+void bootm_final(enum bootm_final_t flags);
 
 #endif
