@@ -5,6 +5,8 @@
  * Copyright 2023 Google LLC
  */
 
+#define LOG_CATEGORY	LOGC_ACPI
+
 #include <mapmem.h>
 #include <tables_csum.h>
 #include <acpi/acpi_table.h>
@@ -18,6 +20,25 @@ void acpi_update_checksum(struct acpi_table_header *header)
 	header->checksum = table_compute_checksum(header, header->length);
 }
 
+static bool acpi_valid_rsdp(struct acpi_rsdp *rsdp)
+{
+	if (strncmp((char *)rsdp, RSDP_SIG, sizeof(RSDP_SIG) - 1) != 0)
+		return false;
+
+	debug("Looking on %p for valid checksum\n", rsdp);
+
+	if (table_compute_checksum((void *)rsdp, 20) != 0)
+		return false;
+	debug("acpi rsdp checksum 1 passed\n");
+
+	if (rsdp->revision > 1 &&
+	    table_compute_checksum((void *)rsdp, rsdp->length))
+		return false;
+	debug("acpi rsdp checksum 2 passed\n");
+
+	return true;
+}
+
 struct acpi_table_header *acpi_find_table(const char *sig)
 {
 	struct acpi_rsdp *rsdp;
@@ -26,8 +47,9 @@ struct acpi_table_header *acpi_find_table(const char *sig)
 	int len, i, count;
 
 	rsdp = map_sysmem(gd_acpi_start(), 0);
-	if (!rsdp)
+	if (!rsdp || !acpi_valid_rsdp(rsdp))
 		return NULL;
+
 	if (rsdp->xsdt_address) {
 		xsdt = nomap_sysmem(rsdp->xsdt_address, 0);
 		len = xsdt->header.length - sizeof(xsdt->header);
@@ -39,6 +61,7 @@ struct acpi_table_header *acpi_find_table(const char *sig)
 		len = rsdt->header.length - sizeof(rsdt->header);
 		count = len / sizeof(u32);
 	}
+
 	for (i = 0; i < count; i++) {
 		struct acpi_table_header *hdr;
 

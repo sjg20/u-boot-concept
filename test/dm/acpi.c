@@ -812,6 +812,8 @@ static int dm_test_acpi_find_table(struct unit_test_state *uts)
 
 	/* Find with XSDT only */
 	rsdp->rsdt_address = 0;
+	acpi_udpate_rsdp_checksum(rsdp);
+
 	table = acpi_find_table("TST1");
 	ut_asserteq_ptr(table1, table);
 	table = acpi_find_table("TST2");
@@ -822,6 +824,8 @@ static int dm_test_acpi_find_table(struct unit_test_state *uts)
 
 	/* Find with RSDT only */
 	rsdp->xsdt_address = 0;
+	acpi_udpate_rsdp_checksum(rsdp);
+
 	table = acpi_find_table("TST1");
 	ut_asserteq_ptr(table1, table);
 	table = acpi_find_table("TST2");
