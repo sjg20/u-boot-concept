@@ -1096,6 +1096,13 @@ void acpi_write_rsdp(struct acpi_rsdp *rsdp, struct acpi_rsdt *rsdt,
 		     struct acpi_xsdt *xsdt);
 
 /**
+ * acpi_udpate_rsdp_checksum() - Set up the checksum for the RSDP  table
+ *
+ * @rsdp: Pointer to RSDP
+ */
+void acpi_udpate_rsdp_checksum(struct acpi_rsdp *rsdp);
+
+/**
  * acpi_fill_header() - Set up a table header
  *
  * @header: Pointer to header to set up
