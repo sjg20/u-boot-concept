@@ -11,5 +11,7 @@
 
 void bootm_final(void)
 {
+	printf("\nStarting kernel ...\n\n");
+
 	dm_remove_devices_active();
 }
