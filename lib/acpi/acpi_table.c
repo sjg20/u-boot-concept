@@ -699,3 +699,14 @@ static int alloc_write_acpi_tables(void)
 }
 
 EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, alloc_write_acpi_tables);
+
+#ifdef CONFIG_EFI_LOADER
+static int acpi_create_bgrt(struct acpi_ctx *ctx,
+			    const struct acpi_writer *entry)
+{
+	acpi_write_bgrt(ctx);
+
+	return 0;
+}
+ACPI_WRITER(6bgrt, "BGRT", acpi_create_bgrt, 0);
+#endif

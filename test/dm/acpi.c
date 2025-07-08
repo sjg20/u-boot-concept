@@ -6,8 +6,10 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#include <bloblist.h>
 #include <console.h>
 #include <dm.h>
+#include <efi_log.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <tables_csum.h>
@@ -899,3 +901,63 @@ static int dm_test_acpi_get_end(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_get_end, 0);
+
+/* Test generating the BGRT */
+static int dm_test_acpi_bgrt(struct unit_test_state *uts)
+{
+	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
+	struct acpi_table_header *table;
+	struct efil_rec_hdr *rec_hdr;
+	struct acpi_ctx ctx;
+	ulong acpi_start, addr;
+	struct acpi_bgrt *bgrt;
+	void *buf;
+
+	/* Keep reference to original ACPI tables */
+	acpi_start = gd_acpi_start();
+
+	/* Setup new ACPI tables */
+	addr = 0;
+	buf = map_sysmem(addr, BUF_SIZE);
+	ut_assertok(setup_ctx_and_base_tables(uts, &ctx, addr));
+
+	if (IS_ENABLED(CONFIG_EFI_LOG))
+		ut_assertok(efi_log_reset());
+
+	ut_assertok(acpi_write_bgrt(&ctx));
+	table = acpi_find_table("BGRT");
+	ut_assertnonnull(table);
+	bgrt = (struct acpi_bgrt *)table;
+
+	ut_asserteq(sizeof(*bgrt), table->length);
+	ut_asserteq_strn("BGRT", table->signature);
+	ut_asserteq(1, bgrt->version);
+	ut_asserteq(1, bgrt->status);
+	ut_asserteq(0, bgrt->image_type);
+	ut_asserteq(0, bgrt->offset_x);
+	ut_asserteq(0, bgrt->offset_y);
+
+	if (!IS_ENABLED(CONFIG_EFI_LOG))
+		return 0;
+
+	/* check the BGRT has been allocated in the EFI pool */
+	for (rec_hdr = (void *)hdr + sizeof(*hdr);
+	     (void *)rec_hdr - (void *)hdr < hdr->upto;
+	     rec_hdr = (void *)rec_hdr + rec_hdr->size) {
+		void *start = (void *)rec_hdr + sizeof(struct efil_rec_hdr);
+
+		switch (rec_hdr->tag) {
+		case EFILT_ALLOCATE_POOL: {
+			struct efil_allocate_pool *rec = start;
+
+			ut_asserteq(bgrt->addr, nomap_to_sysmem(rec->e_buffer));
+			break;
+		}
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+DM_TEST(dm_test_acpi_bgrt, UTF_SCAN_FDT);
