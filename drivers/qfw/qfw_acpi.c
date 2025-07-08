@@ -242,6 +242,20 @@ out:
 
 	gd_set_acpi_start(acpi_get_rsdp_addr());
 
+	ctx->rsdt = (struct acpi_rsdt *)acpi_find_table("RSDT");
+	ctx->xsdt = (struct acpi_xsdt *)acpi_find_table("XSDT");
+
+	/*
+	 * leave space for four 64-bit pointers so we can add up to four more
+	 * tables
+	 */
+	ctx->current = acpi_get_end() + 0x20;
+	ret = acpi_write_bgrt(ctx);
+	if (ret) {
+		printf("error: failed to write BGRT (err=%dE)\n", ret);
+		return addr;
+	}
+
 	return addr;
 }
 
