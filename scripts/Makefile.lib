@@ -478,21 +478,21 @@ $(obj)/%.S: $(src)/%.ttf
 # ---------------------------------------------------------------------------
 
 # Generate an assembly file to wrap the splash data
-quiet_cmd_S_splash= TTF     $@
+quiet_cmd_S_splash= SPLASH  $@
 # Modified for U-Boot
 cmd_S_splash=						\
 (							\
 	echo '.section .rodata.splash.init,"a"';		\
 	echo '.balign 16';				\
-	echo '.global __splash_$(*F)_begin';		\
-	echo '__splash_$(*F)_begin:';			\
+	echo '.global __splash_$(*F)_logo_begin';		\
+	echo '__splash_$(*F)_logo_begin:';			\
 	echo '.incbin "$<" ';				\
-	echo '__splash_$(*F)_end:';			\
-	echo '.global __splash_$(*F)_end';			\
+	echo '__splash_$(*F)_logo_end:';			\
+	echo '.global __splash_$(*F)_logo_end';			\
 	echo '.balign 16';				\
 ) > $@
 
-$(obj)/%.S: $(src)/%.bmp
+$(obj)/%_logo.S: $(src)/%_logo.bmp
 	$(call cmd,S_splash)
 
 # EFI applications
