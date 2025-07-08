@@ -6,7 +6,10 @@
  */
 
 #include <bootm.h>
+#include <dm.h>
+#include <dm/device-internal.h>
 
 void bootm_final(void)
 {
+	dm_remove_devices_active();
 }
