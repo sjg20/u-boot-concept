@@ -1335,6 +1335,9 @@ static int bootflow_efi(struct unit_test_state *uts)
 	/* TODO: Why the \r ? */
 	ut_assert_nextline("U-Boot test app for EFI_LOADER\r");
 	ut_assert_nextline("Exiting boot services");
+	ut_assert_nextline_empty();
+	ut_assert_nextline("Starting kernel ...");
+	ut_assert_nextline_empty();
 	ut_assert_nextline("Exiting test app");
 	ut_assert_nextline("Boot failed (err=-14)");
 

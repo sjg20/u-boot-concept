@@ -10,5 +10,7 @@
 
 void bootm_final(enum bootm_final_t flags)
 {
+	printf("\nStarting kernel ...\n\n");
+
 	dm_remove_devices_active();
 }
