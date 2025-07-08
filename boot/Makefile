@@ -12,7 +12,7 @@ obj-$(CONFIG_PXE_UTILS) += pxe_utils.o
 
 endif
 
-obj-y += image.o image-board.o
+obj-y += image.o image-board.o bootm_final.o
 
 obj-$(CONFIG_ANDROID_AB) += android_ab.o
 obj-$(CONFIG_ANDROID_BOOT_IMAGE) += image-android.o image-android-dt.o

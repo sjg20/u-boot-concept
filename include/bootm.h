@@ -375,4 +375,9 @@ void zimage_dump(struct bootm_info *bmi, bool show_cmdline);
  */
 int bootm_boot_start(ulong addr, const char *cmdline);
 
+/**
+ * bootm_final() - Announce and do cleanup before boot
+ */
+void bootm_final(void);
+
 #endif
