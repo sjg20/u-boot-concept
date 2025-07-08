@@ -11,6 +11,8 @@ obj-$(CONFIG_$(PHASE_)ACPIGEN) += acpi_dp.o
 obj-$(CONFIG_$(PHASE_)ACPIGEN) += acpi_table.o
 obj-y += acpi_writer.o
 
+obj-y += bgrt_image.o
+
 # With QEMU the ACPI tables come from there, not from U-Boot
 ifndef CONFIG_QFW_ACPI
 obj-y += base.o
