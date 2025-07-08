@@ -239,11 +239,6 @@ out:
 		printf("error: no RSDP found\n");
 		return addr;
 	}
-	struct acpi_rsdp *rsdp = ctx->rsdp;
-
-	rsdp->length = sizeof(*rsdp);
-	rsdp->xsdt_address = 0;
-	rsdp->ext_checksum = table_compute_checksum((u8 *)rsdp, sizeof(*rsdp));
 
 	gd_set_acpi_start(acpi_get_rsdp_addr());
 
