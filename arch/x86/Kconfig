@@ -59,7 +59,7 @@ config SPL_X86_64
 
 choice
 	prompt "Mainboard vendor"
-	default VENDOR_EMULATION
+	default ARCH_QEMU_X86
 
 config VENDOR_ADVANTECH
 	bool "advantech"
@@ -77,8 +77,18 @@ config ARCH_EFI_X86
 	bool "efi"
 	select ARCH_EFI
 
-config VENDOR_EMULATION
+config ARCH_QEMU_X86
 	bool "emulation"
+	select MACH_QEMU
+	select ARCH_EARLY_INIT_R
+	imply AHCI_PCI
+	imply E1000
+	imply SCSI
+	imply SCSI_AHCI
+	imply SYS_NS16550
+	imply USB
+	imply USB_EHCI_HCD
+	imply VIDEO_VESA
 
 config VENDOR_GOOGLE
 	bool "Google"
@@ -109,7 +119,6 @@ source "board/advantech/Kconfig"
 source "board/congatec/Kconfig"
 source "board/coreboot/Kconfig"
 source "board/dfi/Kconfig"
-source "board/emulation/Kconfig"
 source "board/google/Kconfig"
 source "board/intel/Kconfig"
 

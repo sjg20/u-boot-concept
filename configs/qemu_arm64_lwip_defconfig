@@ -1,7 +1,7 @@
 #include <configs/qemu_arm64_defconfig>
 
 CONFIG_ARM=y
-CONFIG_ARCH_QEMU=y
+CONFIG_ARCH_QEMU_ARM=y
 
 CONFIG_NET_LWIP=y
 CONFIG_CMD_DNS=y

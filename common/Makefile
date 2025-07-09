@@ -99,5 +99,3 @@ obj-$(CONFIG_$(PHASE_)YMODEM_SUPPORT) += xyzModem.o
 obj-$(CONFIG_$(PHASE_)AVB_VERIFY) += avb_verify.o
 obj-$(CONFIG_$(PHASE_)STACKPROTECTOR) += stackprot.o
 obj-$(CONFIG_SCP03) += scp03.o
-
-obj-$(CONFIG_QFW) += qfw.o

@@ -307,7 +307,7 @@ config X86
 	imply PHYSMEM
 	imply RTC_MC146818
 	imply ACPI
-	imply ACPIGEN if !QEMU && !EFI_APP
+	imply ACPIGEN if !ARCH_QEMU_X86 && !EFI_APP
 	imply SYSINFO if GENERATE_SMBIOS_TABLE
 	imply SYSINFO_SMBIOS if GENERATE_SMBIOS_TABLE
 	imply TIMESTAMP
@@ -567,3 +567,11 @@ config SYS_LITTLE_ENDIAN
 	bool "Little endian"
 	depends on SUPPORT_LITTLE_ENDIAN
 endchoice
+
+config MACH_QEMU
+	bool
+	help
+	  This should enabled for all QEMU targets, on all architectures. It
+	  controls features which are particular to running U-Boot on QEMU.
+
+source "board/emulation/Kconfig"
