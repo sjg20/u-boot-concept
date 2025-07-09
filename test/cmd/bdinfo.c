@@ -216,7 +216,7 @@ static int bdinfo_test_all(struct unit_test_state *uts)
 	}
 
 	if (IS_ENABLED(CONFIG_X86))
-		ut_check_skip_to_linen(uts, " high end   =");
+		ut_check_skip_to_linen(uts, "tsc         =");
 
 	return 0;
 }
