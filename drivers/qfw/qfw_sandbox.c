@@ -31,8 +31,8 @@ static void qfw_sandbox_read_entry_io(struct udevice *dev, u16 entry, u32 size,
 		break;
 	case FW_CFG_ID:
 		/* Advertise DMA support */
-		if (size == 1)
-			*((u8 *)address) = FW_CFG_DMA_ENABLED;
+		if (size == 4)
+			*((u32 *)address) = FW_CFG_DMA_ENABLED;
 		break;
 	default:
 		debug("%s got unsupported entry 0x%x\n", __func__, entry);

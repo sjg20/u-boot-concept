@@ -4,6 +4,8 @@
  * Copyright (C) 2018, Bin Meng <bmeng.cn@gmail.com>
  */
 
+#define LOG_CATEGORY	UCLASS_VIRTIO
+
 #include <dm.h>
 #include <net.h>
 #include <virtio_types.h>

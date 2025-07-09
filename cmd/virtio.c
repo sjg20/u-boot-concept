@@ -34,6 +34,10 @@ static int do_virtio(struct cmd_tbl *cmdtp, int flag, int argc,
 		}
 
 		return CMD_RET_SUCCESS;
+	} else if (argc == 2 && !strcmp(argv[1], "list")) {
+		virtio_list();
+
+		return 0;
 	}
 
 	return blk_common_cmd(argc, argv, UCLASS_VIRTIO, &virtio_curr_dev);
@@ -43,6 +47,7 @@ U_BOOT_CMD(
 	virtio, 8, 1, do_virtio,
 	"virtio block devices sub-system",
 	"scan - initialize virtio bus\n"
+	"list - list virtio devices\n"
 	"virtio info - show all available virtio block devices\n"
 	"virtio device [dev] - show or set current virtio block device\n"
 	"virtio part [dev] - print partition table of one or all virtio block devices\n"

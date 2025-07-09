@@ -14,6 +14,53 @@ struct abuf;
  * List of firmware configuration item selectors. The official source of truth
  * for these is the QEMU source itself; see
  * https://github.com/qemu/qemu/blob/master/hw/nvram/fw_cfg.c
+ *
+ * All fields are 32-bits and little-endian unless otherwise noted
+ *
+ * @FW_CFG_SIGNATURE: Contains 'QEMU' signature (QEMU_FW_CFG_SIGNATURE)
+ * @FW_CFG_ID: Indicates whether DMA is available (FW_CFG_DMA_ENABLED)
+ * @FW_CFG_UUID: QEMU UUID (16 bytes) as provided by the -uuid command-line
+ *	argument to QEMU (all zeros if not provided)
+ * @FW_CFG_RAM_SIZE: RAM size (64-bit)
+ * @FW_CFG_NOGRAPHIC: 0 if no graphics, 1 if graphics; not used on x86 or ARM
+ * (16-bit)
+ * @FW_CFG_NB_CPUS: limit to the APIC ID values SeaBIOS may see (16-bit)
+ * @FW_CFG_KERNEL_ADDR: Expected load-address for the kernel, if any. This is
+ *	just a hint as to where to copy it
+ * @FW_CFG_KERNEL_SIZE: Kernel size in bytes
+ * @FW_CFG_KERNEL_CMDLINE: Address of command line (only used by PowerPC and
+ *	Sparc)
+ * @FW_CFG_INITRD_ADDR: Expected load-address for the ramdisk, if any. This is
+ *	just a hint as to where to copy it
+ * @FW_CFG_INITRD_SIZE: Ramdisk size in bytes
+ * @FW_CFG_BOOT_DEVICE: Boot device selection (only used by PowerPC and Sparc)
+ * @FW_CFG_NUMA: Non-Uniform Memory Access information. This is a set of 64-bit
+ *	values: number of NUMA records, apic_id_limit, then the memory address
+ *	for each record
+ * @FW_CFG_BOOT_MENU: Menu selection, if the architecture has a boot menu (not
+ *	used on x86 / ARM)
+ * @FW_CFG_MAX_CPUS: Maximum number of CPUs (ACPI limit on x86)
+ * @FW_CFG_KERNEL_ENTRY: Kernel entry-point provided by Xen
+ * @FW_CFG_KERNEL_DATA: Kernel contents (@FW_CFG_KERNEL_SIZE bytes)
+ * @FW_CFG_INITRD_DATA: Ramdisk contents (@FW_CFG_INITRD_SIZE bytes)
+ * @FW_CFG_CMDLINE_ADDR: Expected address for the cmdline, if any. This is just
+ *	a hint as to where to copy it
+ * @FW_CFG_CMDLINE_SIZE: Length of command line, including nul terminator. If
+ *	there is no kernel provided, this is 0
+ * @FW_CFG_CMDLINE_DATA: Command-line contents, if @FW_CFG_CMDLINE_SIZE is
+ *	non-zero
+ * @FW_CFG_SETUP_ADDR: Expected address for the x86 setup block, if any. This is
+ *	just a hint as to where to copy it
+ * @FW_CFG_SETUP_SIZE: x86 setup size in bytes
+ * @FW_CFG_SETUP_DATA: x86 setup conntents (@FW_CFG_SETUP_SIZE bytes)
+ * @FW_CFG_FILE_DIR: Number of files in the directory (big endian)
+ * @FW_CFG_FILE_FIRST: Information about the first file (64 bytes, see
+ *	struct fw_cfg_file)
+ *
+ * @FW_CFG_WRITE_CHANNEL: Appears to be unused
+ * @FW_CFG_ARCH_LOCAL: Architecture-specific things
+ * @FW_CFG_INVALID * @ * @= 0xffff,
+ * @FW_CFG_INVALID: Indicates that the next entry should be read
  */
 enum fw_cfg_selector {
 	FW_CFG_SIGNATURE	= 0x00,
@@ -46,12 +93,23 @@ enum fw_cfg_selector {
 	FW_CFG_WRITE_CHANNEL	= 0x4000,
 	FW_CFG_ARCH_LOCAL	= 0x8000,
 	FW_CFG_INVALID		= 0xffff,
+
+	FW_CFG_ACPI_TABLES = FW_CFG_ARCH_LOCAL,
+	FW_CFG_SMBIOS_ENTRIES,
+	FW_CFG_IRQ0_OVERRIDE,
+	FW_CFG_HPET
 };
 
 enum {
 	BIOS_LINKER_LOADER_COMMAND_ALLOCATE	= 0x1,
 	BIOS_LINKER_LOADER_COMMAND_ADD_POINTER  = 0x2,
 	BIOS_LINKER_LOADER_COMMAND_ADD_CHECKSUM = 0x3,
+
+	/*
+	 * this is only used by ACPI Generic Hardware Error Source (GHES) tables
+	 * which U-Boot does not support
+	 */
+	BIOS_LINKER_LOADER_COMMAND_WRITE_POINTER = 0x4,
 };
 
 enum {
@@ -365,5 +423,53 @@ void qemu_fwcfg_read_files(struct udevice *qfw_dev, const struct abuf *setup,
  */
 int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 			    ulong initrd_addr);
+
+/**
+ * qfw_get_table_loader() - Obtain the table-loader contents
+ *
+ * Reads the etc/table-loader file from QFW and returns its contents, a list of
+ * struct bios_linker_entry records *
+ *
+ * Prints a message on failure
+ *
+ * @dev: UCLASS_QFW device
+ * @loader: returns abuf holding the data, alloced by this function. The caller
+ * must call abuf_uninit()
+ * Return 0 if OK, -ENOMEM if out of memory, -EINVAL if the tables are invalid,
+ * -ve on error
+ */
+int qfw_get_table_loader(struct udevice *dev, struct abuf *loader);
+
+/**
+ * qfw_load_file() - Read a file into memory
+ *
+ * Prints a message on failure
+ *
+ * @dev: UCLASS_QFW device
+ * @fname: Filename to load
+ * @addr: Address to load to
+ * Return: 0 on success, -ENOENT if filename not found, -EINVAL if the tables
+ * are invalid,-ve on error
+ */
+int qfw_load_file(struct udevice *dev, const char *fname, ulong addr);
+
+/*
+ * qfw_get_file() - Read a file from qfw
+ *
+ * @dev: UCLASS_QFW device
+ * @fname: Filename to load
+ * @loader: Returns abuf containing the file, allocated by this function
+ * Return 0 if OK, -ENOMEM if out of memory, -EINVAL if the tables are invalid,
+ * -ve on error
+ */
+int qfw_get_file(struct udevice *dev, const char *fname, struct abuf *loader);
+
+/**
+ * cmd_qfw_e820() - Execute the 'qfw e820' command for x86
+ *
+ * @dev: UCLASS_QFW device
+ * Return: 0 on success (always), 1 if there is no E820 information
+ */
+int cmd_qfw_e820(struct udevice *dev);
 
 #endif

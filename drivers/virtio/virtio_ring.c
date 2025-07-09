@@ -6,6 +6,8 @@
  * virtio ring implementation
  */
 
+#define LOG_CATEGORY	UCLASS_VIRTIO
+
 #include <bouncebuf.h>
 #include <dm.h>
 #include <log.h>

@@ -32,6 +32,8 @@ from buildman import bsettings
 from buildman import kconfiglib
 from buildman import toolchain
 from u_boot_pylib import terminal
+from u_boot_pylib.terminal import tprint
+from u_boot_pylib import tools
 
 SHOW_GNU_MAKE = 'scripts/show-gnu-make'
 SLEEP_TIME=0.03
@@ -125,23 +127,26 @@ def get_matched_defconfig(line):
         pattern = os.path.join('configs', line)
     return glob.glob(pattern) + glob.glob(pattern + '_defconfig')
 
-def get_matched_defconfigs(defconfigs_file):
-    """Get all the defconfig files that match the patterns in a file.
+def get_matched_defconfigs(defconfigs_in):
+    """Get all the defconfig files that match the patterns given.
 
     Args:
-        defconfigs_file (str): File containing a list of defconfigs to process,
-            or '-' to read the list from stdin
+        defconfigs_file (str or list of str): File containing a list of
+            defconfigs to process, or '-' to read the list from stdin, or a
+            list of defconfig names
 
     Returns:
         list of str: A list of paths to defconfig files, with no duplicates
     """
     defconfigs = []
     with ExitStack() as stack:
-        if defconfigs_file == '-':
+        if isinstance(defconfigs_in, list):
+            inf = defconfigs_in
+        elif defconfigs_in == '-':
             inf = sys.stdin
-            defconfigs_file = 'stdin'
+            defconfigs_in = 'stdin'
         else:
-            inf = stack.enter_context(open(defconfigs_file, encoding='utf-8'))
+            inf = stack.enter_context(open(defconfigs_in, encoding='utf-8'))
         for i, line in enumerate(inf):
             line = line.strip()
             if not line:
@@ -150,7 +155,7 @@ def get_matched_defconfigs(defconfigs_file):
                 line = line.split(' ')[0]  # handle 'git log' input
             matched = get_matched_defconfig(line)
             if not matched:
-                print(f"warning: {defconfigs_file}:{i + 1}: no defconfig matched '{line}'",
+                print(f"warning: {defconfigs_in}:{i + 1}: no defconfig matched '{line}'",
                       file=sys.stderr)
 
             defconfigs += matched
@@ -548,14 +553,25 @@ class Slot:
         orig_defconfig = os.path.join('configs', self.defconfig)
         new_defconfig = os.path.join(self.build_dir, 'defconfig')
         updated = not filecmp.cmp(orig_defconfig, new_defconfig)
+        success = True
 
         if updated:
-            self.log.append(
-                self.col.build(self.col.BLUE, 'defconfig updated', bright=True))
+            # Files with #include get mangled as savedefconfig doesn't know how to
+            # deal with them. Ignore them
+            success = b'#include' not in tools.read_file(orig_defconfig)
+            if success:
+                self.log.append(
+                    self.col.build(self.col.BLUE, 'defconfig updated',
+                                   bright=True))
+            else:
+                self.log.append(
+                    self.col.build(self.col.RED, 'ignored due to #include',
+                                   bright=True))
+                updated = False
 
         if not self.args.dry_run and updated:
             shutil.move(new_defconfig, orig_defconfig)
-        self.finish(True)
+        self.finish(success)
 
     def finish(self, success):
         """Display log along with progress and go to the idle state.
@@ -738,6 +754,8 @@ def move_config(args):
 
     if args.defconfigs:
         defconfigs = get_matched_defconfigs(args.defconfigs)
+    elif args.defconfiglist:
+        defconfigs = get_matched_defconfigs(args.defconfiglist)
     else:
         defconfigs = get_all_defconfigs()
 
@@ -1530,6 +1548,8 @@ doc/develop/moveconfig.rst for documentation.'''
                       help='a file containing a list of defconfigs to move, '
                       "one per line (for example 'snow_defconfig') "
                       "or '-' to read from stdin")
+    parser.add_argument('-D', '--defconfiglist', type=str, nargs='*',
+                        help='list of defconfigs to move')
     parser.add_argument('-e', '--exit-on-error', action='store_true',
                       default=False,
                       help='exit immediately on any error')
@@ -1657,7 +1677,9 @@ def move_done(progress):
     """
     col = progress.col
     if progress.failed:
-        print(col.build(col.RED, f'{progress.failure_msg}see {FAILED_LIST}', True))
+        if progress.good:
+            tprint(f'{progress.good} OK, ', newline=False, colour=col.GREEN)
+        tprint(f'{progress.failure_msg}see {FAILED_LIST}', colour=col.RED)
     else:
         # Add enough spaces to overwrite the progress indicator
         print(col.build(

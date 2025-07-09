@@ -2,6 +2,8 @@
 /*
  * Copyright (C) 2022, Ovidiu Panait <ovpanait@gmail.com>
  */
+
+#include <display_options.h>
 #include <init.h>
 #include <asm/cpuinfo.h>
 #include <asm/global_data.h>
@@ -13,12 +15,12 @@ void arch_print_bdinfo(void)
 	struct microblaze_cpuinfo *ci = gd_cpuinfo();
 
 	if (ci->icache_size) {
-		bdinfo_print_size("icache", ci->icache_size);
-		bdinfo_print_size("icache line", ci->icache_line_length);
+		lprint_size("icache", ci->icache_size);
+		lprint_size("icache line", ci->icache_line_length);
 	}
 
 	if (ci->dcache_size) {
-		bdinfo_print_size("dcache", ci->dcache_size);
-		bdinfo_print_size("dcache line", ci->dcache_line_length);
+		lprint_size("dcache", ci->dcache_size);
+		lprint_size("dcache line", ci->dcache_line_length);
 	}
 }

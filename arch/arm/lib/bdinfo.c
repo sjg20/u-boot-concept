@@ -7,6 +7,7 @@
  */
 
 #include <config.h>
+#include <display_options.h>
 #include <init.h>
 #include <asm/global_data.h>
 #include <asm/mach-types.h>
@@ -28,23 +29,22 @@ void arch_print_bdinfo(void)
 {
 	struct bd_info *bd = gd->bd;
 
-	bdinfo_print_num_l("arch_number", bd->bi_arch_number);
+	lprint_num_l("arch_number", bd->bi_arch_number);
 #ifdef CFG_SYS_MEM_RESERVE_SECURE
 	if (gd->arch.secure_ram & MEM_RESERVE_SECURE_SECURED) {
-		bdinfo_print_num_ll("Secure ram",
-				    gd->arch.secure_ram &
-				    MEM_RESERVE_SECURE_ADDR_MASK);
+		lprint_num_ll("Secure ram", gd->arch.secure_ram &
+				MEM_RESERVE_SECURE_ADDR_MASK);
 	}
 #endif
 #ifdef CONFIG_RESV_RAM
 	if (gd->arch.resv_ram)
-		bdinfo_print_num_ll("Reserved ram", gd->arch.resv_ram);
+		lprint_num_ll("Reserved ram", gd->arch.resv_ram);
 #endif
 #if !(CONFIG_IS_ENABLED(SYS_ICACHE_OFF) && CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
-	bdinfo_print_num_l("TLB addr", gd->arch.tlb_addr);
+	lprint_num_l("TLB addr", gd->arch.tlb_addr);
 #endif
-	bdinfo_print_num_l("irq_sp", gd->irq_sp);	/* irq stack pointer */
-	bdinfo_print_num_l("sp start ", gd->start_addr_sp);
+	lprint_num_l("irq_sp", gd->irq_sp);	/* irq stack pointer */
+	lprint_num_l("sp start ", gd->start_addr_sp);
 	/*
 	 * TODO: Currently only support for davinci SOC's is added.
 	 * Remove this check once all the board implement this.

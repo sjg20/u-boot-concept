@@ -101,4 +101,28 @@ char *display_options_get_banner(bool newlines, char *buf, int size);
 char *display_options_get_banner_priv(bool newlines, const char *build_tag,
 				      char *buf, int size);
 
+/* Print a numeric value (for use in arch_print_bdinfo()) */
+void lprint_num_l(const char *name, ulong value);
+void lprint_num_ll(const char *name, unsigned long long value);
+void lprint_num_32(const char *name, u32 value);
+
+/* Print a string value (for use in arch_print_bdinfo()) */
+void lprint_str(const char *name, const char *str);
+
+/* Print a clock speed in MHz */
+void lprint_mhz(const char *name, unsigned long hz);
+
+/**
+ * lprint_size - print size variables in bdinfo format
+ * @name:	string to print before the size
+ * @size:	size to print
+ *
+ * Helper function for displaying size variables as properly formatted bdinfo
+ * entries. The size is printed as "xxx Bytes", "xxx KiB", "xxx MiB",
+ * "xxx GiB", etc. as needed;
+ *
+ * For use in arch_print_bdinfo().
+ */
+void lprint_size(const char *name, uint64_t size);
+
 #endif

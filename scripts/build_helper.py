@@ -45,7 +45,6 @@ class Helper:
                 self.os_arch = 'amd64'
             else:
                 self.os_arch = 'i386'
-        self.img_fname = Path(args.disk) if args.disk else None
 
     def read_settings(self):
         """Get settings from the settings file"""
@@ -163,19 +162,21 @@ sct_mnt = /mnt/sct
                     '-drive',
                     f'if=virtio,file={os_path},format=raw,id=hd0,readonly=on'])
 
-        if self.img_fname:
-            if self.img_fname.exists():
-                iface = 'none' if args.scsi else 'virtio'
-                if args.scsi:
+        if args.disk:
+            for i, d in enumerate(args.disk):
+                disk = Path(d)
+                if disk.exists():
+                    iface = 'none' if args.scsi else 'virtio'
+                    if args.scsi:
+                        cmd.extend([
+                            '-device',
+                            f'virtio-scsi-pci,id=scsi0,{MODERN_PCI}',
+                            '-device', f'scsi-hd,bus=scsi0.0,drive=hd{i}'])
                     cmd.extend([
-                        '-device',
-                        f'virtio-scsi-pci,id=scsi0,{MODERN_PCI}',
-                        '-device', 'scsi-hd,bus=scsi0.0,drive=hd0'])
-                cmd.extend([
-                    '-drive',
-                    f'if={iface},file={self.img_fname},format=raw,id=hd0'])
-            else:
-                tout.warning(f"Disk image '{self.img_fname}' not found")
+                        '-drive',
+                        f'if={iface},file={disk},format=raw,id=hd{i}'])
+                else:
+                    tout.warning(f"Disk image '{disk}' not found")
 
 def add_common_args(parser):
     """Add some arguments which are common to build-efi/qemu scripts
@@ -189,7 +190,7 @@ def add_common_args(parser):
                         help="Don't build; assume a build exists")
     parser.add_argument('-C', '--enable-console', action='store_true',
                         help="Enable linux console (x86 only)")
-    parser.add_argument('-d', '--disk',
+    parser.add_argument('-d', '--disk', nargs='*',
                         help='Root disk image file to use with QEMU')
     parser.add_argument('-I', '--initrd',
                         help='Initial ramdisk to run using -initrd')
