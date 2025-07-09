@@ -11,6 +11,9 @@
 
 static int cmd_test_msr(struct unit_test_state *uts)
 {
+	if (IS_ENABLED(CONFIG_X86_RUN_64BIT))
+		return -EAGAIN;
+
 	ut_assertok(run_commandf("msr read 200"));
 	ut_assert_nextline("00000000 ffe00006");
 	ut_assert_console_end();
