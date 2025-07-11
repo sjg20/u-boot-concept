@@ -24,21 +24,21 @@ const efi_guid_t efi_guid_rng_protocol = EFI_RNG_PROTOCOL_GUID;
  *
  * This function may be overridden if special initialization is needed.
  *
- * @dev:	udevice
+ * @devp:	udevice
  * Return:	status code
  */
-__weak efi_status_t platform_get_rng_device(struct udevice **dev)
+__weak efi_status_t platform_get_rng_device(struct udevice **devp)
 {
 	int ret;
-	struct udevice *devp;
+	struct udevice *dev;
 
-	ret = uclass_get_device(UCLASS_RNG, 0, &devp);
+	ret = uclass_first_device_err(UCLASS_RNG, &dev);
 	if (ret) {
 		debug("Unable to get rng device\n");
 		return EFI_DEVICE_ERROR;
 	}
 
-	*dev = devp;
+	*devp = dev;
 
 	return EFI_SUCCESS;
 }
