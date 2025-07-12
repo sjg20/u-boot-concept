@@ -1980,7 +1980,7 @@ static int do_fsl_mc(struct cmd_tbl *cmdtp, int flag, int argc,
 
 		/*
 		 * We will do the actual dpaa exit and dpl apply
-		 * later from announce_and_cleanup().
+		 * later from bootm_final().
 		 */
 		mc_lazy_dpl_addr = mc_dpl_addr;
 		break;

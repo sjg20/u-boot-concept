@@ -35,6 +35,8 @@ void bootm_final(enum bootm_final_t flags)
 	 * Call remove function of all devices with a removal flag set.
 	 * This may be useful for last-stage operations, like cancelling
 	 * of DMA operation or releasing device internal buffers.
+	 * dm_remove_devices_active() ensures that vital devices are removed in
+	 * a second round.
 	 */
 	dm_remove_devices_active();
 
