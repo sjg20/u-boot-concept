@@ -117,10 +117,11 @@ int dir_close(struct udevice *dev, struct fs_dir_stream *strm);
 /**
  * dir_add_probe() - Add a new directory and probe it
  *
+ * This sets up the uclass-private data for the new directory
+ *
  * @fsdev: Filesystem containing the directory
  * @drv: Driver to use
- * @path Absolute path to directory (within the filesystem), or NULL/"/" for
- *	root
+ * @path Absolute path to directory (within the filesystem), or "" for root
  * @devp: Returns the new device, probed ready for use *
  */
 int dir_add_probe(struct udevice *fsdev, struct driver *drv, const char *path,

@@ -206,7 +206,8 @@ static int sandbox_dir_open(struct udevice *dev, struct fs_dir_stream *strm)
 	struct dir_uc_priv *dir_uc_priv = dev_get_uclass_priv(dev);
 	int ret;
 
-	ret = os_dirent_ls(dir_uc_priv->path, &priv->head);
+	ret = os_dirent_ls(*dir_uc_priv->path ? dir_uc_priv->path : ".",
+			   &priv->head);
 	if (ret) {
 		log_err("Failed to open directory: %d\n", ret);
 		return ret;
@@ -300,7 +301,8 @@ static int sandbox_dir_open_file(struct udevice *dir, const char *leaf,
 	struct udevice *dev;
 	off_t size;
 
-	snprintf(pathname, sizeof(pathname), "%s/%s", uc_priv->path, leaf);
+	snprintf(pathname, sizeof(pathname), "%s/%s",
+		 *uc_priv->path ? uc_priv->path: ".", leaf);
 	ftype = os_get_filetype(pathname);
 	if (ftype < 0)
 		return log_msg_ret("soF", ftype);
@@ -367,7 +369,7 @@ static int sandbox_fs_lookup_dir(struct udevice *dev, const char *path,
 	int ftype;
 	int ret;
 
-	ftype = os_get_filetype(path ?: "/");
+	ftype = os_get_filetype(*path ? path : "/");
 	if (ftype < 0)
 		return ftype;
 	if (ftype != OS_FILET_DIR)
