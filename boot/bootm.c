@@ -1035,7 +1035,6 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 {
 	struct bootm_headers *images = bmi->images;
 	boot_os_fn *boot_fn;
-	ulong iflag = 0;
 	int ret = 0, need_boot_fn;
 
 	images->state |= states;
@@ -1068,7 +1067,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 
 	/* Load the OS */
 	if (!ret && (states & BOOTM_STATE_LOADOS)) {
-		iflag = bootm_disable_interrupts();
+		bootm_disable_interrupts();
 		if (IS_ENABLED(CONFIG_EVENT)) {
 			struct event_os_load data;
 
@@ -1114,8 +1113,6 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 			BOOTM_STATE_OS_BD_T | BOOTM_STATE_OS_PREP |
 			BOOTM_STATE_OS_FAKE_GO | BOOTM_STATE_OS_GO);
 	if (boot_fn == NULL && need_boot_fn) {
-		if (iflag)
-			enable_interrupts();
 		printf("ERROR: booting os '%s' (%d) is not supported\n",
 		       genimg_get_os_name(images->os.os), images->os.os);
 		bootstage_error(BOOTSTAGE_ID_CHECK_BOOT_OS);
@@ -1164,9 +1161,6 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 
 	/* Deal with any fallout */
 err:
-	if (iflag)
-		enable_interrupts();
-
 	if (ret == BOOTM_ERR_UNIMPLEMENTED) {
 		bootstage_error(BOOTSTAGE_ID_DECOMP_UNIMPL);
 	} else if (ret == BOOTM_ERR_RESET) {
