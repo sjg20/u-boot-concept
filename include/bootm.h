@@ -392,4 +392,6 @@ int bootm_boot_start(ulong addr, const char *cmdline);
  */
 void bootm_final(enum bootm_final_t flags);
 
+int cleanup_before_linux(void);
+
 #endif

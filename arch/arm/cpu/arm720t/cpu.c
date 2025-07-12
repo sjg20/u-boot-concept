@@ -9,6 +9,8 @@
  * Alex Zuepke <azu@sysgo.de>
  */
 
+#include <bootm.h>
+
 /*
  * cleanup_before_linux() - Prepare the CPU to jump to Linux
  *

@@ -7,6 +7,7 @@
  * Tom Rini <trini@ti.com>
  */
 
+#include <bootm.h>
 #include <config.h>
 #include <init.h>
 #include <log.h>

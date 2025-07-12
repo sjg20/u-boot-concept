@@ -12,6 +12,7 @@
  * CPU specific code
  */
 
+#include <bootm.h>
 #include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>
@@ -20,7 +21,7 @@
 
 static void cache_flush(void);
 
-int cleanup_before_linux (void)
+int cleanup_before_linux(void)
 {
 	/*
 	 * this function is called just before we call linux

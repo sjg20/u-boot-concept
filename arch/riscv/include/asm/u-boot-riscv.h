@@ -11,9 +11,6 @@
 #ifndef _U_BOOT_RISCV_H_
 #define _U_BOOT_RISCV_H_	1
 
-/* cpu/.../cpu.c */
-int cleanup_before_linux(void);
-
 /* board/.../... */
 int board_init(void);
 int riscv_board_reserved_mem_fixup(void *fdt);

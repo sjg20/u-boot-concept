@@ -14,7 +14,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static int cleanup_before_linux(void)
+int cleanup_before_linux(void)
 {
 	disable_interrupts();
 	sync_n_cleanup_cache_all();
