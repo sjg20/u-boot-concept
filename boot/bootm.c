@@ -46,10 +46,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 struct bootm_headers images;		/* pointers to os/initrd/fdt images */
 
-__weak void board_quiesce_devices(void)
-{
-}
-
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 /**
  * image_get_kernel - verify legacy format kernel image

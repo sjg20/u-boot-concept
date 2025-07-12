@@ -10,6 +10,10 @@
 #include <usb.h>
 #include <dm/root.h>
 
+__weak void board_quiesce_devices(void)
+{
+}
+
 void bootm_final(enum bootm_final_t flags)
 {
 	printf("\nStarting kernel ...%s\n\n", flags & BOOTM_FINAL_FAKE ?
@@ -21,6 +25,8 @@ void bootm_final(enum bootm_final_t flags)
 		bootstage_fdt_add_report();
 	if (IS_ENABLED(CONFIG_BOOTSTAGE_REPORT))
 		bootstage_report();
+
+	board_quiesce_devices();
 
 	if (IS_ENABLED(CONFIG_USB_DEVICE))
 		udc_disconnect();
