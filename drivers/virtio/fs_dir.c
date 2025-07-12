@@ -31,12 +31,12 @@ static int virtio_fs_dir_open(struct udevice *dev, struct fs_dir_stream *strm)
 
 	log_debug("opening inode %lld\n", dir_priv->inode);
 	ret = virtio_fs_opendir(fs, dir_priv->inode, &strm->fh);
+	log_debug("2 open ret %d strm %p fh %llx\n", ret, strm, strm->fh);
 	if (ret) {
 		log_err("Failed to open directory: %d\n", ret);
 		return ret;
 	}
 	strm->dev = dev;
-
 	strm->offset = 0;
 
 	return 0;
@@ -53,7 +53,8 @@ int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 	char buf[0x200];
 	int ret, size;
 
-	log_debug("start %lld strm %p\n", dir_priv->inode, strm);
+	log_debug("start %lld strm %p fh %llx\n", dir_priv->inode, strm,
+		  strm->fh);
 	log_debug("offset %lld\n", strm->offset);
 	ret = virtio_fs_readdir(fs, dir_priv->inode, strm->fh, strm->offset,
 				buf, sizeof(buf), &size);

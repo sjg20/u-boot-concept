@@ -224,6 +224,7 @@ int virtio_fs_readdir(struct udevice *dev, u64 nodeid, u64 fh, u64 offset,
 	in.size = size;
 	in.offset = offset;
 	ret = virtio_fs_xfer(dev, &inhdr, &in, sizeof(in), &outhdr, buf, size);
+	log_debug("fh %llx offset %llx\n", in.fh, in.offset);
 	log_debug("len %x error %x unique %llx\n", outhdr.len, outhdr.error,
 		  outhdr.unique);
 	if (ret)
