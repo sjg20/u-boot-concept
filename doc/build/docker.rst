@@ -1,5 +1,7 @@
-GitLab CI / U-Boot runner container
-===================================
+U-Boot runner container
+=======================
+
+See also :doc:`/develop/ci_testing`.
 
 In order to have a reproducible and portable build environment for CI we use a container for building in.  This means that developers can also reproduce the CI environment, to a large degree at least, locally.  This file is located in the tools/docker directory.
 

@@ -3,6 +3,7 @@
 variables:
   DEFAULT_TAG: ""
   MIRROR_DOCKER: docker.io
+  LAB_ONLY: ""
   SJG_LAB: ""
   PLATFORM: linux/amd64,linux/arm64
   GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_RUNNER_ID/$CI_CONCURRENT_ID/u-boot
@@ -28,7 +29,10 @@ stages:
   stage: test.py
   retry: 2 # QEMU may be too slow, etc.
   rules:
-    - when: always
+    - if: $LAB_ONLY != "1"
+      when: always
+    - if: $LAB_ONLY == "1"
+      when: never
   before_script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
     # qemu_arm64_lwip_defconfig is the same as qemu_arm64 but with NET_LWIP enabled.
@@ -117,7 +121,10 @@ stages:
 .world_build:
   stage: world build
   rules:
-    - when: always
+    - if: $LAB_ONLY != "1"
+      when: always
+    - if: $LAB_ONLY == "1"
+      when: never
 
 build all 32bit ARM platforms:
   extends: .world_build
@@ -197,7 +204,10 @@ build all other platforms:
 .testsuites:
   stage: testsuites
   rules:
-    - when: always
+    - if: $LAB_ONLY != "1"
+      when: always
+    - if: $LAB_ONLY == "1"
+      when: never
 
 check for new CONFIG symbols outside Kconfig:
   extends: .testsuites
@@ -602,10 +612,13 @@ coreboot test.py:
 
 .lab_template: &lab_dfn
   stage: sjg-lab
+  needs: []
   rules:
-    - if: $SJG_LAB == "1"
+    - if: $SJG_LAB == $ROLE || $SJG_LAB == "1"
       when: always
-    - if: $SJG_LAB != "1"
+    - if: $SJG_LAB != "" && $SJG_LAB != "1" && $SJG_LAB != $ROLE
+      when: never
+    - if: $SJG_LAB == ""
       when: manual
       allow_failure: true
   dependencies: []
@@ -614,6 +627,11 @@ coreboot test.py:
     # Environment:
     #   SRC  - source tree
     #   OUT  - output directory for builds
+    - if [[ -n ${SJG_LAB} ]]; then
+        if [[ "${SJG_LAB}" != "${ROLE}" && "${SJG_LAB}" != "1" ]]; then
+          exit 0;
+        fi;
+      fi
     - export SRC="$(pwd)"
     - export OUT="${SRC}/build/${BOARD}"
     - export PATH=$PATH:~/bin

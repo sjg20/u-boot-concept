@@ -40,7 +40,24 @@ then the "Checks" tab will show the results.
 GitLab CI Pipelines
 -------------------
 
-This pipeline is defined in the top-level ``.gitlab-ci.yml`` file.  Currently,
+`Gitlab <https://gitlab.com>`_ is used for building and testing U-Boot. There
+are two separate instances:
+
+  - `Denx <https://source.denx.de>`_ - main tree, including custodian trees
+  - `Concept <https://concept.u-boot.org/u-boot/u-boot>`_ - concept tree
+
+This pipeline is defined in the top-level ``.gitlab-ci.yml`` file.
+
+To push to Gitlab without triggering a pipeline use:
+
+.. code-block:: bash
+
+    git push -o ci.skip
+
+Denx
+~~~~
+
+Currently with the main tree,
 we support running GitLab CI pipelines only for custodians, due to the
 resources the project has available.  For Custodians, it is a matter of
 enabling the pipeline feature in your project repository following the standard
@@ -50,11 +67,14 @@ runners you are able to provide.  While it is intended to be able to run this
 pipeline on the free public instances provided at https://gitlab.com/ a problem
 with our squashfs tests currently prevents this.
 
-To push to Gitlab without triggering a pipeline use:
+Concept
+~~~~~~~
 
-.. code-block:: bash
-
-    git push -o ci.skip
+Contributors can request a login at `U-Boot Concept <concept.u-boot.org>`_
+(after sending an email to Simon Glass <sjg@chromium.org> as shown there).
+Contributors are then able to push branches and trigger a CI run. The
+``.gitlab-ci.yml`` is slightly different from the main tree and CI runs
+are generally twice as fast to complete.
 
 Docker container
 ----------------
@@ -74,3 +94,31 @@ developing features.  In that case, it can be useful as part of your own
 testing cycle to edit these pipelines in separate local commits to pair them
 down to just the jobs you're interested in.  These changes must be removed
 prior to submission.
+
+Using the lab
+-------------
+
+There is an 'sjg' lab connected to gitlab. By default, this is set to run
+manually, so you must click a button in the gitlab interface to kick off a run.
+
+You can control this behaviour by passing variables with your `git push`
+command.
+
+To skip CI altogether (assuming your remote is called `ci` and the branch is
+`feature`)::
+
+    git push ci -o ci.skip <branch>
+
+To request that the lab runs::
+
+    git push ci -o ci.variable=SJG_LAB=1 <branch>
+
+To request that *only* the lab runs::
+
+    git push ci -o ci.variable=SJG_LAB=1 ci.variable=LAB_ONLY=1 <branch>
+
+To request running on just a particular board in the lab, e.g. `snow`::
+
+    git push ci -o ci.variable=SJG_LAB=snow <branch>
+
+The `LAB_ONLY` and `SJG_ONLY` options can be specified together.
