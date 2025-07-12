@@ -25,10 +25,6 @@ static int virtio_fs_dir_open(struct udevice *dev, struct fs_dir_stream *strm)
 	struct udevice *fs = dev_get_parent(dev);
 	int ret;
 
-	strm = malloc(sizeof(struct fs_dir_stream));
-	if (!strm)
-		return log_msg_ret("vso", -ENOMEM);
-
 	log_debug("opening inode %lld\n", dir_priv->inode);
 	ret = virtio_fs_opendir(fs, dir_priv->inode, &strm->fh);
 	log_debug("2 open ret %d strm %p fh %llx\n", ret, strm, strm->fh);
