@@ -160,14 +160,12 @@ int virtio_fs_setup_dir(struct udevice *fsdev, const char *path,
 {
 	struct virtio_fs_dir_priv *dir_priv;
 	struct udevice *dir;
-	bool has_path;
 	u64 inode;
 	int ret;
 
 	log_debug("looking up path '%s'\n", path);
 	inode = FUSE_ROOT_ID;
-	has_path = path && strcmp("/", path);
-	if (has_path) {
+	if (*path) {
 		ret = virtio_fs_lookup(fsdev, path, &inode);
 		if (ret) {
 			log_err("Failed to lookup directory '%s': %d\n", path,
@@ -190,7 +188,7 @@ int virtio_fs_setup_dir(struct udevice *fsdev, const char *path,
 	return 0;
 
 no_add:
-	if (has_path)
+	if (*path)
 		ret = virtio_fs_forget(fsdev, inode);
 
 	return ret;

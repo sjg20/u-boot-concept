@@ -44,7 +44,7 @@ static int dm_test_fs_dir(struct unit_test_state *uts)
 	ut_assertok(fs_mount(fsdev));
 
 	ut_asserteq(-ENOENT, fs_lookup_dir(fsdev, "does-not-exit", &dir));
-	ut_assertok(fs_lookup_dir(fsdev, ".", &dir));
+	ut_assertok(fs_lookup_dir(fsdev, "", &dir));
 	ut_assertnonnull(dir);
 	ut_asserteq_str("fs.dir", dir->name);
 
@@ -79,7 +79,7 @@ static int dm_test_fs_file(struct unit_test_state *uts)
 
 	ut_assertok(fs_mount(fsdev));
 
-	ut_assertok(fs_lookup_dir(fsdev, ".", &dir));
+	ut_assertok(fs_lookup_dir(fsdev, "", &dir));
 	ut_assertnonnull(dir);
 	ut_asserteq_str("fs.dir", dir->name);
 

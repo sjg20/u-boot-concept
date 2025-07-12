@@ -58,8 +58,11 @@ struct fs_ops {
 	/**
 	 * lookup_dir() - Look up a directory on a filesystem
 	 *
+	 * This should not set up the uclass-private data; this is done by
+	 * fs_lookup_dir()
+	 *
 	 * @dev: Filesystem device
-	 * @path: Path to look up, empty or "/" for the root
+	 * @path: Path to look up, "" for the root
 	 * @dirp: Returns associated directory device, creating if necessary
 	 * Return 0 if OK, -ENOENT, other -ve on error
 	 */
@@ -89,8 +92,10 @@ int fs_unmount(struct udevice *dev);
 /**
  * fs_lookup_dir() - Look up a directory on a filesystem
  *
+ * If a new directory-device is created, its uclass data is set up also
+ *
  * @dev: Filesystem device
- * @path: Path to look up, empty or "/" for the root
+ * @path: Path to look up, "" or "/" for the root
  * @dirp: Returns associated directory device, creating if necessary
  * Return 0 if OK, -ENOENT, other -ve on error
  */
