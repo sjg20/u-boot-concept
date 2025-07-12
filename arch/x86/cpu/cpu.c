@@ -246,7 +246,7 @@ static int last_stage_init(void)
 	}
 
 	/*
-	 * TODO(sjg@chromium.org): Move this to bootm_announce_and_cleanup()
+	 * TODO(sjg@chromium.org): Move this to boot_linux_kernel()
 	 * once APL FSP-S at 0x200000 does not overlap with the bzimage at
 	 * 0x100000.
 	 */

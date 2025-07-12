@@ -6,8 +6,6 @@
 #ifndef ARM_BOOTM_H
 #define ARM_BOOTM_H
 
-void bootm_announce_and_cleanup(void);
-
 /**
  * boot_linux_kernel() - boot a linux kernel
  *
