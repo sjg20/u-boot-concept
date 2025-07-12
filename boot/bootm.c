@@ -1067,7 +1067,6 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 
 	/* Load the OS */
 	if (!ret && (states & BOOTM_STATE_LOADOS)) {
-		bootm_disable_interrupts();
 		if (IS_ENABLED(CONFIG_EVENT)) {
 			struct event_os_load data;
 

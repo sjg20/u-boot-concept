@@ -38,6 +38,8 @@ void bootm_final(enum bootm_final_t flags)
 	 */
 	dm_remove_devices_active();
 
+	bootm_disable_interrupts();
+
 	if (!(flags & BOOTM_FINAL_NO_CLEANUP))
 		cleanup_before_linux();
 }

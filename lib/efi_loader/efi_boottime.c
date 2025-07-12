@@ -2228,10 +2228,8 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 			list_del(&evt->link);
 	}
 
-	if (!efi_st_keep_devices) {
-		bootm_disable_interrupts();
+	if (!efi_st_keep_devices)
 		bootm_final(BOOTM_FINAL_NO_CLEANUP);
-	}
 
 	/* Patch out unsupported runtime function */
 	efi_runtime_detach();
