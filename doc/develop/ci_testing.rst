@@ -40,7 +40,24 @@ then the "Checks" tab will show the results.
 GitLab CI Pipelines
 -------------------
 
-This pipeline is defined in the top-level ``.gitlab-ci.yml`` file.  Currently,
+`Gitlab <https://gitlab.com>`_ is used for building and testing U-Boot. There
+are two separate instances:
+
+  - `Denx <https://source.denx.de>`_ - main tree, including custodian trees
+  - `Concept <https://concept.u-boot.org/u-boot/u-boot>`_ - concept tree
+
+This pipeline is defined in the top-level ``.gitlab-ci.yml`` file.
+
+To push to Gitlab without triggering a pipeline use:
+
+.. code-block:: bash
+
+    git push -o ci.skip
+
+Denx
+~~~~
+
+Currently with the main tree,
 we support running GitLab CI pipelines only for custodians, due to the
 resources the project has available.  For Custodians, it is a matter of
 enabling the pipeline feature in your project repository following the standard
@@ -50,11 +67,14 @@ runners you are able to provide.  While it is intended to be able to run this
 pipeline on the free public instances provided at https://gitlab.com/ a problem
 with our squashfs tests currently prevents this.
 
-To push to Gitlab without triggering a pipeline use:
+Concept
+~~~~~~~
 
-.. code-block:: bash
-
-    git push -o ci.skip
+Contributors can request a login at `U-Boot Concept <concept.u-boot.org>`_
+(after sending an email to Simon Glass <sjg@chromium.org> as shown there).
+Contributors are then able to push branches and trigger a CI run. The
+``.gitlab-ci.yml`` is slightly different from the main tree and CI runs
+are generally twice as fast to complete.
 
 Docker container
 ----------------
