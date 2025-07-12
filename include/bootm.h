@@ -21,9 +21,11 @@ struct cmd_tbl;
  *
  * @BOOTM_FINAL_FAKE: true to do everything except actually boot; it then
  *	returns to the caller
+ * @BOOTM_FINAL_NO_CLEANUP: true to skip calling cleanup_before_linux()
  */
 enum bootm_final_t {
 	BOOTM_FINAL_FAKE	= BIT(0),
+	BOOTM_FINAL_NO_CLEANUP	= BIT(1),
 };
 
 /**

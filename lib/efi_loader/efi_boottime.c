@@ -2231,7 +2231,7 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 	if (!efi_st_keep_devices) {
 		bootm_disable_interrupts();
 		board_quiesce_devices();
-		bootm_final(0);
+		bootm_final(BOOTM_FINAL_NO_CLEANUP);
 	}
 
 	/* Patch out unsupported runtime function */

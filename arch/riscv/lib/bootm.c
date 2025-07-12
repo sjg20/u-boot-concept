@@ -33,7 +33,6 @@ DECLARE_GLOBAL_DATA_PTR;
 static void announce_and_cleanup(int fake)
 {
 	bootm_final(fake);
-	cleanup_before_linux();
 }
 
 static void boot_prep_linux(struct bootm_headers *images)

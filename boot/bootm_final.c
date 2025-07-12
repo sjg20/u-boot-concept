@@ -31,4 +31,7 @@ void bootm_final(enum bootm_final_t flags)
 	 * of DMA operation or releasing device internal buffers.
 	 */
 	dm_remove_devices_active();
+
+	if (!(flags & BOOTM_FINAL_NO_CLEANUP))
+		cleanup_before_linux();
 }
