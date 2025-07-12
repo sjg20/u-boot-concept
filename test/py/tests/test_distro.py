@@ -59,3 +59,18 @@ def test_distro(ubman):
         ubman.p.expect(['Welcome to .*Ubuntu 24.04.1 LTS.*!'])
 
     ubman.restart_uboot()
+
+@pytest.mark.boardspec('colibri-imx8x')
+@pytest.mark.role('colibrimx8')
+def test_distro_script(ubman):
+    """Test that a selected board can boot into Llinux using a script"""
+    with ubman.log.section('boot'):
+        ubman.run_command('boot', wait_for_prompt=False)
+
+    # This is the start of userspace
+    ubman.p.expect(['Welcome to TDX Wayland'])
+
+    # Shortly later, we should see this banner
+    ubman.p.expect(['Colibri-iMX8X_Reference-Multimedia-Image'])
+
+    ubman.restart_uboot()
