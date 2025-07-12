@@ -80,6 +80,11 @@ int __weak x86_cleanup_before_linux(void)
 	return 0;
 }
 
+int cleanup_before_linux(void)
+{
+	return x86_cleanup_before_linux();
+}
+
 int x86_init_cache(void)
 {
 	enable_caches();
