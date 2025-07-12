@@ -2155,29 +2155,6 @@ error:
 }
 
 /**
- * efi_exit_caches() - fix up caches for EFI payloads if necessary
- */
-static void efi_exit_caches(void)
-{
-#if defined(CONFIG_EFI_GRUB_ARM32_WORKAROUND)
-	/*
-	 * Boooting Linux via GRUB prior to version 2.04 fails on 32bit ARM if
-	 * caches are enabled.
-	 *
-	 * TODO:
-	 * According to the UEFI spec caches that can be managed via CP15
-	 * operations should be enabled. Caches requiring platform information
-	 * to manage should be disabled. This should not happen in
-	 * ExitBootServices() but before invoking any UEFI binary is invoked.
-	 *
-	 * We want to keep the current workaround while GRUB prior to version
-	 * 2.04 is still in use.
-	 */
-	cleanup_before_linux();
-#endif
-}
-
-/**
  * efi_exit_boot_services() - stop all boot services
  * @image_handle: handle of the loaded image
  * @map_key:      key of the memory map
@@ -2259,9 +2236,6 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 
 	/* Patch out unsupported runtime function */
 	efi_runtime_detach();
-
-	/* Fix up caches for EFI payloads if necessary */
-	efi_exit_caches();
 
 	/* Disable boot time services */
 	systab.con_in_handle = NULL;
