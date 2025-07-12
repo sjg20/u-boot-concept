@@ -9,6 +9,7 @@
 
 #include <bootdev.h>
 #include <bootmeth.h>
+#include <dir.h>
 #include <dm.h>
 #include <fs.h>
 #include <dm/device-internal.h>
@@ -41,8 +42,35 @@ int fs_split_path(const char *fname, char **subdirp, const char **leafp)
 int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp)
 {
 	struct fs_ops *ops = fs_get_ops(dev);
+	struct udevice *dir;
+	int ret;
 
-	return ops->lookup_dir(dev, path, dirp);
+	if (!path || !strcmp("/", path))
+		path = "";
+
+	/* see if we already have this directory */
+	device_foreach_child(dir, dev) {
+		struct dir_uc_priv *priv;
+
+		if (!device_active(dir))
+			continue;
+
+		priv = dev_get_uclass_priv(dir);
+		log_debug("dir %s '%s' '%s'\n", dir->name, path, priv->path);
+		if (!strcmp(path, priv->path)) {
+			*dirp = dir;
+			log_debug("found: dev '%s'\n", dir->name);
+			return 0;
+		}
+	}
+
+	ret = ops->lookup_dir(dev, path, &dir);
+	if (ret)
+		return log_msg_ret("fld", ret);
+
+	*dirp = dir;
+
+	return 0;
 }
 
 int fs_mount(struct udevice *dev)
