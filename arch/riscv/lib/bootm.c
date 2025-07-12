@@ -25,16 +25,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/**
- * announce_and_cleanup() - Print message and prepare for kernel boot
- *
- * @fake: non-zero to do everything except actually boot
- */
-static void announce_and_cleanup(int fake)
-{
-	bootm_final(fake);
-}
-
 static void boot_prep_linux(struct bootm_headers *images)
 {
 	if (CONFIG_IS_ENABLED(OF_LIBFDT) && IS_ENABLED(CONFIG_LMB) && images->ft_len) {
@@ -64,7 +54,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 	debug("## Transferring control to kernel (at address %08lx) ...\n",
 	      (ulong)kernel);
 
-	announce_and_cleanup(fake);
+	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
 
 	if (!fake) {
 		if (CONFIG_IS_ENABLED(OF_LIBFDT) && images->ft_len) {
