@@ -67,6 +67,7 @@ static int test_event_simple(struct unit_test_state *uts)
 }
 COMMON_TEST(test_event_simple, 0);
 
+#ifdef CONFIG_SANDBOX
 static int h_probe(void *ctx, struct event *event)
 {
 	struct test_state *test_state = ctx;
@@ -91,9 +92,6 @@ static int test_event_probe(struct unit_test_state *uts)
 	struct test_state state;
 	struct udevice *dev;
 
-	if (!IS_ENABLED(SANDBOX))
-		return -EAGAIN;
-
 	state.val = 0;
 	ut_assertok(event_register("pre", EVT_DM_PRE_PROBE, h_probe, &state));
 	ut_assertok(event_register("post", EVT_DM_POST_PROBE, h_probe, &state));
@@ -107,3 +105,4 @@ static int test_event_probe(struct unit_test_state *uts)
 	return 0;
 }
 COMMON_TEST(test_event_probe, UTF_DM | UTF_SCAN_FDT);
+#endif /* SANDBOX */

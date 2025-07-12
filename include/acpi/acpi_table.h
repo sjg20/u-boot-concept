@@ -750,7 +750,7 @@ struct acpi_gtdt {
  *
  * See ACPI Spec v6.3 section 5.2.22 for details
  */
-struct acpi_bgrt {
+struct __packed acpi_bgrt {
 	struct acpi_table_header header;
 	u16 version;
 	u8 status;
@@ -758,7 +758,7 @@ struct acpi_bgrt {
 	u64 addr;
 	u32 offset_x;
 	u32 offset_y;
-} __packed;
+};
 
 /* Types for PPTT */
 #define ACPI_PPTT_TYPE_PROC		0
@@ -1096,6 +1096,13 @@ void acpi_write_rsdp(struct acpi_rsdp *rsdp, struct acpi_rsdt *rsdt,
 		     struct acpi_xsdt *xsdt);
 
 /**
+ * acpi_udpate_rsdp_checksum() - Set up the checksum for the RSDP  table
+ *
+ * @rsdp: Pointer to RSDP
+ */
+void acpi_udpate_rsdp_checksum(struct acpi_rsdp *rsdp);
+
+/**
  * acpi_fill_header() - Set up a table header
  *
  * @header: Pointer to header to set up
@@ -1280,6 +1287,25 @@ struct acpi_table_header *acpi_find_table(const char *sig);
  * @header - header of an ACPI table
  */
 void acpi_update_checksum(struct acpi_table_header *header);
+
+/**
+ * acpi_get_end() - Find the first place where an ACPI table can be added
+ *
+ * Searches for the last ACPI table in memory and returns the address
+ * immediately after it, where a new table coule added
+ *
+ * Return: Address at the end of all tables
+ */
+void *acpi_get_end(void);
+
+/**
+ * acpi_write_bgrt() - Write a BGRT
+ *
+ * @ctx: ACPI context
+ * Return 0 if OK, -ENOTSUPP if there is no video-device or not log, -EIO if
+ * the video device could not be probed, -ENOENT if there is no logo
+ */
+int acpi_write_bgrt(struct acpi_ctx *ctx);
 
 #endif /* !__ACPI__*/
 

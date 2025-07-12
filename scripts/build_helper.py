@@ -178,6 +178,11 @@ sct_mnt = /mnt/sct
                 else:
                     tout.warning(f"Disk image '{disk}' not found")
 
+        if args.rand:
+            cmd.extend(['-object', 'rng-random,filename=/dev/random,id=rng0',
+                        '-device',
+                        'virtio-rng-pci,rng=rng0,max-bytes=1024,period=1000'])
+
 def add_common_args(parser):
     """Add some arguments which are common to build-efi/qemu scripts
 
@@ -206,6 +211,8 @@ def add_common_args(parser):
     parser.add_argument(
         '-R', '--release', default='24.04.1',
         help='Select OS release version (e.g, 24.04) Default: 24.04.1')
+    parser.add_argument('--rand', '--random', action='store_true',
+                        help='Provide a random-number device')
     parser.add_argument('-s', '--serial-only', action='store_true',
                         help='Run QEMU with serial only (no display)')
     parser.add_argument(

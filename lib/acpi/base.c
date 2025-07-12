@@ -15,6 +15,17 @@
 #include <linux/errno.h>
 #include <linux/string.h>
 
+void acpi_udpate_rsdp_checksum(struct acpi_rsdp *rsdp)
+{
+	rsdp->checksum = 0;
+	rsdp->ext_checksum = 0;
+
+	/* Calculate checksums */
+	rsdp->checksum = table_compute_checksum(rsdp, 20);
+	rsdp->ext_checksum = table_compute_checksum(rsdp,
+						    sizeof(struct acpi_rsdp));
+}
+
 void acpi_write_rsdp(struct acpi_rsdp *rsdp, struct acpi_rsdt *rsdt,
 		     struct acpi_xsdt *xsdt)
 {
@@ -31,11 +42,7 @@ void acpi_write_rsdp(struct acpi_rsdp *rsdp, struct acpi_rsdt *rsdt,
 
 	rsdp->length = sizeof(struct acpi_rsdp);
 	rsdp->revision = ACPI_RSDP_REV_ACPI_2_0;
-
-	/* Calculate checksums */
-	rsdp->checksum = table_compute_checksum(rsdp, 20);
-	rsdp->ext_checksum = table_compute_checksum(rsdp,
-						    sizeof(struct acpi_rsdp));
+	acpi_udpate_rsdp_checksum(rsdp);
 }
 
 static void acpi_write_rsdt(struct acpi_rsdt *rsdt)
