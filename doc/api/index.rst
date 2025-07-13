@@ -13,6 +13,7 @@ U-Boot API documentation
    efi
    event
    fs
+   fuse
    getopt
    interrupt
    led
