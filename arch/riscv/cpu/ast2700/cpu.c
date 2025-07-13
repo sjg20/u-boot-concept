@@ -4,6 +4,7 @@
  * Copyright (C) 2024, Aspeed Technology Inc.
  */
 
+#include <bootm.h>
 #include <irq_func.h>
 #include <asm/cache.h>
 

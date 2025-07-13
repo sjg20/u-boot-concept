@@ -4,6 +4,7 @@
  * Rick Chen, Andes Technology Corporation <rick@andestech.com>
  */
 
+#include <bootm.h>
 #include <linux/types.h>
 #include <asm/u-boot-riscv.h>
 

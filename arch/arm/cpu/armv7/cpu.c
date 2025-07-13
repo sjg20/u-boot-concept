@@ -14,6 +14,7 @@
  * CPU specific code
  */
 
+#include <bootm.h>
 #include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>

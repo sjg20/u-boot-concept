@@ -12,6 +12,7 @@
  * CPU specific code
  */
 
+#include <bootm.h>
 #include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>
@@ -33,7 +34,7 @@ void sdelay(unsigned long loops)
 			  "bne 1b":"=r" (loops):"0"(loops));
 }
 
-int cleanup_before_linux (void)
+int cleanup_before_linux(void)
 {
 	/*
 	 * this function is called just before we call linux

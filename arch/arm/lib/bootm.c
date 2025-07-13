@@ -47,41 +47,6 @@ __weak void board_quiesce_devices(void)
 {
 }
 
-/**
- * announce_and_cleanup() - Print message and prepare for kernel boot
- *
- * @fake: non-zero to do everything except actually boot
- */
-static void announce_and_cleanup(int fake)
-{
-	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_HANDOFF, "start_kernel");
-#ifdef CONFIG_BOOTSTAGE_FDT
-	bootstage_fdt_add_report();
-#endif
-#ifdef CONFIG_BOOTSTAGE_REPORT
-	bootstage_report();
-#endif
-
-#ifdef CONFIG_USB_DEVICE
-	udc_disconnect();
-#endif
-
-	board_quiesce_devices();
-
-	printf("\nStarting kernel ...%s\n\n", fake ?
-		"(fake run for tracing)" : "");
-	/*
-	 * Call remove function of all devices with a removal flag set.
-	 * This may be useful for last-stage operations, like cancelling
-	 * of DMA operation or releasing device internal buffers.
-	 * dm_remove_devices_active() ensures that vital devices are removed in
-	 * a second round.
-	 */
-	dm_remove_devices_active();
-
-	cleanup_before_linux();
-}
-
 static void setup_start_tag (struct bd_info *bd)
 {
 	params = (struct tag *)bd->bi_boot_params;
@@ -304,7 +269,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 		(ulong) kernel_entry);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
-	announce_and_cleanup(fake);
+	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
 
 	if (!fake) {
 #ifdef CONFIG_ARMV8_PSCI
@@ -354,7 +319,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 	debug("## Transferring control to Linux (at address %08lx)" \
 		"...\n", (ulong) kernel_entry);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
-	announce_and_cleanup(fake);
+	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
 
 	if (CONFIG_IS_ENABLED(OF_LIBFDT) && images->ft_len)
 		r2 = (unsigned long)images->ft_addr;

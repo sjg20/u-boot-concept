@@ -941,6 +941,7 @@ M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	boot/bootdev*.c
 F:	boot/bootflow.c
+F:	boot/bootm_final.c
 F:	boot/bootmeth*.c
 F:	boot/bootstd.c
 F:	cmd/bootdev.c

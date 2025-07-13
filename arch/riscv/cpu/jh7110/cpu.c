@@ -4,6 +4,7 @@
  * Author: Yanhong Wang <yanhong.wang@starfivetech.com>
  */
 
+#include <bootm.h>
 #include <asm/cache.h>
 #include <irq_func.h>
 

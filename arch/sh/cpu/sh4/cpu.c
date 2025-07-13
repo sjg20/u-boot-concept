@@ -4,6 +4,7 @@
  * Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
  */
 
+#include <bootm.h>
 #include <command.h>
 #include <irq_func.h>
 #include <cpu_func.h>

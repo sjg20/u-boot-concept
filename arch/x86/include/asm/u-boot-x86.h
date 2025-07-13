@@ -76,7 +76,6 @@ void setup_gdt(struct global_data *id, u64 *gdt_addr);
  */
 void setup_fsp_gdt(void);
 int init_cache(void);
-int cleanup_before_linux(void);
 
 /* cpu/.../timer.c */
 void timer_isr(void *);
@@ -89,7 +88,6 @@ int i8254_init(void);
 /* cpu/.../interrupts.c */
 int cpu_init_interrupts(void);
 
-int cleanup_before_linux(void);
 int x86_cleanup_before_linux(void);
 void x86_enable_caches(void);
 void x86_disable_caches(void);

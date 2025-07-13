@@ -34,26 +34,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define COMMAND_LINE_OFFSET 0x9000
 
-void bootm_announce_and_cleanup(void)
-{
-	printf("\nStarting kernel ...\n\n");
-
-#ifdef CONFIG_SYS_COREBOOT
-	timestamp_add_now(TS_START_KERNEL);
-#endif
-	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_HANDOFF, "start_kernel");
-#if IS_ENABLED(CONFIG_BOOTSTAGE_REPORT)
-	bootstage_report();
-#endif
-
-	/*
-	 * Call remove function of all devices with a removal flag set.
-	 * This may be useful for last-stage operations, like cancelling
-	 * of DMA operation or releasing device internal buffers.
-	 */
-	dm_remove_devices_active();
-}
-
 #if defined(CONFIG_OF_LIBFDT) && !defined(CONFIG_OF_NO_KERNEL)
 int arch_fixup_memory_node(void *blob)
 {
@@ -193,7 +173,10 @@ int efi_boot(ulong setup_base, ulong entry, bool image_64bit)
 
 int boot_linux_kernel(ulong setup_base, ulong entry, bool image_64bit)
 {
-	bootm_announce_and_cleanup();
+#ifdef CONFIG_SYS_COREBOOT
+	timestamp_add_now(TS_START_KERNEL);
+#endif
+	bootm_final(0);
 
 #ifdef CONFIG_SYS_COREBOOT
 	timestamp_add_now(TS_U_BOOT_START_KERNEL);

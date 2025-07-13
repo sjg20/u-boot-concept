@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Cleanup before handing off to the OS
+ *
+ * Copyright 2025 Simon Glass <sjg@chromium.org>
+ */
+
+#include <bootm.h>
+#include <bootstage.h>
+#include <usb.h>
+#include <dm/root.h>
+
+__weak void board_quiesce_devices(void)
+{
+}
+
+void bootm_final(enum bootm_final_t flags)
+{
+	printf("\nStarting kernel ...%s\n\n", flags & BOOTM_FINAL_FAKE ?
+		"(fake run for tracing)" : "");
+
+	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_HANDOFF, "start_kernel");
+
+	if (IS_ENABLED(CONFIG_BOOTSTAGE_FDT) && IS_ENABLED(CONFIG_CMD_FDT))
+		bootstage_fdt_add_report();
+	if (IS_ENABLED(CONFIG_BOOTSTAGE_REPORT))
+		bootstage_report();
+
+	board_quiesce_devices();
+
+	if (IS_ENABLED(CONFIG_USB_DEVICE))
+		udc_disconnect();
+
+	/*
+	 * Call remove function of all devices with a removal flag set.
+	 * This may be useful for last-stage operations, like cancelling
+	 * of DMA operation or releasing device internal buffers.
+	 * dm_remove_devices_active() ensures that vital devices are removed in
+	 * a second round.
+	 */
+	dm_remove_devices_active();
+
+	bootm_disable_interrupts();
+
+	if (!(flags & BOOTM_FINAL_NO_CLEANUP))
+		cleanup_before_linux();
+}

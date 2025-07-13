@@ -498,16 +498,6 @@ config EFI_LOADER_BOUNCE_BUFFER
 	  hardware we can create a bounce buffer so that payloads don't have to
 	  worry about platform details.
 
-config EFI_GRUB_ARM32_WORKAROUND
-	bool "Workaround for GRUB on 32bit ARM"
-	default n if ARCH_BCM283X || ARCH_SUNXI || ARCH_QEMU_ARM
-	default y
-	depends on ARM && !ARM64
-	help
-	  GRUB prior to version 2.04 requires U-Boot to disable caches. This
-	  workaround currently is also needed on systems with caches that
-	  cannot be managed via CP15.
-
 config EFI_ESRT
 	bool "Enable the UEFI ESRT generation"
 	depends on EFI_CAPSULE_FIRMWARE_MANAGEMENT
