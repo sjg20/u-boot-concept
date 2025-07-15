@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0+
 
+include:
+  - local: '.gitlab-ci-release.yml'
+
 variables:
   DEFAULT_TAG: ""
   MIRROR_DOCKER: docker.io
@@ -24,6 +27,7 @@ stages:
   - test.py
   - sjg-lab
   - world build
+  - release
 
 .buildman_and_testpy_template: &buildman_and_testpy_dfn
   stage: test.py
