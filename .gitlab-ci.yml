@@ -27,6 +27,7 @@ stages:
   - test.py
   - sjg-lab
   - world build
+  - version_bump
   - release
 
 .buildman_and_testpy_template: &buildman_and_testpy_dfn
