@@ -38,6 +38,6 @@
 
 exec labgrid-client -V do-bootstrap ${bootstrap:-1} -V do-build ${build:-1} \
     -V do-send ${send:-0} -V do-clean ${clean:-0} ${vars} \
-    -V process-limit ${BUILDMAN_PROCESS_LIMIT:-0} \
+    -V process-limit ${BUILDMAN_PROCESS_LIMIT:-0} ${V} \
     -r "${U_BOOT_BOARD_IDENTITY}" ${strategy} ${verbose} -a console \
     ${console_log}
