@@ -1,5 +1,6 @@
-# Copyright 2024 Google LLC
-# Written by Simon Glass
+#!/bin/bash
+
+# Copyright 2025 Simon Glass <sjg@chromium.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,29 +20,19 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Hostname and port for the gRPC coordinator
-export LG_COORDINATOR=kea:20408
+# Restarts the board, bringing it back to the U-Boot prompt ready for running
+# tests
 
-# Environment file for the lab
-export LG_ENV=/vid/software/devel/ubtest/lab/cfg/kea_env.cfg
+# This is called from restart_board() in test/py
 
-# Make sure only one buildman can run at a time, since it uses all CPUs
-export BUILDMAN_PROCESS_LIMIT=1
+# Arguments:
+# - board 'type' (U-Boot board name)
+# - board identity (Labgrid role)
+# - <reset_flag>
+#
+# <reset_flag> is 1 if this script should reset the board, 0 (or empty) if it
+# has already been done
 
-# Location of the U-Boot test hooks
-export UB_TEST_HOOKS=/vid/software/devel/ubtest/u-boot-test-hooks
+. "$(dirname $0)/u-boot-test-common"
 
-# Use the internal console since microcom can miss serial input at boot
-export LG_CONSOLE=internal
-
-# Tell u-boot-test-hooks to use the Labgrid integration
-export USE_LABGRID_SJG=1
-
-
-flash_impl=none
-reset_impl=none
-console_impl=labgrid-sjg
-release_impl=labgrid-sjg
-getrole_impl=labgrid-sjg
-power_impl=none
-restart_impl=labgrid-sjg
+. "${bin_dir}/restart.${restart_impl}"

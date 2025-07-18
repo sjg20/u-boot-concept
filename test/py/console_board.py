@@ -74,6 +74,20 @@ class ConsoleExecAttach(ConsoleBase):
 
         return s
 
+    def restart_board(self, need_reset=True):
+        if not self.lab_mode:
+            super().restart_board(need_reset)
+            return
+
+        self.log.action(f'Restarting board (need_reset {need_reset})')
+        args = [self.config.board_type, self.config.board_identity]
+        if need_reset:
+            args.append('1')
+        cmd = ['u-boot-test-restart'] + args
+        runner = self.log.get_runner(cmd[0], sys.stdout)
+        runner.run(cmd)
+        runner.close()
+
     def close(self):
         super().close()
 

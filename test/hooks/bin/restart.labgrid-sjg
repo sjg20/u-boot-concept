@@ -19,29 +19,25 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Hostname and port for the gRPC coordinator
-export LG_COORDINATOR=kea:20408
+# The variables here can come from one of two places:
+#
+# 1. When using the ub-xxx scripts (e.g. ub-int) they come from those scripts,
+#    set by the get_args.sh script
+#
+# 2. When running from gitlab, the variables are all empty and so take the
+#    default values below, except for ${strategy} which is set in the gitlab
+#    script
 
-# Environment file for the lab
-export LG_ENV=/vid/software/devel/ubtest/lab/cfg/kea_env.cfg
+# On input:
+# strategy: Strategy arguments to use, e.g. "-s start". Normally this is
+# "-s uboot -e off" but it can be "-s start -e off" or even empty
+# verbose: Verbose argument to use, e.g. "-v"
+#
+# The 'vars' variable is set by .gitlab-ci.yml or by get_args.sh in the Labgrid
+# integration
 
-# Make sure only one buildman can run at a time, since it uses all CPUs
-export BUILDMAN_PROCESS_LIMIT=1
-
-# Location of the U-Boot test hooks
-export UB_TEST_HOOKS=/vid/software/devel/ubtest/u-boot-test-hooks
-
-# Use the internal console since microcom can miss serial input at boot
-export LG_CONSOLE=internal
-
-# Tell u-boot-test-hooks to use the Labgrid integration
-export USE_LABGRID_SJG=1
-
-
-flash_impl=none
-reset_impl=none
-console_impl=labgrid-sjg
-release_impl=labgrid-sjg
-getrole_impl=labgrid-sjg
-power_impl=none
-restart_impl=labgrid-sjg
+reset="$3"
+exec labgrid-client -V do-bootstrap ${bootstrap:-1} \
+    -V do-send ${send:-0} -V do-reset ${reset:-0} ${vars} \
+    -r "${U_BOOT_BOARD_IDENTITY}" -i uboot -s restart ${verbose} \
+    --assume-ready query
