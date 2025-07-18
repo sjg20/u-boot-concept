@@ -633,7 +633,8 @@ coreboot test.py:
         fi;
       fi
     - export SRC="$(pwd)"
-    - export OUT="${SRC}/build/${BOARD}"
+    - export OUT="${SRC}/build/${ROLE}"
+    - export OUT_EXTRA="${SRC}/build/${ROLE}_extra"
     - export PATH=$PATH:~/bin
     - export PATH=$PATH:test/hooks/bin
 
@@ -648,7 +649,8 @@ coreboot test.py:
         vars="-V build-adjust ${ADJUST}";
       fi
     - ${SRC}/test/py/test.py --role ${ROLE} --build-dir "${OUT}"
-        --capture=tee-sys -k "not bootstd ${TEST_PY_TEST_SPEC}" || ret=$?
+        --build-dir-extra ${OUT_EXTRA} --capture=tee-sys
+        -k "not bootstd ${TEST_PY_TEST_SPEC}" || ret=$?
     - U_BOOT_BOARD_IDENTITY="${ROLE}" u-boot-test-release || true
     - if [[ $ret -ne 0 ]]; then
         exit $ret;
@@ -656,8 +658,8 @@ coreboot test.py:
   artifacts:
     when: always
     paths:
-      - "build/${BOARD}/test-log.html"
-      - "build/${BOARD}/multiplexed_log.css"
+      - "build/${ROLE}/test-log.html"
+      - "build/${ROLE}/multiplexed_log.css"
     expire_in: 1 week
 
 rpi3:
@@ -841,4 +843,9 @@ tk1:
 vbe:
   variables:
     ROLE: vbe
+  <<: *lab_dfn
+
+play:
+  variables:
+    ROLE: play
   <<: *lab_dfn
