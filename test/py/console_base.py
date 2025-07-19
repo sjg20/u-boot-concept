@@ -544,8 +544,23 @@ class ConsoleBase(object):
 
     def restart_uboot(self):
         """Shut down and restart U-Boot."""
-        self.cleanup_spawn()
-        self.ensure_spawned(False)
+        self.restart_board()
+
+    def restart_board(self, need_reset=True):
+        """Restart a board so it is ready for use
+
+        If a reset is needed the board is re-spawned. If the reset has already
+        happened it checks for a reboot happening on the console
+
+        Args:
+            need_reset (bool): True if a reset should be initiated, False if it
+                has already happened
+        """
+        if need_reset:
+            self.cleanup_spawn()
+            self.ensure_spawned(False)
+        else:
+            self.run_command(cmd='', send_nl=False, wait_for_reboot=True)
 
     def restart_and_expect_reset(self):
         """Shut down and restart U-Boot, expecting it to reset itself!

@@ -58,7 +58,7 @@ def test_efi_selftest_watchdog_reboot(ubman):
     ubman.run_command(cmd='bootefi selftest', wait_for_prompt=False)
     if ubman.p.expect(['resetting', 'U-Boot']):
         raise Exception('Reset failed in \'watchdog reboot\' test')
-    ubman.run_command(cmd='', send_nl=False, wait_for_reboot=True)
+    ubman.restart_board(need_reset=False)
 
 @pytest.mark.buildconfigspec('cmd_bootefi_selftest')
 def test_efi_selftest_text_input(ubman):

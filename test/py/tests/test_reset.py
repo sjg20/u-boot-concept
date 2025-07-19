@@ -59,5 +59,13 @@ def test_reset_w(ubman):
     setup_reset_env(ubman)
     ubman.run_command('reset -w', wait_for_reboot=True)
 
+    # Checks U-Boot's command-prompt functionality after reset
+    test_000_version.test_version(ubman)
+
+@pytest.mark.buildconfigspec('sandbox')
+def test_reset_sandbox(ubman):
+    """Test the reset command for sandbox"""
+    ubman.restart_board(need_reset=True)
+
     # Checks the u-boot command prompt's functionality after reset
     test_000_version.test_version(ubman)
