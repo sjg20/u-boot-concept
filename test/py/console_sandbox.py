@@ -60,14 +60,11 @@ class ConsoleSandbox(ConsoleBase):
         cmd += self.sandbox_flags
         return Spawn(cmd, cwd=self.config.source_dir, decode_signal=True)
 
-    def restart_uboot_with_flags(self, flags, expect_reset=False, use_dtb=True):
+    def restart_uboot_with_flags(self, flags, use_dtb=True):
         """Run U-Boot with the given command-line flags
 
         Args:
             flags: List of flags to pass, each a string
-            expect_reset: Boolean indication whether this boot is expected
-                to be reset while the 1st boot process after main boot before
-                prompt. False by default.
             use_dtb: True to use a device tree file, False to run without one
 
         Returns:
@@ -77,7 +74,7 @@ class ConsoleSandbox(ConsoleBase):
         try:
             self.sandbox_flags = flags
             self.use_dtb = use_dtb
-            return self.restart_uboot(expect_reset)
+            return self.restart_uboot(False)
         finally:
             self.sandbox_flags = []
             self.use_dtb = True
