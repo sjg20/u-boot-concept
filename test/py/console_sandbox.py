@@ -74,7 +74,7 @@ class ConsoleSandbox(ConsoleBase):
         try:
             self.sandbox_flags = flags
             self.use_dtb = use_dtb
-            return self.restart_uboot(False)
+            return self.restart_uboot()
         finally:
             self.sandbox_flags = []
             self.use_dtb = True

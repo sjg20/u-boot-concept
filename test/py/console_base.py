@@ -542,10 +542,19 @@ class ConsoleBase(object):
             pass
         self.p = None
 
-    def restart_uboot(self, expect_reset=False):
+    def restart_uboot(self):
         """Shut down and restart U-Boot."""
         self.cleanup_spawn()
-        self.ensure_spawned(expect_reset)
+        self.ensure_spawned(False)
+
+    def restart_and_expect_reset(self):
+        """Shut down and restart U-Boot, expecting it to reset itself!
+
+        The reset is itself expected to cause another reset after the U-Boot
+        banner appears
+        """
+        self.cleanup_spawn()
+        self.ensure_spawned(True)
 
     def get_spawn_output(self):
         """Return the start-up output from U-Boot

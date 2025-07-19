@@ -133,7 +133,10 @@ class TestEfiCapsuleFirmwareRaw:
             'config_efi_capsule_authenticate')
 
         # reboot
-        ubman.restart_uboot(expect_reset = capsule_early)
+        if capsule_early:
+            ubman.restart_and_expect_reset()
+        else:
+            ubman.restart_uboot()
 
         with ubman.log.section('Test Case 3-b, after reboot'):
             if not capsule_early:

@@ -58,7 +58,10 @@ class TestEfiCapsuleFirmwareFit():
             'config_efi_capsule_on_disk_early')
 
         # reboot
-        ubman.restart_uboot(expect_reset = capsule_early)
+        if capsule_early:
+            ubman.restart_and_expect_reset()
+        else:
+            ubman.restart_uboot()
 
         with ubman.log.section('Test Case 1-b, after reboot'):
             if not capsule_early:
@@ -92,7 +95,10 @@ class TestEfiCapsuleFirmwareFit():
             'config_efi_capsule_authenticate')
 
         # reboot
-        ubman.restart_uboot(expect_reset = capsule_early)
+        if capsule_early:
+            ubman.restart_and_expect_reset()
+        else:
+            ubman.restart_uboot()
 
         with ubman.log.section('Test Case 2-b, after reboot'):
             if not capsule_early:
