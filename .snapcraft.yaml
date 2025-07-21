@@ -1,0 +1,122 @@
+# snapcraft.yaml
+name: u-boot-concept-qemu
+base: core22
+summary: U-Boot builds for various QEMU targets
+description: |
+  This snap builds the U-Boot bootloader for several QEMU targets,
+  including x86, ARM, and RISC-V.
+
+  The snap itself is built on amd64 or arm64, but the resulting U-Boot
+  binaries are architecture-independent and are intended to be run
+  inside the QEMU emulator on any host.
+
+  After installation, you can find the compiled binaries in:
+  /snap/u-boot-concept-qemu/current/share/u-boot/
+
+# Adopt the version from the u-boot-build part's source repository
+adopt-info: u-boot-build
+
+grade: devel
+confinement: strict
+
+# Build this snap on amd64 or arm64 hosts.
+# The resulting snap will be installable on these architectures.
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+parts:
+  u-boot-build:
+    plugin: make
+    source: https://concept.u-boot.org/u-boot/u-boot.git
+    # source-depth is removed to ensure `git describe` has enough history to find a tag.
+    # Define the packages needed to build U-Boot and its cross-compilers
+    build-packages:
+      - build-essential
+      - bison
+      - flex
+      - swig
+      - python3-dev
+      - libssl-dev
+      - libgnutls28-dev # Added for EFI capsule tools
+      - device-tree-compiler
+      # Cross compilers for other architectures
+      - gcc-arm-linux-gnueabihf  # For 32-bit ARM
+      - gcc-aarch64-linux-gnu   # For 64-bit ARM
+      - gcc-riscv64-linux-gnu
+
+    override-build: |
+      set -ex
+      # Ensure we are in the source directory before running make
+      cd "$SNAPCRAFT_PART_SRC"
+
+      # Use a flag file to ensure the version is only set once.
+      VERSION_SET_FILE="$SNAPCRAFT_PART_BUILD/version_is_set"
+
+      # List of QEMU target base names to build
+      QEMU_TARGETS="qemu-x86 qemu-x86_64"
+      QEMU_TARGETS+=" qemu_arm qemu_arm64"
+      QEMU_TARGETS+=" qemu-riscv64_smode"
+
+      DEST_DIR="$SNAPCRAFT_PART_INSTALL/share/qemu"
+      mkdir -p "$DEST_DIR"
+
+      for target_config in $QEMU_TARGETS; do
+        echo "============================================="
+        echo "Building for ${target_config}"
+        echo "============================================="
+
+        # Clean the tree for a fresh build
+        make distclean
+
+        # Set cross-compiler based on target architecture
+        export CROSS_COMPILE=
+        image=u-boot.bin
+        case "$target_config" in
+          qemu_arm64)
+            CROSS_COMPILE=aarch64-linux-gnu-
+            suffix=arm
+            ;;
+          qemu_arm)
+            CROSS_COMPILE=arm-linux-gnueabihf-
+            suffix=aarch64
+            ;;
+          qemu-riscv64*)
+            CROSS_COMPILE=riscv64-linux-gnu-
+            suffix=riscv64
+            ;;
+          qemu-x86)
+            suffix=i386
+            image=u-boot.rom
+            ;;
+          qemu-x86_64)
+            suffix=x86_64
+            image=u-boot.rom
+            ;;
+        esac
+
+        # Configure and build U-Boot by appending the conventional suffix
+        make ${target_config}_defconfig
+        make -j$(nproc)
+
+        # After the first successful build, extract the version from the
+        # uboot.release file and set it for the snap.
+        if [ ! -f "$VERSION_SET_FILE" ] && [ -f include/config/uboot.release ]; then
+          UBOOT_VERSION=$(cat include/config/uboot.release)
+          echo "Setting snap version to ${UBOOT_VERSION}"
+          snapcraftctl set-version "$UBOOT_VERSION"
+          touch "$VERSION_SET_FILE"
+        fi
+
+        extension="${image##*.}"
+        output="u-boot-${suffix}.${extension}"
+
+        # .bin files are marked executable, so remove that
+        chmod a-x "${image}"
+
+        # Copy the relevant artifact
+        cp "${image}" "$DEST_DIR/${output}"
+
+        echo "Build complete for ${target_config}. Artifacts in $DEST_DIR"
+        echo
+      done
