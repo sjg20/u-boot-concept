@@ -151,6 +151,7 @@ class BuildQemu:
             self.board = 'qemu-x86'
             default_bios = 'u-boot.rom'
             self.qemu = 'qemu-system-i386'
+            self.qemu_extra.extend(['-machine', 'q35'])
             if self.helper.bitness == 64:
                 self.board = 'qemu-x86_64'
                 self.qemu = 'qemu-system-x86_64'
