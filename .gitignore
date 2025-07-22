@@ -7,7 +7,6 @@
 #
 .*
 !.checkpatch.conf
-!.snapcraft.yaml
 *.a
 *.asn1.[ch]
 *.bin
