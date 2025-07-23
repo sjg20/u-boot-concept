@@ -2438,15 +2438,14 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		   enum fit_load_op load_op, ulong *datap, ulong *lenp)
 {
 	int image_type = image_ph_type(ph_type);
-	int noffset;
-	const char *fit_uname;
-	const char *fit_uname_config;
 	const char *fit_base_uname_config;
-	const void *fit;
-	void *buf;
-	ulong load, len;
+	const char *fit_uname_config;
+	const char *fit_uname;
 	const char *prop_name;
-	int ret;
+	int noffset, ret;
+	const void *fit;
+	ulong load, len;
+	void *buf;
 
 	fit = map_sysmem(addr, 0);
 	prop_name = fit_get_image_type_property(ph_type);
