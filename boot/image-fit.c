@@ -2163,17 +2163,19 @@ static int select_image(const void *fit, struct bootm_headers *images,
  *
  * @fit: FIT to check
  * @noffset: Node offset of the image being loaded
+ * @images: Boot images structure
  * @image_type: Type of the image
  * @arch: Expected architecture for the image
  * @bootstage_id: ID of starting bootstage to use for progress updates
  * Return: 0 if OK, -EIO if not
  */
 static int check_allowed(const void *fit, int noffset,
+			 struct bootm_headers *images,
 			 enum image_type_t image_type, enum image_arch_t arch,
 			 int bootstage_id)
 {
 	bool type_ok, os_ok;
-	uint8_t os;
+	uint8_t os, os_arch;
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
 	if (!tools_build() && IS_ENABLED(CONFIG_SANDBOX)) {
@@ -2218,6 +2220,9 @@ static int check_allowed(const void *fit, int noffset,
 	}
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL_OK);
+
+	fit_image_get_arch(fit, noffset, &os_arch);
+	images_set_arch(images, os_arch);
 
 	return 0;
 }
@@ -2442,7 +2447,6 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	const void *fit;
 	void *buf;
 	ulong load, data, len;
-	uint8_t os_arch;
 	const char *prop_name;
 	int ret;
 
@@ -2459,12 +2463,10 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	if (noffset < 0)
 		return noffset;
 
-	ret = check_allowed(fit, noffset, image_type, arch, bootstage_id);
+	ret = check_allowed(fit, noffset, images, image_type, arch,
+			    bootstage_id);
 	if (ret)
 		return ret;
-
-	fit_image_get_arch(fit, noffset, &os_arch);
-	images_set_arch(images, os_arch);
 
 	ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
 	if (ret)
