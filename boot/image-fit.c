@@ -1973,7 +1973,7 @@ int fit_get_data_conf_prop(const void *fit, const char *prop_name,
 	return fit_get_data_tail(fit, noffset, data, size);
 }
 
-static int fit_image_select(const void *fit, int rd_noffset, int verify)
+static int print_and_verify(const void *fit, int rd_noffset, int verify)
 {
 	fit_image_print(fit, rd_noffset, "   ");
 
@@ -2151,6 +2151,11 @@ static int select_image(const void *fit, struct bootm_headers *images,
 	}
 
 	printf("   Trying '%s' %s subimage\n", fit_uname, prop_name);
+	ret = print_and_verify(fit, noffset, images->verify);
+	if (ret) {
+		bootstage_error(bootstage_id + BOOTSTAGE_SUB_HASH);
+		return ret;
+	}
 
 	return noffset;
 }
@@ -2173,7 +2178,6 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	ulong load, load_end, data, len;
 	uint8_t os, comp;
 	const char *prop_name;
-	int ret;
 
 	fit = map_sysmem(addr, 0);
 	prop_name = fit_get_image_type_property(ph_type);
@@ -2187,12 +2191,6 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 			       &fit_base_uname_config);
 	if (noffset < 0)
 		return noffset;
-
-	ret = fit_image_select(fit, noffset, images->verify);
-	if (ret) {
-		bootstage_error(bootstage_id + BOOTSTAGE_SUB_HASH);
-		return ret;
-	}
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
 	if (!tools_build() && IS_ENABLED(CONFIG_SANDBOX)) {
