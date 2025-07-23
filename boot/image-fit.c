@@ -2369,12 +2369,12 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		}
 	}
 
-	fit_image_get_arch(fit, noffset, &os_arch);
-	images_set_arch(images, os_arch);
-
 	ret = check_allowed(fit, noffset, image_type, arch, bootstage_id);
 	if (ret)
 		return ret;
+
+	fit_image_get_arch(fit, noffset, &os_arch);
+	images_set_arch(images, os_arch);
 
 	ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
 	if (ret)
