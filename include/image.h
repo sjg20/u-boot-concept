@@ -459,6 +459,13 @@ struct bootm_headers {
 
 extern struct bootm_headers images;
 
+static inline void images_set_arch(struct bootm_headers *images, int os_arch)
+{
+#ifndef USE_HOSTCC
+	images->os.arch = os_arch;
+#endif
+}
+
 /*
  * Some systems (for example LWMON) have very short watchdog periods;
  * we must make sure to split long operations like memmove() or
