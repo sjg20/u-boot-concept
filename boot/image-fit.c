@@ -2375,14 +2375,13 @@ int decomp_image(const void *fit, int noffset, const char *prop_name,
  * @image_type: Type of the image
  * @load_op: Load operation to process
  * @bootstage_id: ID of starting bootstage to use for progress updates
- * @datap: Returns buf
  * @loadp: Returns the address to which the data should be loaded
  * Return: 0 if OK, -ve on error
  */
 static int handle_load_op(const void *fit, int noffset, const char *prop_name,
 			  void *buf, ulong size, enum image_type_t image_type,
 			  enum fit_load_op load_op, int bootstage_id,
-			  ulong *datap, ulong *loadp)
+			  ulong *loadp)
 {
 	ulong data, load, load_end;
 	int ret;
@@ -2428,7 +2427,6 @@ static int handle_load_op(const void *fit, int noffset, const char *prop_name,
 	if (ret)
 		return ret;
 
-	*datap = data;
 	*loadp = load;
 
 	return 0;
@@ -2446,7 +2444,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	const char *fit_base_uname_config;
 	const void *fit;
 	void *buf;
-	ulong load, data, len;
+	ulong load, len;
 	const char *prop_name;
 	int ret;
 
@@ -2473,7 +2471,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		return ret;
 
 	ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
-			     load_op, bootstage_id, &data, &load);
+			     load_op, bootstage_id, &load);
 	if (ret)
 		return ret;
 
