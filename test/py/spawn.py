@@ -68,7 +68,6 @@ class Spawn:
         self.logfile_read = None
         self.before = ''
         self.after = ''
-        self.timeout = None
         # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
         self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
 

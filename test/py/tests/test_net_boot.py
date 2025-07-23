@@ -224,7 +224,7 @@ def test_net_pxe_boot(ubman):
 
     f, bootfile = setup_pxe_boot(ubman)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', ubman.timeout)
     fn = f['fn']
 
     if addr:
@@ -275,7 +275,7 @@ def test_net_pxe_boot_config(ubman):
 
     f, bootfile = setup_pxe_boot(ubman)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', ubman.timeout)
     fn = f['fn']
     local_label = f['local_label']
     empty_label = f['empty_label']
@@ -354,7 +354,7 @@ def test_net_pxe_boot_config_invalid(ubman):
 
     f, bootfile = setup_pxe_boot(ubman)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', ubman.timeout)
     fn = f['fn']
     invalid_label = f['invalid_label']
     exp_str_invalid = f['exp_str_invalid']

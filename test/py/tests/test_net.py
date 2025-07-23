@@ -358,7 +358,7 @@ def test_net_pxe_get(ubman):
         pytest.skip("No PXE readable file to read")
 
     addr = f.get("addr", None)
-    timeout = f.get("timeout", ubman.p.timeout)
+    timeout = f.get("timeout", ubman.timeout)
 
     pxeuuid = uuid.uuid1()
     ubman.run_command(f"setenv pxeuuid {pxeuuid}")
@@ -416,7 +416,7 @@ def test_net_tftpput(ubman):
         addr = utils.find_ram_base(ubman)
 
     sz = f.get("size", None)
-    timeout = f.get("timeout", ubman.p.timeout)
+    timeout = f.get("timeout", ubman.timeout)
     fn = f["fn"]
     fnu = f.get("fnu", "_".join([datetime.datetime.now().strftime("%y%m%d%H%M%S"), fn]))
     expected_text = "Bytes transferred = "
