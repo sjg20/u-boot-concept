@@ -2358,7 +2358,8 @@ int decomp_image(const void *fit, int noffset, const char *prop_name,
  * handle_load_op() - Handle the load operation
  *
  * Process the load_op and figure out where the image should be loaded, now
- * that it has been located
+ * that it has been located. Decompress and move as necessary to get the image
+ * into the right place - see decomp_image()
  *
  * @fit: FIT to check
  * @noffset: Node offset of the image being loaded
@@ -2371,20 +2372,19 @@ int decomp_image(const void *fit, int noffset, const char *prop_name,
  * @bootstage_id: ID of starting bootstage to use for progress updates
  * @datap: Returns buf
  * @loadp: Returns the address to which the data should be loaded
- * @load_endp: Returns the end address of the data-loading location
  * Return: 0 if OK, -ve on error
  */
 static int handle_load_op(const void *fit, int noffset, const char *prop_name,
-			  const void *buf, ulong size,
-			  enum image_type_t image_type,
+			  void *buf, ulong size, enum image_type_t image_type,
 			  enum fit_load_op load_op, int bootstage_id,
-			  ulong *datap, ulong *loadp, ulong *load_endp)
+			  ulong *datap, ulong *loadp)
 {
-	ulong data, load;
+	ulong data, load, load_end;
+	int ret;
 
 	data = map_to_sysmem(buf);
 	load = data;
-	*load_endp = 0;
+	load_end = 0;
 	if (load_op == FIT_LOAD_IGNORED) {
 		log_debug("load_op: not loading\n");
 		/* Don't load */
@@ -2405,9 +2405,9 @@ static int handle_load_op(const void *fit, int noffset, const char *prop_name,
 		image_start = map_to_sysmem(fit);
 		image_end = image_start + fit_get_size(fit);
 
-		*load_endp = load + size;
+		load_end = load + size;
 		if (image_type != IH_TYPE_KERNEL &&
-		    load < image_end && *load_endp > image_start) {
+		    load < image_end && load_end > image_start) {
 			printf("Error: %s overwritten\n", prop_name);
 			return -EXDEV;
 		}
@@ -2417,6 +2417,12 @@ static int handle_load_op(const void *fit, int noffset, const char *prop_name,
 	} else {
 		load = data;	/* No load address specified */
 	}
+
+	ret = decomp_image(fit, noffset, prop_name, buf, size, image_type,
+			   load_op, bootstage_id, data, load, load_end);
+	if (ret)
+		return ret;
+
 	*datap = data;
 	*loadp = load;
 
@@ -2435,7 +2441,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	const char *fit_base_uname_config;
 	const void *fit;
 	void *buf;
-	ulong load, load_end, data, len;
+	ulong load, data, len;
 	uint8_t os_arch;
 	const char *prop_name;
 	int ret;
@@ -2465,12 +2471,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		return ret;
 
 	ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
-			     load_op, bootstage_id, &data, &load, &load_end);
-	if (ret)
-		return ret;
-
-	ret = decomp_image(fit, noffset, prop_name, buf, len, image_type,
-			   load_op, bootstage_id, data, load, load_end);
+			     load_op, bootstage_id, &data, &load);
 	if (ret)
 		return ret;
 
