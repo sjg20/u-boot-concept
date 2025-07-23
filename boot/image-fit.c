@@ -2216,6 +2216,53 @@ static int check_allowed(const void *fit, int noffset,
 }
 
 /**
+ * obtain_data() - Obtain the data from the FIT
+ *
+ * Get the location of the data in the FIT and see if it needs to be deciphered
+ * or processed in some grubby board-specific way.
+ *
+ * @fit: FIT to check
+ * @noffset: Node offset of the image being loaded
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * that was loaded
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @bufp: Returns a pointer to the data
+ * @size: Returns the size of the data
+ * Return: 0 if OK, -ve on error
+ */
+static int obtain_data(const void *fit, int noffset, const char *prop_name,
+		       int bootstage_id, void *bufp, ulong *sizep)
+{
+	size_t size;
+
+	/* get image data address and length */
+	if (fit_image_get_data(fit, noffset, (const void **)bufp, &size)) {
+		printf("Could not find %s subimage data!\n", prop_name);
+		bootstage_error(bootstage_id + BOOTSTAGE_SUB_GET_DATA);
+		return -ENOENT;
+	}
+
+	/* Decrypt data before uncompress/move */
+	if (IS_ENABLED(CONFIG_FIT_CIPHER) && IMAGE_ENABLE_DECRYPT) {
+		puts("   Decrypting Data ... ");
+		if (fit_image_uncipher(fit, noffset, bufp, &size)) {
+			puts("Error\n");
+			return -EACCES;
+		}
+		puts("OK\n");
+	}
+
+	/* perform any post-processing on the image data */
+	if (!tools_build() && IS_ENABLED(CONFIG_FIT_IMAGE_POST_PROCESS))
+		board_fit_image_post_process(fit, noffset, bufp, &size);
+
+	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_GET_DATA_OK);
+	*sizep = size;
+
+	return 0;
+}
+
+/**
  * handle_load_op() - Handle the load operation
  *
  * Process the load_op and figure out where the image should be loaded, now
@@ -2297,7 +2344,6 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	const void *fit;
 	void *buf;
 	void *loadbuf;
-	size_t size;
 	ulong load, load_end, data, len;
 	uint8_t comp, os_arch;
 	const char *prop_name;
@@ -2332,30 +2378,9 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	if (ret)
 		return ret;
 
-	/* get image data address and length */
-	if (fit_image_get_data(fit, noffset, (const void **)&buf, &size)) {
-		printf("Could not find %s subimage data!\n", prop_name);
-		bootstage_error(bootstage_id + BOOTSTAGE_SUB_GET_DATA);
-		return -ENOENT;
-	}
-
-	/* Decrypt data before uncompress/move */
-	if (IS_ENABLED(CONFIG_FIT_CIPHER) && IMAGE_ENABLE_DECRYPT) {
-		puts("   Decrypting Data ... ");
-		if (fit_image_uncipher(fit, noffset, &buf, &size)) {
-			puts("Error\n");
-			return -EACCES;
-		}
-		puts("OK\n");
-	}
-
-	/* perform any post-processing on the image data */
-	if (!tools_build() && IS_ENABLED(CONFIG_FIT_IMAGE_POST_PROCESS))
-		board_fit_image_post_process(fit, noffset, &buf, &size);
-
-	len = (ulong)size;
-
-	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_GET_DATA_OK);
+	ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
+	if (ret)
+		return ret;
 
 	ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
 			     load_op, bootstage_id, &data, &load, &load_end);
