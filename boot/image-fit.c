@@ -2270,6 +2270,91 @@ static int obtain_data(const void *fit, int noffset, const char *prop_name,
 }
 
 /**
+ * decomp_image() - Decompress / relocate the image
+ *
+ * If the image is compressed, decompress it to the provided load address,
+ * making sure it fits within the allowed space.
+ *
+ * If the image is not compressed, copy it (to the load address)if needed.
+ *
+ * Kernels are not decompressed here, since that is handled in bootm_load_os()
+ *
+ * Compression is ignored on ramdisks, although a warning is provided. Since the
+ * ramdisk normally uses its own compression, doing additional compression at
+ * the FIT level is counter-productive.
+ *
+ * For devicetree, check that the image is actually a devicetree
+ *
+ * @fit: FIT to check
+ * @noffset: Node offset of the image being loaded
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * that was loaded
+ * @buf: Pointer to image (within the FIT)
+ * @size: Size of the image in bytes
+ * @image_type: Type of the image
+ * @load_op: Load operation to process
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @data: Data buffer
+ * @load: Address to which the data should be loaded
+ * @load_end: End address of the data-loading location
+ * Return: 0 if OK, -ve on error
+ */
+int decomp_image(const void *fit, int noffset, const char *prop_name,
+		 void *buf, ulong size, enum image_type_t image_type,
+		 enum fit_load_op load_op, int bootstage_id, ulong data,
+		 ulong load, ulong load_end)
+{
+	void *loadbuf;
+	uint8_t comp;
+
+	comp = IH_COMP_NONE;
+	loadbuf = buf;
+	/* Kernel images get decompressed later in bootm_load_os(). */
+	if (!fit_image_get_comp(fit, noffset, &comp) &&
+	    comp != IH_COMP_NONE &&
+	    load_op != FIT_LOAD_IGNORED &&
+	    !(image_type == IH_TYPE_KERNEL ||
+	      image_type == IH_TYPE_KERNEL_NOLOAD ||
+	      image_type == IH_TYPE_RAMDISK)) {
+		ulong max_decomp_len = size * 20;
+
+		log_debug("decompressing image\n");
+		if (load == data) {
+			loadbuf = malloc(max_decomp_len);
+			load = map_to_sysmem(loadbuf);
+		} else {
+			loadbuf = map_sysmem(load, max_decomp_len);
+		}
+		if (image_decomp(comp, load, data, image_type, loadbuf, buf,
+				 size, max_decomp_len, &load_end)) {
+			printf("Error decompressing %s\n", prop_name);
+
+			return -ENOEXEC;
+		}
+		size = load_end - load;
+	} else if (load != data) {
+		log_debug("copying\n");
+		loadbuf = map_sysmem(load, size);
+		memcpy(loadbuf, buf, size);
+	}
+
+	if (image_type == IH_TYPE_RAMDISK && comp != IH_COMP_NONE)
+		puts("WARNING: 'compression' nodes for ramdisks are deprecated,"
+		     " please fix your .its file!\n");
+
+	/* verify that image data is a proper FDT blob */
+	if (load_op != FIT_LOAD_IGNORED && image_type == IH_TYPE_FLATDT &&
+	    fdt_check_header(loadbuf)) {
+		puts("Subimage data is not a FDT\n");
+		return -ENOEXEC;
+	}
+
+	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_LOAD);
+
+	return 0;
+}
+
+/**
  * handle_load_op() - Handle the load operation
  *
  * Process the load_op and figure out where the image should be loaded, now
@@ -2350,9 +2435,8 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	const char *fit_base_uname_config;
 	const void *fit;
 	void *buf;
-	void *loadbuf;
 	ulong load, load_end, data, len;
-	uint8_t comp, os_arch;
+	uint8_t os_arch;
 	const char *prop_name;
 	int ret;
 
@@ -2385,49 +2469,10 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	if (ret)
 		return ret;
 
-	comp = IH_COMP_NONE;
-	loadbuf = buf;
-	/* Kernel images get decompressed later in bootm_load_os(). */
-	if (!fit_image_get_comp(fit, noffset, &comp) &&
-	    comp != IH_COMP_NONE &&
-	    load_op != FIT_LOAD_IGNORED &&
-	    !(image_type == IH_TYPE_KERNEL ||
-	      image_type == IH_TYPE_KERNEL_NOLOAD ||
-	      image_type == IH_TYPE_RAMDISK)) {
-		ulong max_decomp_len = len * 20;
-
-		log_debug("decompressing image\n");
-		if (load == data) {
-			loadbuf = malloc(max_decomp_len);
-			load = map_to_sysmem(loadbuf);
-		} else {
-			loadbuf = map_sysmem(load, max_decomp_len);
-		}
-		if (image_decomp(comp, load, data, image_type,
-				loadbuf, buf, len, max_decomp_len, &load_end)) {
-			printf("Error decompressing %s\n", prop_name);
-
-			return -ENOEXEC;
-		}
-		len = load_end - load;
-	} else if (load != data) {
-		log_debug("copying\n");
-		loadbuf = map_sysmem(load, len);
-		memcpy(loadbuf, buf, len);
-	}
-
-	if (image_type == IH_TYPE_RAMDISK && comp != IH_COMP_NONE)
-		puts("WARNING: 'compression' nodes for ramdisks are deprecated,"
-		     " please fix your .its file!\n");
-
-	/* verify that image data is a proper FDT blob */
-	if (load_op != FIT_LOAD_IGNORED && image_type == IH_TYPE_FLATDT &&
-	    fdt_check_header(loadbuf)) {
-		puts("Subimage data is not a FDT\n");
-		return -ENOEXEC;
-	}
-
-	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_LOAD);
+	ret = decomp_image(fit, noffset, prop_name, buf, len, image_type,
+			   load_op, bootstage_id, data, load, load_end);
+	if (ret)
+		return ret;
 
 	upl_add_image(fit, noffset, load, len);
 
