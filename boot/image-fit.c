@@ -2177,6 +2177,15 @@ static int check_allowed(const void *fit, int noffset,
 	bool type_ok, os_ok;
 	uint8_t os;
 
+	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
+	if (!tools_build() && IS_ENABLED(CONFIG_SANDBOX)) {
+		if (!fit_image_check_target_arch(fit, noffset)) {
+			puts("Unsupported Architecture\n");
+			bootstage_error(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
+			return -ENOEXEC;
+		}
+	}
+
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL);
 	type_ok = fit_image_check_type(fit, noffset, image_type) ||
 		  fit_image_check_type(fit, noffset, IH_TYPE_FIRMWARE) ||
@@ -2361,15 +2370,6 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 			       &fit_base_uname_config);
 	if (noffset < 0)
 		return noffset;
-
-	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
-	if (!tools_build() && IS_ENABLED(CONFIG_SANDBOX)) {
-		if (!fit_image_check_target_arch(fit, noffset)) {
-			puts("Unsupported Architecture\n");
-			bootstage_error(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
-			return -ENOEXEC;
-		}
-	}
 
 	ret = check_allowed(fit, noffset, image_type, arch, bootstage_id);
 	if (ret)
