@@ -113,7 +113,7 @@ enum {
  * New IDs *MUST* be appended at the end of the list and *NEVER*
  * inserted for backward compatibility.
  */
-enum {
+enum image_arch_t {
 	IH_ARCH_INVALID		= 0,	/* Invalid CPU	*/
 	IH_ARCH_ALPHA,			/* Alpha	*/
 	IH_ARCH_ARM,			/* ARM		*/
@@ -837,7 +837,7 @@ int boot_get_fdt_fit(struct bootm_headers *images, ulong addr,
  */
 int fit_image_load(struct bootm_headers *images, ulong addr,
 		   const char **fit_unamep, const char **fit_uname_configp,
-		   int arch, int image_ph_type, int bootstage_id,
+		   enum image_arch_t arch, int image_ph_type, int bootstage_id,
 		   enum fit_load_op load_op, ulong *datap, ulong *lenp);
 
 /**

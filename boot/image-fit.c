@@ -2158,49 +2158,22 @@ static int select_image(const void *fit, struct bootm_headers *images,
 	return noffset;
 }
 
-int fit_image_load(struct bootm_headers *images, ulong addr,
-		   const char **fit_unamep, const char **fit_uname_configp,
-		   int arch, int ph_type, int bootstage_id,
-		   enum fit_load_op load_op, ulong *datap, ulong *lenp)
+/**
+ * check_allowed() - Check if an image is allowed to be loaded
+ *
+ * @fit: FIT to check
+ * @noffset: Node offset of the image being loaded
+ * @image_type: Type of the image
+ * @arch: Expected architecture for the image
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * Return: 0 if OK, -EIO if not
+ */
+static int check_allowed(const void *fit, int noffset,
+			 enum image_type_t image_type, enum image_arch_t arch,
+			 int bootstage_id)
 {
-	int image_type = image_ph_type(ph_type);
-	int noffset;
-	const char *fit_uname;
-	const char *fit_uname_config;
-	const char *fit_base_uname_config;
-	const void *fit;
-	void *buf;
-	void *loadbuf;
-	size_t size;
-	int type_ok, os_ok;
-	ulong load, load_end, data, len;
-	uint8_t os, comp, os_arch;
-	const char *prop_name;
-
-	fit = map_sysmem(addr, 0);
-	prop_name = fit_get_image_type_property(ph_type);
-	printf("## Loading %s (%s) from FIT Image at %08lx ...\n",
-	       prop_name, genimg_get_phase_name(image_ph_phase(ph_type)), addr);
-
-	fit_uname = fit_unamep ? *fit_unamep : NULL;
-	fit_uname_config = fit_uname_configp ? *fit_uname_configp : NULL;
-	noffset = select_image(fit, images, &fit_uname, fit_uname_config,
-			       prop_name, ph_type, bootstage_id,
-			       &fit_base_uname_config);
-	if (noffset < 0)
-		return noffset;
-
-	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
-	if (!tools_build() && IS_ENABLED(CONFIG_SANDBOX)) {
-		if (!fit_image_check_target_arch(fit, noffset)) {
-			puts("Unsupported Architecture\n");
-			bootstage_error(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
-			return -ENOEXEC;
-		}
-	}
-
-	fit_image_get_arch(fit, noffset, &os_arch);
-	images_set_arch(images, os_arch);
+	bool type_ok, os_ok;
+	uint8_t os;
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL);
 	type_ok = fit_image_check_type(fit, noffset, image_type) ||
@@ -2236,6 +2209,57 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	}
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL_OK);
+
+	return 0;
+}
+
+int fit_image_load(struct bootm_headers *images, ulong addr,
+		   const char **fit_unamep, const char **fit_uname_configp,
+		   enum image_arch_t arch, int ph_type, int bootstage_id,
+		   enum fit_load_op load_op, ulong *datap, ulong *lenp)
+{
+	int image_type = image_ph_type(ph_type);
+	int noffset;
+	const char *fit_uname;
+	const char *fit_uname_config;
+	const char *fit_base_uname_config;
+	const void *fit;
+	void *buf;
+	void *loadbuf;
+	size_t size;
+	ulong load, load_end, data, len;
+	uint8_t comp, os_arch;
+	const char *prop_name;
+	int ret;
+
+	fit = map_sysmem(addr, 0);
+	prop_name = fit_get_image_type_property(ph_type);
+	printf("## Loading %s (%s) from FIT Image at %08lx ...\n",
+	       prop_name, genimg_get_phase_name(image_ph_phase(ph_type)), addr);
+
+	fit_uname = fit_unamep ? *fit_unamep : NULL;
+	fit_uname_config = fit_uname_configp ? *fit_uname_configp : NULL;
+	noffset = select_image(fit, images, &fit_uname, fit_uname_config,
+			       prop_name, ph_type, bootstage_id,
+			       &fit_base_uname_config);
+	if (noffset < 0)
+		return noffset;
+
+	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
+	if (!tools_build() && IS_ENABLED(CONFIG_SANDBOX)) {
+		if (!fit_image_check_target_arch(fit, noffset)) {
+			puts("Unsupported Architecture\n");
+			bootstage_error(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
+			return -ENOEXEC;
+		}
+	}
+
+	fit_image_get_arch(fit, noffset, &os_arch);
+	images_set_arch(images, os_arch);
+
+	ret = check_allowed(fit, noffset, image_type, arch, bootstage_id);
+	if (ret)
+		return ret;
 
 	/* get image data address and length */
 	if (fit_image_get_data(fit, noffset, (const void **)&buf, &size)) {
