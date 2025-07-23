@@ -2054,33 +2054,34 @@ static const char *fit_get_image_type_property(int ph_type)
 	return "unknown";
 }
 
-int fit_image_load(struct bootm_headers *images, ulong addr,
-		   const char **fit_unamep, const char **fit_uname_configp,
-		   int arch, int ph_type, int bootstage_id,
-		   enum fit_load_op load_op, ulong *datap, ulong *lenp)
+/**
+ * select_image() - Select the image to load
+ *
+ * image->fit_uname_cfg is set if the image type is IH_TYPE_KERNEL
+ *
+ * @fit: Pointer to FIT
+ * @images: Boot images structure
+ * @fit_unamep: On entry *fit_unamep is a pointer to the requested image name
+ * (e.g. "kernel") or *fit_unamep is NULL to use the default. On exist, set to
+ * the selected image name. Note that fit_unamep cannot be NULL
+ * @fit_uname_config: Requested configuration name (e.g. "conf-1") or NULL to
+ * use the default
+ * @ph_type: Required image type (IH_TYPE_...) and phase (IH_PHASE_...)
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @fit_base_uname_configp: Returns config name selected, or NULL if *fit_unamep
+ * was used to select an image node
+ * Return: node offset of image node, on success, else -ve error code
+ */
+static int select_image(const void *fit, struct bootm_headers *images,
+			const char **fit_unamep, const char *fit_uname_config,
+			const char *prop_name, int ph_type, int bootstage_id,
+			const char **fit_base_uname_configp)
 {
-	int image_type = image_ph_type(ph_type);
 	int cfg_noffset, noffset;
-	const char *fit_uname;
-	const char *fit_uname_config;
-	const char *fit_base_uname_config;
-	const void *fit;
-	void *buf;
-	void *loadbuf;
-	size_t size;
-	int type_ok, os_ok;
-	ulong load, load_end, data, len;
-	uint8_t os, comp;
-	const char *prop_name;
 	int ret;
 
-	fit = map_sysmem(addr, 0);
-	fit_uname = fit_unamep ? *fit_unamep : NULL;
-	fit_uname_config = fit_uname_configp ? *fit_uname_configp : NULL;
-	fit_base_uname_config = NULL;
+	*fit_base_uname_configp = NULL;
 	prop_name = fit_get_image_type_property(ph_type);
-	printf("## Loading %s (%s) from FIT Image at %08lx ...\n",
-	       prop_name, genimg_get_phase_name(image_ph_phase(ph_type)), addr);
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_FORMAT);
 	ret = fit_check_format(fit, IMAGE_SIZE_INVAL);
@@ -2092,10 +2093,10 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		return ret;
 	}
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_FORMAT_OK);
-	if (fit_uname) {
+	if (*fit_unamep) {
 		/* get FIT component image node offset */
 		bootstage_mark(bootstage_id + BOOTSTAGE_SUB_UNIT_NAME);
-		noffset = fit_image_get_node(fit, fit_uname);
+		noffset = fit_image_get_node(fit, *fit_unamep);
 	} else {
 		/*
 		 * no image node unit name, try to get config
@@ -2116,11 +2117,12 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		}
 		cfg_noffset = ret;
 
-		fit_base_uname_config = fdt_get_name(fit, cfg_noffset, NULL);
-		printf("   Using '%s' configuration\n", fit_base_uname_config);
+		*fit_base_uname_configp = fdt_get_name(fit, cfg_noffset, NULL);
+		printf("   Using '%s' configuration\n",
+		       *fit_base_uname_configp);
 		/* Remember this config */
-		if (image_type == IH_TYPE_KERNEL)
-			images->fit_uname_cfg = fit_base_uname_config;
+		if (image_ph_type(ph_type) == IH_TYPE_KERNEL)
+			images->fit_uname_cfg = *fit_base_uname_configp;
 
 		if (FIT_IMAGE_ENABLE_VERIFY && images->verify) {
 			puts("   Verifying Hash Integrity ... ");
@@ -2137,15 +2139,52 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 
 		noffset = fit_conf_get_prop_node(fit, cfg_noffset, prop_name,
 						 image_ph_phase(ph_type));
-		fit_uname = fit_get_name(fit, noffset, NULL);
+		*fit_unamep = fit_get_name(fit, noffset, NULL);
 	}
+
 	if (noffset < 0) {
 		printf("Could not find subimage node type '%s'\n", prop_name);
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_SUBNODE);
 		return -ENOENT;
 	}
 
-	printf("   Trying '%s' %s subimage\n", fit_uname, prop_name);
+	printf("   Trying '%s' %s subimage\n", *fit_unamep, prop_name);
+
+	return noffset;
+}
+
+int fit_image_load(struct bootm_headers *images, ulong addr,
+		   const char **fit_unamep, const char **fit_uname_configp,
+		   int arch, int ph_type, int bootstage_id,
+		   enum fit_load_op load_op, ulong *datap, ulong *lenp)
+{
+	int image_type = image_ph_type(ph_type);
+	int noffset;
+	const char *fit_uname;
+	const char *fit_uname_config;
+	const char *fit_base_uname_config;
+	const void *fit;
+	void *buf;
+	void *loadbuf;
+	size_t size;
+	int type_ok, os_ok;
+	ulong load, load_end, data, len;
+	uint8_t os, comp;
+	const char *prop_name;
+	int ret;
+
+	fit = map_sysmem(addr, 0);
+	prop_name = fit_get_image_type_property(ph_type);
+	printf("## Loading %s (%s) from FIT Image at %08lx ...\n",
+	       prop_name, genimg_get_phase_name(image_ph_phase(ph_type)), addr);
+
+	fit_uname = fit_unamep ? *fit_unamep : NULL;
+	fit_uname_config = fit_uname_configp ? *fit_uname_configp : NULL;
+	noffset = select_image(fit, images, &fit_uname, fit_uname_config,
+			       prop_name, ph_type, bootstage_id,
+			       &fit_base_uname_config);
+	if (noffset < 0)
+		return noffset;
 
 	ret = fit_image_select(fit, noffset, images->verify);
 	if (ret) {
