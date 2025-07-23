@@ -2176,7 +2176,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	size_t size;
 	int type_ok, os_ok;
 	ulong load, load_end, data, len;
-	uint8_t os, comp;
+	uint8_t os, comp, os_arch;
 	const char *prop_name;
 
 	fit = map_sysmem(addr, 0);
@@ -2201,14 +2201,8 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		}
 	}
 
-#ifndef USE_HOSTCC
-	{
-	uint8_t os_arch;
-
 	fit_image_get_arch(fit, noffset, &os_arch);
-	images->os.arch = os_arch;
-	}
-#endif
+	images_set_arch(images, os_arch);
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL);
 	type_ok = fit_image_check_type(fit, noffset, image_type) ||
