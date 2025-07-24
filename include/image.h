@@ -1176,6 +1176,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 #define FIT_COMP_PROP		"compression"
 #define FIT_ENTRY_PROP		"entry"
 #define FIT_LOAD_PROP		"load"
+#define FIT_PHASE_PROP		"phase"
 
 /* configuration node */
 #define FIT_KERNEL_PROP		"kernel"
@@ -1188,7 +1189,6 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 #define FIT_FIRMWARE_PROP	"firmware"
 #define FIT_STANDALONE_PROP	"standalone"
 #define FIT_SCRIPT_PROP		"script"
-#define FIT_PHASE_PROP		"phase"
 
 #define FIT_MAX_HASH_LEN	HASH_MAX_DIGEST_SIZE
 
