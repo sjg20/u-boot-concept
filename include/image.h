@@ -1259,10 +1259,10 @@ int fit_image_get_data(const void *fit, int noffset, const void **data,
 		       size_t *size);
 
 /**
- * fit_image_get_phase() - Get the phase from a FIT image
+ * fit_image_get_phase() - Get the phase from an image in a FIT
  *
  * @fit: FIT to read from
- * @offset: offset node to read
+ * @offset: offset of the image-node to read
  * @phasep: Returns phase, if any
  * Return: 0 if read OK and *phasep is value, -ENOENT if there was no phase
  * property in the node, other -ve value on other error

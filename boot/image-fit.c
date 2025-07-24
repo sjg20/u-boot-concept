@@ -810,18 +810,6 @@ int fit_image_get_comp(const void *fit, int noffset, uint8_t *comp)
 	return 0;
 }
 
-/**
- * fit_image_get_phase() - get the phase for a configuration node
- * @fit: pointer to the FIT format image header
- * @offset: configuration-node offset
- * @phasep: returns the phase
- *
- * Finds the phase property in a given configuration node. If the property is
- * found, its (string) value is translated to the numeric id which is returned
- * to the caller.
- *
- * Returns: 0 on success, -ENOENT if missing, -EINVAL for invalid value
- */
 int fit_image_get_phase(const void *fit, int offset, enum image_phase_t *phasep)
 {
 	const void *data;
