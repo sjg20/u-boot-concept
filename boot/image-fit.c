@@ -2067,6 +2067,75 @@ static const char *fit_get_image_type_property(int ph_type)
 }
 
 /**
+ * select_from_config() - Select an image from a configuration
+ *
+ * @fit: Pointer to FIT
+ * @images: Boot images structure
+ * @fit_uname_config: Requested configuration name (e.g. "conf-1") or NULL to
+ * use the default
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * to load
+ * @ph_type: Required image type (IH_TYPE_...) and phase (IH_PHASE_...)
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @fit_unamep: Returns name of selected image node, on success
+ * @fit_base_uname_configp: Returns config name selected, on success
+ * Return: node offset of image node, on success, else -ve error code
+ */
+static int select_from_config(const void *fit, struct bootm_headers *images,
+			      const char *fit_uname_config,
+			      const char *prop_name, int ph_type,
+			      int bootstage_id, const char **fit_unamep,
+			      const char **fit_base_uname_configp)
+{
+	int cfg_noffset, noffset;
+	int ret;
+
+	/*
+	 * no image node unit name, try to get config
+	 * node first. If config unit node name is NULL
+	 * fit_conf_get_node() will try to find default config node
+	 */
+	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_NO_UNIT_NAME);
+	ret = -ENXIO;
+	if (IS_ENABLED(CONFIG_FIT_BEST_MATCH) && !fit_uname_config)
+		ret = fit_conf_find_compat(fit, gd_fdt_blob());
+	if (ret < 0 && ret != -EINVAL)
+		ret = fit_conf_get_node(fit, fit_uname_config);
+	if (ret < 0) {
+		puts("Could not find configuration node\n");
+		bootstage_error(bootstage_id +
+				BOOTSTAGE_SUB_NO_UNIT_NAME);
+		return -ENOENT;
+	}
+	cfg_noffset = ret;
+
+	*fit_base_uname_configp = fdt_get_name(fit, cfg_noffset, NULL);
+	printf("   Using '%s' configuration\n", *fit_base_uname_configp);
+	/* Remember this config */
+	if (image_ph_type(ph_type) == IH_TYPE_KERNEL)
+		images->fit_uname_cfg = *fit_base_uname_configp;
+
+	if (FIT_IMAGE_ENABLE_VERIFY && images->verify) {
+		puts("   Verifying Hash Integrity ... ");
+		if (fit_config_verify(fit, cfg_noffset)) {
+			puts("Bad Data Hash\n");
+			bootstage_error(bootstage_id +
+				BOOTSTAGE_SUB_HASH);
+			return -EACCES;
+		}
+		puts("OK\n");
+	}
+
+	bootstage_mark(BOOTSTAGE_ID_FIT_CONFIG);
+
+	noffset = fit_conf_get_prop_node(fit, cfg_noffset, prop_name,
+					 image_ph_phase(ph_type));
+	*fit_unamep = fit_get_name(fit, noffset, NULL);
+
+	return noffset;
+}
+
+/**
  * select_image() - Select the image to load
  *
  * image->fit_uname_cfg is set if the image type is IH_TYPE_KERNEL
@@ -2078,6 +2147,8 @@ static const char *fit_get_image_type_property(int ph_type)
  * the selected image name. Note that fit_unamep cannot be NULL
  * @fit_uname_config: Requested configuration name (e.g. "conf-1") or NULL to
  * use the default
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * to load
  * @ph_type: Required image type (IH_TYPE_...) and phase (IH_PHASE_...)
  * @bootstage_id: ID of starting bootstage to use for progress updates
  * @fit_base_uname_configp: Returns config name selected, or NULL if *fit_unamep
@@ -2089,7 +2160,7 @@ static int select_image(const void *fit, struct bootm_headers *images,
 			const char *prop_name, int ph_type, int bootstage_id,
 			const char **fit_base_uname_configp)
 {
-	int cfg_noffset, noffset;
+	int noffset;
 	int ret;
 
 	*fit_base_uname_configp = NULL;
@@ -2110,48 +2181,10 @@ static int select_image(const void *fit, struct bootm_headers *images,
 		bootstage_mark(bootstage_id + BOOTSTAGE_SUB_UNIT_NAME);
 		noffset = fit_image_get_node(fit, *fit_unamep);
 	} else {
-		/*
-		 * no image node unit name, try to get config
-		 * node first. If config unit node name is NULL
-		 * fit_conf_get_node() will try to find default config node
-		 */
-		bootstage_mark(bootstage_id + BOOTSTAGE_SUB_NO_UNIT_NAME);
-		ret = -ENXIO;
-		if (IS_ENABLED(CONFIG_FIT_BEST_MATCH) && !fit_uname_config)
-			ret = fit_conf_find_compat(fit, gd_fdt_blob());
-		if (ret < 0 && ret != -EINVAL)
-			ret = fit_conf_get_node(fit, fit_uname_config);
-		if (ret < 0) {
-			puts("Could not find configuration node\n");
-			bootstage_error(bootstage_id +
-					BOOTSTAGE_SUB_NO_UNIT_NAME);
-			return -ENOENT;
-		}
-		cfg_noffset = ret;
-
-		*fit_base_uname_configp = fdt_get_name(fit, cfg_noffset, NULL);
-		printf("   Using '%s' configuration\n",
-		       *fit_base_uname_configp);
-		/* Remember this config */
-		if (image_ph_type(ph_type) == IH_TYPE_KERNEL)
-			images->fit_uname_cfg = *fit_base_uname_configp;
-
-		if (FIT_IMAGE_ENABLE_VERIFY && images->verify) {
-			puts("   Verifying Hash Integrity ... ");
-			if (fit_config_verify(fit, cfg_noffset)) {
-				puts("Bad Data Hash\n");
-				bootstage_error(bootstage_id +
-					BOOTSTAGE_SUB_HASH);
-				return -EACCES;
-			}
-			puts("OK\n");
-		}
-
-		bootstage_mark(BOOTSTAGE_ID_FIT_CONFIG);
-
-		noffset = fit_conf_get_prop_node(fit, cfg_noffset, prop_name,
-						 image_ph_phase(ph_type));
-		*fit_unamep = fit_get_name(fit, noffset, NULL);
+		noffset = select_from_config(fit, images, fit_uname_config,
+					     prop_name, ph_type, bootstage_id,
+					     fit_unamep,
+					     fit_base_uname_configp);
 	}
 
 	if (noffset < 0) {
