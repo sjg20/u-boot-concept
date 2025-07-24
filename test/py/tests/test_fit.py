@@ -489,3 +489,26 @@ class TestFitImage:
         # Run and verify failure
         output = ubman.run_command_list(cmds)
         assert "can't get kernel image!" in '\n'.join(output)
+
+    def test_fit_no_kernel_load_only(self, ubman, fsetup):
+        """Test that 'bootm' handles a load-only FIT"""
+        cmds = self.prepare(
+            ubman, fsetup,
+            kernel_config='load-only;',
+            fdt_load="load = <{params['fdt_addr']:#x}>;",
+            ramdisk_config='ramdisk = "ramdisk-1";',
+            ramdisk_load="load = <{params['ramdisk_addr']:#x}>;",
+            loadables_config='loadables = "kernel-2", "ramdisk-2";',
+            loadables1_load="load = <{params['loadables1_addr']:#x}>;",
+            loadables2_load="load = <{params['loadables2_addr']:#x}>;")[0]
+
+        lines = ubman.run_command_list(cmds)
+        output = '\n'.join(lines)
+        assert "can't get kernel image!" not in output
+        assert "Detected load-only image: skipping 'kernel'" in output
+        self.check_equal(fsetup, 'fdt_data', 'fdt_out', 'FDT not loaded')
+        self.check_equal(fsetup, 'ramdisk', 'ramdisk_out', 'Ramdisk not loaded')
+        self.check_equal(fsetup, 'loadables1', 'loadables1_out',
+                         'Loadables1 (kernel) not loaded')
+        self.check_equal(fsetup, 'loadables2', 'loadables2_out',
+                         'Loadables2 (ramdisk) not loaded')
