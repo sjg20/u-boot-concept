@@ -28,5 +28,4 @@ CFLAGS_stub.o += -fpic -fshort-wchar
 CFLAGS_REMOVE_efi.o += -mregparm=3
 CFLAGS_efi.o += -fpic -fshort-wchar
 
-$(info removing flags $(CFLAGS_REMOVE_$(stub_obj)))
 extra-$(CONFIG_EFI_STUB) += $(stub_obj) stub.o efi.o

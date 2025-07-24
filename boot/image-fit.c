@@ -1973,7 +1973,7 @@ int fit_get_data_conf_prop(const void *fit, const char *prop_name,
 	return fit_get_data_tail(fit, noffset, data, size);
 }
 
-static int fit_image_select(const void *fit, int rd_noffset, int verify)
+static int print_and_verify(const void *fit, int rd_noffset, int verify)
 {
 	fit_image_print(fit, rd_noffset, "   ");
 
@@ -2054,33 +2054,36 @@ static const char *fit_get_image_type_property(int ph_type)
 	return "unknown";
 }
 
-int fit_image_load(struct bootm_headers *images, ulong addr,
-		   const char **fit_unamep, const char **fit_uname_configp,
-		   int arch, int ph_type, int bootstage_id,
-		   enum fit_load_op load_op, ulong *datap, ulong *lenp)
+/**
+ * select_image() - Select the image to load
+ *
+ * image->fit_uname_cfg is set if the image type is IH_TYPE_KERNEL
+ *
+ * @fit: Pointer to FIT
+ * @images: Boot images structure
+ * @fit_unamep: On entry *fit_unamep is a pointer to the requested image name
+ * (e.g. "kernel") or *fit_unamep is NULL to use the default. On exist, set to
+ * the selected image name. Note that fit_unamep cannot be NULL
+ * @fit_uname_config: Requested configuration name (e.g. "conf-1") or NULL to
+ * use the default
+ * @ph_type: Required image type (IH_TYPE_...) and phase (IH_PHASE_...)
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @fit_base_uname_configp: Returns config name selected, or NULL if *fit_unamep
+ * was used to select an image node
+ * Return: node offset of image node, on success, else -ve error code
+ */
+static int select_image(const void *fit, struct bootm_headers *images,
+			const char **fit_unamep, const char *fit_uname_config,
+			const char *prop_name, int ph_type, int bootstage_id,
+			const char **fit_base_uname_configp)
 {
-	int image_type = image_ph_type(ph_type);
 	int cfg_noffset, noffset;
 	const char *fit_uname;
-	const char *fit_uname_config;
-	const char *fit_base_uname_config;
-	const void *fit;
-	void *buf;
-	void *loadbuf;
-	size_t size;
-	int type_ok, os_ok;
-	ulong load, load_end, data, len;
-	uint8_t os, comp;
-	const char *prop_name;
 	int ret;
 
-	fit = map_sysmem(addr, 0);
 	fit_uname = fit_unamep ? *fit_unamep : NULL;
-	fit_uname_config = fit_uname_configp ? *fit_uname_configp : NULL;
-	fit_base_uname_config = NULL;
+	*fit_base_uname_configp = NULL;
 	prop_name = fit_get_image_type_property(ph_type);
-	printf("## Loading %s (%s) from FIT Image at %08lx ...\n",
-	       prop_name, genimg_get_phase_name(image_ph_phase(ph_type)), addr);
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_FORMAT);
 	ret = fit_check_format(fit, IMAGE_SIZE_INVAL);
@@ -2116,11 +2119,12 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		}
 		cfg_noffset = ret;
 
-		fit_base_uname_config = fdt_get_name(fit, cfg_noffset, NULL);
-		printf("   Using '%s' configuration\n", fit_base_uname_config);
+		*fit_base_uname_configp = fdt_get_name(fit, cfg_noffset, NULL);
+		printf("   Using '%s' configuration\n",
+		       *fit_base_uname_configp);
 		/* Remember this config */
-		if (image_type == IH_TYPE_KERNEL)
-			images->fit_uname_cfg = fit_base_uname_config;
+		if (image_ph_type(ph_type) == IH_TYPE_KERNEL)
+			images->fit_uname_cfg = *fit_base_uname_configp;
 
 		if (FIT_IMAGE_ENABLE_VERIFY && images->verify) {
 			puts("   Verifying Hash Integrity ... ");
@@ -2137,8 +2141,9 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 
 		noffset = fit_conf_get_prop_node(fit, cfg_noffset, prop_name,
 						 image_ph_phase(ph_type));
-		fit_uname = fit_get_name(fit, noffset, NULL);
+		*fit_unamep = fit_get_name(fit, noffset, NULL);
 	}
+
 	if (noffset < 0) {
 		printf("Could not find subimage node type '%s'\n", prop_name);
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_SUBNODE);
@@ -2146,12 +2151,33 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	}
 
 	printf("   Trying '%s' %s subimage\n", fit_uname, prop_name);
-
-	ret = fit_image_select(fit, noffset, images->verify);
+	ret = print_and_verify(fit, noffset, images->verify);
 	if (ret) {
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_HASH);
 		return ret;
 	}
+
+	return noffset;
+}
+
+/**
+ * check_allowed() - Check if an image is allowed to be loaded
+ *
+ * @fit: FIT to check
+ * @noffset: Node offset of the image being loaded
+ * @images: Boot images structure
+ * @image_type: Type of the image
+ * @arch: Expected architecture for the image
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * Return: 0 if OK, -EIO if not
+ */
+static int check_allowed(const void *fit, int noffset,
+			 struct bootm_headers *images,
+			 enum image_type_t image_type, enum image_arch_t arch,
+			 int bootstage_id)
+{
+	bool type_ok, os_ok;
+	uint8_t os, os_arch;
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ARCH);
 	if (!tools_build() && IS_ENABLED(CONFIG_SANDBOX)) {
@@ -2161,15 +2187,6 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 			return -ENOEXEC;
 		}
 	}
-
-#ifndef USE_HOSTCC
-	{
-	uint8_t os_arch;
-
-	fit_image_get_arch(fit, noffset, &os_arch);
-	images->os.arch = os_arch;
-	}
-#endif
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL);
 	type_ok = fit_image_check_type(fit, noffset, image_type) ||
@@ -2206,8 +2223,34 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL_OK);
 
+	fit_image_get_arch(fit, noffset, &os_arch);
+	images_set_arch(images, os_arch);
+
+	return 0;
+}
+
+/**
+ * obtain_data() - Obtain the data from the FIT
+ *
+ * Get the location of the data in the FIT and see if it needs to be deciphered
+ * or processed in some grubby board-specific way.
+ *
+ * @fit: FIT to check
+ * @noffset: Node offset of the image being loaded
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * that was loaded
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @bufp: Returns a pointer to the data
+ * @size: Returns the size of the data
+ * Return: 0 if OK, -ve on error
+ */
+static int obtain_data(const void *fit, int noffset, const char *prop_name,
+		       int bootstage_id, void *bufp, ulong *sizep)
+{
+	size_t size;
+
 	/* get image data address and length */
-	if (fit_image_get_data(fit, noffset, (const void **)&buf, &size)) {
+	if (fit_image_get_data(fit, noffset, (const void **)bufp, &size)) {
 		printf("Could not find %s subimage data!\n", prop_name);
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_GET_DATA);
 		return -ENOENT;
@@ -2216,7 +2259,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	/* Decrypt data before uncompress/move */
 	if (IS_ENABLED(CONFIG_FIT_CIPHER) && IMAGE_ENABLE_DECRYPT) {
 		puts("   Decrypting Data ... ");
-		if (fit_image_uncipher(fit, noffset, &buf, &size)) {
+		if (fit_image_uncipher(fit, noffset, bufp, &size)) {
 			puts("Error\n");
 			return -EACCES;
 		}
@@ -2225,14 +2268,129 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 
 	/* perform any post-processing on the image data */
 	if (!tools_build() && IS_ENABLED(CONFIG_FIT_IMAGE_POST_PROCESS))
-		board_fit_image_post_process(fit, noffset, &buf, &size);
-
-	len = (ulong)size;
+		board_fit_image_post_process(fit, noffset, bufp, &size);
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_GET_DATA_OK);
+	*sizep = size;
+
+	return 0;
+}
+
+/**
+ * decomp_image() - Decompress / relocate the image
+ *
+ * If the image is compressed, decompress it to the provided load address,
+ * making sure it fits within the allowed space.
+ *
+ * If the image is not compressed, copy it (to the load address)if needed.
+ *
+ * Kernels are not decompressed here, since that is handled in bootm_load_os()
+ *
+ * Compression is ignored on ramdisks, although a warning is provided. Since the
+ * ramdisk normally uses its own compression, doing additional compression at
+ * the FIT level is counter-productive.
+ *
+ * For devicetree, check that the image is actually a devicetree
+ *
+ * @fit: FIT to check
+ * @noffset: Node offset of the image being loaded
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * that was loaded
+ * @buf: Pointer to image (within the FIT)
+ * @size: Size of the image in bytes
+ * @image_type: Type of the image
+ * @load_op: Load operation to process
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @data: Data buffer
+ * @load: Address to which the data should be loaded
+ * @load_end: End address of the data-loading location
+ * Return: 0 if OK, -ve on error
+ */
+int decomp_image(const void *fit, int noffset, const char *prop_name,
+		 void *buf, ulong size, enum image_type_t image_type,
+		 enum fit_load_op load_op, int bootstage_id, ulong data,
+		 ulong load, ulong load_end)
+{
+	void *loadbuf;
+	uint8_t comp;
+
+	comp = IH_COMP_NONE;
+	loadbuf = buf;
+	/* Kernel images get decompressed later in bootm_load_os(). */
+	if (!fit_image_get_comp(fit, noffset, &comp) &&
+	    comp != IH_COMP_NONE &&
+	    load_op != FIT_LOAD_IGNORED &&
+	    !(image_type == IH_TYPE_KERNEL ||
+	      image_type == IH_TYPE_KERNEL_NOLOAD ||
+	      image_type == IH_TYPE_RAMDISK)) {
+		ulong max_decomp_len = size * 20;
+
+		log_debug("decompressing image\n");
+		if (load == data) {
+			loadbuf = malloc(max_decomp_len);
+			load = map_to_sysmem(loadbuf);
+		} else {
+			loadbuf = map_sysmem(load, max_decomp_len);
+		}
+		if (image_decomp(comp, load, data, image_type, loadbuf, buf,
+				 size, max_decomp_len, &load_end)) {
+			printf("Error decompressing %s\n", prop_name);
+
+			return -ENOEXEC;
+		}
+		size = load_end - load;
+	} else if (load != data) {
+		log_debug("copying\n");
+		loadbuf = map_sysmem(load, size);
+		memcpy(loadbuf, buf, size);
+	}
+
+	if (image_type == IH_TYPE_RAMDISK && comp != IH_COMP_NONE)
+		puts("WARNING: 'compression' nodes for ramdisks are deprecated,"
+		     " please fix your .its file!\n");
+
+	/* verify that image data is a proper FDT blob */
+	if (load_op != FIT_LOAD_IGNORED && image_type == IH_TYPE_FLATDT &&
+	    fdt_check_header(loadbuf)) {
+		puts("Subimage data is not a FDT\n");
+		return -ENOEXEC;
+	}
+
+	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_LOAD);
+
+	return 0;
+}
+
+/**
+ * handle_load_op() - Handle the load operation
+ *
+ * Process the load_op and figure out where the image should be loaded, now
+ * that it has been located. Decompress and move as necessary to get the image
+ * into the right place - see decomp_image()
+ *
+ * @fit: FIT to check
+ * @noffset: Node offset of the image being loaded
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * that was loaded
+ * @buf: Pointer to image (within the FIT)
+ * @size: Size of the image in bytes
+ * @image_type: Type of the image
+ * @load_op: Load operation to process
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @loadp: Returns the address to which the data should be loaded
+ * Return: 0 if OK, -ve on error
+ */
+static int handle_load_op(const void *fit, int noffset, const char *prop_name,
+			  void *buf, ulong size, enum image_type_t image_type,
+			  enum fit_load_op load_op, int bootstage_id,
+			  ulong *loadp)
+{
+	ulong data, load, load_end;
+	int ret;
 
 	data = map_to_sysmem(buf);
 	load = data;
+	load_end = 0;
 	if (load_op == FIT_LOAD_IGNORED) {
 		log_debug("load_op: not loading\n");
 		/* Don't load */
@@ -2250,10 +2408,10 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		 * move image data to the load address,
 		 * make sure we don't overwrite initial image
 		 */
-		image_start = addr;
-		image_end = addr + fit_get_size(fit);
+		image_start = map_to_sysmem(fit);
+		image_end = image_start + fit_get_size(fit);
 
-		load_end = load + len;
+		load_end = load + size;
 		if (image_type != IH_TYPE_KERNEL &&
 		    load < image_end && load_end > image_start) {
 			printf("Error: %s overwritten\n", prop_name);
@@ -2266,49 +2424,57 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		load = data;	/* No load address specified */
 	}
 
-	comp = IH_COMP_NONE;
-	loadbuf = buf;
-	/* Kernel images get decompressed later in bootm_load_os(). */
-	if (!fit_image_get_comp(fit, noffset, &comp) &&
-	    comp != IH_COMP_NONE &&
-	    load_op != FIT_LOAD_IGNORED &&
-	    !(image_type == IH_TYPE_KERNEL ||
-	      image_type == IH_TYPE_KERNEL_NOLOAD ||
-	      image_type == IH_TYPE_RAMDISK)) {
-		ulong max_decomp_len = len * 20;
+	ret = decomp_image(fit, noffset, prop_name, buf, size, image_type,
+			   load_op, bootstage_id, data, load, load_end);
+	if (ret)
+		return ret;
 
-		log_debug("decompressing image\n");
-		if (load == data) {
-			loadbuf = malloc(max_decomp_len);
-			load = map_to_sysmem(loadbuf);
-		} else {
-			loadbuf = map_sysmem(load, max_decomp_len);
-		}
-		if (image_decomp(comp, load, data, image_type,
-				loadbuf, buf, len, max_decomp_len, &load_end)) {
-			printf("Error decompressing %s\n", prop_name);
+	*loadp = load;
 
-			return -ENOEXEC;
-		}
-		len = load_end - load;
-	} else if (load != data) {
-		log_debug("copying\n");
-		loadbuf = map_sysmem(load, len);
-		memcpy(loadbuf, buf, len);
-	}
+	return 0;
+}
 
-	if (image_type == IH_TYPE_RAMDISK && comp != IH_COMP_NONE)
-		puts("WARNING: 'compression' nodes for ramdisks are deprecated,"
-		     " please fix your .its file!\n");
+int fit_image_load(struct bootm_headers *images, ulong addr,
+		   const char **fit_unamep, const char **fit_uname_configp,
+		   enum image_arch_t arch, int ph_type, int bootstage_id,
+		   enum fit_load_op load_op, ulong *datap, ulong *lenp)
+{
+	int image_type = image_ph_type(ph_type);
+	const char *fit_base_uname_config;
+	const char *fit_uname_config;
+	const char *fit_uname;
+	const char *prop_name;
+	int noffset, ret;
+	const void *fit;
+	ulong load, len;
+	void *buf;
 
-	/* verify that image data is a proper FDT blob */
-	if (load_op != FIT_LOAD_IGNORED && image_type == IH_TYPE_FLATDT &&
-	    fdt_check_header(loadbuf)) {
-		puts("Subimage data is not a FDT\n");
-		return -ENOEXEC;
-	}
+	fit = map_sysmem(addr, 0);
+	prop_name = fit_get_image_type_property(ph_type);
+	printf("## Loading %s (%s) from FIT Image at %08lx ...\n",
+	       prop_name, genimg_get_phase_name(image_ph_phase(ph_type)), addr);
 
-	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_LOAD);
+	fit_uname = fit_unamep ? *fit_unamep : NULL;
+	fit_uname_config = fit_uname_configp ? *fit_uname_configp : NULL;
+	noffset = select_image(fit, images, &fit_uname, fit_uname_config,
+			       prop_name, ph_type, bootstage_id,
+			       &fit_base_uname_config);
+	if (noffset < 0)
+		return noffset;
+
+	ret = check_allowed(fit, noffset, images, image_type, arch,
+			    bootstage_id);
+	if (ret)
+		return ret;
+
+	ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
+	if (ret)
+		return ret;
+
+	ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
+			     load_op, bootstage_id, &load);
+	if (ret)
+		return ret;
 
 	upl_add_image(fit, noffset, load, len);
 
