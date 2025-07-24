@@ -43,6 +43,18 @@ DECLARE_GLOBAL_DATA_PTR;
 /* New uImage format routines */
 /*****************************************************************************/
 #ifndef USE_HOSTCC
+
+/**
+ * fit_parse_spec() - Helper for parsing a FIT specifier
+ *
+ * @spec: FIT specifier, e.g. "", "1000", "#conf-1", "2000#conf-1",
+ *	 "3000:image-1"
+ * @sepc: Separator character, either '#' or ':'
+ * @addr_curr: Existing default address to return if none is provided in @spec
+ * @addr: Returns the address at @spec, or @addr_curr if none
+ * @name: Returns the name after the separator, or NULL if none
+ * Return: 1 if separator was found, 0 if not
+ */
 static int fit_parse_spec(const char *spec, char sepc, ulong addr_curr,
 		ulong *addr, const char **name)
 {
