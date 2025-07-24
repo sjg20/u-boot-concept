@@ -193,13 +193,20 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 				IH_ARCH_DEFAULT, IH_TYPE_KERNEL,
 				BOOTSTAGE_ID_FIT_KERNEL_START,
 				FIT_LOAD_IGNORED, os_data, os_len);
-		if (os_noffset < 0)
+		if (os_noffset < 0 && os_noffset != -ENOPKG)
 			return -ENOENT;
 
 		images->fit_hdr_os = map_sysmem(img_addr, 0);
 		images->fit_uname_os = fit_uname_kernel;
 		images->fit_uname_cfg = fit_uname_config;
 		images->fit_noffset_os = os_noffset;
+		if (os_noffset == -ENOPKG) {
+			log_debug("no_os: hdr_os %lx uname_os '%s' uname_cfg '%s' noffset_os %dE\n",
+				  img_addr, images->fit_uname_os,
+				  images->fit_uname_cfg,
+				  images->fit_noffset_os);
+			return -ENOPKG;
+		}
 		break;
 #endif
 #ifdef CONFIG_ANDROID_BOOT_IMAGE
@@ -335,6 +342,11 @@ static int bootm_find_os(const char *cmd_name, const char *addr_fit)
 	ret = boot_get_kernel(addr_fit, &images, &images.os.image_start,
 			      &images.os.image_len, &os_hdr);
 	if (ret) {
+		/* no OS present, but that is OK */
+		if (ret == -ENOPKG) {
+			images.no_os = true;
+			return 0;
+		}
 		if (ret == -EPROTOTYPE)
 			printf("Wrong Image Type for %s command\n", cmd_name);
 

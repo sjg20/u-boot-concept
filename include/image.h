@@ -455,6 +455,9 @@ struct bootm_headers {
 
 	int		verify;		/* env_get("verify")[0] != 'n' */
 	enum bootm_state state;
+
+	/* true if this is a load-only FIT with no OS */
+	bool no_os;
 };
 
 extern struct bootm_headers images;
