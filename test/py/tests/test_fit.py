@@ -72,7 +72,7 @@ BASE_ITS = '''
                 default = "conf-1";
                 conf-1 {
                         %(kernel_config)s
-                        fdt = "fdt-1";
+                        %(fdt_config)s
                         %(ramdisk_config)s
                         %(loadables_config)s
                 };
@@ -105,11 +105,11 @@ BASE_FDT = '''
 # then run the 'bootm' command, then save out memory from the places where
 # we expect 'bootm' to write things. Then quit.
 BASE_SCRIPT = '''
-mw 0 0 180000
+%(mem_clear)s
 host load hostfs 0 %(fit_addr)x %(fit)s
 fdt addr %(fit_addr)x
-bootm start %(fit_addr)x
-bootm loados
+bootm %(start_subcmd)s %(fit_addr)x
+bootm loados%(cmd_extra)s
 host save hostfs 0 %(kernel_addr)x %(kernel_out)s %(kernel_size)x
 host save hostfs 0 %(fdt_addr)x %(fdt_out)s %(fdt_size)x
 host save hostfs 0 %(ramdisk_addr)x %(ramdisk_out)s %(ramdisk_size)x
@@ -313,6 +313,7 @@ class TestFitImage:
             'fdt_addr' : 0x80000,
             'fdt_size' : self.filesize(fdt_data),
             'fdt_load' : '',
+            'fdt_config' : 'fdt = "fdt-1";',
 
             'ramdisk' : ramdisk,
             'ramdisk_out' : ramdisk_out,
@@ -335,6 +336,11 @@ class TestFitImage:
 
             'loadables_config' : '',
             'compression' : 'none',
+
+            'mem_clear': 'mw 0 0 180000',
+            'start_subcmd': 'start',
+            'cmd_extra': '',
+            'fit_basename': 'test.fit',
         }
 
         # Yield all necessary components to the tests
@@ -371,7 +377,8 @@ class TestFitImage:
             params[name] = eval(f'f"""{template}"""')
 
         # Make a basic FIT and a script to load it
-        fit = fit_util.make_fit(ubman, params['mkimage'], BASE_ITS, params)
+        fit = fit_util.make_fit(ubman, params['mkimage'], BASE_ITS, params,
+                                basename=params['fit_basename'])
         params['fit'] = fit
         cmds = BASE_SCRIPT % params
 
@@ -512,3 +519,45 @@ class TestFitImage:
                          'Loadables1 (kernel) not loaded')
         self.check_equal(fsetup, 'loadables2', 'loadables2_out',
                          'Loadables2 (ramdisk) not loaded')
+
+    def test_fit_no_kernel_second(self, ubman, fsetup):
+        """Test that 'bootm' handles a load-only FIT and a second FIT"""
+        cmds = self.prepare(
+            ubman, fsetup,
+            kernel_config='load-only;',
+            # Just load a devicetree for the first FIT
+            ramdisk_config='',
+            ramdisk_load='',
+            fdt_load="load = <{params['fdt_addr']:#x}>;")[0]
+
+        lines = ubman.run_command_list(cmds)
+        output = '\n'.join(lines)
+        assert "can't get kernel image!" not in output
+        assert "Detected load-only image: skipping 'kernel'" in output
+        self.check_equal(fsetup, 'fdt_data', 'fdt_out', 'FDT not loaded')
+
+        # Now load a second FIT which has a kernel and ramdisk
+        cmds = self.prepare(
+            ubman, fsetup,
+            fdt_config= '',
+            fdt_load='',
+            ramdisk_config='ramdisk = "ramdisk-1";',
+            ramdisk_load="load = <{params['ramdisk_addr']:#x}>;",
+            # fit=fit
+            mem_clear='',
+
+            # Run the prep stage so we can check that the FDT-fixups are done
+            cmd_extra='\nbootm cmdline\nbootm prep',
+            start_subcmd='restart',
+            fit_basename='second.fit')[0]
+
+        # Run and verify
+        lines = ubman.run_command_list(cmds)
+        output = '\n'.join(lines)
+        assert "can't get kernel image!" not in output
+        assert "Detected load-only image: skipping 'kernel'" not in output
+        self.check_equal(fsetup, 'kernel', 'kernel_out', 'Kernel not loaded')
+        self.check_equal(fsetup, 'ramdisk', 'ramdisk_out', 'Ramdisk not loaded')
+
+        # Check that the devicetree is still there
+        self.check_equal(fsetup, 'fdt_data', 'fdt_out', 'FDT not loaded')
