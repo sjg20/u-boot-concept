@@ -11,8 +11,9 @@ Synopsis
 
 ::
 
-    bootm [fit_addr]#<conf>[#extra-conf]
-    bootm [[fit_addr]:<os_subimg>] [[<fit_addr2>]:<rd_subimg2>] [[<fit_addr3>]:<fdt_subimg>]
+    bootm [start] [<fit_addr>]#<conf>[#<extra-conf>]
+    bootm [start] [[<fit_addr>]:<os_subimg>] [[<fit_addr2>]:<rd_subimg2>] [[<fit_addr3>]:<fdt_subimg>]
+    bootm <subcmd>
 
     bootm <addr1> [[<addr2> [<addr3>]]    # Legacy boot
 
@@ -45,6 +46,103 @@ rd_subimg
 
 fdt_subimg
     FDT sub-image to boot
+
+Bootm steps
+~~~~~~~~~~~
+
+The bootm command follows a predefined set of states to complete a boot. The
+usual case, if a subcommand is omitted, is that bootm runs a complete boot,
+working through each state one by one, in sequence. Some states are skipped
+depending on the boot type.
+
+Note that the bootm command automatically adds `findos` and `findother` states
+when the `start` state begins. These states are documented here but cannot be
+individually selected.
+
+The states are described below:
+
+start
+    Start the boot process afresh, recording the image(s) to be booted.
+
+preload
+    Deal with any preload step, sometimes used to do a full signature check of
+    the FIT, before looking at any of the data within.
+
+    This cannot be selected from the bootm command, as it is implicit in
+    `start`.
+
+findos
+    Find the OS within the FIT, etc. and set up the images.os fields
+
+    This cannot be selected from the bootm command, as it is implicit in
+    `start`.
+
+findother
+    Find other files that may be needed, including any ramdisk, devicetree,
+    FPGA or loadables. After this, the images.rd... and images.ft fields are
+    set up.
+
+    For each loadable, the appropriate handler is called (as declared by the
+    U_BOOT_FIT_LOADABLE_HANDLER() macro). There is no record kept of which
+    loadables were loaded, other than that used by :doc:`../upl`.
+
+    This step is only active if the image type is kernel, kernel_noload or
+    multi, **and** the OS is Linux, VxWorks, EFI or TEE.
+
+    This cannot be selected from the bootm command, as it is implicit in
+    `start`.
+
+measure
+    This measures the loaded files, if `CONFIG_MEASURED_BOOT` is enabled.
+
+    This cannot be selected from the bootm command. Currently it is only used
+    when using bootm without a subcommand.
+
+loados
+    Load the OS itself to its final location. This may involve copying or
+    decompressing it.
+
+ramdisk
+    Load the ramdisk to its final location, if necessary. This typically
+    involves copying it out of the FIT.
+
+fdt
+    Load the devicetree to its final location. This typically involves copying
+    or decompressing it from the FIT.
+
+cmdline
+    Set up the command line for the OS, e.g. using the `bootargs` environment
+    variable, perhaps adding some more pieces from an `extlinux.conf` entry.
+
+bdt
+    Set up the board information for the OS (seldom used these days).
+
+prep
+    Prepare to boot the OS, e.g. setting up any tables or data structures that
+    are required. After this the OS itself is ready to boot.
+
+fake
+    This is only used for testing and only available when `CONFIG_TRACE` is
+    enabled. It fakes a boot of the OS, performs all the normal steps right up
+    to the point where U-Boot is about to jump to the OS. It then runs a list
+    of commands from the `fakegocmd` environment variable. Note that the
+    machine may not be stable after this occurs.
+
+    This can be useful for debugging slow booting, for example. See
+    :doc:`/develop/trace` for more details.
+
+go
+    Start the OS, after performing any last-minute tasks. At this point, the OS
+    should be running and U-Boot's task is completed.
+
+Subcommands
+~~~~~~~~~~~
+
+Except as noted above, it is possible to perform the bootm processing piecemeal.
+The first command must be `bootm start` after which the others can be used,
+normally in the order they are documented above. This can aid debugging but it
+can also help to see what happens at each stage and the state of U-Boot and
+memory after each stage.
 
 See below for legacy boot. Booting using :doc:`../fit/index` is recommended.
 
