@@ -239,7 +239,7 @@ class TestFitImage:
         pytest.fail("Expected '%s' but not found in output")
         return '<no-match>'
 
-    def check_equal(self, expected_fname, actual_fname, failure_msg):
+    def check_equal(self, params, expected_fname, actual_fname, failure_msg):
         """Check that a file matches its expected contents
 
         This is always used on out-buffers whose size is decided by the test
@@ -248,35 +248,40 @@ class TestFitImage:
         expected data.
 
         Args:
-            expected_fname (str): Filename containing expected contents
-            actual_fname (str): Filename containing actual contents
+            params (dict): Parameters dict from which to get the filenames
+            expected_fname (str): Key for filename containing expected contents
+            actual_fname (str): Key for filename containing actual contents
             failure_msg (str): Message to print on failure
         """
-        expected_data = self.read_file(expected_fname)
-        actual_data = self.read_file(actual_fname)
+        expected_data = self.read_file(params[expected_fname])
+        actual_data = self.read_file(params[actual_fname])
         if len(expected_data) < len(actual_data):
             actual_data = actual_data[:len(expected_data)]
         assert expected_data == actual_data, failure_msg
 
-    def check_not_equal(self, expected_fname, actual_fname, failure_msg):
+    def check_not_equal(self, params, expected_fname, actual_fname,
+                        failure_msg):
         """Check that a file does not match its expected contents
 
         Args:
-            expected_fname (str): Filename containing expected contents
-            actual_fname (str): Filename containing actual contents
+            params (dict): Parameters dict from which to get the filenames
+            expected_fname (str): Key for filename containing expected contents
+            actual_fname (str): Key for filename containing actual contents
             failure_msg (str): Message to print on failure
         """
-        expected_data = self.read_file(expected_fname)
-        actual_data = self.read_file(actual_fname)
+        expected_data = self.read_file(params[expected_fname])
+        actual_data = self.read_file(params[actual_fname])
         assert expected_data != actual_data, failure_msg
 
-    def test_fit_operations(self, ubman):
-        """Basic sanity check of FIT loading in U-Boot
-
-        This test covers various FIT configurations and verifies correct behavior.
+    @pytest.fixture()
+    def fsetup(self, ubman):
+        """A fixture to set up files and parameters for FIT tests
 
         Args:
             ubman (ConsoleBase): U-Boot fixture
+
+        Yields:
+            dict: Parameters needed by the test
         """
         mkimage = os.path.join(ubman.config.build_dir, 'tools/mkimage')
 
@@ -332,101 +337,155 @@ class TestFitImage:
             'compression' : 'none',
         }
 
+        # Yield all necessary components to the tests
+        params.update({
+            'mkimage': mkimage,
+            'fdt_data': fdt_data,
+        })
+        yield params
+
+    def prepare(self, ubman, fsetup, **kwargs):
+        """Build a FIT with given params
+
+        Uses the base parameters to create a FIT and a script to test it,
+
+        For the use of eval here to evaluate f-strings, see:
+            https://stackoverflow.com/questions/42497625/how-to-postpone-defer-the-evaluation-of-f-strings
+
+        Args:
+            ubman (ConsoleBase): U-Boot fixture
+            fsetup (dict): Information about the test setup
+            kwargs (dict): Changes to make to the default params
+                key (str): parameter to change
+                val (str): f-string to evaluate to get the parameter value
+
+        Return:
+            tuple:
+                list of str: Commands to run for the test
+                dict: Parameters used by the test
+                str: Filename of the FIT that was created
+        """
+        params = fsetup.copy()
+        for name, template in kwargs.items():
+            # pylint: disable=W0123
+            params[name] = eval(f'f"""{template}"""')
+
         # Make a basic FIT and a script to load it
-        fit = fit_util.make_fit(ubman, mkimage, BASE_ITS, params)
+        fit = fit_util.make_fit(ubman, params['mkimage'], BASE_ITS, params)
         params['fit'] = fit
-        cmd = BASE_SCRIPT % params
+        cmds = BASE_SCRIPT % params
 
-        # First check that we can load a kernel
-        # We could perhaps reduce duplication with some loss of readability
-        with ubman.log.section('Kernel load'):
-            output = ubman.run_command_list(cmd.splitlines())
-            self.check_equal(kernel, kernel_out, 'Kernel not loaded')
-            self.check_not_equal(fdt_data, fdt_out,
-                                 'FDT loaded but should be ignored')
-            self.check_not_equal(ramdisk, ramdisk_out,
-                                 'Ramdisk loaded but should not be')
+        return cmds.splitlines(), params, fit
 
-            # Find out the offset in the FIT where U-Boot has found the FDT
-            line = self.find_matching(output, 'Booting using the fdt blob at ')
-            fit_offset = int(line, 16) - params['fit_addr']
-            fdt_magic = struct.pack('>L', 0xd00dfeed)
-            data = self.read_file(fit)
+    def test_fit_kernel_load(self, ubman, fsetup):
+        """Test loading a FIT image with only a kernel"""
+        cmds, params, fit = self.prepare(ubman, fsetup)
 
-            # Now find where it actually is in the FIT (skip the first word)
-            real_fit_offset = data.find(fdt_magic, 4)
-            assert fit_offset == real_fit_offset, (
-                    'U-Boot loaded FDT from offset %#x, FDT is actually at %#x' %
-                    (fit_offset, real_fit_offset))
+        # Run and verify
+        output = ubman.run_command_list(cmds)
+        self.check_equal(params, 'kernel', 'kernel_out', 'Kernel not loaded')
+        self.check_not_equal(params, 'fdt_data', 'fdt_out',
+                             'FDT loaded but should be ignored')
+        self.check_not_equal(params, 'ramdisk','ramdisk_out',
+                             'Ramdisk loaded but should not be')
+
+        # Find out the offset in the FIT where U-Boot has found the FDT
+        line = self.find_matching(output, 'Booting using the fdt blob at ')
+        fit_offset = int(line, 16) - params['fit_addr']
+        fdt_magic = struct.pack('>L', 0xd00dfeed)
+        data = self.read_file(fit)
+
+        # Now find where it actually is in the FIT (skip the first word)
+        real_fit_offset = data.find(fdt_magic, 4)
+        assert fit_offset == real_fit_offset, (
+            f'U-Boot loaded FDT from offset {fit_offset:#x}, '
+             'FDT is actually at {real_fit_offset:#x}')
 
         # Check bootargs string substitution
-            output = ubman.run_command_list([
-                'env set bootargs \\"\'my_boot_var=${foo}\'\\"',
-                'env set foo bar',
-                'bootm prep',
-                'env print bootargs'])
-            assert 'bootargs="my_boot_var=bar"' in output, "Bootargs strings not substituted"
+        output = ubman.run_command_list([
+            'env set bootargs \\"\'my_boot_var=${foo}\'\\"',
+            'env set foo bar',
+            'bootm prep',
+            'env print bootargs'])
+        assert 'bootargs="my_boot_var=bar"' in output, \
+                "Bootargs strings not substituted"
 
-        # Now a kernel and an FDT
-        with ubman.log.section('Kernel + FDT load'):
-            params['fdt_load'] = 'load = <%#x>;' % params['fdt_addr']
-            fit = fit_util.make_fit(ubman, mkimage, BASE_ITS, params)
-            params['fit'] = fit
-            cmd = BASE_SCRIPT % params
-            output = ubman.run_command_list(cmd.splitlines())
-            self.check_equal(kernel, kernel_out, 'Kernel not loaded')
-            self.check_equal(fdt_data, fdt_out, 'FDT not loaded')
-            self.check_not_equal(ramdisk, ramdisk_out,
-                                 'Ramdisk loaded but should not be')
+    def test_fit_kernel_fdt_load(self, ubman, fsetup):
+        """Test loading a FIT image with a kernel and FDT"""
+        cmds, params, _ = self.prepare(
+            ubman, fsetup, fdt_load="load = <{params['fdt_addr']:#x}>;")
 
-        # Try a ramdisk
-        with ubman.log.section('Kernel + FDT + Ramdisk load'):
-            params['ramdisk_config'] = 'ramdisk = "ramdisk-1";'
-            params['ramdisk_load'] = 'load = <%#x>;' % params['ramdisk_addr']
-            fit = fit_util.make_fit(ubman, mkimage, BASE_ITS, params)
-            params['fit'] = fit
-            cmd = BASE_SCRIPT % params
-            output = ubman.run_command_list(cmd.splitlines())
-            self.check_equal(ramdisk, ramdisk_out, 'Ramdisk not loaded')
+        # Run and verify
+        ubman.run_command_list(cmds)
+        self.check_equal(params, 'kernel', 'kernel_out', 'Kernel not loaded')
+        self.check_equal(params, 'fdt_data', 'fdt_out', 'FDT not loaded')
+        self.check_not_equal(params, 'ramdisk', 'ramdisk_out',
+                             'Ramdisk loaded but should not be')
 
-        # Configuration with some Loadables
-        with ubman.log.section('Kernel + FDT + Ramdisk load + Loadables'):
-            params['loadables_config'] = 'loadables = "kernel-2", "ramdisk-2";'
-            params['loadables1_load'] = ('load = <%#x>;' %
-                                          params['loadables1_addr'])
-            params['loadables2_load'] = ('load = <%#x>;' %
-                                          params['loadables2_addr'])
-            fit = fit_util.make_fit(ubman, mkimage, BASE_ITS, params)
-            params['fit'] = fit
-            cmd = BASE_SCRIPT % params
-            output = ubman.run_command_list(cmd.splitlines())
-            self.check_equal(loadables1, loadables1_out,
-                             'Loadables1 (kernel) not loaded')
-            self.check_equal(loadables2, loadables2_out,
-                             'Loadables2 (ramdisk) not loaded')
+    def test_fit_kernel_fdt_ramdisk_load(self, ubman, fsetup):
+        """Test loading a FIT image with kernel, FDT, and ramdisk"""
+        cmds, params, _ = self.prepare(
+            ubman, fsetup,
+            fdt_load="load = <{params['fdt_addr']:#x}>;",
+            ramdisk_config='ramdisk = "ramdisk-1";',
+            ramdisk_load="load = <{params['ramdisk_addr']:#x}>;")
 
-        # Kernel, FDT and Ramdisk all compressed
-        with ubman.log.section('(Kernel + FDT + Ramdisk) compressed'):
-            params['compression'] = 'gzip'
-            params['kernel'] = self.make_compressed(ubman, kernel)
-            params['fdt'] = self.make_compressed(ubman, fdt)
-            params['ramdisk'] = self.make_compressed(ubman, ramdisk)
-            fit = fit_util.make_fit(ubman, mkimage, BASE_ITS, params)
-            params['fit'] = fit
-            cmd = BASE_SCRIPT % params
-            output = ubman.run_command_list(cmd.splitlines())
-            self.check_equal(kernel, kernel_out, 'Kernel not loaded')
-            self.check_equal(fdt_data, fdt_out, 'FDT not loaded')
-            self.check_not_equal(ramdisk, ramdisk_out, 'Ramdisk got decompressed?')
-            self.check_equal(ramdisk + '.gz', ramdisk_out, 'Ramdisk not loaded')
+        # Run and verify
+        ubman.run_command_list(cmds)
+        self.check_equal(params, 'ramdisk', 'ramdisk_out', 'Ramdisk not loaded')
 
-        # Try without a kernel
-        with ubman.log.section('No kernel + FDT'):
-            params['kernel_config'] = ''
-            params['ramdisk_config'] = ''
-            params['ramdisk_load'] = ''
-            fit = fit_util.make_fit(ubman, mkimage, BASE_ITS, params)
-            params['fit'] = fit
-            cmd = BASE_SCRIPT % params
-            output = ubman.run_command_list(cmd.splitlines())
-            assert "can't get kernel image!" in '\n'.join(output)
+    def test_fit_loadables_load(self, ubman, fsetup):
+        """Test a configuration with 'loadables' properties"""
+        # Configure for FDT, ramdisk, and loadables
+        cmds, params, _ = self.prepare(
+            ubman, fsetup,
+            fdt_load="load = <{params['fdt_addr']:#x}>;",
+            ramdisk_config='ramdisk = "ramdisk-1";',
+            ramdisk_load="load = <{params['ramdisk_addr']:#x}>;",
+            loadables_config='loadables="kernel-2", "ramdisk-2";',
+            loadables1_load="load = <{params['loadables1_addr']:#x}>;",
+            loadables2_load="load = <{params['loadables2_addr']:#x}>;")
+
+        # Run and verify
+        ubman.run_command_list(cmds)
+        self.check_equal(params, 'loadables1', 'loadables1_out',
+                         'Loadables1 (kernel) not loaded')
+        self.check_equal(params, 'loadables2', 'loadables2_out',
+                         'Loadables2 (ramdisk) not loaded')
+
+    def test_fit_compressed_images_load(self, ubman, fsetup):
+        """Test loading compressed kernel, FDT, and ramdisk images"""
+        # Configure for FDT and ramdisk load
+        cmds, params, _ = self.prepare(
+            ubman, fsetup,
+            fdt_load="load = <{params['fdt_addr']:#x}>;",
+            ramdisk_config='ramdisk = "ramdisk-1";',
+            ramdisk_load="load = <{params['ramdisk_addr']:#x}>;",
+
+            # Configure for compression
+            compression='gzip',
+            kernel=self.make_compressed(ubman, fsetup['kernel']),
+            fdt=self.make_compressed(ubman, fsetup['fdt']),
+            ramdisk=self.make_compressed(ubman, fsetup['ramdisk']))
+
+        # Run and verify
+        ubman.run_command_list(cmds)
+        self.check_equal(fsetup, 'kernel', 'kernel_out', 'Kernel not loaded')
+        self.check_equal(fsetup, 'fdt_data', 'fdt_out', 'FDT not loaded')
+        self.check_not_equal(fsetup, 'ramdisk', 'ramdisk_out',
+                             'Ramdisk got decompressed?')
+        self.check_equal(params, 'ramdisk', 'ramdisk_out', 'Ramdisk not loaded')
+
+    def test_fit_no_kernel_load(self, ubman, fsetup):
+        """Test that 'bootm' fails when no kernel is specified"""
+        # Configure for FDT load but no kernel or ramdisk
+        cmds = self.prepare(
+            ubman, fsetup,
+            fdt_load="load = <{params['fdt_addr']:#x}>;",
+            kernel_config='',
+            ramdisk_config='',
+            ramdisk_load='')[0]
+
+        # Run and verify failure
+        output = ubman.run_command_list(cmds)
+        assert "can't get kernel image!" in '\n'.join(output)
