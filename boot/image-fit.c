@@ -2118,6 +2118,18 @@ static int select_from_config(const void *fit, struct bootm_headers *images,
 
 	noffset = fit_conf_get_prop_node(fit, cfg_noffset, prop_name,
 					 image_ph_phase(ph_type));
+	if (noffset < 0) {
+		/*
+		 * see if this is a load-only configuration, in which case we
+		 * allow the image to be missing. Note that the configuration
+		 * was verified above, so that other images can be loaded.
+		 *
+		 * Return a special error message to indicate this.
+		 */
+		if (fdt_getprop(fit, cfg_noffset, FIT_LOAD_ONLY_PROP, NULL))
+			return -ENOPKG;
+	}
+
 	*fit_unamep = fit_get_name(fit, noffset, NULL);
 
 	return noffset;
@@ -2176,6 +2188,11 @@ static int select_image(const void *fit, struct bootm_headers *images,
 	}
 
 	if (noffset < 0) {
+		if (noffset == -ENOPKG) {
+			printf("   Detected load-only image: skipping '%s'\n",
+			       prop_name);
+			return -ENOPKG;
+		}
 		printf("Could not find subimage node type '%s'\n", prop_name);
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_SUBNODE);
 		return -ENOENT;
@@ -2490,32 +2507,36 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	noffset = select_image(fit, images, &fit_uname, fit_uname_config,
 			       prop_name, ph_type, bootstage_id,
 			       &fit_base_uname_config);
-	if (noffset < 0)
-		return noffset;
+	if (noffset >= 0) {
 
-	ret = check_allowed(fit, noffset, images, image_type, arch,
-			    bootstage_id);
-	if (ret)
-		return ret;
+		ret = check_allowed(fit, noffset, images, image_type, arch,
+				    bootstage_id);
+		if (ret)
+			return ret;
 
-	ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
-	if (ret)
-		return ret;
+		ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
+		if (ret)
+			return ret;
 
-	ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
-			     load_op, bootstage_id, &load);
-	if (ret)
-		return ret;
+		ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
+				     load_op, bootstage_id, &load);
+		if (ret)
+			return ret;
 
-	upl_add_image(fit, noffset, load, len);
+		upl_add_image(fit, noffset, load, len);
 
-	*datap = load;
-	*lenp = len;
-	if (fit_unamep)
-		*fit_unamep = (char *)fit_uname;
-	if (fit_uname_configp)
-		*fit_uname_configp = (char *)(fit_uname_config ? :
-					      fit_base_uname_config);
+		*datap = load;
+		*lenp = len;
+	}
+
+	/* note that fit_uname will always be NULL if noffset == -ENOPKG */
+	if (noffset >= 0 || noffset == -ENOPKG) {
+		if (fit_unamep)
+			*fit_unamep = (char *)fit_uname;
+		if (fit_uname_configp)
+			*fit_uname_configp = (char *)(fit_uname_config ? :
+						      fit_base_uname_config);
+	}
 
 	return noffset;
 }

@@ -812,10 +812,11 @@ int boot_get_fdt_fit(struct bootm_headers *images, ulong addr,
  * @param addr		Address of FIT in memory
  * @param fit_unamep	On entry this is the requested image name
  *			(e.g. "kernel") or NULL to use the default. On exit
- *			points to the selected image name
+ *			points to the selected image name on success
  * @param fit_uname_configp	On entry this is the requested configuration
  *			name (e.g. "conf-1") or NULL to use the default. On
- *			exit points to the selected configuration name.
+ *			exit points to the selected configuration name, on
+ *			success or if -ENOPKG is returned
  * @param arch		Expected architecture (IH_ARCH_...)
  * @param image_ph_type	Required image type (IH_TYPE_...). If this is
  *			IH_TYPE_KERNEL then we allow IH_TYPE_KERNEL_NOLOAD
@@ -833,7 +834,8 @@ int boot_get_fdt_fit(struct bootm_headers *images, ulong addr,
  *   -EACCES - hash, signature or decryptions failure
  *   -EBADF - invalid OS or image type, or cannot get image load-address
  *   -EXDEV - memory overwritten / overlap
- *   -NOEXEC - image decompression error, or invalid FDT
+ *   -ENOEXEC - image decompression error, or invalid FDT
+ *   -ENOPKG - image is missing, but this is a load-only image
  */
 int fit_image_load(struct bootm_headers *images, ulong addr,
 		   const char **fit_unamep, const char **fit_uname_configp,
@@ -1189,6 +1191,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 #define FIT_FIRMWARE_PROP	"firmware"
 #define FIT_STANDALONE_PROP	"standalone"
 #define FIT_SCRIPT_PROP		"script"
+#define FIT_LOAD_ONLY_PROP	"load-only"
 
 #define FIT_MAX_HASH_LEN	HASH_MAX_DIGEST_SIZE
 
