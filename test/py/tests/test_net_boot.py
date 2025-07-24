@@ -194,8 +194,7 @@ def test_net_tftpboot_boot(ubman):
             # This forces the console object to be shutdown, so any subsequent
             # test will reset the board back into U-Boot. We want to force this
             # no matter whether the kernel boot passed or failed.
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            ubman.shutdown_required()
 
 def setup_pxe_boot(ubman):
     f = ubman.config.env.get('env__net_pxe_bootable_file', None)
@@ -224,7 +223,7 @@ def test_net_pxe_boot(ubman):
 
     f, bootfile = setup_pxe_boot(ubman)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', ubman.timeout)
     fn = f['fn']
 
     if addr:
@@ -257,8 +256,7 @@ def test_net_pxe_boot(ubman):
             ubman.run_command(pxe_boot_cmd, wait_for_prompt=False)
             ubman.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            ubman.shutdown_required()
 
 @pytest.mark.buildconfigspec('cmd_pxe')
 def test_net_pxe_boot_config(ubman):
@@ -275,7 +273,7 @@ def test_net_pxe_boot_config(ubman):
 
     f, bootfile = setup_pxe_boot(ubman)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', ubman.timeout)
     fn = f['fn']
     local_label = f['local_label']
     empty_label = f['empty_label']
@@ -318,7 +316,7 @@ def test_net_pxe_boot_config(ubman):
             # should not boot it and come out to u-boot prompt
             ubman.wait_for('Enter choice:')
             ubman.run_command(local_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_local])
+            expected_str = ubman.expect([exp_str_local])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_local} did not match!'
@@ -329,15 +327,14 @@ def test_net_pxe_boot_config(ubman):
             ubman.run_command(pxe_boot_cmd, wait_for_prompt=False)
             ubman.wait_for('Enter choice:')
             ubman.run_command(empty_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_empty])
+            expected_str = ubman.expect([exp_str_empty])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_empty} did not match!'
 
             ubman.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            ubman.shutdown_required()
 
 @pytest.mark.buildconfigspec('cmd_pxe')
 def test_net_pxe_boot_config_invalid(ubman):
@@ -354,7 +351,7 @@ def test_net_pxe_boot_config_invalid(ubman):
 
     f, bootfile = setup_pxe_boot(ubman)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', ubman.timeout)
     fn = f['fn']
     invalid_label = f['invalid_label']
     exp_str_invalid = f['exp_str_invalid']
@@ -389,12 +386,11 @@ def test_net_pxe_boot_config_invalid(ubman):
             # label and if it fails it should load the default label to boot
             ubman.wait_for('Enter choice:')
             ubman.run_command(invalid_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_invalid])
+            expected_str = ubman.expect([exp_str_invalid])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_invalid} did not match!'
 
             ubman.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            ubman.shutdown_required()

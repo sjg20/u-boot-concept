@@ -25,7 +25,7 @@ import re
 from _pytest.runner import runtestprotocol
 import subprocess
 import sys
-from spawn import BootFail, Timeout, Unexpected, handle_exception
+from console_base import BootFail, Timeout, Unexpected, handle_exception
 import time
 
 # Globals: The HTML log file, and the top-level fixture
@@ -312,6 +312,8 @@ def pytest_configure(config):
             log.info(f"Loaded {module}")
 
         if not_found:
+            paths = '\n'.join(sys.path)
+            log.info(f"PYTHONPATH: {paths}")
             log.warning(f"Failed to find modules: {' '.join(not_found)}")
 
     ubconfig.buildconfig = dict()

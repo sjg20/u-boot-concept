@@ -34,7 +34,7 @@ class ConsoleExecAttach(ConsoleBase):
         # 1 would be safe anywhere, but is very slow (a pexpect issue?).
         # 16 is a common FIFO size.
         # HW flow control would mean this could be infinite.
-        super(ConsoleExecAttach, self).__init__(log, config, max_fifo_fill=16)
+        super().__init__(log, config, max_fifo_fill=16)
 
         with self.log.section('flash'):
             self.log.action('Flashing U-Boot')
@@ -55,7 +55,7 @@ class ConsoleExecAttach(ConsoleBase):
         Returns:
             A spawn.Spawn object that is attached to U-Boot.
         """
-
+        super().get_spawn()
         args = [self.config.board_type, self.config.board_identity]
         s = Spawn(['u-boot-test-console'] + args)
 
