@@ -599,15 +599,19 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 static int bootm_find_other(ulong img_addr, const char *conf_ramdisk,
 			    const char *conf_fdt)
 {
+	bool type_ok, os_ok;
+
 	log_debug("find_other type %x os %x\n", images.os.type, images.os.os);
-	if ((images.os.type == IH_TYPE_KERNEL ||
-	     images.os.type == IH_TYPE_KERNEL_NOLOAD ||
-	     images.os.type == IH_TYPE_MULTI) &&
-	    (images.os.os == IH_OS_LINUX || images.os.os == IH_OS_VXWORKS ||
-	     images.os.os == IH_OS_EFI || images.os.os == IH_OS_TEE)) {
+
+	type_ok = images.os.type == IH_TYPE_KERNEL ||
+		  images.os.type == IH_TYPE_KERNEL_NOLOAD ||
+		  images.os.type == IH_TYPE_MULTI;
+	os_ok = images.os.os == IH_OS_LINUX || images.os.os == IH_OS_VXWORKS ||
+		images.os.os == IH_OS_EFI || images.os.os == IH_OS_TEE;
+
+	if (images.no_os || (type_ok && os_ok))
 		return bootm_find_images(img_addr, conf_ramdisk, conf_fdt, 0,
 					 0);
-	}
 
 	return 0;
 }
@@ -1075,7 +1079,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		bootm_measure(images);
 
 	/* Load the OS */
-	if (!ret && (states & BOOTM_STATE_LOADOS)) {
+	if (!ret && (states & BOOTM_STATE_LOADOS) && !images->no_os) {
 		if (IS_ENABLED(CONFIG_EVENT)) {
 			struct event_os_load data;
 
@@ -1112,6 +1116,9 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		ret = boot_relocate_fdt(&images->ft_addr, &images->ft_len);
 	}
 #endif
+
+	if (images->no_os)
+		return -ENOPKG;
 
 	/* From now on, we need the OS boot function */
 	if (ret)
