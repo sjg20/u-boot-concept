@@ -468,9 +468,6 @@ int boot_get_ramdisk(char const *select, struct bootm_headers *images,
 	ulong rd_data, rd_len;
 	int ret;
 
-	*startp = 0;
-	*endp = 0;
-
 	/*
 	 * Look for a '-' which indicates to ignore the
 	 * ramdisk argument

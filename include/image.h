@@ -740,8 +740,8 @@ int boot_get_fpga(struct bootm_headers *images);
  * @select: address or name of ramdisk to use, or NULL for default
  * @images: pointer to the bootm images structure
  * @arch: expected ramdisk architecture
- * @startp: returns ramdisk start address, or 0 if none
- * @endp: returns ramdisk end on success, or 0 if none
+ * @startp: returns ramdisk start address, on success
+ * @endp: returns ramdisk end on success, on success
  *
  * Return: 0 if ramdisk image was found and valid, or skipped;
  * -ENOPKG if ramdisk image is found but corrupted, or invalid;

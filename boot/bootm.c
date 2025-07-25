@@ -546,7 +546,7 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 	/* find ramdisk */
 	ret = boot_get_ramdisk(select, &images, IH_INITRD_ARCH,
 			       &images.rd_start, &images.rd_end);
-	if (ret) {
+	if (ret && ret != -ENOPKG) {
 		puts("Ramdisk image is corrupt or invalid\n");
 		return 1;
 	}
