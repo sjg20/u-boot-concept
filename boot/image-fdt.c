@@ -439,14 +439,13 @@ static int select_fdt(struct bootm_headers *images, const char *select, u8 arch,
 }
 
 int boot_get_fdt(void *buf, const char *select, uint arch,
-		 struct bootm_headers *images, char **of_flat_tree,
-		 ulong *of_size)
+		 struct bootm_headers *images, char **startp, ulong *sizep)
 {
 	char *fdt_blob = NULL;
 	ulong fdt_addr;
 
-	*of_flat_tree = NULL;
-	*of_size = 0;
+	*startp = NULL;
+	*sizep = 0;
 
 	if (select || genimg_has_config(images)) {
 		int ret;
@@ -529,10 +528,10 @@ int boot_get_fdt(void *buf, const char *select, uint arch,
 		goto no_fdt;
 	}
 
-	*of_flat_tree = fdt_blob;
-	*of_size = fdt_totalsize(fdt_blob);
+	*startp = fdt_blob;
+	*sizep = fdt_totalsize(fdt_blob);
 	debug("   of_flat_tree at 0x%08lx size 0x%08lx\n",
-	      (ulong)*of_flat_tree, *of_size);
+	      (ulong)*startp, *sizep);
 
 	return 0;
 
