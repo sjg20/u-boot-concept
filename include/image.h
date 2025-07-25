@@ -733,27 +733,22 @@ int boot_get_fpga(struct bootm_headers *images);
 /**
  * boot_get_ramdisk() - Locate the ramdisk
  *
+ * Finds a valid ramdisk image if possible, from these ramdisk sources:
+ *      - multicomponent kernel/ramdisk image
+ *      - commandline-provided address of dedicated ramdisk image
+ *
  * @select: address or name of ramdisk to use, or NULL for default
  * @images: pointer to the bootm images structure
  * @arch: expected ramdisk architecture
- * @rd_start: pointer to a ulong variable, will hold ramdisk start address
- * @rd_end: pointer to a ulong variable, will hold ramdisk end
+ * @startp: returns ramdisk start address, or 0 if none
+ * @endp: returns ramdisk end on success, or 0 if none
  *
- * boot_get_ramdisk() is responsible for finding a valid ramdisk image.
- * Currently supported are the following ramdisk sources:
- *      - multicomponent kernel/ramdisk image,
- *      - commandline provided address of decicated ramdisk image.
- *
- * returns:
- *     0, if ramdisk image was found and valid, or skiped
- *     rd_start and rd_end are set to ramdisk start/end addresses if
- *     ramdisk image is found and valid
- *
- *     1, if ramdisk image is found but corrupted, or invalid
- *     rd_start and rd_end are set to 0 if no ramdisk exists
+ * Return: 0 if ramdisk image was found and valid, or skipped;
+ * -ENOPKG if ramdisk image is found but corrupted, or invalid;
+ * other error code on other error
  */
 int boot_get_ramdisk(char const *select, struct bootm_headers *images,
-		     uint arch, ulong *rd_start, ulong *rd_end);
+		     uint arch, ulong *startp, ulong *endp);
 
 /**
  * boot_get_loadable() - load a list of binaries to memory

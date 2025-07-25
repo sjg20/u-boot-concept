@@ -463,12 +463,13 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 }
 
 int boot_get_ramdisk(char const *select, struct bootm_headers *images,
-		     uint arch, ulong *rd_start, ulong *rd_end)
+		     uint arch, ulong *startp, ulong *endp)
 {
 	ulong rd_data, rd_len;
+	int ret;
 
-	*rd_start = 0;
-	*rd_end = 0;
+	*startp = 0;
+	*endp = 0;
 
 	/*
 	 * Look for a '-' which indicates to ignore the
@@ -476,16 +477,11 @@ int boot_get_ramdisk(char const *select, struct bootm_headers *images,
 	 */
 	if (select && strcmp(select, "-") ==  0) {
 		debug("## Skipping init Ramdisk\n");
-		rd_len = 0;
-		rd_data = 0;
+		return -ENOPKG;
 	} else if (select || genimg_has_config(images)) {
-		int ret;
-
 		ret = select_ramdisk(images, select, arch, &rd_data, &rd_len);
-		if (ret == -ENOPKG)
-			return 0;
-		else if (ret)
-			return ret;
+		if (ret)
+			goto err;
 	} else if (images->legacy_hdr_valid &&
 			image_check_type(&images->legacy_hdr_os_copy,
 					 IH_TYPE_MULTI)) {
@@ -498,25 +494,28 @@ int boot_get_ramdisk(char const *select, struct bootm_headers *images,
 		       (ulong)images->legacy_hdr_os);
 
 		image_multi_getimg(images->legacy_hdr_os, 1, &rd_data, &rd_len);
+		if (!rd_data || !rd_len) {
+			ret = -ENOPKG;
+			goto err;
+		}
 	} else {
-		/*
-		 * no initrd image
-		 */
-		bootstage_mark(BOOTSTAGE_ID_NO_RAMDISK);
-		rd_len = 0;
-		rd_data = 0;
+		/* no initrd image */
+		ret = -ENOPKG;
+		goto err;
 	}
 
-	if (!rd_data) {
-		debug("## No init Ramdisk\n");
-	} else {
-		*rd_start = rd_data;
-		*rd_end = rd_data + rd_len;
-	}
+	*startp = rd_data;
+	*endp = rd_data + rd_len;
 	debug("   ramdisk start = 0x%08lx, ramdisk end = 0x%08lx\n",
-	      *rd_start, *rd_end);
+	      *startp, *endp);
 
 	return 0;
+
+err:
+	bootstage_mark(BOOTSTAGE_ID_NO_RAMDISK);
+	debug("## No init Ramdisk\n");
+
+	return ret;
 }
 
 /**
