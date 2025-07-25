@@ -444,9 +444,6 @@ int boot_get_fdt(void *buf, const char *select, uint arch,
 	char *fdt_blob = NULL;
 	ulong fdt_addr;
 
-	*startp = NULL;
-	*sizep = 0;
-
 	if (select || genimg_has_config(images)) {
 		int ret;
 

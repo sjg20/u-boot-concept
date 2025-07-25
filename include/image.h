@@ -895,8 +895,8 @@ int fit_get_node_from_config(struct bootm_headers *images,
  * @select: FDT to select (this is normally argv[2] of the bootm command)
  * @arch: architecture (IH_ARCH_...)
  * @images: pointer to the bootm images structure
- * @startp: returns the fdt start address, if 0 if none
- * @sizep: returns the fdt length, or 0 if none
+ * @startp: returns the fdt start address, on success
+ * @sizep: returns the fdt length, on success
  *
  * Return: 0 if fdt image was found and valid, or skipped;
  *     1, if fdt image is found but corrupted
