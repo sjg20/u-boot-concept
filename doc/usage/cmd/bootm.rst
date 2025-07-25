@@ -11,8 +11,8 @@ Synopsis
 
 ::
 
-    bootm [start] [<fit_addr>]#<conf>[#<extra-conf>]
-    bootm [start] [[<fit_addr>]:<os_subimg>] [[<fit_addr2>]:<rd_subimg2>] [[<fit_addr3>]:<fdt_subimg>]
+    bootm [start|restart] [<fit_addr>]#<conf>[#<extra-conf>]
+    bootm [start|restart] [[<fit_addr>]:<os_subimg>] [[<fit_addr2>]:<rd_subimg2>] [[<fit_addr3>]:<fdt_subimg>]
     bootm <subcmd>
 
     bootm <addr1> [[<addr2> [<addr3>]]    # Legacy boot
@@ -63,6 +63,14 @@ The states are described below:
 
 start
     Start the boot process afresh, recording the image(s) to be booted.
+
+restart
+    Start the boot process again, but keeping the current state. This allows
+    multiple FITs to be loaded, for example a first FIT containing just the
+    devicetree and a second containing the OS and any overlays. In this case,
+    the first `bootm` command will typically use only `start` (and its implicit
+    states) and `loados`, with the second using `bootm restart` to select the
+    second FIT.
 
 preload
     Deal with any preload step, sometimes used to do a full signature check of

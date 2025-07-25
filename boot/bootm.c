@@ -257,6 +257,16 @@ static int bootm_start(void)
 	return 0;
 }
 
+static int bootm_restart(void)
+{
+	images.no_os = false;
+
+	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_RESTART, "bootm_restart");
+	images.state = BOOTM_STATE_START;
+
+	return 0;
+}
+
 static ulong bootm_data_addr(const char *addr_str)
 {
 	ulong addr;
@@ -1058,6 +1068,9 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	 */
 	if (states & BOOTM_STATE_START)
 		ret = bootm_start();
+
+	if (states & BOOTM_STATE_RESTART)
+		ret = bootm_restart();
 
 	if (!ret && (states & BOOTM_STATE_PRE_LOAD))
 		ret = bootm_pre_load(bmi->addr_img);

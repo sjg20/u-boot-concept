@@ -349,6 +349,7 @@ struct image_info {
  * enum bootm_state - States which the bootm machine goes through (in order)
  *
  * @BOOTM_STATE_START: Set up the state structure (struct bootm_headers)
+ * @BOOTM_STATE_RESTART: Restart the boot, keeping the existing state
  * @BOOTM_STATE_PRE_LOAD: Do any neceessary processing before images are read.
  *	For now this just implements a whole-image signature, if enabled. See
  *	CONFIG_IMAGE_PRE_LOAD_SIG
@@ -398,6 +399,7 @@ enum bootm_state {
 	BOOTM_STATE_OS_PREP		= BIT(10),
 	BOOTM_STATE_OS_FAKE_GO		= BIT(11),
 	BOOTM_STATE_OS_GO		= BIT(12),
+	BOOTM_STATE_RESTART		= BIT(13),
 };
 
 /*
