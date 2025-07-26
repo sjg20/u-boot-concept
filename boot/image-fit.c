@@ -2078,10 +2078,8 @@ static int select_image(const void *fit, struct bootm_headers *images,
 			const char **fit_base_uname_configp)
 {
 	int cfg_noffset, noffset;
-	const char *fit_uname;
 	int ret;
 
-	fit_uname = fit_unamep ? *fit_unamep : NULL;
 	*fit_base_uname_configp = NULL;
 	prop_name = fit_get_image_type_property(ph_type);
 
@@ -2095,10 +2093,10 @@ static int select_image(const void *fit, struct bootm_headers *images,
 		return ret;
 	}
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_FORMAT_OK);
-	if (fit_uname) {
+	if (*fit_unamep) {
 		/* get FIT component image node offset */
 		bootstage_mark(bootstage_id + BOOTSTAGE_SUB_UNIT_NAME);
-		noffset = fit_image_get_node(fit, fit_uname);
+		noffset = fit_image_get_node(fit, *fit_unamep);
 	} else {
 		/*
 		 * no image node unit name, try to get config
@@ -2150,7 +2148,7 @@ static int select_image(const void *fit, struct bootm_headers *images,
 		return -ENOENT;
 	}
 
-	printf("   Trying '%s' %s subimage\n", fit_uname, prop_name);
+	printf("   Trying '%s' %s subimage\n", *fit_unamep, prop_name);
 	ret = print_and_verify(fit, noffset, images->verify);
 	if (ret) {
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_HASH);
