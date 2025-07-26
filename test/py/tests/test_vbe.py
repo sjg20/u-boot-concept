@@ -88,9 +88,10 @@ fdt print
 ut bootstd -f vbe_test_fixup_norun
 '''
 
-@pytest.mark.boardspec('sandbox_flattree')
+@pytest.mark.boardspec('sandbox')
 @pytest.mark.requiredtool('dtc')
-def test_vbe(ubman):
+def test_vbe_os_request(ubman):
+    """Test loading an OS and dealing with requests"""
     kernel = fit_util.make_kernel(ubman, 'vbe-kernel.bin', 'kernel')
     fdt = fit_util.make_dtb(ubman, base_fdt, 'vbe-fdt')
     fdt_out = fit_util.make_fname(ubman, 'fdt-out.dtb')
