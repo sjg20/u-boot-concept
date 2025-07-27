@@ -593,11 +593,9 @@ def test_ut_dm_init(ubman):
 def setup_efi_image(ubman):
     """Create a 20MB disk image with an EFI app on it"""
     devnum = 1
-    basename = 'flash'
-    fname, mnt = fs_helper.setup_image(ubman, devnum, 0xc, second_part=True,
-                                       basename=basename)
-
-    efi_dir = os.path.join(mnt, 'EFI')
+    fsh = FsHelper(ubman.config, 'vfat', 18, 'flash')
+    fsh.setup()
+    efi_dir = os.path.join(fsh.srcdir, 'EFI')
     mkdir_cond(efi_dir)
     bootdir = os.path.join(efi_dir, 'BOOT')
     mkdir_cond(bootdir)
@@ -607,13 +605,14 @@ def setup_efi_image(ubman):
     with open(efi_src, 'rb') as inf:
         with open(efi_dst, 'wb') as outf:
             outf.write(inf.read())
-    fsfile = 'vfat18M.img'
-    utils.run_and_log(ubman, f'fallocate -l 18M {fsfile}')
-    utils.run_and_log(ubman, f'mkfs.vfat {fsfile}')
-    utils.run_and_log(ubman, ['sh', '-c', f'mcopy -vs -i {fsfile} {mnt}/* ::/'])
-    copy_partition(ubman, fsfile, fname)
-    utils.run_and_log(ubman, f'rm -rf {mnt}')
-    utils.run_and_log(ubman, f'rm -f {fsfile}')
+
+    fsh.mk_fs()
+
+    img = DiskHelper(ubman.config, devnum, 'flash', True)
+    img.add_fs(fsh, DiskHelper.VFAT)
+    img.create()
+    fsh.cleanup()
+
 
 @pytest.mark.buildconfigspec('cmd_bootflow')
 @pytest.mark.buildconfigspec('sandbox')
