@@ -193,13 +193,20 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 				IH_ARCH_DEFAULT, IH_TYPE_KERNEL,
 				BOOTSTAGE_ID_FIT_KERNEL_START,
 				FIT_LOAD_IGNORED, os_data, os_len);
-		if (os_noffset < 0)
+		if (os_noffset < 0 && os_noffset != -ENOPKG)
 			return -ENOENT;
 
 		images->fit_hdr_os = map_sysmem(img_addr, 0);
 		images->fit_uname_os = fit_uname_kernel;
 		images->fit_uname_cfg = fit_uname_config;
 		images->fit_noffset_os = os_noffset;
+		if (os_noffset == -ENOPKG) {
+			log_debug("no_os: hdr_os %lx uname_os '%s' uname_cfg '%s' noffset_os %dE\n",
+				  img_addr, images->fit_uname_os,
+				  images->fit_uname_cfg,
+				  images->fit_noffset_os);
+			return -ENOPKG;
+		}
 		break;
 #endif
 #ifdef CONFIG_ANDROID_BOOT_IMAGE
@@ -245,6 +252,16 @@ static int bootm_start(void)
 	images.verify = env_get_yesno("verify");
 
 	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_START, "bootm_start");
+	images.state = BOOTM_STATE_START;
+
+	return 0;
+}
+
+static int bootm_restart(void)
+{
+	images.no_os = false;
+
+	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_RESTART, "bootm_restart");
 	images.state = BOOTM_STATE_START;
 
 	return 0;
@@ -335,6 +352,11 @@ static int bootm_find_os(const char *cmd_name, const char *addr_fit)
 	ret = boot_get_kernel(addr_fit, &images, &images.os.image_start,
 			      &images.os.image_len, &os_hdr);
 	if (ret) {
+		/* no OS present, but that is OK */
+		if (ret == -ENOPKG) {
+			images.no_os = true;
+			return 0;
+		}
 		if (ret == -EPROTOTYPE)
 			printf("Wrong Image Type for %s command\n", cmd_name);
 
@@ -531,13 +553,10 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 		}
 	}
 
-	if (conf_ramdisk)
-		select = conf_ramdisk;
-
 	/* find ramdisk */
 	ret = boot_get_ramdisk(select, &images, IH_INITRD_ARCH,
 			       &images.rd_start, &images.rd_end);
-	if (ret) {
+	if (ret && ret != -ENOPKG) {
 		puts("Ramdisk image is corrupt or invalid\n");
 		return 1;
 	}
@@ -590,15 +609,19 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 static int bootm_find_other(ulong img_addr, const char *conf_ramdisk,
 			    const char *conf_fdt)
 {
+	bool type_ok, os_ok;
+
 	log_debug("find_other type %x os %x\n", images.os.type, images.os.os);
-	if ((images.os.type == IH_TYPE_KERNEL ||
-	     images.os.type == IH_TYPE_KERNEL_NOLOAD ||
-	     images.os.type == IH_TYPE_MULTI) &&
-	    (images.os.os == IH_OS_LINUX || images.os.os == IH_OS_VXWORKS ||
-	     images.os.os == IH_OS_EFI || images.os.os == IH_OS_TEE)) {
+
+	type_ok = images.os.type == IH_TYPE_KERNEL ||
+		  images.os.type == IH_TYPE_KERNEL_NOLOAD ||
+		  images.os.type == IH_TYPE_MULTI;
+	os_ok = images.os.os == IH_OS_LINUX || images.os.os == IH_OS_VXWORKS ||
+		images.os.os == IH_OS_EFI || images.os.os == IH_OS_TEE;
+
+	if (images.no_os || (type_ok && os_ok))
 		return bootm_find_images(img_addr, conf_ramdisk, conf_fdt, 0,
 					 0);
-	}
 
 	return 0;
 }
@@ -1046,6 +1069,9 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	if (states & BOOTM_STATE_START)
 		ret = bootm_start();
 
+	if (states & BOOTM_STATE_RESTART)
+		ret = bootm_restart();
+
 	if (!ret && (states & BOOTM_STATE_PRE_LOAD))
 		ret = bootm_pre_load(bmi->addr_img);
 
@@ -1066,7 +1092,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		bootm_measure(images);
 
 	/* Load the OS */
-	if (!ret && (states & BOOTM_STATE_LOADOS)) {
+	if (!ret && (states & BOOTM_STATE_LOADOS) && !images->no_os) {
 		if (IS_ENABLED(CONFIG_EVENT)) {
 			struct event_os_load data;
 
@@ -1103,6 +1129,9 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		ret = boot_relocate_fdt(&images->ft_addr, &images->ft_len);
 	}
 #endif
+
+	if (images->no_os)
+		return -ENOPKG;
 
 	/* From now on, we need the OS boot function */
 	if (ret)

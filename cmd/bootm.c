@@ -41,6 +41,7 @@ static int do_imls(struct cmd_tbl *cmdtp, int flag, int argc,
  * function pointer */
 static struct cmd_tbl cmd_bootm_sub[] = {
 	U_BOOT_CMD_MKENT(start, 0, 1, (void *)BOOTM_STATE_START, "", ""),
+	U_BOOT_CMD_MKENT(restart, 0, 1, (void *)BOOTM_STATE_RESTART, "", ""),
 	U_BOOT_CMD_MKENT(loados, 0, 1, (void *)BOOTM_STATE_LOADOS, "", ""),
 #ifdef CONFIG_CMD_BOOTM_PRE_LOAD
 	U_BOOT_CMD_MKENT(preload, 0, 1, (void *)BOOTM_STATE_PRE_LOAD, "", ""),
@@ -85,7 +86,9 @@ static int do_bootm_subcommand(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	if (c) {
 		state = (long)c->cmd;
-		if (state == BOOTM_STATE_START)
+		if (state == BOOTM_STATE_RESTART)
+			images.state = BOOTM_STATE_START;
+		if (state == BOOTM_STATE_START || state == BOOTM_STATE_RESTART)
 			state |= BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOS |
 				 BOOTM_STATE_FINDOTHER;
 #if defined(CONFIG_CMD_BOOTM_PRE_LOAD)

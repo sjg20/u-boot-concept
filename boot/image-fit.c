@@ -43,6 +43,18 @@ DECLARE_GLOBAL_DATA_PTR;
 /* New uImage format routines */
 /*****************************************************************************/
 #ifndef USE_HOSTCC
+
+/**
+ * fit_parse_spec() - Helper for parsing a FIT specifier
+ *
+ * @spec: FIT specifier, e.g. "", "1000", "#conf-1", "2000#conf-1",
+ *	 "3000:image-1"
+ * @sepc: Separator character, either '#' or ':'
+ * @addr_curr: Existing default address to return if none is provided in @spec
+ * @addr: Returns the address at @spec, or @addr_curr if none
+ * @name: Returns the name after the separator, or NULL if none
+ * Return: 1 if separator was found, 0 if not
+ */
 static int fit_parse_spec(const char *spec, char sepc, ulong addr_curr,
 		ulong *addr, const char **name)
 {
@@ -798,18 +810,6 @@ int fit_image_get_comp(const void *fit, int noffset, uint8_t *comp)
 	return 0;
 }
 
-/**
- * fit_image_get_phase() - get the phase for a configuration node
- * @fit: pointer to the FIT format image header
- * @offset: configuration-node offset
- * @phasep: returns the phase
- *
- * Finds the phase property in a given configuration node. If the property is
- * found, its (string) value is translated to the numeric id which is returned
- * to the caller.
- *
- * Returns: 0 on success, -ENOENT if missing, -EINVAL for invalid value
- */
 int fit_image_get_phase(const void *fit, int offset, enum image_phase_t *phasep)
 {
 	const void *data;
@@ -2055,6 +2055,87 @@ static const char *fit_get_image_type_property(int ph_type)
 }
 
 /**
+ * select_from_config() - Select an image from a configuration
+ *
+ * @fit: Pointer to FIT
+ * @images: Boot images structure
+ * @fit_uname_config: Requested configuration name (e.g. "conf-1") or NULL to
+ * use the default
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * to load
+ * @ph_type: Required image type (IH_TYPE_...) and phase (IH_PHASE_...)
+ * @bootstage_id: ID of starting bootstage to use for progress updates
+ * @fit_unamep: Returns name of selected image node, on success
+ * @fit_base_uname_configp: Returns config name selected, on success
+ * Return: node offset of image node, on success, else -ve error code
+ */
+static int select_from_config(const void *fit, struct bootm_headers *images,
+			      const char *fit_uname_config,
+			      const char *prop_name, int ph_type,
+			      int bootstage_id, const char **fit_unamep,
+			      const char **fit_base_uname_configp)
+{
+	int cfg_noffset, noffset;
+	int ret;
+
+	/*
+	 * no image node unit name, try to get config
+	 * node first. If config unit node name is NULL
+	 * fit_conf_get_node() will try to find default config node
+	 */
+	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_NO_UNIT_NAME);
+	ret = -ENXIO;
+	if (IS_ENABLED(CONFIG_FIT_BEST_MATCH) && !fit_uname_config)
+		ret = fit_conf_find_compat(fit, gd_fdt_blob());
+	if (ret < 0 && ret != -EINVAL)
+		ret = fit_conf_get_node(fit, fit_uname_config);
+	if (ret < 0) {
+		puts("Could not find configuration node\n");
+		bootstage_error(bootstage_id +
+				BOOTSTAGE_SUB_NO_UNIT_NAME);
+		return -ENOENT;
+	}
+	cfg_noffset = ret;
+
+	*fit_base_uname_configp = fdt_get_name(fit, cfg_noffset, NULL);
+	printf("   Using '%s' configuration\n", *fit_base_uname_configp);
+	/* Remember this config */
+	if (image_ph_type(ph_type) == IH_TYPE_KERNEL)
+		images->fit_uname_cfg = *fit_base_uname_configp;
+
+	if (FIT_IMAGE_ENABLE_VERIFY && images->verify) {
+		puts("   Verifying Hash Integrity ... ");
+		if (fit_config_verify(fit, cfg_noffset)) {
+			puts("Bad Data Hash\n");
+			bootstage_error(bootstage_id +
+				BOOTSTAGE_SUB_HASH);
+			return -EACCES;
+		}
+		puts("OK\n");
+	}
+
+	bootstage_mark(BOOTSTAGE_ID_FIT_CONFIG);
+
+	noffset = fit_conf_get_prop_node(fit, cfg_noffset, prop_name,
+					 image_ph_phase(ph_type));
+	if (noffset < 0) {
+		/*
+		 * see if this is a load-only configuration, in which case we
+		 * allow the image to be missing. Note that the configuration
+		 * was verified above, so that other images can be loaded.
+		 *
+		 * Return a special error message to indicate this.
+		 */
+		if (fdt_getprop(fit, cfg_noffset, FIT_LOAD_ONLY_PROP, NULL))
+			return -ENOPKG;
+	}
+
+	*fit_unamep = fit_get_name(fit, noffset, NULL);
+
+	return noffset;
+}
+
+/**
  * select_image() - Select the image to load
  *
  * image->fit_uname_cfg is set if the image type is IH_TYPE_KERNEL
@@ -2066,6 +2147,8 @@ static const char *fit_get_image_type_property(int ph_type)
  * the selected image name. Note that fit_unamep cannot be NULL
  * @fit_uname_config: Requested configuration name (e.g. "conf-1") or NULL to
  * use the default
+ * @prop_name: Property name (in the configuration node) indicating the image
+ * to load
  * @ph_type: Required image type (IH_TYPE_...) and phase (IH_PHASE_...)
  * @bootstage_id: ID of starting bootstage to use for progress updates
  * @fit_base_uname_configp: Returns config name selected, or NULL if *fit_unamep
@@ -2077,7 +2160,7 @@ static int select_image(const void *fit, struct bootm_headers *images,
 			const char *prop_name, int ph_type, int bootstage_id,
 			const char **fit_base_uname_configp)
 {
-	int cfg_noffset, noffset;
+	int noffset;
 	int ret;
 
 	*fit_base_uname_configp = NULL;
@@ -2098,51 +2181,18 @@ static int select_image(const void *fit, struct bootm_headers *images,
 		bootstage_mark(bootstage_id + BOOTSTAGE_SUB_UNIT_NAME);
 		noffset = fit_image_get_node(fit, *fit_unamep);
 	} else {
-		/*
-		 * no image node unit name, try to get config
-		 * node first. If config unit node name is NULL
-		 * fit_conf_get_node() will try to find default config node
-		 */
-		bootstage_mark(bootstage_id + BOOTSTAGE_SUB_NO_UNIT_NAME);
-		ret = -ENXIO;
-		if (IS_ENABLED(CONFIG_FIT_BEST_MATCH) && !fit_uname_config)
-			ret = fit_conf_find_compat(fit, gd_fdt_blob());
-		if (ret < 0 && ret != -EINVAL)
-			ret = fit_conf_get_node(fit, fit_uname_config);
-		if (ret < 0) {
-			puts("Could not find configuration node\n");
-			bootstage_error(bootstage_id +
-					BOOTSTAGE_SUB_NO_UNIT_NAME);
-			return -ENOENT;
-		}
-		cfg_noffset = ret;
-
-		*fit_base_uname_configp = fdt_get_name(fit, cfg_noffset, NULL);
-		printf("   Using '%s' configuration\n",
-		       *fit_base_uname_configp);
-		/* Remember this config */
-		if (image_ph_type(ph_type) == IH_TYPE_KERNEL)
-			images->fit_uname_cfg = *fit_base_uname_configp;
-
-		if (FIT_IMAGE_ENABLE_VERIFY && images->verify) {
-			puts("   Verifying Hash Integrity ... ");
-			if (fit_config_verify(fit, cfg_noffset)) {
-				puts("Bad Data Hash\n");
-				bootstage_error(bootstage_id +
-					BOOTSTAGE_SUB_HASH);
-				return -EACCES;
-			}
-			puts("OK\n");
-		}
-
-		bootstage_mark(BOOTSTAGE_ID_FIT_CONFIG);
-
-		noffset = fit_conf_get_prop_node(fit, cfg_noffset, prop_name,
-						 image_ph_phase(ph_type));
-		*fit_unamep = fit_get_name(fit, noffset, NULL);
+		noffset = select_from_config(fit, images, fit_uname_config,
+					     prop_name, ph_type, bootstage_id,
+					     fit_unamep,
+					     fit_base_uname_configp);
 	}
 
 	if (noffset < 0) {
+		if (noffset == -ENOPKG) {
+			printf("   Detected load-only image: skipping '%s'\n",
+			       prop_name);
+			return -ENOPKG;
+		}
 		printf("Could not find subimage node type '%s'\n", prop_name);
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_SUBNODE);
 		return -ENOENT;
@@ -2457,32 +2507,36 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	noffset = select_image(fit, images, &fit_uname, fit_uname_config,
 			       prop_name, ph_type, bootstage_id,
 			       &fit_base_uname_config);
-	if (noffset < 0)
-		return noffset;
+	if (noffset >= 0) {
 
-	ret = check_allowed(fit, noffset, images, image_type, arch,
-			    bootstage_id);
-	if (ret)
-		return ret;
+		ret = check_allowed(fit, noffset, images, image_type, arch,
+				    bootstage_id);
+		if (ret)
+			return ret;
 
-	ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
-	if (ret)
-		return ret;
+		ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
+		if (ret)
+			return ret;
 
-	ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
-			     load_op, bootstage_id, &load);
-	if (ret)
-		return ret;
+		ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
+				     load_op, bootstage_id, &load);
+		if (ret)
+			return ret;
 
-	upl_add_image(fit, noffset, load, len);
+		upl_add_image(fit, noffset, load, len);
 
-	*datap = load;
-	*lenp = len;
-	if (fit_unamep)
-		*fit_unamep = (char *)fit_uname;
-	if (fit_uname_configp)
-		*fit_uname_configp = (char *)(fit_uname_config ? :
-					      fit_base_uname_config);
+		*datap = load;
+		*lenp = len;
+	}
+
+	/* note that fit_uname will always be NULL if noffset == -ENOPKG */
+	if (noffset >= 0 || noffset == -ENOPKG) {
+		if (fit_unamep)
+			*fit_unamep = (char *)fit_uname;
+		if (fit_uname_configp)
+			*fit_uname_configp = (char *)(fit_uname_config ? :
+						      fit_base_uname_config);
+	}
 
 	return noffset;
 }

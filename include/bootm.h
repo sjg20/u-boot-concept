@@ -201,10 +201,11 @@ int bootm_measure(struct bootm_headers *images);
  *
  * @bmi: bootm information
  * @states	Mask containing states to run (BOOTM_STATE_...)
- * Return: 0 if ok, something else on error. Some errors will cause this
+ * Return: 0 if ok, -ENOPKG if a 'load-only' FIT was loaded and there is no OS
+ *	to load, something else on error. Some errors will cause this
  *	function to perform a reboot! If states contains BOOTM_STATE_OS_GO
  *	then the intent is to boot an OS, so this function will not return
- *	unless the image type is standalone.
+ *	unless the image type is standalone or this is a=.
  */
 int bootm_run_states(struct bootm_info *bmi, int states);
 

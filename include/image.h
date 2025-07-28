@@ -349,6 +349,7 @@ struct image_info {
  * enum bootm_state - States which the bootm machine goes through (in order)
  *
  * @BOOTM_STATE_START: Set up the state structure (struct bootm_headers)
+ * @BOOTM_STATE_RESTART: Restart the boot, keeping the existing state
  * @BOOTM_STATE_PRE_LOAD: Do any neceessary processing before images are read.
  *	For now this just implements a whole-image signature, if enabled. See
  *	CONFIG_IMAGE_PRE_LOAD_SIG
@@ -398,6 +399,7 @@ enum bootm_state {
 	BOOTM_STATE_OS_PREP		= BIT(10),
 	BOOTM_STATE_OS_FAKE_GO		= BIT(11),
 	BOOTM_STATE_OS_GO		= BIT(12),
+	BOOTM_STATE_RESTART		= BIT(13),
 };
 
 /*
@@ -455,6 +457,9 @@ struct bootm_headers {
 
 	int		verify;		/* env_get("verify")[0] != 'n' */
 	enum bootm_state state;
+
+	/* true if this is a load-only FIT with no OS */
+	bool no_os;
 };
 
 extern struct bootm_headers images;
@@ -730,27 +735,22 @@ int boot_get_fpga(struct bootm_headers *images);
 /**
  * boot_get_ramdisk() - Locate the ramdisk
  *
+ * Finds a valid ramdisk image if possible, from these ramdisk sources:
+ *      - multicomponent kernel/ramdisk image
+ *      - commandline-provided address of dedicated ramdisk image
+ *
  * @select: address or name of ramdisk to use, or NULL for default
  * @images: pointer to the bootm images structure
  * @arch: expected ramdisk architecture
- * @rd_start: pointer to a ulong variable, will hold ramdisk start address
- * @rd_end: pointer to a ulong variable, will hold ramdisk end
+ * @startp: returns ramdisk start address, on success
+ * @endp: returns ramdisk end on success, on success
  *
- * boot_get_ramdisk() is responsible for finding a valid ramdisk image.
- * Currently supported are the following ramdisk sources:
- *      - multicomponent kernel/ramdisk image,
- *      - commandline provided address of decicated ramdisk image.
- *
- * returns:
- *     0, if ramdisk image was found and valid, or skiped
- *     rd_start and rd_end are set to ramdisk start/end addresses if
- *     ramdisk image is found and valid
- *
- *     1, if ramdisk image is found but corrupted, or invalid
- *     rd_start and rd_end are set to 0 if no ramdisk exists
+ * Return: 0 if ramdisk image was found and valid, or skipped;
+ * -ENOPKG if ramdisk image is found but corrupted, or invalid;
+ * other error code on other error
  */
 int boot_get_ramdisk(char const *select, struct bootm_headers *images,
-		     uint arch, ulong *rd_start, ulong *rd_end);
+		     uint arch, ulong *startp, ulong *endp);
 
 /**
  * boot_get_loadable() - load a list of binaries to memory
@@ -812,10 +812,11 @@ int boot_get_fdt_fit(struct bootm_headers *images, ulong addr,
  * @param addr		Address of FIT in memory
  * @param fit_unamep	On entry this is the requested image name
  *			(e.g. "kernel") or NULL to use the default. On exit
- *			points to the selected image name
+ *			points to the selected image name on success
  * @param fit_uname_configp	On entry this is the requested configuration
  *			name (e.g. "conf-1") or NULL to use the default. On
- *			exit points to the selected configuration name.
+ *			exit points to the selected configuration name, on
+ *			success or if -ENOPKG is returned
  * @param arch		Expected architecture (IH_ARCH_...)
  * @param image_ph_type	Required image type (IH_TYPE_...). If this is
  *			IH_TYPE_KERNEL then we allow IH_TYPE_KERNEL_NOLOAD
@@ -833,7 +834,8 @@ int boot_get_fdt_fit(struct bootm_headers *images, ulong addr,
  *   -EACCES - hash, signature or decryptions failure
  *   -EBADF - invalid OS or image type, or cannot get image load-address
  *   -EXDEV - memory overwritten / overlap
- *   -NOEXEC - image decompression error, or invalid FDT
+ *   -ENOEXEC - image decompression error, or invalid FDT
+ *   -ENOPKG - image is missing, but this is a load-only image
  */
 int fit_image_load(struct bootm_headers *images, ulong addr,
 		   const char **fit_unamep, const char **fit_uname_configp,
@@ -887,29 +889,23 @@ int fit_get_node_from_config(struct bootm_headers *images,
 /**
  * boot_get_fdt() - locate FDT devicetree to use for booting
  *
+ * Finds a valid flat device tree image if possible, from these sources:
+ *      - multicomponent kernel/ramdisk/FDT image
+ *      - commandline provided address of decicated FDT image
+ *
  * @buf: Pointer to image
  * @select: FDT to select (this is normally argv[2] of the bootm command)
  * @arch: architecture (IH_ARCH_...)
  * @images: pointer to the bootm images structure
- * @of_flat_tree: pointer to a char* variable, will hold fdt start address
- * @of_size: pointer to a ulong variable, will hold fdt length
+ * @startp: returns the fdt start address, on success
+ * @sizep: returns the fdt length, on success
  *
- * boot_get_fdt() is responsible for finding a valid flat device tree image.
- * Currently supported are the following FDT sources:
- *      - multicomponent kernel/ramdisk/FDT image,
- *      - commandline provided address of decicated FDT image.
- *
- * Return:
- *     0, if fdt image was found and valid, or skipped
- *     of_flat_tree and of_size are set to fdt start address and length if
- *     fdt image is found and valid
- *
+ * Return: 0 if fdt image was found and valid, or skipped;
  *     1, if fdt image is found but corrupted
- *     of_flat_tree and of_size are set to 0 if no fdt exists
  */
 int boot_get_fdt(void *buf, const char *select, uint arch,
-		 struct bootm_headers *images, char **of_flat_tree,
-		 ulong *of_size);
+		 struct bootm_headers *images, char **startp,
+		 ulong *sizep);
 
 void boot_fdt_add_mem_rsv_regions(void *fdt_blob);
 int boot_relocate_fdt(char **of_flat_tree, ulong *of_size);
@@ -1176,6 +1172,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 #define FIT_COMP_PROP		"compression"
 #define FIT_ENTRY_PROP		"entry"
 #define FIT_LOAD_PROP		"load"
+#define FIT_PHASE_PROP		"phase"
 
 /* configuration node */
 #define FIT_KERNEL_PROP		"kernel"
@@ -1188,7 +1185,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 #define FIT_FIRMWARE_PROP	"firmware"
 #define FIT_STANDALONE_PROP	"standalone"
 #define FIT_SCRIPT_PROP		"script"
-#define FIT_PHASE_PROP		"phase"
+#define FIT_LOAD_ONLY_PROP	"load-only"
 
 #define FIT_MAX_HASH_LEN	HASH_MAX_DIGEST_SIZE
 
@@ -1259,10 +1256,10 @@ int fit_image_get_data(const void *fit, int noffset, const void **data,
 		       size_t *size);
 
 /**
- * fit_image_get_phase() - Get the phase from a FIT image
+ * fit_image_get_phase() - Get the phase from an image in a FIT
  *
  * @fit: FIT to read from
- * @offset: offset node to read
+ * @offset: offset of the image-node to read
  * @phasep: Returns phase, if any
  * Return: 0 if read OK and *phasep is value, -ENOENT if there was no phase
  * property in the node, other -ve value on other error
