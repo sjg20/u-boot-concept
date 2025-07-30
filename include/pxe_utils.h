@@ -324,4 +324,28 @@ int pxe_probe(struct pxe_context *ctx, ulong pxefile_addr_r, bool prompt);
  */
 int pxe_do_boot(struct pxe_context *ctx);
 
+/*
+ * Entry point for parsing a menu file. nest_level indicates how many times
+ * we've nested in includes.  It will be 1 for the top level menu file.
+ *
+ * Returns 1 on success, < 0 on error.
+ */
+int parse_pxefile_top(struct pxe_context *ctx, char *p, ulong base,
+		      struct pxe_menu *cfg, int nest_level);
+
+/**
+ * label_destroy() - free the memory used by a pxe_label
+ *
+ * This frees @label itself as well as memory used by its name,
+ * kernel, config, append, initrd, fdt, fdtdir and fdtoverlay members, if
+ * they're non-NULL.
+ *
+ * So - be sure to only use dynamically allocated memory for the members of
+ * the pxe_label struct, unless you want to clean it up first. These are
+ * currently only created by the pxe file parsing code.
+ *
+ * @label: Label to free
+ */
+void label_destroy(struct pxe_label *label);
+
 #endif /* __PXE_UTILS_H */
