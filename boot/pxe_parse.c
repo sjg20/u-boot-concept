@@ -37,6 +37,7 @@ enum token_type {
 	T_KASLRSEED,
 	T_FALLBACK,
 	T_SAY,
+	T_FIT,
 	T_INVALID
 };
 
@@ -72,6 +73,7 @@ static const struct token keywords[] = {
 	{"kaslrseed", T_KASLRSEED,},
 	{"fallback", T_FALLBACK,},
 	{"say", T_SAY,},
+	{"fit", T_FIT,},
 	{NULL, T_INVALID}
 };
 
@@ -502,6 +504,7 @@ static int parse_label(char **c, struct pxe_menu *cfg)
 			break;
 		case T_KERNEL:
 		case T_LINUX:
+		case T_FIT:
 			err = parse_label_kernel(c, label);
 			break;
 		case T_APPEND:
