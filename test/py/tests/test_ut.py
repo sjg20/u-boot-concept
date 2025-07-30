@@ -158,7 +158,7 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
     fsh.cleanup()
 
 
-def setup_bootflow_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
                          script):
     """Create a 20MB disk image with a single FAT partition
 
@@ -235,7 +235,7 @@ label Fedora-Workstation-armhfp-31-1.9 (5.3.7-301.fc31.armv7hl)
         append ro root=UUID=9732b35b-4cd5-458b-9b91-80f7047e0b8a rhgb quiet LANG=en_US.UTF-8 cma=192MB cma=256MB
         fdtdir /%s/
         initrd /%s''' % (vmlinux, dtbdir, initrd)
-    setup_bootflow_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+    setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
                          script)
 
 def setup_ubuntu_image(ubman, devnum, basename):
@@ -274,7 +274,7 @@ label l0r
 	linux /boot/%s
 	initrd /boot/%s
 ''' % (vmlinux, initrd, vmlinux, initrd)
-    setup_bootflow_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+    setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
                          script)
 
 def setup_cros_image(ubman):
@@ -614,6 +614,21 @@ def setup_efi_image(ubman):
     fsh.cleanup()
 
 
+def setup_localboot_image(cons):
+    """Create a 20MB disk image with a single FAT partition"""
+    mmc_dev = 9
+
+    script = '''DEFAULT local
+
+LABEL local
+  SAY Doing local boot...
+  LOCALBOOT 0
+'''
+    vmlinux = 'vmlinuz'
+    initrd = 'initrd.img'
+    setup_extlinux_image(cons, mmc_dev, 'mmc', vmlinux, initrd, None, script)
+
+
 @pytest.mark.buildconfigspec('cmd_bootflow')
 @pytest.mark.buildconfigspec('sandbox')
 def test_ut_dm_init_bootstd(ubman):
@@ -626,6 +641,7 @@ def test_ut_dm_init_bootstd(ubman):
     setup_android_image(ubman)
     setup_efi_image(ubman)
     setup_ubuntu_image(ubman, 3, 'flash')
+    setup_localboot_image(ubman)
 
     # Restart so that the new mmc1.img is picked up
     ubman.restart_uboot()

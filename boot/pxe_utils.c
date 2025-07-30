@@ -642,6 +642,25 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 }
 
 /**
+ * generate_localboot() - Try to come up with a localboot definition
+ *
+ * Adds a default kernel and initrd filename for use with localboot
+ *
+ * @label: Label to process
+ * Return 0 if OK, -ENOMEM if out of memory
+ */
+static int generate_localboot(struct pxe_label *label)
+{
+	label->kernel = strdup("/vmlinuz");
+	label->kernel_label = strdup(label->kernel);
+	label->initrd = strdup("/initrd.img");
+	if (!label->kernel || !label->kernel_label || !label->initrd)
+		return -ENOMEM;
+
+	return 0;
+}
+
+/**
  * label_boot() - Boot according to the contents of a pxe_label
  *
  * If we can't boot for any reason, we return.  A successful boot never
@@ -678,9 +697,17 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	label->attempted = 1;
 
 	if (label->localboot) {
-		if (label->localboot_val >= 0)
-			label_localboot(label);
-		return 0;
+		if (label->localboot_val >= 0) {
+			ret = label_localboot(label);
+
+			if (IS_ENABLED(CONFIG_BOOTMETH_EXTLINUX_LOCALBOOT) &&
+			    ret == -ENOENT)
+				ret = generate_localboot(label);
+			if (ret)
+				return ret;
+		} else {
+			return 0;
+		}
 	}
 
 	if (!label->kernel) {
@@ -800,7 +827,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		}
 		unmap_sysmem(buf);
 	}
-	if (ctx->bflow)
+	if (ctx->bflow && conf_fdt)
 		ctx->bflow->fdt_addr = hextoul(conf_fdt, NULL);
 
 	if (IS_ENABLED(CONFIG_BOOTSTD_FULL) && ctx->no_boot) {
@@ -820,7 +847,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 				  ctx->initrd_addr_str, ctx->initrd_filesize,
 				  ctx->initrd_str);
 		}
-		if (!ctx->kernel_addr || !ctx->conf_fdt ||
+		if (!ctx->kernel_addr || (conf_fdt && !ctx->conf_fdt) ||
 		    (initrd_addr_str && (!ctx->initrd_addr_str ||
 		     !ctx->initrd_filesize || !ctx->initrd_str))) {
 			printf("malloc fail (saving label)\n");
@@ -864,6 +891,7 @@ enum token_type {
 	T_BACKGROUND,
 	T_KASLRSEED,
 	T_FALLBACK,
+	T_SAY,
 	T_INVALID
 };
 
@@ -898,6 +926,7 @@ static const struct token keywords[] = {
 	{"background", T_BACKGROUND,},
 	{"kaslrseed", T_KASLRSEED,},
 	{"fallback", T_FALLBACK,},
+	{"say", T_SAY,},
 	{NULL, T_INVALID}
 };
 
@@ -1361,6 +1390,17 @@ static int parse_label(char **c, struct pxe_menu *cfg)
 
 		case T_EOL:
 			break;
+
+		case T_SAY: {
+			char *p = strchr(s, '\n');
+
+			if (p) {
+				printf("%.*s\n", (int)(p - *c) - 1, *c + 1);
+
+				*c = p;
+			}
+			break;
+		}
 
 		default:
 			/*
