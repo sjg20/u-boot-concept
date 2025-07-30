@@ -103,7 +103,6 @@ static struct pxe_label *label_create(void)
 	label = malloc(sizeof(struct pxe_label));
 	if (!label)
 		return NULL;
-
 	memset(label, 0, sizeof(struct pxe_label));
 
 	return label;
@@ -167,7 +166,6 @@ static char *get_string(char **p, struct token *t, char delim, int lower)
 			break;
 		e++;
 	}
-
 	len = e - b;
 
 	/*
@@ -294,7 +292,6 @@ static int parse_sliteral(char **c, char **dst)
 	char *s = *c;
 
 	get_token(c, &t, L_SLITERAL);
-
 	if (t.type != T_STRING) {
 		printf("Expected string literal: %.*s\n", (int)(*c - s), s);
 		return -EINVAL;
@@ -320,7 +317,6 @@ static int parse_integer(char **c, int *dst)
 	}
 
 	*dst = simple_strtol(t.val, NULL, 10);
-
 	free(t.val);
 
 	return 1;
@@ -384,17 +380,13 @@ static int parse_menu(struct pxe_context *ctx, char **c, struct pxe_menu *cfg,
 	switch (t.type) {
 	case T_TITLE:
 		err = parse_sliteral(c, &cfg->title);
-
 		break;
-
 	case T_INCLUDE:
 		err = handle_include(ctx, c, base, cfg, nest_level + 1);
 		break;
-
 	case T_BACKGROUND:
 		err = parse_sliteral(c, &cfg->bmp);
 		break;
-
 	default:
 		printf("Ignoring malformed menu command: %.*s\n",
 		       (int)(*c - s), s);
@@ -417,7 +409,6 @@ static int parse_label_menu(char **c, struct pxe_menu *cfg,
 	char *s;
 
 	s = *c;
-
 	get_token(c, &t, L_KEYWORD);
 
 	switch (t.type) {
@@ -479,7 +470,6 @@ static int parse_label_kernel(char **c, struct pxe_label *label)
  * A label ends when we either get to the end of a file, or
  * get some input we otherwise don't have a handler defined
  * for.
- *
  */
 static int parse_label(char **c, struct pxe_menu *cfg)
 {
@@ -499,7 +489,6 @@ static int parse_label(char **c, struct pxe_menu *cfg)
 		label_destroy(label);
 		return -EINVAL;
 	}
-
 	list_add_tail(&label->list, &cfg->labels);
 
 	while (1) {
@@ -511,12 +500,10 @@ static int parse_label(char **c, struct pxe_menu *cfg)
 		case T_MENU:
 			err = parse_label_menu(c, cfg, label);
 			break;
-
 		case T_KERNEL:
 		case T_LINUX:
 			err = parse_label_kernel(c, label);
 			break;
-
 		case T_APPEND:
 			err = parse_sliteral(c, &label->append);
 			if (label->initrd)
@@ -531,40 +518,32 @@ static int parse_label(char **c, struct pxe_menu *cfg)
 			label->initrd[len] = '\0';
 
 			break;
-
 		case T_INITRD:
 			if (!label->initrd)
 				err = parse_sliteral(c, &label->initrd);
 			break;
-
 		case T_FDT:
 			if (!label->fdt)
 				err = parse_sliteral(c, &label->fdt);
 			break;
-
 		case T_FDTDIR:
 			if (!label->fdtdir)
 				err = parse_sliteral(c, &label->fdtdir);
 			break;
-
 		case T_FDTOVERLAYS:
 			if (!label->fdtoverlays)
 				err = parse_sliteral(c, &label->fdtoverlays);
 			break;
-
 		case T_LOCALBOOT:
 			label->localboot = 1;
 			err = parse_integer(c, &label->localboot_val);
 			break;
-
 		case T_IPAPPEND:
 			err = parse_integer(c, &label->ipappend);
 			break;
-
 		case T_KASLRSEED:
 			label->kaslrseed = 1;
 			break;
-
 		case T_EOL:
 			break;
 		case T_SAY: {
@@ -608,7 +587,6 @@ int parse_pxefile_top(struct pxe_context *ctx, char *p, ulong base,
 	int err;
 
 	b = p;
-
 	if (nest_level > MAX_NEST_LEVEL) {
 		printf("Maximum nesting (%d) exceeded\n", MAX_NEST_LEVEL);
 		return -EMLINK;
@@ -616,7 +594,6 @@ int parse_pxefile_top(struct pxe_context *ctx, char *p, ulong base,
 
 	while (1) {
 		s = p;
-
 		get_token(&p, &t, L_KEYWORD);
 
 		err = 0;
@@ -627,59 +604,46 @@ int parse_pxefile_top(struct pxe_context *ctx, char *p, ulong base,
 					 base + ALIGN(strlen(b) + 1, 4),
 					 nest_level);
 			break;
-
 		case T_TIMEOUT:
 			err = parse_integer(&p, &cfg->timeout);
 			break;
-
 		case T_LABEL:
 			err = parse_label(&p, cfg);
 			break;
-
 		case T_DEFAULT:
 		case T_ONTIMEOUT:
 			err = parse_sliteral(&p, &label_name);
-
 			if (label_name) {
 				if (cfg->default_label)
 					free(cfg->default_label);
 
 				cfg->default_label = label_name;
 			}
-
 			break;
-
 		case T_FALLBACK:
 			err = parse_sliteral(&p, &label_name);
-
 			if (label_name) {
 				if (cfg->fallback_label)
 					free(cfg->fallback_label);
 
 				cfg->fallback_label = label_name;
 			}
-
 			break;
-
 		case T_INCLUDE:
 			err = handle_include(ctx, &p,
 					     base + ALIGN(strlen(b), 4), cfg,
 					     nest_level + 1);
 			break;
-
 		case T_PROMPT:
 			err = parse_integer(&p, &cfg->prompt);
 			// Do not fail if prompt configuration is undefined
 			if (err <  0)
 				eol_or_eof(&p);
 			break;
-
 		case T_EOL:
 			break;
-
 		case T_EOF:
 			return 1;
-
 		default:
 			printf("Ignoring unknown command: %.*s\n",
 			       (int)(p - s), s);
