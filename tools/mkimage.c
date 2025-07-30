@@ -18,8 +18,6 @@
 #include <sys/ioctl.h>
 #endif
 
-static void copy_file(int, const char *, int);
-
 /* parameters initialized by core will be used by the image type code */
 static struct image_tool_params params = {
 	.os = IH_OS_LINUX,
@@ -445,6 +443,121 @@ static void verify_image(const struct image_type_params *tparams)
 	(void)close(ifd);
 }
 
+static void copy_file(int ifd, const char *datafile, int pad)
+{
+	int dfd;
+	struct stat sbuf;
+	unsigned char *ptr;
+	int tail;
+	int zero = 0;
+	uint8_t zeros[4096];
+	int offset = 0;
+	int size, ret;
+	struct image_type_params *tparams = imagetool_get_type(params.type);
+
+	memset(zeros, 0, sizeof(zeros));
+
+	if (params.vflag)
+		fprintf(stderr, "Adding Image %s\n", datafile);
+
+	dfd = open(datafile, O_RDONLY | O_BINARY);
+	if (dfd < 0) {
+		fprintf(stderr, "%s: Can't open %s: %s\n",
+			params.cmdname, datafile, strerror(errno));
+		exit (EXIT_FAILURE);
+	}
+
+	if (fstat(dfd, &sbuf) < 0) {
+		fprintf(stderr, "%s: Can't stat %s: %s\n",
+			params.cmdname, datafile, strerror(errno));
+		exit (EXIT_FAILURE);
+	}
+
+	if (sbuf.st_size == 0) {
+		fprintf(stderr, "%s: Input file %s is empty, bailing out\n",
+			params.cmdname, datafile);
+		exit (EXIT_FAILURE);
+	}
+
+	ptr = mmap(0, sbuf.st_size, PROT_READ, MAP_SHARED, dfd, 0);
+	if (ptr == MAP_FAILED) {
+		fprintf(stderr, "%s: Can't read %s: %s\n",
+			params.cmdname, datafile, strerror(errno));
+		exit (EXIT_FAILURE);
+	}
+
+	if (params.xflag &&
+	    ((params.type > IH_TYPE_INVALID && params.type < IH_TYPE_FLATDT) ||
+	     params.type == IH_TYPE_KERNEL_NOLOAD ||
+	     params.type == IH_TYPE_FIRMWARE_IVT)) {
+		unsigned char *p = NULL;
+		/*
+		 * XIP: do not append the struct legacy_img_hdr at the
+		 * beginning of the file, but consume the space
+		 * reserved for it.
+		 */
+
+		if ((unsigned int)sbuf.st_size < tparams->header_size) {
+			fprintf(stderr,
+				"%s: Bad size: \"%s\" is too small for XIP\n",
+				params.cmdname, datafile);
+			exit (EXIT_FAILURE);
+		}
+
+		for (p = ptr; p < ptr + tparams->header_size; p++) {
+			if (*p != 0xff) {
+				fprintf(stderr,
+					"%s: Bad file: \"%s\" has invalid buffer for XIP\n",
+					params.cmdname, datafile);
+				exit (EXIT_FAILURE);
+			}
+		}
+
+		offset = tparams->header_size;
+	}
+
+	size = sbuf.st_size - offset;
+
+	ret = write(ifd, ptr + offset, size);
+	if (ret != size) {
+		if (ret < 0)
+			fprintf(stderr, "%s: Write error on %s: %s\n",
+				params.cmdname, params.imagefile, strerror(errno));
+		else if (ret < size)
+			fprintf(stderr, "%s: Write only %d/%d bytes, "
+				"probably no space left on the device\n",
+				params.cmdname, ret, size);
+		exit (EXIT_FAILURE);
+	}
+
+	tail = size % 4;
+	if (pad == 1 && tail != 0) {
+		if (write(ifd, (char *)&zero, 4 - tail) != 4 - tail) {
+			fprintf(stderr, "%s: Write error on %s: %s\n",
+				params.cmdname, params.imagefile,
+				strerror(errno));
+			exit (EXIT_FAILURE);
+		}
+	} else if (pad > 1) {
+		while (pad > 0) {
+			int todo = sizeof(zeros);
+
+			if (todo > pad)
+				todo = pad;
+			if (write(ifd, (char *)&zeros, todo) != todo) {
+				fprintf(stderr, "%s: Write error on %s: %s\n",
+					params.cmdname, params.imagefile,
+					strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+			pad -= todo;
+		}
+	}
+
+	(void)munmap((void *)ptr, sbuf.st_size);
+	(void)close(dfd);
+}
+
 void copy_datafile(int ifd, char *file)
 {
 	if (!file)
@@ -821,120 +934,4 @@ int main(int argc, char **argv)
 		verify_image(tparams);
 
 	exit (EXIT_SUCCESS);
-}
-
-static void
-copy_file (int ifd, const char *datafile, int pad)
-{
-	int dfd;
-	struct stat sbuf;
-	unsigned char *ptr;
-	int tail;
-	int zero = 0;
-	uint8_t zeros[4096];
-	int offset = 0;
-	int size, ret;
-	struct image_type_params *tparams = imagetool_get_type(params.type);
-
-	memset(zeros, 0, sizeof(zeros));
-
-	if (params.vflag) {
-		fprintf (stderr, "Adding Image %s\n", datafile);
-	}
-
-	if ((dfd = open(datafile, O_RDONLY|O_BINARY)) < 0) {
-		fprintf (stderr, "%s: Can't open %s: %s\n",
-			params.cmdname, datafile, strerror(errno));
-		exit (EXIT_FAILURE);
-	}
-
-	if (fstat(dfd, &sbuf) < 0) {
-		fprintf (stderr, "%s: Can't stat %s: %s\n",
-			params.cmdname, datafile, strerror(errno));
-		exit (EXIT_FAILURE);
-	}
-
-	if (sbuf.st_size == 0) {
-		fprintf (stderr, "%s: Input file %s is empty, bailing out\n",
-			params.cmdname, datafile);
-		exit (EXIT_FAILURE);
-	}
-
-	ptr = mmap(0, sbuf.st_size, PROT_READ, MAP_SHARED, dfd, 0);
-	if (ptr == MAP_FAILED) {
-		fprintf (stderr, "%s: Can't read %s: %s\n",
-			params.cmdname, datafile, strerror(errno));
-		exit (EXIT_FAILURE);
-	}
-
-	if (params.xflag &&
-	    (((params.type > IH_TYPE_INVALID) && (params.type < IH_TYPE_FLATDT)) ||
-	     (params.type == IH_TYPE_KERNEL_NOLOAD) || (params.type == IH_TYPE_FIRMWARE_IVT))) {
-		unsigned char *p = NULL;
-		/*
-		 * XIP: do not append the struct legacy_img_hdr at the
-		 * beginning of the file, but consume the space
-		 * reserved for it.
-		 */
-
-		if ((unsigned)sbuf.st_size < tparams->header_size) {
-			fprintf (stderr,
-				"%s: Bad size: \"%s\" is too small for XIP\n",
-				params.cmdname, datafile);
-			exit (EXIT_FAILURE);
-		}
-
-		for (p = ptr; p < ptr + tparams->header_size; p++) {
-			if ( *p != 0xff ) {
-				fprintf (stderr,
-					"%s: Bad file: \"%s\" has invalid buffer for XIP\n",
-					params.cmdname, datafile);
-				exit (EXIT_FAILURE);
-			}
-		}
-
-		offset = tparams->header_size;
-	}
-
-	size = sbuf.st_size - offset;
-
-	ret = write(ifd, ptr + offset, size);
-	if (ret != size) {
-		if (ret < 0)
-			fprintf (stderr, "%s: Write error on %s: %s\n",
-				 params.cmdname, params.imagefile, strerror(errno));
-		else if (ret < size)
-			fprintf (stderr, "%s: Write only %d/%d bytes, "\
-				 "probably no space left on the device\n",
-				 params.cmdname, ret, size);
-		exit (EXIT_FAILURE);
-	}
-
-	tail = size % 4;
-	if ((pad == 1) && (tail != 0)) {
-
-		if (write(ifd, (char *)&zero, 4-tail) != 4-tail) {
-			fprintf (stderr, "%s: Write error on %s: %s\n",
-				params.cmdname, params.imagefile,
-				strerror(errno));
-			exit (EXIT_FAILURE);
-		}
-	} else if (pad > 1) {
-		while (pad > 0) {
-			int todo = sizeof(zeros);
-
-			if (todo > pad)
-				todo = pad;
-			if (write(ifd, (char *)&zeros, todo) != todo) {
-				fprintf(stderr, "%s: Write error on %s: %s\n",
-					params.cmdname, params.imagefile,
-					strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-			pad -= todo;
-		}
-	}
-
-	(void) munmap((void *)ptr, sbuf.st_size);
-	(void) close (dfd);
 }
