@@ -244,7 +244,7 @@ static int mtk_image_check_params(struct image_tool_params *params)
 }
 
 static int mtk_image_vrec_header(struct image_tool_params *params,
-				 struct image_type_params *tparams)
+				 struct imgtool_funcs *tparams)
 {
 	if (use_lk_hdr) {
 		tparams->header_size = sizeof(union lk_hdr);

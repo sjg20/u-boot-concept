@@ -157,7 +157,7 @@ static void aisimage_print_header(const void *hdr, struct image_tool_params *par
 }
 
 static uint32_t *ais_insert_cmd_header(uint32_t cmd, uint32_t nargs,
-	uint32_t *parms, struct image_type_params *tparams,
+	uint32_t *parms, struct imgtool_funcs *tparams,
 	uint32_t *ptr)
 {
 	int i;
@@ -252,7 +252,7 @@ static uint32_t *ais_copy_image(struct image_tool_params *params,
 }
 
 static int aisimage_generate(struct image_tool_params *params,
-	struct image_type_params *tparams)
+	struct imgtool_funcs *tparams)
 {
 	FILE *fd = NULL;
 	char *line = NULL;

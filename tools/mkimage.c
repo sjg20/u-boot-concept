@@ -414,7 +414,7 @@ static int process_args(int argc, char **argv)
 	return 0;
 }
 
-static void verify_image(const struct image_type_params *tparams)
+static void verify_image(const struct imgtool_funcs *tparams)
 {
 	struct stat sbuf;
 	void *ptr;
@@ -462,7 +462,7 @@ static void copy_file(int ifd, const char *datafile, int pad)
 	uint8_t zeros[4096];
 	int offset = 0;
 	int size, ret;
-	struct image_type_params *tparams = imagetool_get_type(params.type);
+	struct imgtool_funcs *tparams = imagetool_get_type(params.type);
 
 	memset(zeros, 0, sizeof(zeros));
 
@@ -595,7 +595,7 @@ void copy_datafile(int ifd, char *file)
  */
 static int run_mkimage(void)
 {
-	struct image_type_params *tparams = NULL;
+	struct imgtool_funcs *tparams = NULL;
 	struct stat sbuf;
 	int pad_len = 0;
 	int retval = 0;

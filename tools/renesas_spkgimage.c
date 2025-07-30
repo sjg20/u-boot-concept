@@ -217,7 +217,7 @@ static inline uint32_t roundup(uint32_t x, uint32_t y)
 }
 
 static int spkgimage_vrec_header(struct image_tool_params *params,
-				 struct image_type_params *tparams)
+				 struct imgtool_funcs *tparams)
 {
 	struct stat s;
 	struct spkg_file *out_buf;

@@ -2160,7 +2160,7 @@ static int kwbimage_verify_header(unsigned char *ptr, int image_size,
 }
 
 static int kwbimage_generate(struct image_tool_params *params,
-			     struct image_type_params *tparams)
+			     struct imgtool_funcs *tparams)
 {
 	FILE *fcfg;
 	struct stat s;

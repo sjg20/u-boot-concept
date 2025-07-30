@@ -499,7 +499,7 @@ static int zynqmpimage_extract_contents(void *ptr, struct image_tool_params *par
 }
 
 static int zynqmpimage_vrec_header(struct image_tool_params *params,
-				   struct image_type_params *tparams)
+				   struct imgtool_funcs *tparams)
 {
 	struct stat path_stat;
 	char *filename = params->imagename;

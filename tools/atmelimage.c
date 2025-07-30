@@ -238,7 +238,7 @@ static int atmel_check_params(struct image_tool_params *params)
 }
 
 static int atmel_vrec_header(struct image_tool_params *params,
-				struct image_type_params *tparams)
+			     struct imgtool_funcs *tparams)
 {
 	uint32_t tmp;
 	size_t pos;

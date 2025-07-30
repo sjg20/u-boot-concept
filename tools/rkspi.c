@@ -58,7 +58,7 @@ static int rkspi_check_image_type(uint8_t type)
  * (i.e. only the first 2K of each 4K sector is used).
  */
 static int rkspi_vrec_header(struct image_tool_params *params,
-			     struct image_type_params *tparams)
+			     struct imgtool_funcs *tparams)
 {
 	rkcommon_vrec_header(params, tparams);
 

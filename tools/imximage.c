@@ -967,7 +967,7 @@ static void generate_fspi_header(int ifd)
 #endif
 
 static int imximage_generate(struct image_tool_params *params,
-	struct image_type_params *tparams)
+			     struct imgtool_funcs *tparams)
 {
 	struct imx_header *imxhdr;
 	size_t alloc_len;

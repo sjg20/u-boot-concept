@@ -889,7 +889,7 @@ static int toc0_check_image_type(uint8_t type)
 }
 
 static int toc0_vrec_header(struct image_tool_params *params,
-			    struct image_type_params *tparams)
+			    struct imgtool_funcs *tparams)
 {
 	tparams->hdr = calloc(tparams->header_size, 1);
 

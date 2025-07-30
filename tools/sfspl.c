@@ -153,7 +153,7 @@ static void sfspl_set_header(void *buf, struct stat *sbuf, int infd,
 }
 
 static int sfspl_vrec_header(struct image_tool_params *params,
-			     struct image_type_params *tparams)
+			     struct imgtool_funcs *tparams)
 {
 	tparams->hdr = calloc(sizeof(struct spl_hdr), 1);
 

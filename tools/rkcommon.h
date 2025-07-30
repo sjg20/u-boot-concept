@@ -102,6 +102,6 @@ void rkcommon_rc4_encode_spl(void *buf, unsigned int offset, unsigned int size);
  * Return: 0 (always)
  */
 int rkcommon_vrec_header(struct image_tool_params *params,
-			 struct image_type_params *tparams);
+			 struct imgtool_funcs *tparams);
 
 #endif

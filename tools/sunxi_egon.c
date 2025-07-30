@@ -172,7 +172,7 @@ static int egon_check_image_type(uint8_t type)
 }
 
 static int egon_vrec_header(struct image_tool_params *params,
-			    struct image_type_params *tparams)
+			    struct imgtool_funcs *tparams)
 {
 	int pad_size = ALIGN(params->bl_len ?: PAD_SIZE, PAD_SIZE_MIN);
 

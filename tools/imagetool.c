@@ -9,13 +9,13 @@
 
 #include <image.h>
 
-struct image_type_params *imagetool_get_type(int type)
+struct imgtool_funcs *imagetool_get_type(int type)
 {
-	struct image_type_params **curr;
+	struct imgtool_funcs **curr;
 	INIT_SECTION(image_type);
 
-	struct image_type_params **start = __start_image_type;
-	struct image_type_params **end = __stop_image_type;
+	struct imgtool_funcs **start = __start_image_type;
+	struct imgtool_funcs **end = __stop_image_type;
 
 	for (curr = start; curr != end; curr++) {
 		if ((*curr)->check_image_type) {
@@ -29,21 +29,21 @@ struct image_type_params *imagetool_get_type(int type)
 static int imagetool_verify_print_header_by_type(
 	void *ptr,
 	struct stat *sbuf,
-	struct image_type_params *tparams,
+	struct imgtool_funcs *tparams,
 	struct image_tool_params *params);
 
 int imagetool_verify_print_header(
 	void *ptr,
 	struct stat *sbuf,
-	struct image_type_params *tparams,
+	struct imgtool_funcs *tparams,
 	struct image_tool_params *params)
 {
 	int retval = -1;
-	struct image_type_params **curr;
+	struct imgtool_funcs **curr;
 	INIT_SECTION(image_type);
 
-	struct image_type_params **start = __start_image_type;
-	struct image_type_params **end = __stop_image_type;
+	struct imgtool_funcs **start = __start_image_type;
+	struct imgtool_funcs **end = __stop_image_type;
 
 	if (tparams)
 		return imagetool_verify_print_header_by_type(ptr, sbuf, tparams, params);
@@ -88,7 +88,7 @@ int imagetool_verify_print_header(
 static int imagetool_verify_print_header_by_type(
 	void *ptr,
 	struct stat *sbuf,
-	struct image_type_params *tparams,
+	struct imgtool_funcs *tparams,
 	struct image_tool_params *params)
 {
 	int retval = -1;

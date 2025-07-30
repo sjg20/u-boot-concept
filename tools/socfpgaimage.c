@@ -398,7 +398,7 @@ static int sfp_fake_header_size(unsigned int size, uint8_t ver)
 }
 
 static int sfp_vrec_header(struct image_tool_params *params,
-			   struct image_type_params *tparams, uint8_t ver)
+			   struct imgtool_funcs *tparams, uint8_t ver)
 {
 	struct stat sbuf;
 
@@ -413,13 +413,13 @@ static int sfp_vrec_header(struct image_tool_params *params,
 }
 
 static int socfpgaimage_vrec_header_v0(struct image_tool_params *params,
-				       struct image_type_params *tparams)
+				       struct imgtool_funcs *tparams)
 {
 	return sfp_vrec_header(params, tparams, 0);
 }
 
 static int socfpgaimage_vrec_header_v1(struct image_tool_params *params,
-				       struct image_type_params *tparams)
+				       struct imgtool_funcs *tparams)
 {
 	return sfp_vrec_header(params, tparams, 1);
 }

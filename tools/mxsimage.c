@@ -2245,7 +2245,7 @@ static void mxsimage_print_header(const void *hdr, struct image_tool_params *par
 }
 
 static int sb_build_image(struct sb_image_ctx *ictx,
-			  struct image_type_params *tparams)
+			  struct imgtool_funcs *tparams)
 {
 	struct sb_boot_image_header *sb_header = &ictx->payload;
 	struct sb_section_ctx *sctx;
@@ -2315,7 +2315,7 @@ static int sb_build_image(struct sb_image_ctx *ictx,
 }
 
 static int mxsimage_generate(struct image_tool_params *params,
-	struct image_type_params *tparams)
+			     struct imgtool_funcs *tparams)
 {
 	int ret;
 	struct sb_image_ctx ctx;
