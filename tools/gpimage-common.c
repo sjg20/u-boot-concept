@@ -72,7 +72,7 @@ void gph_set_header(struct gp_header *gph, uint32_t size, uint32_t load_addr,
 		to_be32(&gph->size, &gph->load_addr);
 }
 
-int gpimage_check_params(struct image_tool_params *params)
+int gpimage_check_params(struct imgtool *params)
 {
 	return	(params->dflag && (params->fflag || params->lflag)) ||
 		(params->fflag && (params->dflag || params->lflag)) ||

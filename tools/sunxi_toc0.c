@@ -667,7 +667,7 @@ err:
 	return ret;
 }
 
-static int toc0_check_params(struct image_tool_params *params)
+static int toc0_check_params(struct imgtool *params)
 {
 	if (!params->dflag)
 		return -EINVAL;
@@ -717,7 +717,7 @@ static int toc0_check_params(struct image_tool_params *params)
 }
 
 static int toc0_verify_header(unsigned char *buf, int image_size,
-			      struct image_tool_params *params)
+			      struct imgtool *params)
 {
 	int ret = EXIT_FAILURE;
 	RSA *root_key = NULL;
@@ -757,7 +757,7 @@ static const char *toc0_item_name(uint32_t name)
 	return "(unknown)";
 }
 
-static void toc0_print_header(const void *buf, struct image_tool_params *params)
+static void toc0_print_header(const void *buf, struct imgtool *params)
 {
 	const struct toc0_main_info *main_info = buf;
 	const struct toc0_item_info *item_info = (void *)(main_info + 1);
@@ -802,7 +802,7 @@ static void toc0_print_header(const void *buf, struct image_tool_params *params)
 }
 
 static void toc0_set_header(void *buf, struct stat *sbuf, int ifd,
-			    struct image_tool_params *params)
+			    struct imgtool *params)
 {
 	uint32_t key_item_len = 0;
 	uint8_t *key_item = NULL;
@@ -888,7 +888,7 @@ static int toc0_check_image_type(uint8_t type)
 	return type == IH_TYPE_SUNXI_TOC0 ? 0 : 1;
 }
 
-static int toc0_vrec_header(struct image_tool_params *params,
+static int toc0_vrec_header(struct imgtool *params,
 			    struct imgtool_funcs *tparams)
 {
 	tparams->hdr = calloc(tparams->header_size, 1);

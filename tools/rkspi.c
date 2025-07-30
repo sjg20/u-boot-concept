@@ -17,7 +17,7 @@ enum {
 };
 
 static void rkspi_set_header(void *buf, struct stat *sbuf, int ifd,
-			     struct image_tool_params *params)
+			     struct imgtool *params)
 {
 	int sector;
 	unsigned int size;
@@ -57,7 +57,7 @@ static int rkspi_check_image_type(uint8_t type)
  * The SPI payload needs to make space for odd half-sector layout used in flash
  * (i.e. only the first 2K of each 4K sector is used).
  */
-static int rkspi_vrec_header(struct image_tool_params *params,
+static int rkspi_vrec_header(struct imgtool *params,
 			     struct imgtool_funcs *tparams)
 {
 	rkcommon_vrec_header(params, tparams);

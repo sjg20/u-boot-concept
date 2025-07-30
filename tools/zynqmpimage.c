@@ -117,7 +117,7 @@ void zynqmpimage_default_header(struct zynqmp_header *ptr)
 
 /* mkimage glue functions */
 static int zynqmpimage_verify_header(unsigned char *ptr, int image_size,
-		struct image_tool_params *params)
+				     struct imgtool *params)
 {
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 
@@ -263,7 +263,7 @@ static void print_partition(const void *ptr, const struct partition_header *ph)
 	printf("    Checksum   : 0x%08x\n", le32_to_cpu(ph->checksum));
 }
 
-void zynqmpimage_print_header(const void *ptr, struct image_tool_params *params)
+void zynqmpimage_print_header(const void *ptr, struct imgtool *params)
 {
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 	struct partition_header *ph;
@@ -311,7 +311,7 @@ void zynqmpimage_print_header(const void *ptr, struct image_tool_params *params)
 	free(dynamic_header);
 }
 
-static int zynqmpimage_check_params(struct image_tool_params *params)
+static int zynqmpimage_check_params(struct imgtool *params)
 {
 	if (!params)
 		return 0;
@@ -439,7 +439,7 @@ static void zynqmpimage_parse_initparams(struct zynqmp_header *zynqhdr,
 }
 
 static void zynqmpimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-		struct image_tool_params *params)
+				   struct imgtool *params)
 {
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 	zynqmpimage_default_header(zynqhdr);
@@ -483,7 +483,7 @@ static int zynqmpimage_partition_extract(struct zynqmp_header *zynqhdr,
  * returns:
  *     zero in case of success or a negative value if fail.
  */
-static int zynqmpimage_extract_contents(void *ptr, struct image_tool_params *params)
+static int zynqmpimage_extract_contents(void *ptr, struct imgtool *params)
 {
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 	struct partition_header *ph;
@@ -498,7 +498,7 @@ static int zynqmpimage_extract_contents(void *ptr, struct image_tool_params *par
 	return -1;
 }
 
-static int zynqmpimage_vrec_header(struct image_tool_params *params,
+static int zynqmpimage_vrec_header(struct imgtool *params,
 				   struct imgtool_funcs *tparams)
 {
 	struct stat path_stat;

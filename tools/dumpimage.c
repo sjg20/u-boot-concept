@@ -12,7 +12,7 @@
 static void usage(void);
 
 /* parameters initialized by core will be used by the image type code */
-static struct image_tool_params params;
+static struct imgtool params;
 
 /*
  * dumpimage_extract_subimage -

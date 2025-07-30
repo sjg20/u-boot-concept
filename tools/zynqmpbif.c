@@ -84,7 +84,7 @@ static uint32_t zynqmp_csum(void *start, void *end)
 	return ~checksum;
 }
 
-static int zynqmpbif_check_params(struct image_tool_params *params)
+static int zynqmpbif_check_params(struct imgtool *params)
 {
 	if (!params)
 		return 0;
@@ -825,7 +825,7 @@ static char *skip_whitespace(char *str)
 	return str;
 }
 
-int zynqmpbif_copy_image(int outfd, struct image_tool_params *mparams)
+int zynqmpbif_copy_image(int outfd, struct imgtool *mparams)
 {
 	char *bif, *bifp, *bifpn;
 	char *line;
@@ -995,7 +995,7 @@ err:
 
 /* Needs to be stubbed out so we can print after creation */
 static void zynqmpbif_set_header(void *ptr, struct stat *sbuf, int ifd,
-				 struct image_tool_params *params)
+				 struct imgtool *params)
 {
 }
 

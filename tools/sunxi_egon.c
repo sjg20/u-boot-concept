@@ -15,7 +15,7 @@
 #define PAD_SIZE			8192
 #define PAD_SIZE_MIN			512
 
-static int egon_get_arch(struct image_tool_params *params)
+static int egon_get_arch(struct imgtool *params)
 {
 	if (params->Aflag)
 		return params->arch;
@@ -24,7 +24,7 @@ static int egon_get_arch(struct image_tool_params *params)
 	return IH_ARCH_ARM;
 }
 
-static int egon_check_params(struct image_tool_params *params)
+static int egon_check_params(struct imgtool *params)
 {
 	/*
 	 * Check whether the architecture is supported.
@@ -42,7 +42,7 @@ static int egon_check_params(struct image_tool_params *params)
 }
 
 static int egon_verify_header(unsigned char *ptr, int image_size,
-			      struct image_tool_params *params)
+			      struct imgtool *params)
 {
 	const struct boot_file_head *header = (void *)ptr;
 	uint32_t length;
@@ -82,7 +82,7 @@ static int egon_verify_header(unsigned char *ptr, int image_size,
 	return EXIT_SUCCESS;
 }
 
-static void egon_print_header(const void *buf, struct image_tool_params *params)
+static void egon_print_header(const void *buf, struct imgtool *params)
 {
 	const struct boot_file_head *header = buf;
 
@@ -104,7 +104,7 @@ static void egon_print_header(const void *buf, struct image_tool_params *params)
 }
 
 static void egon_set_header(void *buf, struct stat *sbuf, int infd,
-			    struct image_tool_params *params)
+			    struct imgtool *params)
 {
 	struct boot_file_head *header = buf;
 	uint32_t *buf32 = buf;
@@ -171,7 +171,7 @@ static int egon_check_image_type(uint8_t type)
 	return type == IH_TYPE_SUNXI_EGON ? 0 : 1;
 }
 
-static int egon_vrec_header(struct image_tool_params *params,
+static int egon_vrec_header(struct imgtool *params,
 			    struct imgtool_funcs *tparams)
 {
 	int pad_size = ALIGN(params->bl_len ?: PAD_SIZE, PAD_SIZE_MIN);

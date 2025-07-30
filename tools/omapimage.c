@@ -37,7 +37,7 @@ static int omapimage_check_image_types(uint8_t type)
 }
 
 static int omapimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				   struct imgtool *params)
 {
 	struct ch_toc *toc = (struct ch_toc *)ptr;
 	struct gp_header *gph = (struct gp_header *)(ptr+OMAP_CH_HDR_SIZE);
@@ -85,7 +85,7 @@ static void omapimage_print_section(struct ch_settings *chs)
 		chs->flags);
 }
 
-static void omapimage_print_header(const void *ptr, struct image_tool_params *params)
+static void omapimage_print_header(const void *ptr, struct imgtool *params)
 {
 	const struct ch_toc *toc = (struct ch_toc *)ptr;
 	const struct gp_header *gph =
@@ -124,7 +124,7 @@ static int toc_offset(void *hdr, void *member)
 }
 
 static void omapimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				 struct imgtool *params)
 {
 	struct ch_toc *toc = (struct ch_toc *)ptr;
 	struct ch_settings *chs = (struct ch_settings *)

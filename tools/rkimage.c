@@ -13,7 +13,7 @@
 static uint32_t header;
 
 static void rkimage_set_header(void *buf, struct stat *sbuf, int ifd,
-			       struct image_tool_params *params)
+			       struct imgtool *params)
 {
 	memcpy(buf, rkcommon_get_spl_hdr(params), RK_SPL_HDR_SIZE);
 

@@ -19,7 +19,7 @@
 #endif
 
 /* parameters initialized by core will be used by the image type code */
-static struct image_tool_params params = {
+static struct imgtool params = {
 	.os = IH_OS_LINUX,
 	.arch = IH_ARCH_PPC,
 	.type = IH_TYPE_KERNEL,

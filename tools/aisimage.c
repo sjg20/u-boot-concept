@@ -113,7 +113,7 @@ static int get_ais_table_id(uint32_t *ptr)
 	return -1;
 }
 
-static void aisimage_print_header(const void *hdr, struct image_tool_params *params)
+static void aisimage_print_header(const void *hdr, struct imgtool *params)
 {
 	struct ais_header *ais_hdr = (struct ais_header *)hdr;
 	uint32_t *ptr;
@@ -174,7 +174,7 @@ static uint32_t *ais_insert_cmd_header(uint32_t cmd, uint32_t nargs,
 
 }
 
-static uint32_t *ais_alloc_buffer(struct image_tool_params *params)
+static uint32_t *ais_alloc_buffer(struct imgtool *params)
 {
 	int dfd;
 	struct stat sbuf;
@@ -215,8 +215,7 @@ static uint32_t *ais_alloc_buffer(struct image_tool_params *params)
 	return ptr;
 }
 
-static uint32_t *ais_copy_image(struct image_tool_params *params,
-	uint32_t *aisptr)
+static uint32_t *ais_copy_image(struct imgtool *params, uint32_t *aisptr)
 
 {
 	int dfd;
@@ -251,8 +250,8 @@ static uint32_t *ais_copy_image(struct image_tool_params *params,
 
 }
 
-static int aisimage_generate(struct image_tool_params *params,
-	struct imgtool_funcs *tparams)
+static int aisimage_generate(struct imgtool *params,
+			     struct imgtool_funcs *tparams)
 {
 	FILE *fd = NULL;
 	char *line = NULL;
@@ -369,7 +368,7 @@ static int aisimage_check_image_types(uint8_t type)
 }
 
 static int aisimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				  struct imgtool *params)
 {
 	struct ais_header *ais_hdr = (struct ais_header *)ptr;
 
@@ -383,11 +382,11 @@ static int aisimage_verify_header(unsigned char *ptr, int image_size,
 }
 
 static void aisimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct imgtool *params)
 {
 }
 
-int aisimage_check_params(struct image_tool_params *params)
+int aisimage_check_params(struct imgtool *params)
 {
 	if (!params)
 		return CFG_INVALID;

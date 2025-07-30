@@ -193,7 +193,7 @@ static int ublimage_check_image_types(uint8_t type)
 }
 
 static int ublimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				  struct imgtool *params)
 {
 	struct ubl_header *ubl_hdr = (struct ubl_header *)ptr;
 
@@ -203,7 +203,7 @@ static int ublimage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void ublimage_print_header(const void *ptr, struct image_tool_params *params)
+static void ublimage_print_header(const void *ptr, struct imgtool *params)
 {
 	struct ubl_header *ubl_hdr = (struct ubl_header *) ptr;
 
@@ -211,7 +211,7 @@ static void ublimage_print_header(const void *ptr, struct image_tool_params *par
 }
 
 static void ublimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct imgtool *params)
 {
 	struct ubl_header *ublhdr = (struct ubl_header *)ptr;
 
@@ -219,7 +219,7 @@ static void ublimage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	parse_cfg_file(ublhdr, params->imagename);
 }
 
-int ublimage_check_params(struct image_tool_params *params)
+int ublimage_check_params(struct imgtool *params)
 {
 	if (!params)
 		return CFG_INVALID;

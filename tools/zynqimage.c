@@ -139,7 +139,7 @@ static void zynqimage_default_header(struct zynq_header *ptr)
 
 /* mkimage glue functions */
 static int zynqimage_verify_header(unsigned char *ptr, int image_size,
-		struct image_tool_params *params)
+				   struct imgtool *params)
 {
 	struct zynq_header *zynqhdr = (struct zynq_header *)ptr;
 
@@ -163,7 +163,7 @@ static int zynqimage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void zynqimage_print_header(const void *ptr, struct image_tool_params *params)
+static void zynqimage_print_header(const void *ptr, struct imgtool *params)
 {
 	struct zynq_header *zynqhdr = (struct zynq_header *)ptr;
 	int i;
@@ -198,7 +198,7 @@ static void zynqimage_print_header(const void *ptr, struct image_tool_params *pa
 	}
 }
 
-static int zynqimage_check_params(struct image_tool_params *params)
+static int zynqimage_check_params(struct imgtool *params)
 {
 	if (!params)
 		return 0;
@@ -266,7 +266,7 @@ static void zynqimage_parse_initparams(struct zynq_header *zynqhdr,
 }
 
 static void zynqimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-		struct image_tool_params *params)
+				 struct imgtool *params)
 {
 	struct zynq_header *zynqhdr = (struct zynq_header *)ptr;
 	zynqimage_default_header(zynqhdr);

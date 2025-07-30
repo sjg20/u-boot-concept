@@ -78,7 +78,7 @@ static int stm32image_check_image_types(uint8_t type)
 }
 
 static int stm32image_verify_header(unsigned char *ptr, int image_size,
-				    struct image_tool_params *params)
+				    struct imgtool *params)
 {
 	struct stm32_header *stm32hdr = (struct stm32_header *)ptr;
 	int i;
@@ -99,7 +99,7 @@ static int stm32image_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void stm32image_print_header(const void *ptr, struct image_tool_params *params)
+static void stm32image_print_header(const void *ptr, struct imgtool *params)
 {
 	struct stm32_header *stm32hdr = (struct stm32_header *)ptr;
 
@@ -121,7 +121,7 @@ static void stm32image_print_header(const void *ptr, struct image_tool_params *p
 }
 
 static void stm32image_set_header(void *ptr, struct stat *sbuf, int ifd,
-				  struct image_tool_params *params)
+				  struct imgtool *params)
 {
 	struct stm32_header *stm32hdr = (struct stm32_header *)ptr;
 

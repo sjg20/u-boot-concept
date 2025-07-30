@@ -80,7 +80,7 @@ static int lpc32xximage_check_image_types(uint8_t type)
 }
 
 static int lpc32xximage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				      struct imgtool *params)
 {
 	struct nand_page_0_boot_header *hdr =
 		(struct nand_page_0_boot_header *)ptr;
@@ -125,7 +125,7 @@ static void print_hdr_byte(struct nand_page_0_boot_header *hdr, int ofs)
 	printf("header[%d] = %02x\n", ofs, hdr->data[ofs]);
 }
 
-static void lpc32xximage_print_header(const void *ptr, struct image_tool_params *params)
+static void lpc32xximage_print_header(const void *ptr, struct imgtool *params)
 {
 	struct nand_page_0_boot_header *hdr =
 		(struct nand_page_0_boot_header *)ptr;
@@ -137,7 +137,7 @@ static void lpc32xximage_print_header(const void *ptr, struct image_tool_params 
 }
 
 static void lpc32xximage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				    struct imgtool *params)
 {
 	struct nand_page_0_boot_header *hdr =
 		(struct nand_page_0_boot_header *)ptr;

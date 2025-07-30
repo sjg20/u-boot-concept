@@ -131,7 +131,7 @@ static uint16_t sfp_hdr_checksum(uint8_t *buf, unsigned char ver)
 
 static void sfp_build_header(uint8_t *buf, uint8_t ver, uint8_t flags,
 			     uint32_t length_bytes,
-			     struct image_tool_params *params)
+			     struct imgtool *params)
 {
 	uint32_t entry_offset = params->eflag ? params->ep : ENTRY_POINT_OFFSET;
 	struct socfpga_header_v0 header_v0 = {
@@ -212,7 +212,7 @@ static int sfp_verify_header(const uint8_t *buf, uint8_t *ver)
 /* Sign the buffer and return the signed buffer size */
 static int sfp_sign_buffer(uint8_t *buf, uint8_t ver, uint8_t flags,
 			   int len, int pad_64k,
-			   struct image_tool_params *params)
+			   struct imgtool *params)
 {
 	uint32_t calc_crc;
 	uint32_t crc_off;
@@ -275,7 +275,7 @@ static int sfp_verify_buffer(const uint8_t *buf)
 
 /* mkimage glue functions */
 static int socfpgaimage_verify_header(unsigned char *ptr, int image_size,
-				      struct image_tool_params *params)
+				      struct imgtool *params)
 {
 	if (image_size < 0x80)
 		return -1;
@@ -313,7 +313,7 @@ static void socfpgaimage_print_header_v1(struct socfpga_header_v1 *header)
 	       le16_to_cpu(header->checksum));
 }
 
-static void socfpgaimage_print_header(const void *ptr, struct image_tool_params *params)
+static void socfpgaimage_print_header(const void *ptr, struct imgtool *params)
 {
 	const void *header = ptr + HEADER_OFFSET;
 	struct socfpga_header_v0 *header_v0;
@@ -330,7 +330,7 @@ static void socfpgaimage_print_header(const void *ptr, struct image_tool_params 
 	}
 }
 
-static int socfpgaimage_check_params_v0(struct image_tool_params *params)
+static int socfpgaimage_check_params_v0(struct imgtool *params)
 {
 	/* Not sure if we should be accepting fflags */
 	return	(params->dflag && (params->fflag || params->lflag)) ||
@@ -338,7 +338,7 @@ static int socfpgaimage_check_params_v0(struct image_tool_params *params)
 		(params->lflag && (params->dflag || params->fflag));
 }
 
-static int socfpgaimage_check_params_v1(struct image_tool_params *params)
+static int socfpgaimage_check_params_v1(struct imgtool *params)
 {
 	/*
 	 * If the entry point is specified, ensure it is >= ENTRY_POINT_OFFSET
@@ -397,7 +397,7 @@ static int sfp_fake_header_size(unsigned int size, uint8_t ver)
 	return align_size - size;
 }
 
-static int sfp_vrec_header(struct image_tool_params *params,
+static int sfp_vrec_header(struct imgtool *params,
 			   struct imgtool_funcs *tparams, uint8_t ver)
 {
 	struct stat sbuf;
@@ -412,20 +412,20 @@ static int sfp_vrec_header(struct image_tool_params *params,
 
 }
 
-static int socfpgaimage_vrec_header_v0(struct image_tool_params *params,
+static int socfpgaimage_vrec_header_v0(struct imgtool *params,
 				       struct imgtool_funcs *tparams)
 {
 	return sfp_vrec_header(params, tparams, 0);
 }
 
-static int socfpgaimage_vrec_header_v1(struct image_tool_params *params,
+static int socfpgaimage_vrec_header_v1(struct imgtool *params,
 				       struct imgtool_funcs *tparams)
 {
 	return sfp_vrec_header(params, tparams, 1);
 }
 
 static void sfp_set_header(void *ptr, unsigned char ver,
-			   struct image_tool_params *params)
+			   struct imgtool *params)
 {
 	uint8_t *buf = (uint8_t *)ptr;
 
@@ -443,13 +443,13 @@ static void sfp_set_header(void *ptr, unsigned char ver,
 }
 
 static void socfpgaimage_set_header_v0(void *ptr, struct stat *sbuf, int ifd,
-				       struct image_tool_params *params)
+				       struct imgtool *params)
 {
 	sfp_set_header(ptr, 0, params);
 }
 
 static void socfpgaimage_set_header_v1(void *ptr, struct stat *sbuf, int ifd,
-				       struct image_tool_params *params)
+				       struct imgtool *params)
 {
 	sfp_set_header(ptr, 1, params);
 }

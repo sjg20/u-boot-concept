@@ -803,7 +803,7 @@ static int imximage_check_image_types(uint8_t type)
 }
 
 static int imximage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				  struct imgtool *params)
 {
 	struct imx_header *imx_hdr = (struct imx_header *) ptr;
 
@@ -813,7 +813,7 @@ static int imximage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void imximage_print_header(const void *ptr, struct image_tool_params *params)
+static void imximage_print_header(const void *ptr, struct imgtool *params)
 {
 	struct imx_header *imx_hdr = (struct imx_header *) ptr;
 	uint32_t version = detect_imximage_version(imx_hdr);
@@ -832,7 +832,7 @@ static void imximage_print_header(const void *ptr, struct image_tool_params *par
 }
 
 static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct imgtool *params)
 {
 	struct imx_header *imxhdr = (struct imx_header *)ptr;
 	uint32_t dcd_len;
@@ -886,7 +886,7 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	}
 }
 
-int imximage_check_params(struct image_tool_params *params)
+int imximage_check_params(struct imgtool *params)
 {
 	if (!params)
 		return CFG_INVALID;
@@ -966,7 +966,7 @@ static void generate_fspi_header(int ifd)
 }
 #endif
 
-static int imximage_generate(struct image_tool_params *params,
+static int imximage_generate(struct imgtool *params,
 			     struct imgtool_funcs *tparams)
 {
 	struct imx_header *imxhdr;

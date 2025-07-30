@@ -486,7 +486,7 @@ static int kwb_load_rsa_key(const char *keydir, const char *name, RSA **p_rsa)
 	return 0;
 }
 
-static int kwb_load_cfg_key(struct image_tool_params *params,
+static int kwb_load_cfg_key(struct imgtool *params,
 			    unsigned int cfg_option, const char *key_name,
 			    RSA **p_key)
 {
@@ -513,12 +513,12 @@ static int kwb_load_cfg_key(struct image_tool_params *params,
 	return 0;
 }
 
-static int kwb_load_kak(struct image_tool_params *params, RSA **p_kak)
+static int kwb_load_kak(struct imgtool *params, RSA **p_kak)
 {
 	return kwb_load_cfg_key(params, IMAGE_CFG_KAK, "KAK", p_kak);
 }
 
-static int kwb_load_csk(struct image_tool_params *params, RSA **p_csk)
+static int kwb_load_csk(struct imgtool *params, RSA **p_csk)
 {
 	return kwb_load_cfg_key(params, IMAGE_CFG_CSK, "CSK", p_csk);
 }
@@ -929,7 +929,7 @@ done:
 	return ret;
 }
 
-static int image_fill_xip_header(void *image, struct image_tool_params *params)
+static int image_fill_xip_header(void *image, struct imgtool *params)
 {
 	struct main_hdr_v1 *main_hdr = image; /* kwbimage v0 and v1 have same XIP members */
 	int version = kwbimage_version(image);
@@ -1039,7 +1039,7 @@ static size_t image_headersz_v0(int *hasext)
 	return headersz;
 }
 
-static void *image_create_v0(size_t *dataoff, struct image_tool_params *params,
+static void *image_create_v0(size_t *dataoff, struct imgtool *params,
 			     int payloadsz)
 {
 	struct image_cfg_element *e;
@@ -1369,7 +1369,7 @@ static int export_pub_kak_hash(RSA *kak, struct secure_hdr_v1 *secure_hdr)
 	return res < 0 ? 1 : 0;
 }
 
-static int kwb_sign_csk_with_kak(struct image_tool_params *params,
+static int kwb_sign_csk_with_kak(struct imgtool *params,
 				 struct secure_hdr_v1 *secure_hdr, RSA *csk)
 {
 	RSA *kak = NULL;
@@ -1411,7 +1411,7 @@ static int kwb_sign_csk_with_kak(struct image_tool_params *params,
 	return 0;
 }
 
-static int add_secure_header_v1(struct image_tool_params *params, uint8_t *image_ptr,
+static int add_secure_header_v1(struct imgtool *params, uint8_t *image_ptr,
 				size_t image_size, uint8_t *header_ptr, size_t headersz,
 				struct secure_hdr_v1 *secure_hdr)
 {
@@ -1474,7 +1474,7 @@ static void finish_register_set_header_v1(uint8_t **cur, uint8_t **next_ext,
 	*datai = 0;
 }
 
-static void *image_create_v1(size_t *dataoff, struct image_tool_params *params,
+static void *image_create_v1(size_t *dataoff, struct imgtool *params,
 			     uint8_t *ptr, int payloadsz)
 {
 	struct image_cfg_element *e;
@@ -1905,7 +1905,7 @@ static int image_get_version(void)
 }
 
 static void kwbimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct imgtool *params)
 {
 	FILE *fcfg;
 	void *image = NULL;
@@ -1997,7 +1997,7 @@ static void kwbimage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	free(image);
 }
 
-static void kwbimage_print_header(const void *ptr, struct image_tool_params *params)
+static void kwbimage_print_header(const void *ptr, struct imgtool *params)
 {
 	struct main_hdr_v0 *mhdr = (struct main_hdr_v0 *)ptr;
 	struct bin_hdr_v0 *bhdr;
@@ -2052,7 +2052,7 @@ static int kwbimage_check_image_types(uint8_t type)
 }
 
 static int kwbimage_verify_header(unsigned char *ptr, int image_size,
-				  struct image_tool_params *params)
+				  struct imgtool *params)
 {
 	size_t header_size = kwbheader_size(ptr);
 	uint8_t blockid;
@@ -2159,7 +2159,7 @@ static int kwbimage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static int kwbimage_generate(struct image_tool_params *params,
+static int kwbimage_generate(struct imgtool *params,
 			     struct imgtool_funcs *tparams)
 {
 	FILE *fcfg;
@@ -2291,7 +2291,7 @@ static int kwbimage_generate(struct image_tool_params *params,
 	}
 }
 
-static int kwbimage_generate_config(void *ptr, struct image_tool_params *params)
+static int kwbimage_generate_config(void *ptr, struct imgtool *params)
 {
 	struct main_hdr_v0 *mhdr0 = (struct main_hdr_v0 *)ptr;
 	struct main_hdr_v1 *mhdr = (struct main_hdr_v1 *)ptr;
@@ -2511,7 +2511,7 @@ static int kwbimage_generate_config(void *ptr, struct image_tool_params *params)
 	return 0;
 }
 
-static int kwbimage_extract_subimage(void *ptr, struct image_tool_params *params)
+static int kwbimage_extract_subimage(void *ptr, struct imgtool *params)
 {
 	struct main_hdr_v1 *mhdr = (struct main_hdr_v1 *)ptr;
 	size_t header_size = kwbheader_size(ptr);
@@ -2581,7 +2581,7 @@ static int kwbimage_extract_subimage(void *ptr, struct image_tool_params *params
 	return imagetool_save_subimage(params->outfile, image, size);
 }
 
-static int kwbimage_check_params(struct image_tool_params *params)
+static int kwbimage_check_params(struct imgtool *params)
 {
 	if (!params->lflag && !params->iflag && !params->pflag &&
 	    (!params->imagename || !strlen(params->imagename))) {

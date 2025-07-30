@@ -24,7 +24,7 @@
 
 static struct legacy_img_hdr header;
 
-static int fit_add_file_data(struct image_tool_params *params, size_t size_inc,
+static int fit_add_file_data(struct imgtool *params, size_t size_inc,
 			     const char *tmpfile)
 {
 	int tfd, destfd = 0;
@@ -97,7 +97,7 @@ err_keydest:
 /**
  * fit_calc_size() - Calculate the approximate size of the FIT we will generate
  */
-static int fit_calc_size(struct image_tool_params *params)
+static int fit_calc_size(struct imgtool *params)
 {
 	struct content_info *cont;
 	int size, total_size;
@@ -129,7 +129,7 @@ static int fit_calc_size(struct image_tool_params *params)
 	return total_size;
 }
 
-static int fdt_property_file(struct image_tool_params *params,
+static int fdt_property_file(struct imgtool *params,
 			     void *fdt, const char *name, const char *fname)
 {
 	struct stat sbuf;
@@ -211,7 +211,7 @@ static void get_basename(char *str, int size, const char *fname)
  * a sign node to parent. Otherwise, just add a CRC. Rationale: if conf have
  * to be signed, image/dt have to be hashed even if there is a key name hint.
  */
-static void fit_add_hash_or_sign(struct image_tool_params *params, void *fdt,
+static void fit_add_hash_or_sign(struct imgtool *params, void *fdt,
 				 bool is_images_subnode)
 {
 	const char *hash_algo = "crc32";
@@ -262,7 +262,7 @@ static void fit_add_hash_or_sign(struct image_tool_params *params, void *fdt,
  * We always include the main image (params->datafile). If there are device
  * tree files, we include an fdt- node for each of those too.
  */
-static int fit_write_images(struct image_tool_params *params, char *fdt)
+static int fit_write_images(struct imgtool *params, char *fdt)
 {
 	struct content_info *cont;
 	const char *typename;
@@ -357,7 +357,7 @@ static int fit_write_images(struct image_tool_params *params, char *fdt)
  *
  * Otherwise we just create a configuration with the main image in it.
  */
-static void fit_write_configs(struct image_tool_params *params, char *fdt)
+static void fit_write_configs(struct imgtool *params, char *fdt)
 {
 	struct content_info *cont;
 	const char *typename;
@@ -410,7 +410,7 @@ static void fit_write_configs(struct image_tool_params *params, char *fdt)
 	fdt_end_node(fdt);
 }
 
-static int fit_build_fdt(struct image_tool_params *params, char *fdt, int size)
+static int fit_build_fdt(struct imgtool *params, char *fdt, int size)
 {
 	int ret;
 
@@ -436,7 +436,7 @@ static int fit_build_fdt(struct image_tool_params *params, char *fdt, int size)
 	return fdt_totalsize(fdt);
 }
 
-static int fit_build(struct image_tool_params *params, const char *fname)
+static int fit_build(struct imgtool *params, const char *fname)
 {
 	char *buf;
 	int size;
@@ -493,7 +493,7 @@ err_buf:
  * This function cannot cope with FITs with 'data-offset' properties. All
  * data must be in 'data' properties on entry.
  */
-static int fit_extract_data(struct image_tool_params *params, const char *fname)
+static int fit_extract_data(struct imgtool *params, const char *fname)
 {
 	void *buf = NULL;
 	int buf_ptr;
@@ -617,7 +617,7 @@ err:
 	return ret;
 }
 
-static int fit_import_data(struct image_tool_params *params, const char *fname)
+static int fit_import_data(struct imgtool *params, const char *fname)
 {
 	void *fdt, *old_fdt;
 	void *data = NULL;
@@ -744,7 +744,7 @@ err:
  * returns:
  *     only on success, otherwise calls exit (EXIT_FAILURE);
  */
-static int fit_handle_file(struct image_tool_params *params)
+static int fit_handle_file(struct imgtool *params)
 {
 	char tmpfile[MKIMAGE_MAX_TMPFILE_LEN];
 	char bakfile[MKIMAGE_MAX_TMPFILE_LEN + 4] = {0};
@@ -894,7 +894,7 @@ static int fit_image_extract(
  * returns:
  *     zero in case of success or a negative value if fail.
  */
-static int fit_extract_contents(void *ptr, struct image_tool_params *params)
+static int fit_extract_contents(void *ptr, struct imgtool *params)
 {
 	int images_noffset;
 	int noffset;
@@ -948,7 +948,7 @@ static int fit_extract_contents(void *ptr, struct image_tool_params *params)
 	return 0;
 }
 
-static int fit_check_params(struct image_tool_params *params)
+static int fit_check_params(struct imgtool *params)
 {
 	if (params->auto_fit)
 		return 0;

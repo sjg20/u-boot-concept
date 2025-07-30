@@ -115,7 +115,7 @@ static int spkgimage_parse_config_file(char *filename)
 	return 0;
 }
 
-static int spkgimage_check_params(struct image_tool_params *params)
+static int spkgimage_check_params(struct imgtool *params)
 {
 	if (!params->addr) {
 		fprintf(stderr, "Error: Load Address must be set.\n");
@@ -136,7 +136,7 @@ static int spkgimage_check_params(struct image_tool_params *params)
 }
 
 static int spkgimage_verify_header(unsigned char *ptr, int size,
-				   struct image_tool_params *param)
+				   struct imgtool *param)
 {
 	struct spkg_file *file = (struct spkg_file *)ptr;
 	struct spkg_hdr *header = (struct spkg_hdr *)ptr;
@@ -182,8 +182,7 @@ static int spkgimage_verify_header(unsigned char *ptr, int size,
 	return 0;
 }
 
-static void spkgimage_print_header(const void *ptr,
-				   struct image_tool_params *image)
+static void spkgimage_print_header(const void *ptr, struct imgtool *image)
 {
 	const struct spkg_hdr *h = ptr;
 	uint32_t offset = le32_to_cpu(h->execution_offset);
@@ -216,7 +215,7 @@ static inline uint32_t roundup(uint32_t x, uint32_t y)
 	return ((x + y - 1) / y) * y;
 }
 
-static int spkgimage_vrec_header(struct image_tool_params *params,
+static int spkgimage_vrec_header(struct imgtool *params,
 				 struct imgtool_funcs *tparams)
 {
 	struct stat s;
@@ -282,7 +281,7 @@ static int spkgimage_vrec_header(struct image_tool_params *params,
 }
 
 static void spkgimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				 struct image_tool_params *params)
+				 struct imgtool *params)
 {
 	uint8_t *payload = ptr + SPKG_HEADER_SIZE * SPKG_HEADER_COUNT;
 	uint8_t *file_end = payload + conf.blp_len + params->orig_file_size;

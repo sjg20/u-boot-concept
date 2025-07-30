@@ -228,7 +228,7 @@ static int mtk_brom_parse_imagename(const char *imagename)
 	return 0;
 }
 
-static int mtk_image_check_params(struct image_tool_params *params)
+static int mtk_image_check_params(struct imgtool *params)
 {
 	if (!params->addr) {
 		fprintf(stderr, "Error: Load Address must be set.\n");
@@ -243,7 +243,7 @@ static int mtk_image_check_params(struct image_tool_params *params)
 	return mtk_brom_parse_imagename(params->imagename);
 }
 
-static int mtk_image_vrec_header(struct image_tool_params *params,
+static int mtk_image_vrec_header(struct imgtool *params,
 				 struct imgtool_funcs *tparams)
 {
 	if (use_lk_hdr) {
@@ -488,7 +488,7 @@ static int mtk_image_verify_mt7621_header(const uint8_t *ptr, int print)
 }
 
 static int mtk_image_verify_header(unsigned char *ptr, int image_size,
-				   struct image_tool_params *params)
+				   struct imgtool *params)
 {
 	struct legacy_img_hdr *hdr = (struct legacy_img_hdr *)ptr;
 	union lk_hdr *lk = (union lk_hdr *)ptr;
@@ -510,7 +510,7 @@ static int mtk_image_verify_header(unsigned char *ptr, int image_size,
 	return -1;
 }
 
-static void mtk_image_print_header(const void *ptr, struct image_tool_params *params)
+static void mtk_image_print_header(const void *ptr, struct imgtool *params)
 {
 	struct legacy_img_hdr *hdr = (struct legacy_img_hdr *)ptr;
 	union lk_hdr *lk = (union lk_hdr *)ptr;
@@ -730,7 +730,7 @@ static void mtk_image_set_mt7621_header(void *ptr, off_t filesize,
 }
 
 static void mtk_image_set_header(void *ptr, struct stat *sbuf, int ifd,
-				 struct image_tool_params *params)
+				 struct imgtool *params)
 {
 	union lk_hdr *lk = (union lk_hdr *)ptr;
 

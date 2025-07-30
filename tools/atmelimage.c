@@ -112,7 +112,7 @@ static int atmel_parse_pmecc_params(char *txt)
 }
 
 static int atmel_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+			       struct imgtool *params)
 {
 	uint32_t *ints = (uint32_t *)ptr;
 	size_t pos;
@@ -182,7 +182,7 @@ static void atmel_print_pmecc_header(const uint32_t word)
 	printf("\t\t====================\n");
 }
 
-static void atmel_print_header(const void *ptr, struct image_tool_params *params)
+static void atmel_print_header(const void *ptr, struct imgtool *params)
 {
 	uint32_t *ints = (uint32_t *)ptr;
 	size_t pos;
@@ -204,7 +204,7 @@ static void atmel_print_header(const void *ptr, struct image_tool_params *params
 }
 
 static void atmel_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+			     struct imgtool *params)
 {
 	/* just save the image size into 6'th interrupt vector */
 	uint32_t *ints = (uint32_t *)ptr;
@@ -224,7 +224,7 @@ static void atmel_set_header(void *ptr, struct stat *sbuf, int ifd,
 	ints[pos] = cpu_to_le32(size);
 }
 
-static int atmel_check_params(struct image_tool_params *params)
+static int atmel_check_params(struct imgtool *params)
 {
 	if (strlen(params->imagename) > 0)
 		if (atmel_parse_pmecc_params(params->imagename))
@@ -237,7 +237,7 @@ static int atmel_check_params(struct image_tool_params *params)
 		 (params->lflag && !params->dflag)));
 }
 
-static int atmel_vrec_header(struct image_tool_params *params,
+static int atmel_vrec_header(struct imgtool *params,
 			     struct imgtool_funcs *tparams)
 {
 	uint32_t tmp;

@@ -177,7 +177,7 @@ static struct spl_info *rkcommon_get_spl_info(char *imagename)
 	return NULL;
 }
 
-static int rkcommon_get_aligned_size(struct image_tool_params *params,
+static int rkcommon_get_aligned_size(struct imgtool *params,
 				     const char *fname)
 {
 	int size;
@@ -193,7 +193,7 @@ static int rkcommon_get_aligned_size(struct image_tool_params *params,
 	return ROUND(size, RK_SIZE_ALIGN);
 }
 
-int rkcommon_check_params(struct image_tool_params *params)
+int rkcommon_check_params(struct imgtool *params)
 {
 	int i, size;
 
@@ -249,7 +249,7 @@ err_spl_info:
 	return EXIT_FAILURE;
 }
 
-const char *rkcommon_get_spl_hdr(struct image_tool_params *params)
+const char *rkcommon_get_spl_hdr(struct imgtool *params)
 {
 	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
 
@@ -259,7 +259,7 @@ const char *rkcommon_get_spl_hdr(struct image_tool_params *params)
 	return info->spl_hdr;
 }
 
-int rkcommon_get_spl_size(struct image_tool_params *params)
+int rkcommon_get_spl_size(struct imgtool *params)
 {
 	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
 
@@ -269,7 +269,7 @@ int rkcommon_get_spl_size(struct image_tool_params *params)
 	return info->spl_size;
 }
 
-bool rkcommon_need_rc4_spl(struct image_tool_params *params)
+bool rkcommon_need_rc4_spl(struct imgtool *params)
 {
 	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
 
@@ -279,7 +279,7 @@ bool rkcommon_need_rc4_spl(struct image_tool_params *params)
 	return info->spl_rc4;
 }
 
-bool rkcommon_is_header_v2(struct image_tool_params *params)
+bool rkcommon_is_header_v2(struct imgtool *params)
 {
 	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
 
@@ -295,7 +295,7 @@ static void do_sha256_hash(uint8_t *buf, uint32_t size, uint8_t *out)
 	sha256_finish(&ctx, out);
 }
 
-static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
+static void rkcommon_set_header0(void *buf, struct imgtool *params)
 {
 	struct header0_info *hdr = buf;
 	uint32_t init_boot_size;
@@ -323,7 +323,7 @@ static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
 	rc4_encode(buf, RK_BLK_SIZE, rc4_key);
 }
 
-static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
+static void rkcommon_set_header0_v2(void *buf, struct imgtool *params)
 {
 	struct header0_info_v2 *hdr = buf;
 	uint32_t sector_offset, image_sector_count;
@@ -357,7 +357,7 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
 }
 
 void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
-			 struct image_tool_params *params)
+			 struct imgtool *params)
 {
 	struct header1_info *hdr = buf + RK_SPL_HDR_START;
 
@@ -449,7 +449,7 @@ static int rkcommon_parse_header_v2(const void *buf, struct header0_info_v2 *hea
 }
 
 int rkcommon_verify_header(unsigned char *buf, int size,
-			   struct image_tool_params *params)
+			   struct imgtool *params)
 {
 	struct header0_info header0;
 	struct spl_info *img_spl_info, *spl_info;
@@ -483,7 +483,7 @@ int rkcommon_verify_header(unsigned char *buf, int size,
 	return -ENOENT;
 }
 
-void rkcommon_print_header(const void *buf, struct image_tool_params *params)
+void rkcommon_print_header(const void *buf, struct imgtool *params)
 {
 	struct header0_info header0;
 	struct header0_info_v2 header0_v2;
@@ -543,7 +543,7 @@ void rkcommon_rc4_encode_spl(void *buf, unsigned int offset, unsigned int size)
 	}
 }
 
-int rkcommon_vrec_header(struct image_tool_params *params,
+int rkcommon_vrec_header(struct imgtool *params,
 			 struct imgtool_funcs *tparams)
 {
 	/*
@@ -591,7 +591,7 @@ int rkcommon_vrec_header(struct image_tool_params *params,
 	return 0;
 }
 
-static int pad_file(struct image_tool_params *params, int ifd, int pad)
+static int pad_file(struct imgtool *params, int ifd, int pad)
 {
 	uint8_t zeros[4096];
 
@@ -614,7 +614,7 @@ static int pad_file(struct image_tool_params *params, int ifd, int pad)
 	return 0;
 }
 
-static int copy_file(struct image_tool_params *params, int ifd,
+static int copy_file(struct imgtool *params, int ifd,
 		     const char *file, int padded_size)
 {
 	int dfd;
@@ -667,7 +667,7 @@ err_close:
 	return -1;
 }
 
-int rockchip_copy_image(int ifd, struct image_tool_params *params)
+int rockchip_copy_image(int ifd, struct imgtool *params)
 {
 	int ret;
 

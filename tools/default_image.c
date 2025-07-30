@@ -33,20 +33,20 @@ static int image_check_image_types(uint8_t type)
 		return EXIT_FAILURE;
 }
 
-static int image_check_params(struct image_tool_params *params)
+static int image_check_params(struct imgtool *params)
 {
 	return	((params->dflag && (params->fflag || params->lflag)) ||
 		(params->fflag && (params->dflag || params->lflag)) ||
 		(params->lflag && (params->dflag || params->fflag)));
 }
 
-static void image_print_header(const void *ptr, struct image_tool_params *params)
+static void image_print_header(const void *ptr, struct imgtool *params)
 {
 	image_print_contents(ptr);
 }
 
 static int image_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+			       struct imgtool *params)
 {
 	uint32_t len;
 	const unsigned char *data;
@@ -108,7 +108,7 @@ static int image_verify_header(unsigned char *ptr, int image_size,
 }
 
 static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+			     struct imgtool *params)
 {
 	uint32_t checksum;
 	time_t time;
@@ -165,7 +165,7 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
 	image_set_hcrc(hdr, checksum);
 }
 
-static int image_extract_subimage(void *ptr, struct image_tool_params *params)
+static int image_extract_subimage(void *ptr, struct imgtool *params)
 {
 	const struct legacy_img_hdr *hdr = (const struct legacy_img_hdr *)ptr;
 	ulong file_data;

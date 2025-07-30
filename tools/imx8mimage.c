@@ -49,17 +49,17 @@ static uint32_t get_cfg_value(char *token, char *name,  int linenr)
 	return value;
 }
 
-int imx8mimage_check_params(struct image_tool_params *params)
+int imx8mimage_check_params(struct imgtool *params)
 {
 	return 0;
 }
 
 static void imx8mimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				  struct image_tool_params *params)
+				  struct imgtool *params)
 {
 }
 
-static void imx8mimage_print_header(const void *ptr, struct image_tool_params *params)
+static void imx8mimage_print_header(const void *ptr, struct imgtool *params)
 {
 }
 
@@ -688,7 +688,7 @@ void build_image(int ofd)
 		sld_load_addr, sld_header_off, sld_csf_off - sld_header_off);
 }
 
-int imx8mimage_copy_image(int outfd, struct image_tool_params *mparams)
+int imx8mimage_copy_image(int outfd, struct imgtool *mparams)
 {
 	/*
 	 * SECO FW is a container image, this is to calculate the

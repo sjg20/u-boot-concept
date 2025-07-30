@@ -48,11 +48,13 @@ enum af_mode {
 };
 
 /*
+ * struct imgtool() - Defines mkimage/dumpimage parameters and variables
+ *
  * This structure defines all such variables those are initialized by
- * mkimage and dumpimage main core and need to be referred by image
- * type specific functions
+ * mkimage and dumpimage main core and need to be referred by
+ * image-type-specific functions
  */
-struct image_tool_params {
+struct imgtool {
 	int dflag;
 	int eflag;
 	int fflag;
@@ -120,7 +122,7 @@ struct imgtool_funcs {
 	 *
 	 * Returns 1 if parameter check is successful
 	 */
-	int (*check_params) (struct image_tool_params *);
+	int (*check_params)(struct imgtool *itl);
 	/*
 	 * This function is used by list command (i.e. mkimage -l <filename>)
 	 * image type verification code must be put here
@@ -128,17 +130,17 @@ struct imgtool_funcs {
 	 * Returns 0 if image header verification is successful
 	 * otherwise, returns respective negative error codes
 	 */
-	int (*verify_header) (unsigned char *, int, struct image_tool_params *);
+	int (*verify_header)(unsigned char *, int, struct imgtool *itl);
 	/* Prints image information abstracting from image header */
-	void (*print_header) (const void *, struct image_tool_params *);
+	void (*print_header)(const void *, struct imgtool *itl);
 	/*
 	 * The header or image contents need to be set as per image type to
 	 * be generated using this callback function.
 	 * further output file post processing (for ex. checksum calculation,
 	 * padding bytes etc..) can also be done in this callback function.
 	 */
-	void (*set_header) (void *, struct stat *, int,
-					struct image_tool_params *);
+	void (*set_header)(void *data, struct stat *sbuf, int ifd,
+			   struct imgtool *itl);
 	/*
 	 * This function is used by the command to retrieve a component
 	 * (sub-image) from the image (i.e. dumpimage -p <position>
@@ -148,7 +150,7 @@ struct imgtool_funcs {
 	 * Returns 0 if the file was successfully retrieved from the image,
 	 * or a negative value on error.
 	 */
-	int (*extract_subimage)(void *, struct image_tool_params *);
+	int (*extract_subimage)(void *, struct imgtool *itl);
 	/*
 	 * Some image generation support for ex (default image type) supports
 	 * more than one type_ids, this callback function is used to check
@@ -157,7 +159,7 @@ struct imgtool_funcs {
 	 */
 	int (*check_image_type) (uint8_t);
 	/* This callback function will be executed if fflag is defined */
-	int (*fflag_handle) (struct image_tool_params *);
+	int (*fflag_handle)(struct imgtool *itl);
 	/*
 	 * This callback function will be executed for variable size record
 	 * It is expected to build this header in memory and return its length
@@ -166,8 +168,7 @@ struct imgtool_funcs {
 	 * additional padding should be used when copying the data image
 	 * by returning the padding length.
 	 */
-	int (*vrec_header)(struct image_tool_params *,
-			   struct imgtool_funcs *funcs);
+	int (*vrec_header)(struct imgtool *itl, struct imgtool_funcs *funcs);
 };
 
 /**
@@ -202,7 +203,7 @@ int imagetool_verify_print_header(
 	void *ptr,
 	struct stat *sbuf,
 	struct imgtool_funcs *tparams,
-	struct image_tool_params *params);
+	struct imgtool *params);
 
 /**
  * imagetool_save_subimage - store data into a file
@@ -231,7 +232,7 @@ int imagetool_save_subimage(
  * @fname:	filename to check
  * Return: size of file, or -ve value on error
  */
-int imagetool_get_filesize(struct image_tool_params *params, const char *fname);
+int imagetool_get_filesize(struct imgtool *params, const char *fname);
 
 /**
  * imagetool_get_source_date() - Get timestamp for build output.
@@ -254,11 +255,11 @@ time_t imagetool_get_source_date(
  * for ex. default_image.c, fit_image.c
  */
 
-void pbl_load_uboot(int fd, struct image_tool_params *mparams);
-int zynqmpbif_copy_image(int fd, struct image_tool_params *mparams);
-int imx8image_copy_image(int fd, struct image_tool_params *mparams);
-int imx8mimage_copy_image(int fd, struct image_tool_params *mparams);
-int rockchip_copy_image(int fd, struct image_tool_params *mparams);
+void pbl_load_uboot(int fd, struct imgtool *mparams);
+int zynqmpbif_copy_image(int fd, struct imgtool *mparams);
+int imx8image_copy_image(int fd, struct imgtool *mparams);
+int imx8mimage_copy_image(int fd, struct imgtool *mparams);
+int rockchip_copy_image(int fd, struct imgtool *mparams);
 
 #define ___cat(a, b) a ## b
 #define __cat(a, b) ___cat(a, b)

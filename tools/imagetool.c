@@ -30,13 +30,13 @@ static int imagetool_verify_print_header_by_type(
 	void *ptr,
 	struct stat *sbuf,
 	struct imgtool_funcs *tparams,
-	struct image_tool_params *params);
+	struct imgtool *params);
 
 int imagetool_verify_print_header(
 	void *ptr,
 	struct stat *sbuf,
 	struct imgtool_funcs *tparams,
-	struct image_tool_params *params)
+	struct imgtool *params)
 {
 	int retval = -1;
 	struct imgtool_funcs **curr;
@@ -89,7 +89,7 @@ static int imagetool_verify_print_header_by_type(
 	void *ptr,
 	struct stat *sbuf,
 	struct imgtool_funcs *tparams,
-	struct image_tool_params *params)
+	struct imgtool *params)
 {
 	int retval = -1;
 
@@ -150,7 +150,7 @@ int imagetool_save_subimage(
 	return 0;
 }
 
-int imagetool_get_filesize(struct image_tool_params *params, const char *fname)
+int imagetool_get_filesize(struct imgtool *params, const char *fname)
 {
 	struct stat sbuf;
 	int fd;

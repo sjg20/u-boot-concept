@@ -185,7 +185,7 @@ static void add_end_cmd(void)
 	pbl_size += 4;
 }
 
-void pbl_load_uboot(int ifd, struct image_tool_params *params)
+void pbl_load_uboot(int ifd, struct imgtool *params)
 {
 	FILE *fp_uboot;
 	int size, ret;
@@ -232,7 +232,7 @@ static int pblimage_check_image_types(uint8_t type)
 }
 
 static int pblimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				  struct imgtool *params)
 {
 	struct pbl_header *pbl_hdr = (struct pbl_header *) ptr;
 	uint32_t rcwheader;
@@ -259,18 +259,18 @@ static int pblimage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void pblimage_print_header(const void *ptr, struct image_tool_params *params)
+static void pblimage_print_header(const void *ptr, struct imgtool *params)
 {
 	printf("Image Type:   Freescale PBL Boot Image\n");
 }
 
 static void pblimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct imgtool *params)
 {
 	/*nothing need to do, pbl_load_uboot takes care of whole file. */
 }
 
-int pblimage_check_params(struct image_tool_params *params)
+int pblimage_check_params(struct imgtool *params)
 {
 	FILE *fp_uboot;
 	int fd;

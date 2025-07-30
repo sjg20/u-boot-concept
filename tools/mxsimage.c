@@ -2171,11 +2171,11 @@ static int mxsimage_check_image_types(uint8_t type)
 }
 
 static void mxsimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct imgtool *params)
 {
 }
 
-int mxsimage_check_params(struct image_tool_params *params)
+int mxsimage_check_params(struct imgtool *params)
 {
 	if (!params)
 		return -1;
@@ -2216,7 +2216,7 @@ static int mxsimage_verify_print_header(char *file, int silent)
 
 char *imagefile;
 static int mxsimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				  struct imgtool *params)
 {
 	struct sb_boot_image_header *hdr;
 
@@ -2238,7 +2238,7 @@ static int mxsimage_verify_header(unsigned char *ptr, int image_size,
 	return mxsimage_verify_print_header(params->imagefile, 1);
 }
 
-static void mxsimage_print_header(const void *hdr, struct image_tool_params *params)
+static void mxsimage_print_header(const void *hdr, struct imgtool *params)
 {
 	if (imagefile)
 		mxsimage_verify_print_header(imagefile, 0);
@@ -2314,7 +2314,7 @@ static int sb_build_image(struct sb_image_ctx *ictx,
 	return 0;
 }
 
-static int mxsimage_generate(struct image_tool_params *params,
+static int mxsimage_generate(struct imgtool *params,
 			     struct imgtool_funcs *tparams)
 {
 	int ret;
