@@ -78,7 +78,13 @@ static int show_valid_options(enum ih_category category)
 	return 0;
 }
 
-static void usage(const char *msg)
+/**
+ * usage() - Print a usage message
+ *
+ * Return:
+ *	EXIT_FAILURE (always)
+ */
+static int usage(const char *msg)
 {
 	fprintf(stderr, "Error: %s\n", msg);
 	fprintf(stderr, "Usage: %s [-T type] -l image\n"
@@ -136,7 +142,7 @@ static void usage(const char *msg)
 	fprintf(stderr, "Use '-T list' to see a list of available image types\n");
 	fprintf(stderr, "Long options are available; read the man page for details\n");
 
-	exit(EXIT_FAILURE);
+	return EXIT_FAILURE;
 }
 
 static int add_content(int type, const char *fname)
@@ -197,7 +203,7 @@ static const struct option longopts[] = {
 	{ /* sentinel */ },
 };
 
-static void process_args(int argc, char **argv)
+static int process_args(int argc, char **argv)
 {
 	char *ptr;
 	int type = IH_TYPE_INVALID;
@@ -219,7 +225,7 @@ static void process_args(int argc, char **argv)
 			params.arch = genimg_get_arch_id(optarg);
 			if (params.arch < 0) {
 				show_valid_options(IH_ARCH);
-				usage("Invalid architecture");
+				return usage("Invalid architecture");
 			}
 			params.Aflag = 1;
 			break;
@@ -247,7 +253,7 @@ static void process_args(int argc, char **argv)
 			params.comp = genimg_get_comp_id(optarg);
 			if (params.comp < 0) {
 				show_valid_options(IH_COMP);
-				usage("Invalid compression type");
+				return usage("Invalid compression type");
 			}
 			break;
 		case 'd':
@@ -315,7 +321,7 @@ static void process_args(int argc, char **argv)
 			params.os = genimg_get_os_id(optarg);
 			if (params.os < 0) {
 				show_valid_options(IH_OS);
-				usage("Invalid operating system");
+				return usage("Invalid operating system");
 			}
 			break;
 		case 'p':
@@ -353,7 +359,7 @@ static void process_args(int argc, char **argv)
 			type = genimg_get_type_id(optarg);
 			if (type < 0) {
 				show_valid_options(IH_TYPE);
-				usage("Invalid image type");
+				return usage("Invalid image type");
 			}
 			break;
 		case 'v':
@@ -366,7 +372,7 @@ static void process_args(int argc, char **argv)
 			params.xflag++;
 			break;
 		default:
-			usage("Invalid option");
+			return usage("Invalid option");
 		}
 	}
 
@@ -376,11 +382,12 @@ static void process_args(int argc, char **argv)
 
 	if (params.auto_fit == AF_SIGNED_CONF) {
 		if (!params.keyname || !params.algo_name)
-			usage("Missing key/algo for auto-FIT with signed configs (use -g -o)");
+			return usage(
+				"Missing key/algo for auto-FIT with signed configs (use -g -o)");
 	} else if (params.auto_fit == AF_HASHED_IMG && params.keyname) {
 		params.auto_fit = AF_SIGNED_IMG;
 		if (!params.algo_name)
-			usage("Missing algorithm for auto-FIT with signed images (use -g)");
+			return usage("Missing algorithm for auto-FIT with signed images (use -g)");
 	}
 
 	/*
@@ -394,15 +401,17 @@ static void process_args(int argc, char **argv)
 		if (!params.auto_fit)
 			params.datafile = datafile;
 		else if (!params.datafile)
-			usage("Missing data file for auto-FIT (use -d)");
+			return usage("Missing data file for auto-FIT (use -d)");
 	} else if (params.lflag || type != IH_TYPE_INVALID) {
 		if (type == IH_TYPE_SCRIPT && !params.datafile)
-			usage("Missing data file for script (use -d)");
+			return usage("Missing data file for script (use -d)");
 		params.type = type;
 	}
 
 	if (!params.imagefile)
-		usage("Missing output filename");
+		return usage("Missing output filename");
+
+	return 0;
 }
 
 static void verify_image(const struct image_type_params *tparams)
@@ -609,7 +618,7 @@ static int run_mkimage(void)
 	 */
 	if (tparams && tparams->check_params)
 		if (tparams->check_params (&params))
-			usage("Bad parameters for image type");
+			return usage("Bad parameters for image type");
 
 	if (!params.eflag) {
 		params.ep = params.addr;
@@ -634,7 +643,7 @@ static int run_mkimage(void)
 			retval = tparams->fflag_handle(&params);
 
 		if (retval != EXIT_SUCCESS)
-			usage("Bad parameters for FIT image type");
+			return usage("Bad parameters for FIT image type");
 	}
 
 	if (params.lflag || params.fflag) {
@@ -945,9 +954,9 @@ int main(int argc, char **argv)
 	params.addr = 0;
 	params.ep = 0;
 
-	process_args(argc, argv);
-
-	ret = run_mkimage();
+	ret = process_args(argc, argv);
+	if (!ret)
+		ret = run_mkimage();
 
 	return ret;
 }
