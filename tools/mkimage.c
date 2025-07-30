@@ -446,7 +446,7 @@ static int verify_image(struct imgtool *itl, const struct imgtool_funcs *tparams
 	return 0;
 }
 
-static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pad)
+static int copy_file(struct imgtool *itl, int ifd, const char *datafile, int pad)
 {
 	int dfd;
 	struct stat sbuf;
@@ -467,26 +467,26 @@ static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pa
 	if (dfd < 0) {
 		fprintf(stderr, "%s: Can't open %s: %s\n",
 			itl->cmdname, datafile, strerror(errno));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if (fstat(dfd, &sbuf) < 0) {
 		fprintf(stderr, "%s: Can't stat %s: %s\n",
 			itl->cmdname, datafile, strerror(errno));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if (sbuf.st_size == 0) {
 		fprintf(stderr, "%s: Input file %s is empty, bailing out\n",
 			itl->cmdname, datafile);
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	ptr = mmap(0, sbuf.st_size, PROT_READ, MAP_SHARED, dfd, 0);
 	if (ptr == MAP_FAILED) {
 		fprintf(stderr, "%s: Can't read %s: %s\n",
 			itl->cmdname, datafile, strerror(errno));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if (itl->xflag &&
@@ -504,7 +504,7 @@ static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pa
 			fprintf(stderr,
 				"%s: Bad size: \"%s\" is too small for XIP\n",
 				itl->cmdname, datafile);
-			exit (EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 
 		for (p = ptr; p < ptr + tparams->header_size; p++) {
@@ -512,7 +512,7 @@ static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pa
 				fprintf(stderr,
 					"%s: Bad file: \"%s\" has invalid buffer for XIP\n",
 					itl->cmdname, datafile);
-				exit (EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 		}
 
@@ -530,7 +530,7 @@ static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pa
 			fprintf(stderr, "%s: Write only %d/%d bytes, "
 				"probably no space left on the device\n",
 				itl->cmdname, ret, size);
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	tail = size % 4;
@@ -539,7 +539,7 @@ static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pa
 			fprintf(stderr, "%s: Write error on %s: %s\n",
 				itl->cmdname, itl->imagefile,
 				strerror(errno));
-			exit (EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 	} else if (pad > 1) {
 		while (pad > 0) {
@@ -551,7 +551,7 @@ static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pa
 				fprintf(stderr, "%s: Write error on %s: %s\n",
 					itl->cmdname, itl->imagefile,
 					strerror(errno));
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 			pad -= todo;
 		}
@@ -559,25 +559,31 @@ static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pa
 
 	(void)munmap((void *)ptr, sbuf.st_size);
 	(void)close(dfd);
+
+	return 0;
 }
 
-void copy_datafile(struct imgtool *itl, int ifd, char *file)
+static int copy_datafile(struct imgtool *itl, int ifd, char *file)
 {
 	if (!file)
-		return;
+		return 0;
 	for (;;) {
 		char *sep = strchr(file, ':');
 
 		if (sep) {
 			*sep = '\0';
-			copy_file(itl, ifd, file, 1);
+			if (copy_file(itl, ifd, file, 1))
+				return EXIT_FAILURE;
 			*sep++ = ':';
 			file = sep;
 		} else {
-			copy_file(itl, ifd, file, 0);
+			if (copy_file(itl, ifd, file, 0))
+				return EXIT_FAILURE;
 			break;
 		}
 	}
+
+	return 0;
 }
 
 /**
@@ -802,7 +808,8 @@ static int run_mkimage(struct imgtool *itl)
 					file = NULL;
 				}
 			}
-			copy_datafile(itl, ifd, itl->datafile);
+			if (copy_datafile(itl, ifd, itl->datafile))
+				return EXIT_FAILURE;
 		} else if (itl->type == IH_TYPE_PBLIMAGE) {
 			/* PBL has special Image format, implements its' own */
 			pbl_load_uboot(ifd, itl);
@@ -836,7 +843,8 @@ static int run_mkimage(struct imgtool *itl)
 			if (ret)
 				return ret;
 		} else {
-			copy_file(itl, ifd, itl->datafile, pad_len);
+			if (copy_file(itl, ifd, itl->datafile, pad_len))
+				return EXIT_FAILURE;
 		}
 		if (itl->type == IH_TYPE_FIRMWARE_IVT) {
 			/* Add alignment and IVT */
