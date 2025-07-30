@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Verified Boot for Embedded (VBE) 'simple' method
+ * Verified Boot for Embedded (VBE) 'abrec' method
  *
  * Copyright 2024 Google LLC
  * Written by Simon Glass <sjg@chromium.org>
@@ -164,7 +164,7 @@ static int bootmeth_vbe_abrec_bind(struct udevice *dev)
 }
 
 #if CONFIG_IS_ENABLED(OF_REAL)
-static const struct udevice_id generic_simple_vbe_abrec_ids[] = {
+static const struct udevice_id vbe_abrec_ids[] = {
 	{ .compatible = "fwupd,vbe-abrec" },
 	{ }
 };
@@ -173,7 +173,7 @@ static const struct udevice_id generic_simple_vbe_abrec_ids[] = {
 U_BOOT_DRIVER(vbe_abrec) = {
 	.name	= "vbe_abrec",
 	.id	= UCLASS_BOOTMETH,
-	.of_match = of_match_ptr(generic_simple_vbe_abrec_ids),
+	.of_match = of_match_ptr(vbe_abrec_ids),
 	.ops	= &bootmeth_vbe_abrec_ops,
 	.bind	= bootmeth_vbe_abrec_bind,
 	.probe	= bootmeth_vbe_abrec_probe,
