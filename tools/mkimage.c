@@ -207,7 +207,7 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 			if (*ptr) {
 				fprintf(stderr, "%s: invalid load address %s\n",
 					itl->cmdname, optarg);
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 			break;
 		case 'A':
@@ -223,7 +223,7 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 				fprintf(stderr,
 					"%s: Out of memory adding content '%s'",
 					itl->cmdname, optarg);
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 			break;
 		case 'B':
@@ -231,7 +231,7 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 			if (*ptr) {
 				fprintf(stderr, "%s: invalid block length %s\n",
 					itl->cmdname, optarg);
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 
 			break;
@@ -257,7 +257,7 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 			if (*ptr) {
 				fprintf(stderr, "%s: invalid entry point %s\n",
 					itl->cmdname, optarg);
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 			itl->eflag = 1;
 			break;
@@ -318,7 +318,7 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 			if (*ptr) {
 				fprintf(stderr, "%s: invalid offset size %s\n",
 					itl->cmdname, optarg);
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 			break;
 		case 'q':
