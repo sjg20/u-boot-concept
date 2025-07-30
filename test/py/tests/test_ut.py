@@ -158,7 +158,7 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
     fsh.cleanup()
 
 
-def setup_bootflow_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
                          script):
     """Create a 20MB disk image with a single FAT partition
 
@@ -235,7 +235,7 @@ label Fedora-Workstation-armhfp-31-1.9 (5.3.7-301.fc31.armv7hl)
         append ro root=UUID=9732b35b-4cd5-458b-9b91-80f7047e0b8a rhgb quiet LANG=en_US.UTF-8 cma=192MB cma=256MB
         fdtdir /%s/
         initrd /%s''' % (vmlinux, dtbdir, initrd)
-    setup_bootflow_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+    setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
                          script)
 
 def setup_ubuntu_image(ubman, devnum, basename):
@@ -274,7 +274,7 @@ label l0r
 	linux /boot/%s
 	initrd /boot/%s
 ''' % (vmlinux, initrd, vmlinux, initrd)
-    setup_bootflow_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+    setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
                          script)
 
 def setup_cros_image(ubman):
