@@ -600,7 +600,7 @@ static int run_mkimage(void)
 	if (tparams == NULL && !params.lflag) {
 		fprintf (stderr, "%s: unsupported type %s\n",
 			params.cmdname, genimg_get_type_name(params.type));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	/*
@@ -622,7 +622,7 @@ static int run_mkimage(void)
 		if (!tparams) {
 			fprintf(stderr, "%s: Missing FIT support\n",
 				params.cmdname);
-			exit (EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 		if (tparams->fflag_handle)
 			/*
@@ -648,7 +648,7 @@ static int run_mkimage(void)
 		fprintf (stderr, "%s: Can't open %s: %s\n",
 			params.cmdname, params.imagefile,
 			strerror(errno));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if (params.lflag || params.fflag) {
@@ -660,7 +660,7 @@ static int run_mkimage(void)
 			fprintf (stderr, "%s: Can't stat %s: %s\n",
 				params.cmdname, params.imagefile,
 				strerror(errno));
-			exit (EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 
 		if ((sbuf.st_mode & S_IFMT) == S_IFBLK) {
@@ -672,13 +672,13 @@ static int run_mkimage(void)
 				fprintf (stderr,
 					"%s: failed to get size of block device \"%s\"\n",
 					params.cmdname, params.imagefile);
-				exit (EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 #else
 			fprintf (stderr,
 				"%s: \"%s\" is block device, don't know how to get its size\n",
 				params.cmdname, params.imagefile);
-			exit (EXIT_FAILURE);
+			return EXIT_FAILURE;
 #endif
 		} else if (tparams && sbuf.st_size < (off_t)tparams->header_size) {
 			fprintf (stderr,
@@ -686,7 +686,7 @@ static int run_mkimage(void)
 				params.cmdname, params.imagefile,
 				(unsigned long long) sbuf.st_size,
 				tparams->header_size);
-			exit (EXIT_FAILURE);
+			return EXIT_FAILURE;
 		} else {
 			size = sbuf.st_size;
 		}
@@ -696,7 +696,7 @@ static int run_mkimage(void)
 			fprintf (stderr, "%s: Can't read %s: %s\n",
 				params.cmdname, params.imagefile,
 				strerror(errno));
-			exit (EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 
 		/*
@@ -712,28 +712,28 @@ static int run_mkimage(void)
 			summary_show(&params.summary, params.imagefile,
 				     params.keydest);
 
-		exit (retval);
+		return retval;
 	}
 
 	if (!params.skipcpy && params.type != IH_TYPE_MULTI && params.type != IH_TYPE_SCRIPT) {
 		if (!params.datafile) {
 			fprintf(stderr, "%s: Option -d with image data file was not specified\n",
 				params.cmdname);
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 		dfd = open(params.datafile, O_RDONLY | O_BINARY);
 		if (dfd < 0) {
 			fprintf(stderr, "%s: Can't open %s: %s\n",
 				params.cmdname, params.datafile,
 				strerror(errno));
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 
 		if (fstat(dfd, &sbuf) < 0) {
 			fprintf(stderr, "%s: Can't stat %s: %s\n",
 				params.cmdname, params.datafile,
 				strerror(errno));
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 
 		params.file_size = sbuf.st_size + tparams->header_size;
@@ -755,7 +755,7 @@ static int run_mkimage(void)
 					!= tparams->header_size) {
 		fprintf (stderr, "%s: Write error on %s: %s\n",
 			params.cmdname, params.imagefile, strerror(errno));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if (!params.skipcpy) {
@@ -775,7 +775,7 @@ static int run_mkimage(void)
 					if (stat (file, &sbuf) < 0) {
 						fprintf (stderr, "%s: Can't stat %s: %s\n",
 							 params.cmdname, file, strerror(errno));
-						exit (EXIT_FAILURE);
+						return EXIT_FAILURE;
 					}
 					size = cpu_to_uimage (sbuf.st_size);
 				} else {
@@ -786,7 +786,7 @@ static int run_mkimage(void)
 					fprintf (stderr, "%s: Write error on %s: %s\n",
 						 params.cmdname, params.imagefile,
 						 strerror(errno));
-					exit (EXIT_FAILURE);
+					return EXIT_FAILURE;
 				}
 
 				if (!file) {
@@ -855,7 +855,7 @@ static int run_mkimage(void)
 							params.cmdname,
 							params.imagefile,
 							strerror(errno));
-					exit(EXIT_FAILURE);
+					return EXIT_FAILURE;
 				}
 			}
 			if (write(ifd, &ivt_header, sizeof(flash_header_v2_t))
@@ -864,7 +864,7 @@ static int run_mkimage(void)
 						params.cmdname,
 						params.imagefile,
 						strerror(errno));
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 		}
 	}
@@ -883,7 +883,7 @@ static int run_mkimage(void)
 	if (fstat(ifd, &sbuf) < 0) {
 		fprintf (stderr, "%s: Can't stat %s: %s\n",
 			params.cmdname, params.imagefile, strerror(errno));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 	params.file_size = sbuf.st_size;
 
@@ -892,7 +892,7 @@ static int run_mkimage(void)
 	if (ptr == MAP_FAILED) {
 		fprintf (stderr, "%s: Can't map %s: %s\n",
 			params.cmdname, params.imagefile, strerror(errno));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	/* Setup the image header as per input image type*/
@@ -901,7 +901,7 @@ static int run_mkimage(void)
 	else {
 		fprintf (stderr, "%s: Can't set header for %s\n",
 			params.cmdname, tparams->name);
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	/* Print the image information by processing image header */
@@ -928,13 +928,13 @@ static int run_mkimage(void)
 	if (close(ifd)) {
 		fprintf (stderr, "%s: Write error on %s: %s\n",
 			params.cmdname, params.imagefile, strerror(errno));
-		exit (EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if (tparams->verify_header)
 		verify_image(tparams);
 
-	exit (EXIT_SUCCESS);
+	return 0;
 }
 
 int main(int argc, char **argv)
