@@ -577,22 +577,23 @@ void copy_datafile(int ifd, char *file)
 	}
 }
 
-int main(int argc, char **argv)
+/**
+ * run_mkimage() - Run the mkimage tool
+ *
+ * The program arguments are in params
+ *
+ * Return: 0 on success, or non-zero exit code
+ */
+static int run_mkimage(void)
 {
-	int ifd = -1;
-	struct stat sbuf;
-	char *ptr;
-	int retval = 0;
 	struct image_type_params *tparams = NULL;
+	struct stat sbuf;
 	int pad_len = 0;
-	int dfd;
+	int retval = 0;
 	size_t map_len;
-
-	params.cmdname = *argv;
-	params.addr = 0;
-	params.ep = 0;
-
-	process_args(argc, argv);
+	int ifd = -1;
+	char *ptr;
+	int dfd;
 
 	/* set tparams as per input type_id */
 	tparams = imagetool_get_type(params.type);
@@ -934,4 +935,19 @@ int main(int argc, char **argv)
 		verify_image(tparams);
 
 	exit (EXIT_SUCCESS);
+}
+
+int main(int argc, char **argv)
+{
+	int ret;
+
+	params.cmdname = *argv;
+	params.addr = 0;
+	params.ep = 0;
+
+	process_args(argc, argv);
+
+	ret = run_mkimage();
+
+	return ret;
 }
