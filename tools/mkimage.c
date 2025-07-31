@@ -84,14 +84,14 @@ static int show_valid_options(enum ih_category category)
  * Return:
  *	EXIT_FAILURE (always)
  */
-static int usage(const char *msg)
+static int usage(const struct imgtool *itl, const char *msg)
 {
 	fprintf(stderr, "Error: %s\n", msg);
 	fprintf(stderr, "Usage: %s [-T type] -l image\n"
 			 "          -l ==> list image header information\n"
 			 "          -T ==> parse image file as 'type'\n"
 			 "          -q ==> quiet\n",
-		params.cmdname);
+		itl->cmdname);
 	fprintf(stderr,
 		"       %s [-x] -A arch -O os -T type -C comp -a addr -e ep -n name -d data_file[:data_file...] image\n"
 		"          -A ==> set architecture to 'arch'\n"
@@ -106,11 +106,11 @@ static int usage(const char *msg)
 		"          -x ==> set XIP (execute in place)\n"
 		"          -s ==> create an image with no data\n"
 		"          -v ==> verbose\n",
-		params.cmdname);
+		itl->cmdname);
 	fprintf(stderr,
 		"       %s [-D dtc_options] [-f fit-image.its|-f auto|-f auto-conf|-F] [-b <dtb> [-b <dtb>]] [-E] [-B size] [-i <ramdisk.cpio.gz>] fit-image\n"
 		"           <dtb> file is used with -f auto, it may occur multiple times.\n",
-		params.cmdname);
+		itl->cmdname);
 	fprintf(stderr,
 		"          -D => set all options for device tree compiler\n"
 		"          -f => input filename for FIT source\n"
@@ -138,7 +138,7 @@ static int usage(const char *msg)
 #endif
 
 	fprintf(stderr, "       %s -V ==> print version information and exit\n",
-		params.cmdname);
+		itl->cmdname);
 	fprintf(stderr, "Use '-T list' to see a list of available image types\n");
 	fprintf(stderr, "Long options are available; read the man page for details\n");
 
@@ -203,7 +203,7 @@ static const struct option longopts[] = {
 	{ /* sentinel */ },
 };
 
-static int process_args(int argc, char **argv)
+static int process_args(struct imgtool *itl, int argc, char **argv)
 {
 	char *ptr;
 	int type = IH_TYPE_INVALID;
@@ -225,7 +225,7 @@ static int process_args(int argc, char **argv)
 			params.arch = genimg_get_arch_id(optarg);
 			if (params.arch < 0) {
 				show_valid_options(IH_ARCH);
-				return usage("Invalid architecture");
+				return usage(itl, "Invalid architecture");
 			}
 			params.Aflag = 1;
 			break;
@@ -253,7 +253,7 @@ static int process_args(int argc, char **argv)
 			params.comp = genimg_get_comp_id(optarg);
 			if (params.comp < 0) {
 				show_valid_options(IH_COMP);
-				return usage("Invalid compression type");
+				return usage(itl, "Invalid compression type");
 			}
 			break;
 		case 'd':
@@ -321,7 +321,7 @@ static int process_args(int argc, char **argv)
 			params.os = genimg_get_os_id(optarg);
 			if (params.os < 0) {
 				show_valid_options(IH_OS);
-				return usage("Invalid operating system");
+				return usage(itl, "Invalid operating system");
 			}
 			break;
 		case 'p':
@@ -359,7 +359,7 @@ static int process_args(int argc, char **argv)
 			type = genimg_get_type_id(optarg);
 			if (type < 0) {
 				show_valid_options(IH_TYPE);
-				return usage("Invalid image type");
+				return usage(itl, "Invalid image type");
 			}
 			break;
 		case 'v':
@@ -372,7 +372,7 @@ static int process_args(int argc, char **argv)
 			params.xflag++;
 			break;
 		default:
-			return usage("Invalid option");
+			return usage(itl, "Invalid option");
 		}
 	}
 
@@ -382,12 +382,13 @@ static int process_args(int argc, char **argv)
 
 	if (params.auto_fit == AF_SIGNED_CONF) {
 		if (!params.keyname || !params.algo_name)
-			return usage(
+			return usage(itl,
 				"Missing key/algo for auto-FIT with signed configs (use -g -o)");
 	} else if (params.auto_fit == AF_HASHED_IMG && params.keyname) {
 		params.auto_fit = AF_SIGNED_IMG;
 		if (!params.algo_name)
-			return usage("Missing algorithm for auto-FIT with signed images (use -g)");
+			return usage(itl,
+				     "Missing algorithm for auto-FIT with signed images (use -g)");
 	}
 
 	/*
@@ -401,15 +402,17 @@ static int process_args(int argc, char **argv)
 		if (!params.auto_fit)
 			params.datafile = datafile;
 		else if (!params.datafile)
-			return usage("Missing data file for auto-FIT (use -d)");
+			return usage(itl,
+				     "Missing data file for auto-FIT (use -d)");
 	} else if (params.lflag || type != IH_TYPE_INVALID) {
 		if (type == IH_TYPE_SCRIPT && !params.datafile)
-			return usage("Missing data file for script (use -d)");
+			return usage(itl,
+				     "Missing data file for script (use -d)");
 		params.type = type;
 	}
 
 	if (!params.imagefile)
-		return usage("Missing output filename");
+		return usage(itl, "Missing output filename");
 
 	return 0;
 }
@@ -593,7 +596,7 @@ void copy_datafile(int ifd, char *file)
  *
  * Return: 0 on success, or non-zero exit code
  */
-static int run_mkimage(void)
+static int run_mkimage(struct imgtool *itl)
 {
 	struct imgtool_funcs *tparams = NULL;
 	struct stat sbuf;
@@ -618,7 +621,7 @@ static int run_mkimage(void)
 	 */
 	if (tparams && tparams->check_params)
 		if (tparams->check_params (&params))
-			return usage("Bad parameters for image type");
+			return usage(itl, "Bad parameters for image type");
 
 	if (!params.eflag) {
 		params.ep = params.addr;
@@ -643,7 +646,7 @@ static int run_mkimage(void)
 			retval = tparams->fflag_handle(&params);
 
 		if (retval != EXIT_SUCCESS)
-			return usage("Bad parameters for FIT image type");
+			return usage(itl, "Bad parameters for FIT image type");
 	}
 
 	if (params.lflag || params.fflag) {
@@ -954,9 +957,9 @@ int main(int argc, char **argv)
 	params.addr = 0;
 	params.ep = 0;
 
-	ret = process_args(argc, argv);
+	ret = process_args(&params, argc, argv);
 	if (!ret)
-		ret = run_mkimage();
+		ret = run_mkimage(&params);
 
 	return ret;
 }
