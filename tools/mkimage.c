@@ -417,41 +417,41 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 	return 0;
 }
 
-static void verify_image(const struct imgtool_funcs *tparams)
+static void verify_image(struct imgtool *itl, const struct imgtool_funcs *tparams)
 {
 	struct stat sbuf;
 	void *ptr;
 	int ifd;
 
-	ifd = open(params.imagefile, O_RDONLY | O_BINARY);
+	ifd = open(itl->imagefile, O_RDONLY | O_BINARY);
 	if (ifd < 0) {
 		fprintf(stderr, "%s: Can't open %s: %s\n",
-			params.cmdname, params.imagefile,
+			itl->cmdname, itl->imagefile,
 			strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	if (fstat(ifd, &sbuf) < 0) {
 		fprintf(stderr, "%s: Can't stat %s: %s\n",
-			params.cmdname, params.imagefile, strerror(errno));
+			itl->cmdname, itl->imagefile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	params.file_size = sbuf.st_size;
+	itl->file_size = sbuf.st_size;
 
-	ptr = mmap(0, params.file_size, PROT_READ, MAP_SHARED, ifd, 0);
+	ptr = mmap(0, itl->file_size, PROT_READ, MAP_SHARED, ifd, 0);
 	if (ptr == MAP_FAILED) {
 		fprintf(stderr, "%s: Can't map %s: %s\n",
-			params.cmdname, params.imagefile, strerror(errno));
+			itl->cmdname, itl->imagefile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
-	if (tparams->verify_header((unsigned char *)ptr, params.file_size, &params) != 0) {
+	if (tparams->verify_header((unsigned char *)ptr, itl->file_size, itl) != 0) {
 		fprintf(stderr, "%s: Failed to verify header of %s\n",
-			params.cmdname, params.imagefile);
+			itl->cmdname, itl->imagefile);
 		exit(EXIT_FAILURE);
 	}
 
-	(void)munmap(ptr, params.file_size);
+	(void)munmap(ptr, itl->file_size);
 	(void)close(ifd);
 }
 
@@ -944,7 +944,7 @@ static int run_mkimage(struct imgtool *itl)
 	}
 
 	if (tparams->verify_header)
-		verify_image(tparams);
+		verify_image(itl, tparams);
 
 	return 0;
 }
