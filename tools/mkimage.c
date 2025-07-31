@@ -587,6 +587,61 @@ static int copy_datafile(struct imgtool *itl, int ifd, char *file)
 }
 
 /**
+ * check_params() - Do some initial checks on the parameters
+ *
+ * @itl: Image-tool info
+ * @tfuncs: image-tool functions
+ * Return: 0 if OK, non-zero on error
+ */
+static int check_params(struct imgtool *itl, struct imgtool_funcs *tfuncs)
+{
+	/* set tparams as per input type_id */
+	tfuncs = imagetool_get_type(itl->type);
+	if (!tfuncs && !itl->lflag) {
+		fprintf (stderr, "%s: unsupported type %s\n",
+			itl->cmdname, genimg_get_type_name(itl->type));
+		return -EINVAL;
+	}
+
+	/*
+	 * check the passed arguments parameters meets the requirements
+	 * as per image type to be generated/listed
+	 */
+	if (tfuncs && tfuncs->check_params)
+		if (tfuncs->check_params(itl))
+			return usage(itl, "Bad parameters for image type");
+
+	if (!itl->eflag) {
+		itl->ep = itl->addr;
+		/* If XIP, entry point must be after the U-Boot header */
+		if (itl->xflag && tfuncs)
+			itl->ep += tfuncs->header_size;
+	}
+
+	return 0;
+}
+
+static int process_fit(struct imgtool *itl, struct imgtool_funcs *tfuncs)
+{
+	if (!tfuncs) {
+		fprintf(stderr, "%s: Missing FIT support\n",
+			itl->cmdname);
+		return -ENOTSUP;
+	}
+
+	/*
+	 * in some cases, some additional processing needs to be done if fflag
+	 * is defined
+	 *
+	 * E.g. fit_handle_file for Fit file support
+	 */
+	if (tfuncs->fflag_handle && tfuncs->fflag_handle(itl))
+		return usage(itl, "Bad parameters for FIT image type");
+
+	return 0;
+}
+
+/**
  * run_mkimage() - Run the mkimage tool
  *
  * The program arguments are in params
@@ -604,47 +659,11 @@ static int run_mkimage(struct imgtool *itl)
 	char *ptr;
 	int dfd;
 
-	/* set tparams as per input type_id */
 	tparams = imagetool_get_type(itl->type);
-	if (!tparams && !itl->lflag) {
-		fprintf (stderr, "%s: unsupported type %s\n",
-			itl->cmdname, genimg_get_type_name(itl->type));
+	if (check_params(itl, tparams))
 		return EXIT_FAILURE;
-	}
-
-	/*
-	 * check the passed arguments parameters meets the requirements
-	 * as per image type to be generated/listed
-	 */
-	if (tparams && tparams->check_params)
-		if (tparams->check_params(itl))
-			return usage(itl, "Bad parameters for image type");
-
-	if (!itl->eflag) {
-		itl->ep = itl->addr;
-		/* If XIP, entry point must be after the U-Boot header */
-		if (itl->xflag && tparams)
-			itl->ep += tparams->header_size;
-	}
-
-	if (itl->fflag) {
-		if (!tparams) {
-			fprintf(stderr, "%s: Missing FIT support\n",
-				itl->cmdname);
-			return EXIT_FAILURE;
-		}
-		if (tparams->fflag_handle)
-			/*
-			 * in some cases, some additional processing needs
-			 * to be done if fflag is defined
-			 *
-			 * For ex. fit_handle_file for Fit file support
-			 */
-			retval = tparams->fflag_handle(itl);
-
-		if (retval != EXIT_SUCCESS)
-			return usage(itl, "Bad parameters for FIT image type");
-	}
+	if (itl->fflag && process_fit(itl, tparams))
+		return EXIT_FAILURE;
 
 	if (itl->lflag || itl->fflag) {
 		ifd = open(itl->imagefile, O_RDONLY | O_BINARY);
