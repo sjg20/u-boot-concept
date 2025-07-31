@@ -295,9 +295,7 @@ static void fit_image_print_verification_data(const void *fit, int noffset,
 static void fit_conf_print(const void *fit, int noffset, const char *p)
 {
 	const char *uname, *desc;
-	int ret;
-	int fdt_index, loadables_index;
-	int ndepth;
+	int ret, ndepth, i;
 
 	/* Mandatory properties */
 	ret = fit_get_desc(fit, noffset, &desc);
@@ -323,11 +321,11 @@ static void fit_conf_print(const void *fit, int noffset, const char *p)
 	if (uname)
 		printf("%s  Firmware:     %s\n", p, uname);
 
-	for (fdt_index = 0;
+	for (i = 0;
 	     uname = fdt_stringlist_get(fit, noffset, FIT_FDT_PROP,
-					fdt_index, NULL), uname;
-	     fdt_index++) {
-		if (fdt_index == 0)
+					i, NULL), uname;
+	     i++) {
+		if (!i)
 			printf("%s  FDT:          ", p);
 		else
 			printf("%s                ", p);
@@ -339,15 +337,14 @@ static void fit_conf_print(const void *fit, int noffset, const char *p)
 		printf("%s  FPGA:         %s\n", p, uname);
 
 	/* Print out all of the specified loadables */
-	for (loadables_index = 0;
+	for (i = 0;
 	     uname = fdt_stringlist_get(fit, noffset, FIT_LOADABLE_PROP,
-					loadables_index, NULL), uname;
-	     loadables_index++) {
-		if (loadables_index == 0) {
+					i, NULL), uname;
+	     i++) {
+		if (!i)
 			printf("%s  Loadables:    ", p);
-		} else {
+		else
 			printf("%s                ", p);
-		}
 		printf("%s\n", uname);
 	}
 
