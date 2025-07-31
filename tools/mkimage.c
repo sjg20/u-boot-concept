@@ -608,10 +608,10 @@ static int run_mkimage(struct imgtool *itl)
 	int dfd;
 
 	/* set tparams as per input type_id */
-	tparams = imagetool_get_type(params.type);
-	if (tparams == NULL && !params.lflag) {
+	tparams = imagetool_get_type(itl->type);
+	if (!tparams && !itl->lflag) {
 		fprintf (stderr, "%s: unsupported type %s\n",
-			params.cmdname, genimg_get_type_name(params.type));
+			itl->cmdname, genimg_get_type_name(itl->type));
 		return EXIT_FAILURE;
 	}
 
@@ -620,20 +620,20 @@ static int run_mkimage(struct imgtool *itl)
 	 * as per image type to be generated/listed
 	 */
 	if (tparams && tparams->check_params)
-		if (tparams->check_params (&params))
+		if (tparams->check_params(itl))
 			return usage(itl, "Bad parameters for image type");
 
-	if (!params.eflag) {
-		params.ep = params.addr;
+	if (!itl->eflag) {
+		itl->ep = itl->addr;
 		/* If XIP, entry point must be after the U-Boot header */
-		if (params.xflag && tparams)
-			params.ep += tparams->header_size;
+		if (itl->xflag && tparams)
+			itl->ep += tparams->header_size;
 	}
 
-	if (params.fflag){
+	if (itl->fflag) {
 		if (!tparams) {
 			fprintf(stderr, "%s: Missing FIT support\n",
-				params.cmdname);
+				itl->cmdname);
 			return EXIT_FAILURE;
 		}
 		if (tparams->fflag_handle)
@@ -643,34 +643,34 @@ static int run_mkimage(struct imgtool *itl)
 			 *
 			 * For ex. fit_handle_file for Fit file support
 			 */
-			retval = tparams->fflag_handle(&params);
+			retval = tparams->fflag_handle(itl);
 
 		if (retval != EXIT_SUCCESS)
 			return usage(itl, "Bad parameters for FIT image type");
 	}
 
-	if (params.lflag || params.fflag) {
-		ifd = open(params.imagefile, O_RDONLY | O_BINARY);
+	if (itl->lflag || itl->fflag) {
+		ifd = open(itl->imagefile, O_RDONLY | O_BINARY);
 	} else {
-		ifd = open(params.imagefile,
+		ifd = open(itl->imagefile,
 			   O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
 	}
 
 	if (ifd < 0) {
 		fprintf (stderr, "%s: Can't open %s: %s\n",
-			params.cmdname, params.imagefile,
+			itl->cmdname, itl->imagefile,
 			strerror(errno));
 		return EXIT_FAILURE;
 	}
 
-	if (params.lflag || params.fflag) {
+	if (itl->lflag || itl->fflag) {
 		uint64_t size;
 		/*
 		 * list header information of existing image
 		 */
 		if (fstat(ifd, &sbuf) < 0) {
 			fprintf (stderr, "%s: Can't stat %s: %s\n",
-				params.cmdname, params.imagefile,
+				itl->cmdname, itl->imagefile,
 				strerror(errno));
 			return EXIT_FAILURE;
 		}
@@ -683,19 +683,19 @@ static int run_mkimage(struct imgtool *itl)
 			if (ioctl(ifd, BLKGETSIZE64, &size) < 0) {
 				fprintf (stderr,
 					"%s: failed to get size of block device \"%s\"\n",
-					params.cmdname, params.imagefile);
+					itl->cmdname, itl->imagefile);
 				return EXIT_FAILURE;
 			}
 #else
 			fprintf (stderr,
 				"%s: \"%s\" is block device, don't know how to get its size\n",
-				params.cmdname, params.imagefile);
+				itl->cmdname, itl->imagefile);
 			return EXIT_FAILURE;
 #endif
 		} else if (tparams && sbuf.st_size < (off_t)tparams->header_size) {
 			fprintf (stderr,
 				"%s: Bad size: \"%s\" is not valid image: size %llu < %u\n",
-				params.cmdname, params.imagefile,
+				itl->cmdname, itl->imagefile,
 				(unsigned long long) sbuf.st_size,
 				tparams->header_size);
 			return EXIT_FAILURE;
@@ -706,49 +706,48 @@ static int run_mkimage(struct imgtool *itl)
 		ptr = mmap(0, size, PROT_READ, MAP_SHARED, ifd, 0);
 		if (ptr == MAP_FAILED) {
 			fprintf (stderr, "%s: Can't read %s: %s\n",
-				params.cmdname, params.imagefile,
+				itl->cmdname, itl->imagefile,
 				strerror(errno));
 			return EXIT_FAILURE;
 		}
 
 		/*
 		 * Verifies the header format based on the expected header for image
-		 * type in tparams. If tparams is NULL simply check all image types
+		 * type in titl-> If tparams is NULL simply check all image types
 		 * to find one that matches our header.
 		 */
-		retval = imagetool_verify_print_header(ptr, &sbuf, tparams, &params);
+		retval = imagetool_verify_print_header(ptr, &sbuf, tparams, itl);
 
 		(void) munmap((void *)ptr, sbuf.st_size);
 		(void) close (ifd);
 		if (!retval)
-			summary_show(&params.summary, params.imagefile,
-				     params.keydest);
+			summary_show(&itl->summary, itl->imagefile, itl->keydest);
 
 		return retval;
 	}
 
-	if (!params.skipcpy && params.type != IH_TYPE_MULTI && params.type != IH_TYPE_SCRIPT) {
-		if (!params.datafile) {
+	if (!itl->skipcpy && itl->type != IH_TYPE_MULTI && itl->type != IH_TYPE_SCRIPT) {
+		if (!itl->datafile) {
 			fprintf(stderr, "%s: Option -d with image data file was not specified\n",
-				params.cmdname);
+				itl->cmdname);
 			return EXIT_FAILURE;
 		}
-		dfd = open(params.datafile, O_RDONLY | O_BINARY);
+		dfd = open(itl->datafile, O_RDONLY | O_BINARY);
 		if (dfd < 0) {
 			fprintf(stderr, "%s: Can't open %s: %s\n",
-				params.cmdname, params.datafile,
+				itl->cmdname, itl->datafile,
 				strerror(errno));
 			return EXIT_FAILURE;
 		}
 
 		if (fstat(dfd, &sbuf) < 0) {
 			fprintf(stderr, "%s: Can't stat %s: %s\n",
-				params.cmdname, params.datafile,
+				itl->cmdname, itl->datafile,
 				strerror(errno));
 			return EXIT_FAILURE;
 		}
 
-		params.file_size = sbuf.st_size + tparams->header_size;
+		itl->file_size = sbuf.st_size + tparams->header_size;
 		close(dfd);
 	}
 
@@ -759,21 +758,21 @@ static int run_mkimage(struct imgtool *itl)
 	 * allocate memory for the header itself.
 	 */
 	if (tparams->vrec_header)
-		pad_len = tparams->vrec_header(&params, tparams);
+		pad_len = tparams->vrec_header(itl, tparams);
 	else
 		memset(tparams->hdr, 0, tparams->header_size);
 
 	if (write(ifd, tparams->hdr, tparams->header_size)
 					!= tparams->header_size) {
 		fprintf (stderr, "%s: Write error on %s: %s\n",
-			params.cmdname, params.imagefile, strerror(errno));
+			itl->cmdname, itl->imagefile, strerror(errno));
 		return EXIT_FAILURE;
 	}
 
-	if (!params.skipcpy) {
-		if (params.type == IH_TYPE_MULTI ||
-		    params.type == IH_TYPE_SCRIPT) {
-			char *file = params.datafile;
+	if (!itl->skipcpy) {
+		if (itl->type == IH_TYPE_MULTI ||
+		    itl->type == IH_TYPE_SCRIPT) {
+			char *file = itl->datafile;
 			uint32_t size;
 
 			for (;;) {
@@ -786,7 +785,7 @@ static int run_mkimage(struct imgtool *itl)
 
 					if (stat (file, &sbuf) < 0) {
 						fprintf (stderr, "%s: Can't stat %s: %s\n",
-							 params.cmdname, file, strerror(errno));
+							 itl->cmdname, file, strerror(errno));
 						return EXIT_FAILURE;
 					}
 					size = cpu_to_uimage (sbuf.st_size);
@@ -796,7 +795,7 @@ static int run_mkimage(struct imgtool *itl)
 
 				if (write(ifd, (char *)&size, sizeof(size)) != sizeof(size)) {
 					fprintf (stderr, "%s: Write error on %s: %s\n",
-						 params.cmdname, params.imagefile,
+						 itl->cmdname, itl->imagefile,
 						 strerror(errno));
 					return EXIT_FAILURE;
 				}
@@ -812,60 +811,60 @@ static int run_mkimage(struct imgtool *itl)
 					file = NULL;
 				}
 			}
-			copy_datafile(itl, ifd, params.datafile);
-		} else if (params.type == IH_TYPE_PBLIMAGE) {
+			copy_datafile(itl, ifd, itl->datafile);
+		} else if (itl->type == IH_TYPE_PBLIMAGE) {
 			/* PBL has special Image format, implements its' own */
-			pbl_load_uboot(ifd, &params);
-		} else if (params.type == IH_TYPE_ZYNQMPBIF) {
+			pbl_load_uboot(ifd, itl);
+		} else if (itl->type == IH_TYPE_ZYNQMPBIF) {
 			/* Image file is meta, walk through actual targets */
 			int ret;
 
-			ret = zynqmpbif_copy_image(ifd, &params);
+			ret = zynqmpbif_copy_image(ifd, itl);
 			if (ret)
 				return ret;
-		} else if (params.type == IH_TYPE_IMX8IMAGE) {
+		} else if (itl->type == IH_TYPE_IMX8IMAGE) {
 			/* i.MX8/8X has special Image format */
 			int ret;
 
-			ret = imx8image_copy_image(ifd, &params);
+			ret = imx8image_copy_image(ifd, itl);
 			if (ret)
 				return ret;
-		} else if (params.type == IH_TYPE_IMX8MIMAGE) {
+		} else if (itl->type == IH_TYPE_IMX8MIMAGE) {
 			/* i.MX8M has special Image format */
 			int ret;
 
-			ret = imx8mimage_copy_image(ifd, &params);
+			ret = imx8mimage_copy_image(ifd, itl);
 			if (ret)
 				return ret;
-		} else if ((params.type == IH_TYPE_RKSD) ||
-				(params.type == IH_TYPE_RKSPI)) {
+		} else if ((itl->type == IH_TYPE_RKSD) ||
+				(itl->type == IH_TYPE_RKSPI)) {
 			/* Rockchip has special Image format */
 			int ret;
 
-			ret = rockchip_copy_image(ifd, &params);
+			ret = rockchip_copy_image(ifd, itl);
 			if (ret)
 				return ret;
 		} else {
-			copy_file(itl, ifd, params.datafile, pad_len);
+			copy_file(itl, ifd, itl->datafile, pad_len);
 		}
-		if (params.type == IH_TYPE_FIRMWARE_IVT) {
+		if (itl->type == IH_TYPE_FIRMWARE_IVT) {
 			/* Add alignment and IVT */
-			uint32_t aligned_filesize = ALIGN(params.file_size,
+			uint32_t aligned_filesize = ALIGN(itl->file_size,
 							  0x1000);
 			flash_header_v2_t ivt_header = { { 0xd1, 0x2000, 0x40 },
-					params.addr, 0, 0, 0, params.addr
+					itl->addr, 0, 0, 0, itl->addr
 							+ aligned_filesize
 							- tparams->header_size,
-					params.addr + aligned_filesize
+					itl->addr + aligned_filesize
 							- tparams->header_size
 							+ 0x20, 0 };
-			int i = params.file_size;
+			int i = itl->file_size;
 			for (; i < aligned_filesize; i++) {
 				if (write(ifd, (char *) &i, 1) != 1) {
 					fprintf(stderr,
 							"%s: Write error on %s: %s\n",
-							params.cmdname,
-							params.imagefile,
+							itl->cmdname,
+							itl->imagefile,
 							strerror(errno));
 					return EXIT_FAILURE;
 				}
@@ -873,8 +872,8 @@ static int run_mkimage(struct imgtool *itl)
 			if (write(ifd, &ivt_header, sizeof(flash_header_v2_t))
 					!= sizeof(flash_header_v2_t)) {
 				fprintf(stderr, "%s: Write error on %s: %s\n",
-						params.cmdname,
-						params.imagefile,
+						itl->cmdname,
+						itl->imagefile,
 						strerror(errno));
 				return EXIT_FAILURE;
 			}
@@ -894,34 +893,34 @@ static int run_mkimage(struct imgtool *itl)
 
 	if (fstat(ifd, &sbuf) < 0) {
 		fprintf (stderr, "%s: Can't stat %s: %s\n",
-			params.cmdname, params.imagefile, strerror(errno));
+			itl->cmdname, itl->imagefile, strerror(errno));
 		return EXIT_FAILURE;
 	}
-	params.file_size = sbuf.st_size;
+	itl->file_size = sbuf.st_size;
 
 	map_len = sbuf.st_size;
 	ptr = mmap(0, map_len, PROT_READ | PROT_WRITE, MAP_SHARED, ifd, 0);
 	if (ptr == MAP_FAILED) {
 		fprintf (stderr, "%s: Can't map %s: %s\n",
-			params.cmdname, params.imagefile, strerror(errno));
+			itl->cmdname, itl->imagefile, strerror(errno));
 		return EXIT_FAILURE;
 	}
 
 	/* Setup the image header as per input image type*/
 	if (tparams->set_header)
-		tparams->set_header (ptr, &sbuf, ifd, &params);
+		tparams->set_header(ptr, &sbuf, ifd, itl);
 	else {
 		fprintf (stderr, "%s: Can't set header for %s\n",
-			params.cmdname, tparams->name);
+			itl->cmdname, tparams->name);
 		return EXIT_FAILURE;
 	}
 
 	/* Print the image information by processing image header */
 	if (tparams->print_header)
-		tparams->print_header (ptr, &params);
+		tparams->print_header(ptr, itl);
 	else {
 		fprintf (stderr, "%s: Can't print header for %s\n",
-			params.cmdname, tparams->name);
+			itl->cmdname, tparams->name);
 	}
 
 	(void)munmap((void *)ptr, map_len);
@@ -939,7 +938,7 @@ static int run_mkimage(struct imgtool *itl)
 
 	if (close(ifd)) {
 		fprintf (stderr, "%s: Write error on %s: %s\n",
-			params.cmdname, params.imagefile, strerror(errno));
+			itl->cmdname, itl->imagefile, strerror(errno));
 		return EXIT_FAILURE;
 	}
 
