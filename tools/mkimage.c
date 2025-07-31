@@ -145,7 +145,7 @@ static int usage(const struct imgtool *itl, const char *msg)
 	return EXIT_FAILURE;
 }
 
-static int add_content(int type, const char *fname)
+static int add_content(struct imgtool *itl, int type, const char *fname)
 {
 	struct content_info *cont;
 
@@ -154,11 +154,11 @@ static int add_content(int type, const char *fname)
 		return -1;
 	cont->type = type;
 	cont->fname = fname;
-	if (params.content_tail)
-		params.content_tail->next = cont;
+	if (itl->content_tail)
+		itl->content_tail->next = cont;
 	else
-		params.content_head = cont;
-	params.content_tail = cont;
+		itl->content_head = cont;
+	itl->content_tail = cont;
 
 	return 0;
 }
@@ -230,7 +230,7 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 			params.Aflag = 1;
 			break;
 		case 'b':
-			if (add_content(IH_TYPE_FLATDT, optarg)) {
+			if (add_content(itl, IH_TYPE_FLATDT, optarg)) {
 				fprintf(stderr,
 					"%s: Out of memory adding content '%s'",
 					params.cmdname, optarg);
