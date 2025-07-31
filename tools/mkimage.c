@@ -18,17 +18,6 @@
 #include <sys/ioctl.h>
 #endif
 
-/* parameters initialized by core will be used by the image type code */
-static struct imgtool params = {
-	.os = IH_OS_LINUX,
-	.arch = IH_ARCH_PPC,
-	.type = IH_TYPE_KERNEL,
-	.comp = IH_COMP_GZIP,
-	.dtc = MKIMAGE_DEFAULT_DTC_OPTIONS,
-	.imagename = "",
-	.imagename2 = "",
-};
-
 static enum ih_category cur_category;
 
 static int h_compare_category_name(const void *vtype1, const void *vtype2)
@@ -950,15 +939,22 @@ static int run_mkimage(struct imgtool *itl)
 
 int main(int argc, char **argv)
 {
+	/* parameters initialized by core will be used by the image type code */
+	struct imgtool itl = {
+		.cmdname = *argv,
+		.os = IH_OS_LINUX,
+		.arch = IH_ARCH_PPC,
+		.type = IH_TYPE_KERNEL,
+		.comp = IH_COMP_GZIP,
+		.dtc = MKIMAGE_DEFAULT_DTC_OPTIONS,
+		.imagename = "",
+		.imagename2 = "",
+	};
 	int ret;
 
-	params.cmdname = *argv;
-	params.addr = 0;
-	params.ep = 0;
-
-	ret = process_args(&params, argc, argv);
+	ret = process_args(&itl, argc, argv);
 	if (!ret)
-		ret = run_mkimage(&params);
+		ret = run_mkimage(&itl);
 
 	return ret;
 }
