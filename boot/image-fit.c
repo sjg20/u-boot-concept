@@ -294,8 +294,7 @@ static void fit_image_print_verification_data(const void *fit, int noffset,
  */
 static void fit_conf_print(const void *fit, int noffset, const char *p)
 {
-	char *desc;
-	const char *uname;
+	const char *uname, *desc;
 	int ret;
 	int fdt_index, loadables_index;
 	int ndepth;
@@ -377,7 +376,7 @@ static void fit_conf_print(const void *fit, int noffset, const char *p)
  */
 void fit_print_contents(const void *fit)
 {
-	char *desc;
+	const char *desc;
 	char *uname;
 	int images_noffset;
 	int confs_noffset;
@@ -484,7 +483,7 @@ void fit_print_contents(const void *fit)
  */
 void fit_image_print(const void *fit, int image_noffset, const char *p)
 {
-	char *desc;
+	const char *desc;
 	uint8_t type, arch, os, comp = IH_COMP_NONE;
 	size_t size;
 	ulong load, entry;
@@ -590,28 +589,17 @@ void fit_image_print(const void *fit, int image_noffset, const char *p)
 	}
 }
 
-/**
- * fit_get_desc - get node description property
- * @fit: pointer to the FIT format image header
- * @noffset: node offset
- * @desc: double pointer to the char, will hold pointer to the description
- *
- * fit_get_desc() reads description property from a given node, if
- * description is found pointer to it is returned in third call argument.
- *
- * returns:
- *     0, on success
- *     -1, on failure
- */
-int fit_get_desc(const void *fit, int noffset, char **desc)
+int fit_get_desc(const void *fit, int noffset, const char **descp)
 {
+	const char *desc;
 	int len;
 
-	*desc = (char *)fdt_getprop(fit, noffset, FIT_DESC_PROP, &len);
-	if (*desc == NULL) {
+	desc = (char *)fdt_getprop(fit, noffset, FIT_DESC_PROP, &len);
+	if (!desc) {
 		fit_get_debug(fit, noffset, FIT_DESC_PROP, len);
-		return -1;
+		return -ENOENT;
 	}
+	*descp = desc;
 
 	return 0;
 }
@@ -1938,7 +1926,7 @@ int fit_conf_get_prop_node(const void *fit, int noffset, const char *prop_name,
 static int fit_get_data_tail(const void *fit, int noffset,
 			     const void **data, size_t *size)
 {
-	char *desc;
+	const char *desc;
 
 	if (noffset < 0)
 		return noffset;
