@@ -455,7 +455,7 @@ static void verify_image(struct imgtool *itl, const struct imgtool_funcs *tparam
 	(void)close(ifd);
 }
 
-static void copy_file(int ifd, const char *datafile, int pad)
+static void copy_file(struct imgtool *itl, int ifd, const char *datafile, int pad)
 {
 	int dfd;
 	struct stat sbuf;
@@ -465,43 +465,43 @@ static void copy_file(int ifd, const char *datafile, int pad)
 	uint8_t zeros[4096];
 	int offset = 0;
 	int size, ret;
-	struct imgtool_funcs *tparams = imagetool_get_type(params.type);
+	struct imgtool_funcs *tparams = imagetool_get_type(itl->type);
 
 	memset(zeros, 0, sizeof(zeros));
 
-	if (params.vflag)
+	if (itl->vflag)
 		fprintf(stderr, "Adding Image %s\n", datafile);
 
 	dfd = open(datafile, O_RDONLY | O_BINARY);
 	if (dfd < 0) {
 		fprintf(stderr, "%s: Can't open %s: %s\n",
-			params.cmdname, datafile, strerror(errno));
+			itl->cmdname, datafile, strerror(errno));
 		exit (EXIT_FAILURE);
 	}
 
 	if (fstat(dfd, &sbuf) < 0) {
 		fprintf(stderr, "%s: Can't stat %s: %s\n",
-			params.cmdname, datafile, strerror(errno));
+			itl->cmdname, datafile, strerror(errno));
 		exit (EXIT_FAILURE);
 	}
 
 	if (sbuf.st_size == 0) {
 		fprintf(stderr, "%s: Input file %s is empty, bailing out\n",
-			params.cmdname, datafile);
+			itl->cmdname, datafile);
 		exit (EXIT_FAILURE);
 	}
 
 	ptr = mmap(0, sbuf.st_size, PROT_READ, MAP_SHARED, dfd, 0);
 	if (ptr == MAP_FAILED) {
 		fprintf(stderr, "%s: Can't read %s: %s\n",
-			params.cmdname, datafile, strerror(errno));
+			itl->cmdname, datafile, strerror(errno));
 		exit (EXIT_FAILURE);
 	}
 
-	if (params.xflag &&
-	    ((params.type > IH_TYPE_INVALID && params.type < IH_TYPE_FLATDT) ||
-	     params.type == IH_TYPE_KERNEL_NOLOAD ||
-	     params.type == IH_TYPE_FIRMWARE_IVT)) {
+	if (itl->xflag &&
+	    ((itl->type > IH_TYPE_INVALID && itl->type < IH_TYPE_FLATDT) ||
+	     itl->type == IH_TYPE_KERNEL_NOLOAD ||
+	     itl->type == IH_TYPE_FIRMWARE_IVT)) {
 		unsigned char *p = NULL;
 		/*
 		 * XIP: do not append the struct legacy_img_hdr at the
@@ -512,7 +512,7 @@ static void copy_file(int ifd, const char *datafile, int pad)
 		if ((unsigned int)sbuf.st_size < tparams->header_size) {
 			fprintf(stderr,
 				"%s: Bad size: \"%s\" is too small for XIP\n",
-				params.cmdname, datafile);
+				itl->cmdname, datafile);
 			exit (EXIT_FAILURE);
 		}
 
@@ -520,7 +520,7 @@ static void copy_file(int ifd, const char *datafile, int pad)
 			if (*p != 0xff) {
 				fprintf(stderr,
 					"%s: Bad file: \"%s\" has invalid buffer for XIP\n",
-					params.cmdname, datafile);
+					itl->cmdname, datafile);
 				exit (EXIT_FAILURE);
 			}
 		}
@@ -534,19 +534,19 @@ static void copy_file(int ifd, const char *datafile, int pad)
 	if (ret != size) {
 		if (ret < 0)
 			fprintf(stderr, "%s: Write error on %s: %s\n",
-				params.cmdname, params.imagefile, strerror(errno));
+				itl->cmdname, itl->imagefile, strerror(errno));
 		else if (ret < size)
 			fprintf(stderr, "%s: Write only %d/%d bytes, "
 				"probably no space left on the device\n",
-				params.cmdname, ret, size);
+				itl->cmdname, ret, size);
 		exit (EXIT_FAILURE);
 	}
 
 	tail = size % 4;
-	if (pad == 1 && tail != 0) {
+	if (pad == 1 && tail) {
 		if (write(ifd, (char *)&zero, 4 - tail) != 4 - tail) {
 			fprintf(stderr, "%s: Write error on %s: %s\n",
-				params.cmdname, params.imagefile,
+				itl->cmdname, itl->imagefile,
 				strerror(errno));
 			exit (EXIT_FAILURE);
 		}
@@ -558,7 +558,7 @@ static void copy_file(int ifd, const char *datafile, int pad)
 				todo = pad;
 			if (write(ifd, (char *)&zeros, todo) != todo) {
 				fprintf(stderr, "%s: Write error on %s: %s\n",
-					params.cmdname, params.imagefile,
+					itl->cmdname, itl->imagefile,
 					strerror(errno));
 				exit(EXIT_FAILURE);
 			}
@@ -570,7 +570,7 @@ static void copy_file(int ifd, const char *datafile, int pad)
 	(void)close(dfd);
 }
 
-void copy_datafile(int ifd, char *file)
+void copy_datafile(struct imgtool *itl, int ifd, char *file)
 {
 	if (!file)
 		return;
@@ -579,11 +579,11 @@ void copy_datafile(int ifd, char *file)
 
 		if (sep) {
 			*sep = '\0';
-			copy_file(ifd, file, 1);
+			copy_file(itl, ifd, file, 1);
 			*sep++ = ':';
 			file = sep;
 		} else {
-			copy_file(ifd, file, 0);
+			copy_file(itl, ifd, file, 0);
 			break;
 		}
 	}
@@ -650,10 +650,10 @@ static int run_mkimage(struct imgtool *itl)
 	}
 
 	if (params.lflag || params.fflag) {
-		ifd = open (params.imagefile, O_RDONLY|O_BINARY);
+		ifd = open(params.imagefile, O_RDONLY | O_BINARY);
 	} else {
-		ifd = open (params.imagefile,
-			O_RDWR|O_CREAT|O_TRUNC|O_BINARY, 0666);
+		ifd = open(params.imagefile,
+			   O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
 	}
 
 	if (ifd < 0) {
@@ -812,7 +812,7 @@ static int run_mkimage(struct imgtool *itl)
 					file = NULL;
 				}
 			}
-			copy_datafile(ifd, params.datafile);
+			copy_datafile(itl, ifd, params.datafile);
 		} else if (params.type == IH_TYPE_PBLIMAGE) {
 			/* PBL has special Image format, implements its' own */
 			pbl_load_uboot(ifd, &params);
@@ -846,7 +846,7 @@ static int run_mkimage(struct imgtool *itl)
 			if (ret)
 				return ret;
 		} else {
-			copy_file(ifd, params.datafile, pad_len);
+			copy_file(itl, ifd, params.datafile, pad_len);
 		}
 		if (params.type == IH_TYPE_FIRMWARE_IVT) {
 			/* Add alignment and IVT */
