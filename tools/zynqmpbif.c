@@ -84,22 +84,22 @@ static uint32_t zynqmp_csum(void *start, void *end)
 	return ~checksum;
 }
 
-static int zynqmpbif_check_params(struct imgtool *params)
+static int zynqmpbif_check_params(struct imgtool *itl)
 {
-	if (!params)
+	if (!itl)
 		return 0;
 
-	if (params->addr != 0x0) {
+	if (itl->addr != 0x0) {
 		fprintf(stderr, "Error: Load Address can not be specified.\n");
 		return -1;
 	}
 
-	if (params->eflag) {
+	if (itl->eflag) {
 		fprintf(stderr, "Error: Entry Point can not be specified.\n");
 		return -1;
 	}
 
-	return !(params->lflag || params->dflag);
+	return !(itl->lflag || itl->dflag);
 }
 
 static int zynqmpbif_check_image_types(uint8_t type)
@@ -995,7 +995,7 @@ err:
 
 /* Needs to be stubbed out so we can print after creation */
 static void zynqmpbif_set_header(void *ptr, struct stat *sbuf, int ifd,
-				 struct imgtool *params)
+				 struct imgtool *itl)
 {
 }
 

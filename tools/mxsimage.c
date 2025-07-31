@@ -2171,18 +2171,18 @@ static int mxsimage_check_image_types(uint8_t type)
 }
 
 static void mxsimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct imgtool *params)
+				struct imgtool *itl)
 {
 }
 
-int mxsimage_check_params(struct imgtool *params)
+int mxsimage_check_params(struct imgtool *itl)
 {
-	if (!params)
+	if (!itl)
 		return -1;
-	if (!strlen(params->imagename)) {
+	if (!strlen(itl->imagename)) {
 		fprintf(stderr,
 			"Error: %s - Configuration file not specified, it is needed for mxsimage generation\n",
-			params->cmdname);
+			itl->cmdname);
 		return -1;
 	}
 
@@ -2192,10 +2192,10 @@ int mxsimage_check_params(struct imgtool *params)
 	 * parameters are not sent at the same time
 	 * For example, if list is required a data image must not be provided
 	 */
-	return	(params->dflag && (params->fflag || params->lflag)) ||
-		(params->fflag && (params->dflag || params->lflag)) ||
-		(params->lflag && (params->dflag || params->fflag)) ||
-		(params->xflag) || !(strlen(params->imagename));
+	return	(itl->dflag && (itl->fflag || itl->lflag)) ||
+		(itl->fflag && (itl->dflag || itl->lflag)) ||
+		(itl->lflag && (itl->dflag || itl->fflag)) ||
+		(itl->xflag) || !(strlen(itl->imagename));
 }
 
 static int mxsimage_verify_print_header(char *file, int silent)
@@ -2216,7 +2216,7 @@ static int mxsimage_verify_print_header(char *file, int silent)
 
 char *imagefile;
 static int mxsimage_verify_header(unsigned char *ptr, int image_size,
-				  struct imgtool *params)
+				  struct imgtool *itl)
 {
 	struct sb_boot_image_header *hdr;
 
@@ -2233,12 +2233,12 @@ static int mxsimage_verify_header(unsigned char *ptr, int image_size,
 	    memcmp(hdr->signature2, "sgtl", 4))
 		return -EINVAL;
 
-	imagefile = params->imagefile;
+	imagefile = itl->imagefile;
 
-	return mxsimage_verify_print_header(params->imagefile, 1);
+	return mxsimage_verify_print_header(itl->imagefile, 1);
 }
 
-static void mxsimage_print_header(const void *hdr, struct imgtool *params)
+static void mxsimage_print_header(const void *hdr, struct imgtool *itl)
 {
 	if (imagefile)
 		mxsimage_verify_print_header(imagefile, 0);
@@ -2314,19 +2314,18 @@ static int sb_build_image(struct sb_image_ctx *ictx,
 	return 0;
 }
 
-static int mxsimage_generate(struct imgtool *params,
-			     struct imgtool_funcs *tparams)
+static int mxsimage_generate(struct imgtool *itl, struct imgtool_funcs *tparams)
 {
 	int ret;
 	struct sb_image_ctx ctx;
 
 	/* Do not copy the U-Boot image! */
-	params->skipcpy = 1;
+	itl->skipcpy = 1;
 
 	memset(&ctx, 0, sizeof(ctx));
 
-	ctx.cfg_filename = params->imagename;
-	ctx.output_filename = params->imagefile;
+	ctx.cfg_filename = itl->imagename;
+	ctx.output_filename = itl->imagefile;
 
 	ret = sb_build_tree_from_cfg(&ctx);
 	if (ret)

@@ -193,7 +193,7 @@ static int ublimage_check_image_types(uint8_t type)
 }
 
 static int ublimage_verify_header(unsigned char *ptr, int image_size,
-				  struct imgtool *params)
+				  struct imgtool *itl)
 {
 	struct ubl_header *ubl_hdr = (struct ubl_header *)ptr;
 
@@ -203,7 +203,7 @@ static int ublimage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void ublimage_print_header(const void *ptr, struct imgtool *params)
+static void ublimage_print_header(const void *ptr, struct imgtool *itl)
 {
 	struct ubl_header *ubl_hdr = (struct ubl_header *) ptr;
 
@@ -211,22 +211,22 @@ static void ublimage_print_header(const void *ptr, struct imgtool *params)
 }
 
 static void ublimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct imgtool *params)
+				struct imgtool *itl)
 {
 	struct ubl_header *ublhdr = (struct ubl_header *)ptr;
 
 	/* Parse configuration file */
-	parse_cfg_file(ublhdr, params->imagename);
+	parse_cfg_file(ublhdr, itl->imagename);
 }
 
-int ublimage_check_params(struct imgtool *params)
+int ublimage_check_params(struct imgtool *itl)
 {
-	if (!params)
+	if (!itl)
 		return CFG_INVALID;
-	if (!strlen(params->imagename)) {
+	if (!strlen(itl->imagename)) {
 		fprintf(stderr, "Error: %s - Configuration file not"
 			"specified, it is needed for ublimage generation\n",
-			params->cmdname);
+			itl->cmdname);
 		return CFG_INVALID;
 	}
 	/*
@@ -235,10 +235,10 @@ int ublimage_check_params(struct imgtool *params)
 	 * parameters are not sent at the same time
 	 * For example, if list is required a data image must not be provided
 	 */
-	return	(params->dflag && (params->fflag || params->lflag)) ||
-		(params->fflag && (params->dflag || params->lflag)) ||
-		(params->lflag && (params->dflag || params->fflag)) ||
-		(params->xflag) || !(strlen(params->imagename));
+	return	(itl->dflag && (itl->fflag || itl->lflag)) ||
+		(itl->fflag && (itl->dflag || itl->lflag)) ||
+		(itl->lflag && (itl->dflag || itl->fflag)) ||
+		(itl->xflag) || !(strlen(itl->imagename));
 }
 
 /*

@@ -194,7 +194,7 @@ struct imgtool_funcs *imagetool_get_type(int type);
  * @ptr: pointer the the image header
  * @sbuf: stat information about the file pointed to by ptr
  * @tparams: image type parameters or NULL
- * @params: mkimage parameters
+ * @itl: mkimage parameters
  *
  * Return: 0 on success, negative if input image format does not match with
  * the given image type
@@ -203,7 +203,7 @@ int imagetool_verify_print_header(
 	void *ptr,
 	struct stat *sbuf,
 	struct imgtool_funcs *tparams,
-	struct imgtool *params);
+	struct imgtool *itl);
 
 /**
  * imagetool_save_subimage - store data into a file
@@ -228,11 +228,11 @@ int imagetool_save_subimage(
  * This function prints a message if an error occurs, showing the error that
  * was obtained.
  *
- * @params:	mkimage parameters
+ * @itl:	mkimage parameters
  * @fname:	filename to check
  * Return: size of file, or -ve value on error
  */
-int imagetool_get_filesize(struct imgtool *params, const char *fname);
+int imagetool_get_filesize(struct imgtool *itl, const char *fname);
 
 /**
  * imagetool_get_source_date() - Get timestamp for build output.

@@ -228,22 +228,22 @@ static int mtk_brom_parse_imagename(const char *imagename)
 	return 0;
 }
 
-static int mtk_image_check_params(struct imgtool *params)
+static int mtk_image_check_params(struct imgtool *itl)
 {
-	if (!params->addr) {
+	if (!itl->addr) {
 		fprintf(stderr, "Error: Load Address must be set.\n");
 		return -EINVAL;
 	}
 
-	if (!params->imagename) {
+	if (!itl->imagename) {
 		fprintf(stderr, "Error: Image Name must be set.\n");
 		return -EINVAL;
 	}
 
-	return mtk_brom_parse_imagename(params->imagename);
+	return mtk_brom_parse_imagename(itl->imagename);
 }
 
-static int mtk_image_vrec_header(struct imgtool *params,
+static int mtk_image_vrec_header(struct imgtool *itl,
 				 struct imgtool_funcs *tparams)
 {
 	if (use_lk_hdr) {
@@ -488,7 +488,7 @@ static int mtk_image_verify_mt7621_header(const uint8_t *ptr, int print)
 }
 
 static int mtk_image_verify_header(unsigned char *ptr, int image_size,
-				   struct imgtool *params)
+				   struct imgtool *itl)
 {
 	struct legacy_img_hdr *hdr = (struct legacy_img_hdr *)ptr;
 	union lk_hdr *lk = (union lk_hdr *)ptr;
@@ -510,7 +510,7 @@ static int mtk_image_verify_header(unsigned char *ptr, int image_size,
 	return -1;
 }
 
-static void mtk_image_print_header(const void *ptr, struct imgtool *params)
+static void mtk_image_print_header(const void *ptr, struct imgtool *itl)
 {
 	struct legacy_img_hdr *hdr = (struct legacy_img_hdr *)ptr;
 	union lk_hdr *lk = (union lk_hdr *)ptr;
@@ -730,14 +730,14 @@ static void mtk_image_set_mt7621_header(void *ptr, off_t filesize,
 }
 
 static void mtk_image_set_header(void *ptr, struct stat *sbuf, int ifd,
-				 struct imgtool *params)
+				 struct imgtool *itl)
 {
 	union lk_hdr *lk = (union lk_hdr *)ptr;
 
 	if (use_lk_hdr) {
 		lk->magic = cpu_to_le32(LK_PART_MAGIC);
 		lk->size = cpu_to_le32(sbuf->st_size - sizeof(union lk_hdr));
-		lk->loadaddr = cpu_to_le32(params->addr);
+		lk->loadaddr = cpu_to_le32(itl->addr);
 		lk->mode = 0xffffffff; /* must be non-zero */
 		memset(lk->name, 0, sizeof(lk->name));
 		strncpy(lk->name, lk_name, sizeof(lk->name));
@@ -748,14 +748,14 @@ static void mtk_image_set_header(void *ptr, struct stat *sbuf, int ifd,
 	img_size = sbuf->st_size;
 
 	if (use_mt7621_hdr) {
-		mtk_image_set_mt7621_header(ptr, sbuf->st_size, params->addr);
+		mtk_image_set_mt7621_header(ptr, sbuf->st_size, itl->addr);
 		return;
 	}
 
 	if (hdr_media == BRLYT_TYPE_NAND || hdr_media == BRLYT_TYPE_SNAND)
-		mtk_image_set_nand_header(ptr, sbuf->st_size, params->addr);
+		mtk_image_set_nand_header(ptr, sbuf->st_size, itl->addr);
 	else
-		mtk_image_set_gen_header(ptr, sbuf->st_size, params->addr);
+		mtk_image_set_gen_header(ptr, sbuf->st_size, itl->addr);
 }
 
 U_BOOT_IMAGE_TYPE(

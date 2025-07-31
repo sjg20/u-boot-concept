@@ -177,12 +177,12 @@ static struct spl_info *rkcommon_get_spl_info(char *imagename)
 	return NULL;
 }
 
-static int rkcommon_get_aligned_size(struct imgtool *params,
+static int rkcommon_get_aligned_size(struct imgtool *itl,
 				     const char *fname)
 {
 	int size;
 
-	size = imagetool_get_filesize(params, fname);
+	size = imagetool_get_filesize(itl, fname);
 	if (size < 0)
 		return -1;
 
@@ -193,7 +193,7 @@ static int rkcommon_get_aligned_size(struct imgtool *params,
 	return ROUND(size, RK_SIZE_ALIGN);
 }
 
-int rkcommon_check_params(struct imgtool *params)
+int rkcommon_check_params(struct imgtool *itl)
 {
 	int i, size;
 
@@ -201,13 +201,13 @@ int rkcommon_check_params(struct imgtool *params)
 	 * If this is a operation (list or extract), the don't require
 	 * imagename to be set.
 	 */
-	if (params->lflag || params->iflag)
+	if (itl->lflag || itl->iflag)
 		return EXIT_SUCCESS;
 
-	if (!rkcommon_get_spl_info(params->imagename))
+	if (!rkcommon_get_spl_info(itl->imagename))
 		goto err_spl_info;
 
-	spl_params.init_file = params->datafile;
+	spl_params.init_file = itl->datafile;
 
 	spl_params.boot_file = strchr(spl_params.init_file, ':');
 	if (spl_params.boot_file) {
@@ -215,23 +215,23 @@ int rkcommon_check_params(struct imgtool *params)
 		spl_params.boot_file += 1;
 	}
 
-	size = rkcommon_get_aligned_size(params, spl_params.init_file);
+	size = rkcommon_get_aligned_size(itl, spl_params.init_file);
 	if (size < 0)
 		return EXIT_FAILURE;
 	spl_params.init_size = size;
 
 	/* Boot file is optional, and only for back-to-bootrom functionality. */
 	if (spl_params.boot_file) {
-		size = rkcommon_get_aligned_size(params, spl_params.boot_file);
+		size = rkcommon_get_aligned_size(itl, spl_params.boot_file);
 		if (size < 0)
 			return EXIT_FAILURE;
 		spl_params.boot_size = size;
 	}
 
-	if (spl_params.init_size > rkcommon_get_spl_size(params)) {
+	if (spl_params.init_size > rkcommon_get_spl_size(itl)) {
 		fprintf(stderr,
 			"Error: SPL image is too large (size %#x than %#x)\n",
-			spl_params.init_size, rkcommon_get_spl_size(params));
+			spl_params.init_size, rkcommon_get_spl_size(itl));
 		return EXIT_FAILURE;
 	}
 
@@ -239,7 +239,7 @@ int rkcommon_check_params(struct imgtool *params)
 
 err_spl_info:
 	fprintf(stderr, "ERROR: imagename (%s) is not supported!\n",
-		params->imagename ? params->imagename : "NULL");
+		itl->imagename ? itl->imagename : "NULL");
 
 	fprintf(stderr, "Available imagename:");
 	for (i = 0; i < ARRAY_SIZE(spl_infos); i++)
@@ -249,9 +249,9 @@ err_spl_info:
 	return EXIT_FAILURE;
 }
 
-const char *rkcommon_get_spl_hdr(struct imgtool *params)
+const char *rkcommon_get_spl_hdr(struct imgtool *itl)
 {
-	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
+	struct spl_info *info = rkcommon_get_spl_info(itl->imagename);
 
 	/*
 	 * info would not be NULL, because of we checked params before.
@@ -259,9 +259,9 @@ const char *rkcommon_get_spl_hdr(struct imgtool *params)
 	return info->spl_hdr;
 }
 
-int rkcommon_get_spl_size(struct imgtool *params)
+int rkcommon_get_spl_size(struct imgtool *itl)
 {
-	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
+	struct spl_info *info = rkcommon_get_spl_info(itl->imagename);
 
 	/*
 	 * info would not be NULL, because of we checked params before.
@@ -269,9 +269,9 @@ int rkcommon_get_spl_size(struct imgtool *params)
 	return info->spl_size;
 }
 
-bool rkcommon_need_rc4_spl(struct imgtool *params)
+bool rkcommon_need_rc4_spl(struct imgtool *itl)
 {
-	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
+	struct spl_info *info = rkcommon_get_spl_info(itl->imagename);
 
 	/*
 	 * info would not be NULL, because of we checked params before.
@@ -279,9 +279,9 @@ bool rkcommon_need_rc4_spl(struct imgtool *params)
 	return info->spl_rc4;
 }
 
-bool rkcommon_is_header_v2(struct imgtool *params)
+bool rkcommon_is_header_v2(struct imgtool *itl)
 {
-	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
+	struct spl_info *info = rkcommon_get_spl_info(itl->imagename);
 
 	return (info->header_ver == RK_HEADER_V2);
 }
@@ -295,14 +295,14 @@ static void do_sha256_hash(uint8_t *buf, uint32_t size, uint8_t *out)
 	sha256_finish(&ctx, out);
 }
 
-static void rkcommon_set_header0(void *buf, struct imgtool *params)
+static void rkcommon_set_header0(void *buf, struct imgtool *itl)
 {
 	struct header0_info *hdr = buf;
 	uint32_t init_boot_size;
 
 	memset(buf, '\0', RK_INIT_OFFSET * RK_BLK_SIZE);
 	hdr->magic = cpu_to_le32(RK_MAGIC);
-	hdr->disable_rc4 = cpu_to_le32(!rkcommon_need_rc4_spl(params));
+	hdr->disable_rc4 = cpu_to_le32(!rkcommon_need_rc4_spl(itl));
 	hdr->init_offset = cpu_to_le16(RK_INIT_OFFSET);
 	hdr->init_size   = cpu_to_le16(spl_params.init_size / RK_BLK_SIZE);
 
@@ -323,7 +323,7 @@ static void rkcommon_set_header0(void *buf, struct imgtool *params)
 	rc4_encode(buf, RK_BLK_SIZE, rc4_key);
 }
 
-static void rkcommon_set_header0_v2(void *buf, struct imgtool *params)
+static void rkcommon_set_header0_v2(void *buf, struct imgtool *itl)
 {
 	struct header0_info_v2 *hdr = buf;
 	uint32_t sector_offset, image_sector_count;
@@ -332,7 +332,7 @@ static void rkcommon_set_header0_v2(void *buf, struct imgtool *params)
 	int i;
 
 	printf("Image Type:   Rockchip %s boot image\n",
-		rkcommon_get_spl_hdr(params));
+		rkcommon_get_spl_hdr(itl));
 	memset(buf, '\0', RK_INIT_OFFSET * RK_BLK_SIZE);
 	hdr->magic   = cpu_to_le32(RK_MAGIC_V2);
 	hdr->size_and_nimage = cpu_to_le32((2 << 16) + 384);
@@ -357,25 +357,25 @@ static void rkcommon_set_header0_v2(void *buf, struct imgtool *params)
 }
 
 void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
-			 struct imgtool *params)
+			 struct imgtool *itl)
 {
 	struct header1_info *hdr = buf + RK_SPL_HDR_START;
 
-	if (rkcommon_is_header_v2(params)) {
-		rkcommon_set_header0_v2(buf, params);
+	if (rkcommon_is_header_v2(itl)) {
+		rkcommon_set_header0_v2(buf, itl);
 	} else {
-		rkcommon_set_header0(buf, params);
+		rkcommon_set_header0(buf, itl);
 
 		/* Set up the SPL name (i.e. copy spl_hdr over) */
 		if (memcmp(&hdr->magic, "RSAK", 4))
-			memcpy(&hdr->magic, rkcommon_get_spl_hdr(params), RK_SPL_HDR_SIZE);
+			memcpy(&hdr->magic, rkcommon_get_spl_hdr(itl), RK_SPL_HDR_SIZE);
 
-		if (rkcommon_need_rc4_spl(params))
+		if (rkcommon_need_rc4_spl(itl))
 			rkcommon_rc4_encode_spl(buf, RK_SPL_HDR_START,
 						spl_params.init_size);
 
 		if (spl_params.boot_file) {
-			if (rkcommon_need_rc4_spl(params))
+			if (rkcommon_need_rc4_spl(itl))
 				rkcommon_rc4_encode_spl(buf + RK_SPL_HDR_START,
 							spl_params.init_size,
 							spl_params.boot_size);
@@ -449,7 +449,7 @@ static int rkcommon_parse_header_v2(const void *buf, struct header0_info_v2 *hea
 }
 
 int rkcommon_verify_header(unsigned char *buf, int size,
-			   struct imgtool *params)
+			   struct imgtool *itl)
 {
 	struct header0_info header0;
 	struct spl_info *img_spl_info, *spl_info;
@@ -472,18 +472,18 @@ int rkcommon_verify_header(unsigned char *buf, int size,
 	 * If no 'imagename' is specified via the commandline (e.g. if this is
 	 * 'dumpimage -l' w/o any further constraints), we accept any spl_info.
 	 */
-	if (params->imagename == NULL || !strlen(params->imagename))
+	if (!itl->imagename || !strlen(itl->imagename))
 		return 0;
 
 	/* Match the 'imagename' against the 'spl_hdr' found */
-	spl_info = rkcommon_get_spl_info(params->imagename);
+	spl_info = rkcommon_get_spl_info(itl->imagename);
 	if (spl_info && img_spl_info)
 		return strcmp(spl_info->spl_hdr, img_spl_info->spl_hdr);
 
 	return -ENOENT;
 }
 
-void rkcommon_print_header(const void *buf, struct imgtool *params)
+void rkcommon_print_header(const void *buf, struct imgtool *itl)
 {
 	struct header0_info header0;
 	struct header0_info_v2 header0_v2;
@@ -543,8 +543,7 @@ void rkcommon_rc4_encode_spl(void *buf, unsigned int offset, unsigned int size)
 	}
 }
 
-int rkcommon_vrec_header(struct imgtool *params,
-			 struct imgtool_funcs *tparams)
+int rkcommon_vrec_header(struct imgtool *itl, struct imgtool_funcs *tparams)
 {
 	/*
 	 * The SPL image looks as follows:
@@ -573,7 +572,7 @@ int rkcommon_vrec_header(struct imgtool *params,
 	tparams->hdr = malloc(tparams->header_size);
 	if (!tparams->hdr) {
 		fprintf(stderr, "%s: Can't alloc header: %s\n",
-			params->cmdname, strerror(errno));
+			itl->cmdname, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 	memset(tparams->hdr, 0, tparams->header_size);
@@ -582,16 +581,16 @@ int rkcommon_vrec_header(struct imgtool *params,
 	 * We need to store the original file-size (i.e. before padding), as
 	 * imagetool does not set this during its adjustment of file_size.
 	 */
-	params->orig_file_size = tparams->header_size +
+	itl->orig_file_size = tparams->header_size +
 		spl_params.init_size + spl_params.boot_size;
 
-	params->file_size = ROUND(params->orig_file_size, RK_SIZE_ALIGN);
+	itl->file_size = ROUND(itl->orig_file_size, RK_SIZE_ALIGN);
 
 	/* Ignoring pad len, since we are using our own copy_image() */
 	return 0;
 }
 
-static int pad_file(struct imgtool *params, int ifd, int pad)
+static int pad_file(struct imgtool *itl, int ifd, int pad)
 {
 	uint8_t zeros[4096];
 
@@ -604,7 +603,7 @@ static int pad_file(struct imgtool *params, int ifd, int pad)
 			todo = pad;
 		if (write(ifd, (char *)&zeros, todo) != todo) {
 			fprintf(stderr, "%s: Write error on %s: %s\n",
-				params->cmdname, params->imagefile,
+				itl->cmdname, itl->imagefile,
 				strerror(errno));
 			return -1;
 		}
@@ -614,51 +613,51 @@ static int pad_file(struct imgtool *params, int ifd, int pad)
 	return 0;
 }
 
-static int copy_file(struct imgtool *params, int ifd,
-		     const char *file, int padded_size)
+static int copy_file(struct imgtool *itl, int ifd, const char *file,
+		     int padded_size)
 {
 	int dfd;
 	struct stat sbuf;
 	unsigned char *ptr;
 	int size;
 
-	if (params->vflag)
+	if (itl->vflag)
 		fprintf(stderr, "Adding Image %s\n", file);
 
 	dfd = open(file, O_RDONLY | O_BINARY);
 	if (dfd < 0) {
 		fprintf(stderr, "%s: Can't open %s: %s\n",
-			params->cmdname, file, strerror(errno));
+			itl->cmdname, file, strerror(errno));
 		return -1;
 	}
 
 	if (fstat(dfd, &sbuf) < 0) {
 		fprintf(stderr, "%s: Can't stat %s: %s\n",
-			params->cmdname, file, strerror(errno));
+			itl->cmdname, file, strerror(errno));
 		goto err_close;
 	}
 
-	if (params->vflag)
+	if (itl->vflag)
 		fprintf(stderr, "Size %u(pad to %u)\n",
 			(int)sbuf.st_size, padded_size);
 
 	ptr = mmap(0, sbuf.st_size, PROT_READ, MAP_SHARED, dfd, 0);
 	if (ptr == MAP_FAILED) {
 		fprintf(stderr, "%s: Can't read %s: %s\n",
-			params->cmdname, file, strerror(errno));
+			itl->cmdname, file, strerror(errno));
 		goto err_munmap;
 	}
 
 	size = sbuf.st_size;
 	if (write(ifd, ptr, size) != size) {
 		fprintf(stderr, "%s: Write error on %s: %s\n",
-			params->cmdname, params->imagefile, strerror(errno));
+			itl->cmdname, itl->imagefile, strerror(errno));
 		goto err_munmap;
 	}
 
 	munmap((void *)ptr, sbuf.st_size);
 	close(dfd);
-	return pad_file(params, ifd, padded_size - size);
+	return pad_file(itl, ifd, padded_size - size);
 
 err_munmap:
 	munmap((void *)ptr, sbuf.st_size);
@@ -667,22 +666,22 @@ err_close:
 	return -1;
 }
 
-int rockchip_copy_image(int ifd, struct imgtool *params)
+int rockchip_copy_image(int ifd, struct imgtool *itl)
 {
 	int ret;
 
-	ret = copy_file(params, ifd, spl_params.init_file,
+	ret = copy_file(itl, ifd, spl_params.init_file,
 			spl_params.init_size);
 	if (ret)
 		return ret;
 
 	if (spl_params.boot_file) {
-		ret = copy_file(params, ifd, spl_params.boot_file,
+		ret = copy_file(itl, ifd, spl_params.boot_file,
 				spl_params.boot_size);
 		if (ret)
 			return ret;
 	}
 
-	return pad_file(params, ifd,
-			params->file_size - params->orig_file_size);
+	return pad_file(itl, ifd,
+			itl->file_size - itl->orig_file_size);
 }

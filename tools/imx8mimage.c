@@ -49,17 +49,17 @@ static uint32_t get_cfg_value(char *token, char *name,  int linenr)
 	return value;
 }
 
-int imx8mimage_check_params(struct imgtool *params)
+int imx8mimage_check_params(struct imgtool *itl)
 {
 	return 0;
 }
 
 static void imx8mimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				  struct imgtool *params)
+				  struct imgtool *itl)
 {
 }
 
-static void imx8mimage_print_header(const void *ptr, struct imgtool *params)
+static void imx8mimage_print_header(const void *ptr, struct imgtool *itl)
 {
 }
 

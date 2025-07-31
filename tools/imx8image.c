@@ -22,17 +22,17 @@ static uint16_t sw_version;
 static uint32_t custom_partition;
 static uint32_t scfw_flags;
 
-int imx8image_check_params(struct imgtool *params)
+int imx8image_check_params(struct imgtool *itl)
 {
 	return 0;
 }
 
 static void imx8image_set_header(void *ptr, struct stat *sbuf, int ifd,
-				 struct imgtool *params)
+				 struct imgtool *itl)
 {
 }
 
-static void imx8image_print_header(const void *ptr, struct imgtool *params)
+static void imx8image_print_header(const void *ptr, struct imgtool *itl)
 {
 }
 
@@ -1133,8 +1133,8 @@ int imx8image_copy_image(int outfd, struct imgtool *itl)
 	 * SECO FW is a container image, this is to calculate the
 	 * 2nd container offset.
 	 */
-	fprintf(stdout, "parsing %s\n", mparams->imagename);
-	parse_cfg_file(img_sp, mparams->imagename);
+	fprintf(stdout, "parsing %s\n", itl->imagename);
+	parse_cfg_file(img_sp, itl->imagename);
 
 	if (sector_size == 0) {
 		fprintf(stderr, "Wrong sector size\n");

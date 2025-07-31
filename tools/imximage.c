@@ -803,7 +803,7 @@ static int imximage_check_image_types(uint8_t type)
 }
 
 static int imximage_verify_header(unsigned char *ptr, int image_size,
-				  struct imgtool *params)
+				  struct imgtool *itl)
 {
 	struct imx_header *imx_hdr = (struct imx_header *) ptr;
 
@@ -813,7 +813,7 @@ static int imximage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void imximage_print_header(const void *ptr, struct imgtool *params)
+static void imximage_print_header(const void *ptr, struct imgtool *itl)
 {
 	struct imx_header *imx_hdr = (struct imx_header *) ptr;
 	uint32_t version = detect_imximage_version(imx_hdr);
@@ -832,7 +832,7 @@ static void imximage_print_header(const void *ptr, struct imgtool *params)
 }
 
 static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct imgtool *params)
+				struct imgtool *itl)
 {
 	struct imx_header *imxhdr = (struct imx_header *)ptr;
 	uint32_t dcd_len;
@@ -850,7 +850,7 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	set_hdr_func();
 
 	/* Parse dcd configuration file */
-	dcd_len = parse_cfg_file(imxhdr, params->imagename);
+	dcd_len = parse_cfg_file(imxhdr, itl->imagename);
 
 	if (imximage_version == IMXIMAGE_V1)
 		header_size = sizeof(flash_header_v1_t);
@@ -866,7 +866,7 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 			imximage_init_loadsize = imximage_ivt_offset + header_size;
 
 	/* Set the imx header */
-	(*set_imx_hdr)(imxhdr, dcd_len, params->ep, imximage_ivt_offset);
+	(*set_imx_hdr)(imxhdr, dcd_len, itl->ep, imximage_ivt_offset);
 
 	/*
 	 * ROM bug alert
@@ -880,20 +880,20 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	*header_size_ptr = ROUND((sbuf->st_size + imximage_ivt_offset), 4096);
 
 	if (csf_ptr && imximage_csf_size) {
-		*csf_ptr = params->ep - imximage_init_loadsize +
+		*csf_ptr = itl->ep - imximage_init_loadsize +
 			*header_size_ptr;
 		*header_size_ptr += imximage_csf_size;
 	}
 }
 
-int imximage_check_params(struct imgtool *params)
+int imximage_check_params(struct imgtool *itl)
 {
-	if (!params)
+	if (!itl)
 		return CFG_INVALID;
-	if (!strlen(params->imagename)) {
+	if (!strlen(itl->imagename)) {
 		fprintf(stderr, "Error: %s - Configuration file not specified, "
 			"it is needed for imximage generation\n",
-			params->cmdname);
+			itl->cmdname);
 		return CFG_INVALID;
 	}
 	/*
@@ -902,10 +902,10 @@ int imximage_check_params(struct imgtool *params)
 	 * parameters are not sent at the same time
 	 * For example, if list is required a data image must not be provided
 	 */
-	return	(params->dflag && (params->fflag || params->lflag)) ||
-		(params->fflag && (params->dflag || params->lflag)) ||
-		(params->lflag && (params->dflag || params->fflag)) ||
-		(params->xflag) || !(strlen(params->imagename));
+	return	(itl->dflag && (itl->fflag || itl->lflag)) ||
+		(itl->fflag && (itl->dflag || itl->lflag)) ||
+		(itl->lflag && (itl->dflag || itl->fflag)) ||
+		(itl->xflag) || !(strlen(itl->imagename));
 }
 
 #ifdef CONFIG_FSPI_CONF_HEADER
@@ -966,13 +966,12 @@ static void generate_fspi_header(int ifd)
 }
 #endif
 
-static int imximage_generate(struct imgtool *params,
-			     struct imgtool_funcs *tparams)
+static int imximage_generate(struct imgtool *itl, struct imgtool_funcs *tparams)
 {
 	struct imx_header *imxhdr;
 	size_t alloc_len;
 	struct stat sbuf;
-	char *datafile = params->datafile;
+	char *datafile = itl->datafile;
 	uint32_t pad_len, header_size;
 
 #ifdef CONFIG_FSPI_CONF_HEADER
@@ -994,7 +993,7 @@ static int imximage_generate(struct imgtool *params,
 	set_hdr_func();
 
 	/* Parse dcd configuration file */
-	parse_cfg_file(&imximage_header, params->imagename);
+	parse_cfg_file(&imximage_header, itl->imagename);
 
 	if (imximage_version == IMXIMAGE_V1)
 		header_size = sizeof(imx_header_v1_t);
@@ -1013,7 +1012,7 @@ static int imximage_generate(struct imgtool *params,
 
 	if (alloc_len < header_size) {
 		fprintf(stderr, "%s: header error\n",
-			params->cmdname);
+			itl->cmdname);
 		exit(EXIT_FAILURE);
 	}
 
@@ -1021,7 +1020,7 @@ static int imximage_generate(struct imgtool *params,
 
 	if (!imxhdr) {
 		fprintf(stderr, "%s: malloc return failure: %s\n",
-			params->cmdname, strerror(errno));
+			itl->cmdname, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
@@ -1034,7 +1033,7 @@ static int imximage_generate(struct imgtool *params,
 
 	if (stat(datafile, &sbuf) < 0) {
 		fprintf(stderr, "%s: Can't stat %s: %s\n",
-			params->cmdname, datafile, strerror(errno));
+			itl->cmdname, datafile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 

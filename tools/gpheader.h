@@ -35,5 +35,5 @@ int gph_verify_header(struct gp_header *gph, int be);
 void gph_print_header(const struct gp_header *gph, int be);
 void gph_set_header(struct gp_header *gph, uint32_t size, uint32_t load_addr,
 			int be);
-int gpimage_check_params(struct imgtool *params);
+int gpimage_check_params(struct imgtool *itl);
 #endif

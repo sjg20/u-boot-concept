@@ -17,23 +17,23 @@ enum {
 };
 
 static void rkspi_set_header(void *buf, struct stat *sbuf, int ifd,
-			     struct imgtool *params)
+			     struct imgtool *itl)
 {
 	int sector;
 	unsigned int size;
 
-	size = params->orig_file_size;
+	size = itl->orig_file_size;
 
-	rkcommon_set_header(buf, sbuf, ifd, params);
+	rkcommon_set_header(buf, sbuf, ifd, itl);
 
 	/*
 	 * Spread the image out so we only use the first 2KB of each 4KB
 	 * region. This is a feature of the SPI format required by the Rockchip
 	 * boot ROM. Its rationale is unknown.
 	 */
-	if (params->vflag)
+	if (itl->vflag)
 		fprintf(stderr, "Spreading spi image from %u to %u\n",
-			size, params->file_size);
+			size, itl->file_size);
 
 	for (sector = size / RKSPI_SECT_LEN - 1; sector >= 0; sector--) {
 		debug("sector %u\n", sector);
@@ -57,17 +57,16 @@ static int rkspi_check_image_type(uint8_t type)
  * The SPI payload needs to make space for odd half-sector layout used in flash
  * (i.e. only the first 2K of each 4K sector is used).
  */
-static int rkspi_vrec_header(struct imgtool *params,
-			     struct imgtool_funcs *tparams)
+static int rkspi_vrec_header(struct imgtool *itl, struct imgtool_funcs *tparams)
 {
-	rkcommon_vrec_header(params, tparams);
+	rkcommon_vrec_header(itl, tparams);
 
 	/*
 	 * Converting to the SPI format (i.e. splitting each 4K page into two
 	 * 2K subpages and then padding these 2K pages up to take a complete
 	 * 4K sector again) which will double the image size.
 	 */
-	params->file_size = ROUND(params->file_size, RKSPI_SECT_LEN) << 1;
+	itl->file_size = ROUND(itl->file_size, RKSPI_SECT_LEN) << 1;
 
 	/* Ignoring pad len, since we are using our own copy_image() */
 	return 0;

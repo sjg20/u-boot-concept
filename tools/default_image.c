@@ -33,20 +33,20 @@ static int image_check_image_types(uint8_t type)
 		return EXIT_FAILURE;
 }
 
-static int image_check_params(struct imgtool *params)
+static int image_check_params(struct imgtool *itl)
 {
-	return	((params->dflag && (params->fflag || params->lflag)) ||
-		(params->fflag && (params->dflag || params->lflag)) ||
-		(params->lflag && (params->dflag || params->fflag)));
+	return ((itl->dflag && (itl->fflag || itl->lflag)) ||
+		(itl->fflag && (itl->dflag || itl->lflag)) ||
+		(itl->lflag && (itl->dflag || itl->fflag)));
 }
 
-static void image_print_header(const void *ptr, struct imgtool *params)
+static void image_print_header(const void *ptr, struct imgtool *itl)
 {
 	image_print_contents(ptr);
 }
 
 static int image_verify_header(unsigned char *ptr, int image_size,
-			       struct imgtool *params)
+			       struct imgtool *itl)
 {
 	uint32_t len;
 	const unsigned char *data;
@@ -56,7 +56,7 @@ static int image_verify_header(unsigned char *ptr, int image_size,
 
 	if (image_size < sizeof(struct legacy_img_hdr)) {
 		debug("%s: Bad image size: \"%s\" is no valid image\n",
-		      params->cmdname, params->imagefile);
+		      itl->cmdname, itl->imagefile);
 		return -FDT_ERR_BADSTRUCTURE;
 	}
 
@@ -69,7 +69,7 @@ static int image_verify_header(unsigned char *ptr, int image_size,
 
 	if (be32_to_cpu(hdr->ih_magic) != IH_MAGIC) {
 		debug("%s: Bad Magic Number: \"%s\" is no valid image\n",
-		      params->cmdname, params->imagefile);
+		      itl->cmdname, itl->imagefile);
 		return -FDT_ERR_BADMAGIC;
 	}
 
@@ -81,7 +81,7 @@ static int image_verify_header(unsigned char *ptr, int image_size,
 
 	if (crc32(0, data, len) != checksum) {
 		debug("%s: ERROR: \"%s\" has bad header checksum!\n",
-		      params->cmdname, params->imagefile);
+		      itl->cmdname, itl->imagefile);
 		return -FDT_ERR_BADSTATE;
 	}
 
@@ -94,21 +94,21 @@ static int image_verify_header(unsigned char *ptr, int image_size,
 
 	if (image_size - sizeof(struct legacy_img_hdr) < len) {
 		debug("%s: Bad image size: \"%s\" is no valid image\n",
-		      params->cmdname, params->imagefile);
+		      itl->cmdname, itl->imagefile);
 		return -FDT_ERR_BADSTRUCTURE;
 	}
 
 	checksum = be32_to_cpu(hdr->ih_dcrc);
 	if (crc32(0, data, len) != checksum) {
 		debug("%s: ERROR: \"%s\" has corrupted data!\n",
-		      params->cmdname, params->imagefile);
+		      itl->cmdname, itl->imagefile);
 		return -FDT_ERR_BADSTRUCTURE;
 	}
 	return 0;
 }
 
 static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
-			     struct imgtool *params)
+			     struct imgtool *itl)
 {
 	uint32_t checksum;
 	time_t time;
@@ -123,11 +123,11 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
 				sizeof(struct legacy_img_hdr)),
 			sbuf->st_size - sizeof(struct legacy_img_hdr));
 
-	time = imagetool_get_source_date(params->cmdname, sbuf->st_mtime);
-	ep = params->ep;
-	addr = params->addr;
+	time = imagetool_get_source_date(itl->cmdname, sbuf->st_mtime);
+	ep = itl->ep;
+	addr = itl->addr;
 
-	if (params->type == IH_TYPE_FIRMWARE_IVT)
+	if (itl->type == IH_TYPE_FIRMWARE_IVT)
 		/* Add size of CSF minus IVT */
 		imagesize = sbuf->st_size - sizeof(struct legacy_img_hdr)
 			    + 0x2060 - sizeof(flash_header_v2_t);
@@ -135,12 +135,12 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
 	else
 		imagesize = sbuf->st_size - sizeof(struct legacy_img_hdr);
 
-	if (params->type == IH_TYPE_FDT_LEGACY)
+	if (itl->type == IH_TYPE_FDT_LEGACY)
 		type = IH_TYPE_FLATDT;
 	else
-		type = params->type;
+		type = itl->type;
 
-	if (params->os == IH_OS_TEE) {
+	if (itl->os == IH_OS_TEE) {
 		addr = optee_image_get_load_addr(hdr);
 		ep = optee_image_get_entry_point(hdr);
 	}
@@ -152,12 +152,12 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
 	image_set_load(hdr, addr);
 	image_set_ep(hdr, ep);
 	image_set_dcrc(hdr, checksum);
-	image_set_os(hdr, params->os);
-	image_set_arch(hdr, params->arch);
+	image_set_os(hdr, itl->os);
+	image_set_arch(hdr, itl->arch);
 	image_set_type(hdr, type);
-	image_set_comp(hdr, params->comp);
+	image_set_comp(hdr, itl->comp);
 
-	image_set_name(hdr, params->imagename);
+	image_set_name(hdr, itl->imagename);
 
 	checksum = crc32(0, (const unsigned char *)hdr,
 				sizeof(struct legacy_img_hdr));
@@ -165,14 +165,14 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
 	image_set_hcrc(hdr, checksum);
 }
 
-static int image_extract_subimage(void *ptr, struct imgtool *params)
+static int image_extract_subimage(void *ptr, struct imgtool *itl)
 {
 	const struct legacy_img_hdr *hdr = (const struct legacy_img_hdr *)ptr;
 	ulong file_data;
 	ulong file_len;
 
 	if (image_check_type(hdr, IH_TYPE_MULTI)) {
-		ulong idx = params->pflag;
+		ulong idx = itl->pflag;
 		ulong count;
 
 		/* get the number of data files present in the image */
@@ -183,7 +183,7 @@ static int image_extract_subimage(void *ptr, struct imgtool *params)
 
 		if ((file_len == 0) || (idx >= count)) {
 			fprintf(stderr, "%s: No such data file %ld in \"%s\"\n",
-				params->cmdname, idx, params->imagefile);
+				itl->cmdname, idx, itl->imagefile);
 			return -1;
 		}
 	} else {
@@ -192,7 +192,7 @@ static int image_extract_subimage(void *ptr, struct imgtool *params)
 	}
 
 	/* save the "data file" into the file system */
-	return imagetool_save_subimage(params->outfile, file_data, file_len);
+	return imagetool_save_subimage(itl->outfile, file_data, file_len);
 }
 
 /*

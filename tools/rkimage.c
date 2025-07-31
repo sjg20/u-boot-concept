@@ -13,12 +13,12 @@
 static uint32_t header;
 
 static void rkimage_set_header(void *buf, struct stat *sbuf, int ifd,
-			       struct imgtool *params)
+			       struct imgtool *itl)
 {
-	memcpy(buf, rkcommon_get_spl_hdr(params), RK_SPL_HDR_SIZE);
+	memcpy(buf, rkcommon_get_spl_hdr(itl), RK_SPL_HDR_SIZE);
 
-	if (rkcommon_need_rc4_spl(params))
-		rkcommon_rc4_encode_spl(buf, 0, params->file_size);
+	if (rkcommon_need_rc4_spl(itl))
+		rkcommon_rc4_encode_spl(buf, 0, itl->file_size);
 }
 
 static int rkimage_check_image_type(uint8_t type)

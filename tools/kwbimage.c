@@ -486,7 +486,7 @@ static int kwb_load_rsa_key(const char *keydir, const char *name, RSA **p_rsa)
 	return 0;
 }
 
-static int kwb_load_cfg_key(struct imgtool *params,
+static int kwb_load_cfg_key(struct imgtool *itl,
 			    unsigned int cfg_option, const char *key_name,
 			    RSA **p_key)
 {
@@ -502,7 +502,7 @@ static int kwb_load_cfg_key(struct imgtool *params,
 		return -ENOENT;
 	}
 
-	res = kwb_load_rsa_key(params->keydir, e_key->key_name, &key);
+	res = kwb_load_rsa_key(itl->keydir, e_key->key_name, &key);
 	if (res < 0) {
 		fprintf(stderr, "Failed to load %s\n", key_name);
 		return -ENOENT;
@@ -513,14 +513,14 @@ static int kwb_load_cfg_key(struct imgtool *params,
 	return 0;
 }
 
-static int kwb_load_kak(struct imgtool *params, RSA **p_kak)
+static int kwb_load_kak(struct imgtool *itl, RSA **p_kak)
 {
-	return kwb_load_cfg_key(params, IMAGE_CFG_KAK, "KAK", p_kak);
+	return kwb_load_cfg_key(itl, IMAGE_CFG_KAK, "KAK", p_kak);
 }
 
-static int kwb_load_csk(struct imgtool *params, RSA **p_csk)
+static int kwb_load_csk(struct imgtool *itl, RSA **p_csk)
 {
-	return kwb_load_cfg_key(params, IMAGE_CFG_CSK, "CSK", p_csk);
+	return kwb_load_cfg_key(itl, IMAGE_CFG_CSK, "CSK", p_csk);
 }
 
 static int kwb_compute_pubkey_hash(struct pubkey_der_v1 *pk,
@@ -929,7 +929,7 @@ done:
 	return ret;
 }
 
-static int image_fill_xip_header(void *image, struct imgtool *params)
+static int image_fill_xip_header(void *image, struct imgtool *itl)
 {
 	struct main_hdr_v1 *main_hdr = image; /* kwbimage v0 and v1 have same XIP members */
 	int version = kwbimage_version(image);
@@ -942,21 +942,21 @@ static int image_fill_xip_header(void *image, struct imgtool *params)
 	}
 
 	if (version == 0 &&
-		   params->addr >= 0xE8000000 && params->addr < 0xEFFFFFFF &&
-		   params->ep >= 0xE8000000 && params->ep < 0xEFFFFFFF) {
+		   itl->addr >= 0xe8000000 && itl->addr < 0xefffffff &&
+		   itl->ep >= 0xe8000000 && itl->ep < 0xefffffff) {
 		/* Load and Execute address is in SPI address space (kwbimage v0) */
-		startaddr = 0xE8000000;
+		startaddr = 0xe8000000;
 	} else if (version != 0 &&
-		   params->addr >= 0xD4000000 && params->addr < 0xD7FFFFFF &&
-		   params->ep >= 0xD4000000 && params->ep < 0xD7FFFFFF) {
+		   itl->addr >= 0xd4000000 && itl->addr < 0xd7ffffff &&
+		   itl->ep >= 0xd4000000 && itl->ep < 0xd7ffffff) {
 		/* Load and Execute address is in SPI address space (kwbimage v1) */
-		startaddr = 0xD4000000;
+		startaddr = 0xd4000000;
 	} else if (version != 0 &&
-		   params->addr >= 0xD8000000 && params->addr < 0xDFFFFFFF &&
-		   params->ep >= 0xD8000000 && params->ep < 0xDFFFFFFF) {
+		   itl->addr >= 0xd8000000 && itl->addr < 0xdfffffff &&
+		   itl->ep >= 0xd8000000 && itl->ep < 0xdfffffff) {
 		/* Load and Execute address is in Device bus space (kwbimage v1) */
-		startaddr = 0xD8000000;
-	} else if (params->addr != 0x0) {
+		startaddr = 0xd8000000;
+	} else if (itl->addr != 0x0) {
 		/* Load address is non-zero */
 		if (version == 0)
 			fprintf(stderr, "XIP Load Address or XIP Entry Point is not in SPI address space\n");
@@ -977,18 +977,18 @@ static int image_fill_xip_header(void *image, struct imgtool *params)
 		 * Independent and in this case mkimage's --entry-point address
 		 * is relative offset from beginning of the data part of image.
 		 */
-		main_hdr->execaddr = cpu_to_le32(srcaddr + params->ep);
+		main_hdr->execaddr = cpu_to_le32(srcaddr + itl->ep);
 	} else {
 		/* The lowest possible load address is after the header at srcaddr. */
-		if (params->addr - startaddr < srcaddr) {
+		if (itl->addr - startaddr < srcaddr) {
 			fprintf(stderr,
 				"Invalid XIP Load Address 0x%08x.\n"
 				"The lowest address for this configuration is 0x%08x.\n",
-				params->addr, (unsigned)(startaddr + srcaddr));
+				itl->addr, (unsigned int)(startaddr + srcaddr));
 			return 0;
 		}
-		main_hdr->srcaddr = cpu_to_le32(params->addr - startaddr);
-		main_hdr->execaddr = cpu_to_le32(params->ep - startaddr);
+		main_hdr->srcaddr = cpu_to_le32(itl->addr - startaddr);
+		main_hdr->execaddr = cpu_to_le32(itl->ep - startaddr);
 	}
 
 	return 1;
@@ -1039,7 +1039,7 @@ static size_t image_headersz_v0(int *hasext)
 	return headersz;
 }
 
-static void *image_create_v0(size_t *dataoff, struct imgtool *params,
+static void *image_create_v0(size_t *dataoff, struct imgtool *itl,
 			     int payloadsz)
 {
 	struct image_cfg_element *e;
@@ -1071,8 +1071,8 @@ static void *image_create_v0(size_t *dataoff, struct imgtool *params,
 	main_hdr->srcaddr   = cpu_to_le32(*dataoff);
 	main_hdr->ext       = has_ext;
 	main_hdr->version   = 0;
-	main_hdr->destaddr  = cpu_to_le32(params->addr);
-	main_hdr->execaddr  = cpu_to_le32(params->ep);
+	main_hdr->destaddr  = cpu_to_le32(itl->addr);
+	main_hdr->execaddr  = cpu_to_le32(itl->ep);
 	main_hdr->blockid   = image_get_bootfrom();
 
 	e = image_find_option(IMAGE_CFG_NAND_ECC_MODE);
@@ -1090,16 +1090,16 @@ static void *image_create_v0(size_t *dataoff, struct imgtool *params,
 
 	/* For SATA srcaddr is specified in number of sectors. */
 	if (main_hdr->blockid == IBR_HDR_SATA_ID) {
-		params->bl_len = image_get_satablksz();
-		main_hdr->srcaddr = cpu_to_le32(le32_to_cpu(main_hdr->srcaddr) / params->bl_len);
+		itl->bl_len = image_get_satablksz();
+		main_hdr->srcaddr = cpu_to_le32(le32_to_cpu(main_hdr->srcaddr) / itl->bl_len);
 	}
 
 	/* For PCIe srcaddr is not used and must be set to 0xFFFFFFFF. */
 	if (main_hdr->blockid == IBR_HDR_PEX_ID)
 		main_hdr->srcaddr = cpu_to_le32(0xFFFFFFFF);
 
-	if (params->xflag) {
-		if (!image_fill_xip_header(main_hdr, params)) {
+	if (itl->xflag) {
+		if (!image_fill_xip_header(main_hdr, itl)) {
 			free(image);
 			return NULL;
 		}
@@ -1369,7 +1369,7 @@ static int export_pub_kak_hash(RSA *kak, struct secure_hdr_v1 *secure_hdr)
 	return res < 0 ? 1 : 0;
 }
 
-static int kwb_sign_csk_with_kak(struct imgtool *params,
+static int kwb_sign_csk_with_kak(struct imgtool *itl,
 				 struct secure_hdr_v1 *secure_hdr, RSA *csk)
 {
 	RSA *kak = NULL;
@@ -1382,7 +1382,7 @@ static int kwb_sign_csk_with_kak(struct imgtool *params,
 		return 1;
 	}
 
-	if (kwb_load_kak(params, &kak) < 0)
+	if (kwb_load_kak(itl, &kak) < 0)
 		return 1;
 
 	if (export_pub_kak_hash(kak, secure_hdr))
@@ -1411,7 +1411,7 @@ static int kwb_sign_csk_with_kak(struct imgtool *params,
 	return 0;
 }
 
-static int add_secure_header_v1(struct imgtool *params, uint8_t *image_ptr,
+static int add_secure_header_v1(struct imgtool *itl, uint8_t *image_ptr,
 				size_t image_size, uint8_t *header_ptr, size_t headersz,
 				struct secure_hdr_v1 *secure_hdr)
 {
@@ -1428,7 +1428,7 @@ static int add_secure_header_v1(struct imgtool *params, uint8_t *image_ptr,
 	e_boxid = image_find_option(IMAGE_CFG_BOX_ID);
 	e_flashid = image_find_option(IMAGE_CFG_FLASH_ID);
 
-	if (kwb_load_csk(params, &csk) < 0)
+	if (kwb_load_csk(itl, &csk) < 0)
 		return 1;
 
 	secure_hdr->headertype = OPT_HDR_V1_SECURE_TYPE;
@@ -1441,7 +1441,7 @@ static int add_secure_header_v1(struct imgtool *params, uint8_t *image_ptr,
 	if (e_flashid && specialized_img)
 		secure_hdr->flashid = cpu_to_le32(e_flashid->flashid);
 
-	if (kwb_sign_csk_with_kak(params, secure_hdr, csk))
+	if (kwb_sign_csk_with_kak(itl, secure_hdr, csk))
 		return 1;
 
 	if (kwb_sign_and_verify(csk, image_ptr, image_size - 4,
@@ -1474,7 +1474,7 @@ static void finish_register_set_header_v1(uint8_t **cur, uint8_t **next_ext,
 	*datai = 0;
 }
 
-static void *image_create_v1(size_t *dataoff, struct imgtool *params,
+static void *image_create_v1(size_t *dataoff, struct imgtool *itl,
 			     uint8_t *ptr, int payloadsz)
 {
 	struct image_cfg_element *e;
@@ -1515,8 +1515,8 @@ static void *image_create_v1(size_t *dataoff, struct imgtool *params,
 		cpu_to_le32(payloadsz);
 	main_hdr->headersz_lsb = cpu_to_le16(headersz & 0xFFFF);
 	main_hdr->headersz_msb = (headersz & 0xFFFF0000) >> 16;
-	main_hdr->destaddr     = cpu_to_le32(params->addr);
-	main_hdr->execaddr     = cpu_to_le32(params->ep);
+	main_hdr->destaddr     = cpu_to_le32(itl->addr);
+	main_hdr->execaddr     = cpu_to_le32(itl->ep);
 	main_hdr->srcaddr      = cpu_to_le32(*dataoff);
 	main_hdr->ext          = hasext;
 	main_hdr->version      = 1;
@@ -1546,16 +1546,16 @@ static void *image_create_v1(size_t *dataoff, struct imgtool *params,
 
 	/* For SATA srcaddr is specified in number of sectors. */
 	if (main_hdr->blockid == IBR_HDR_SATA_ID) {
-		params->bl_len = image_get_satablksz();
-		main_hdr->srcaddr = cpu_to_le32(le32_to_cpu(main_hdr->srcaddr) / params->bl_len);
+		itl->bl_len = image_get_satablksz();
+		main_hdr->srcaddr = cpu_to_le32(le32_to_cpu(main_hdr->srcaddr) / itl->bl_len);
 	}
 
 	/* For PCIe srcaddr is not used and must be set to 0xFFFFFFFF. */
 	if (main_hdr->blockid == IBR_HDR_PEX_ID)
 		main_hdr->srcaddr = cpu_to_le32(0xFFFFFFFF);
 
-	if (params->xflag) {
-		if (!image_fill_xip_header(main_hdr, params)) {
+	if (itl->xflag) {
+		if (!image_fill_xip_header(main_hdr, itl)) {
 			free(image);
 			return NULL;
 		}
@@ -1623,7 +1623,7 @@ static void *image_create_v1(size_t *dataoff, struct imgtool *params,
 					      &datai, delay);
 	}
 
-	if (secure_hdr && add_secure_header_v1(params, ptr + *dataoff, payloadsz,
+	if (secure_hdr && add_secure_header_v1(itl, ptr + *dataoff, payloadsz,
 					       image, headersz, secure_hdr))
 		return NULL;
 
@@ -1905,7 +1905,7 @@ static int image_get_version(void)
 }
 
 static void kwbimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct imgtool *params)
+				struct imgtool *itl)
 {
 	FILE *fcfg;
 	void *image = NULL;
@@ -1916,25 +1916,25 @@ static void kwbimage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	struct stat s;
 	int ret;
 
-	params->bl_len = 1;
+	itl->bl_len = 1;
 
 	/*
 	 * Do not use sbuf->st_size as it contains size with padding.
 	 * We need original image data size, so stat original file.
 	 */
-	if (params->skipcpy) {
+	if (itl->skipcpy) {
 		s.st_size = 0;
-	} else if (stat(params->datafile, &s)) {
+	} else if (stat(itl->datafile, &s)) {
 		fprintf(stderr, "Could not stat data file %s: %s\n",
-			params->datafile, strerror(errno));
+			itl->datafile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 	datasz = ALIGN(s.st_size, 4);
 
-	fcfg = fopen(params->imagename, "r");
+	fcfg = fopen(itl->imagename, "r");
 	if (!fcfg) {
 		fprintf(stderr, "Could not open input file %s\n",
-			params->imagename);
+			itl->imagename);
 		exit(EXIT_FAILURE);
 	}
 
@@ -1965,11 +1965,11 @@ static void kwbimage_set_header(void *ptr, struct stat *sbuf, int ifd,
 		 */
 	case -1:
 	case 0:
-		image = image_create_v0(&dataoff, params, datasz + 4);
+		image = image_create_v0(&dataoff, itl, datasz + 4);
 		break;
 
 	case 1:
-		image = image_create_v1(&dataoff, params, ptr, datasz + 4);
+		image = image_create_v1(&dataoff, itl, ptr, datasz + 4);
 		break;
 
 	default:
@@ -1997,7 +1997,7 @@ static void kwbimage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	free(image);
 }
 
-static void kwbimage_print_header(const void *ptr, struct imgtool *params)
+static void kwbimage_print_header(const void *ptr, struct imgtool *itl)
 {
 	struct main_hdr_v0 *mhdr = (struct main_hdr_v0 *)ptr;
 	struct bin_hdr_v0 *bhdr;
@@ -2031,9 +2031,9 @@ static void kwbimage_print_header(const void *ptr, struct imgtool *params)
 	if (mhdr->blockid == IBR_HDR_SATA_ID)
 		printf("%u Sector%s (LBA) = ", le32_to_cpu(mhdr->srcaddr),
 		       le32_to_cpu(mhdr->srcaddr) != 1 ? "s" : "");
-	genimg_print_size(le32_to_cpu(mhdr->srcaddr) * params->bl_len);
+	genimg_print_size(le32_to_cpu(mhdr->srcaddr) * itl->bl_len);
 	if (mhdr->blockid == IBR_HDR_SATA_ID)
-		printf("Sector Size:  %u Bytes\n", params->bl_len);
+		printf("Sector Size:  %u Bytes\n", itl->bl_len);
 	if (mhdr->blockid == IBR_HDR_SPI_ID && le32_to_cpu(mhdr->destaddr) == 0xFFFFFFFF) {
 		printf("Load Address: XIP\n");
 		printf("Execute Offs: %08x\n", le32_to_cpu(mhdr->execaddr));
@@ -2052,7 +2052,7 @@ static int kwbimage_check_image_types(uint8_t type)
 }
 
 static int kwbimage_verify_header(unsigned char *ptr, int image_size,
-				  struct imgtool *params)
+				  struct imgtool *itl)
 {
 	size_t header_size = kwbheader_size(ptr);
 	uint8_t blockid;
@@ -2133,7 +2133,7 @@ static int kwbimage_verify_header(unsigned char *ptr, int image_size,
 
 			if (image_checksum32(ptr + offset * blksz, size - 4) ==
 			    *(uint32_t *)(ptr + offset * blksz + size - 4)) {
-				params->bl_len = blksz;
+				itl->bl_len = blksz;
 				return 0;
 			}
 		}
@@ -2155,12 +2155,11 @@ static int kwbimage_verify_header(unsigned char *ptr, int image_size,
 	    *(uint32_t *)(ptr + offset + size - 4))
 		return -FDT_ERR_BADSTRUCTURE;
 
-	params->bl_len = 1;
+	itl->bl_len = 1;
 	return 0;
 }
 
-static int kwbimage_generate(struct imgtool *params,
-			     struct imgtool_funcs *tparams)
+static int kwbimage_generate(struct imgtool *itl, struct imgtool_funcs *tparams)
 {
 	FILE *fcfg;
 	struct stat s;
@@ -2172,18 +2171,18 @@ static int kwbimage_generate(struct imgtool *params,
 	int align, size;
 	unsigned int satablksz;
 
-	fcfg = fopen(params->imagename, "r");
+	fcfg = fopen(itl->imagename, "r");
 	if (!fcfg) {
 		fprintf(stderr, "Could not open input file %s\n",
-			params->imagename);
+			itl->imagename);
 		exit(EXIT_FAILURE);
 	}
 
-	if (params->skipcpy) {
+	if (itl->skipcpy) {
 		s.st_size = 0;
-	} else if (stat(params->datafile, &s)) {
+	} else if (stat(itl->datafile, &s)) {
 		fprintf(stderr, "Could not stat data file %s: %s\n",
-			params->datafile, strerror(errno));
+			itl->datafile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
@@ -2245,7 +2244,7 @@ static int kwbimage_generate(struct imgtool *params,
 	hdr = malloc(alloc_len);
 	if (!hdr) {
 		fprintf(stderr, "%s: malloc return failure: %s\n",
-			params->cmdname, strerror(errno));
+			itl->cmdname, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
@@ -2283,7 +2282,7 @@ static int kwbimage_generate(struct imgtool *params,
 	 * function is ignored, so we have to put required kwbimage aligning
 	 * into the preallocated header size.
 	 */
-	if (params->skipcpy) {
+	if (itl->skipcpy) {
 		tparams->header_size += size;
 		return 0;
 	} else {
@@ -2291,7 +2290,7 @@ static int kwbimage_generate(struct imgtool *params,
 	}
 }
 
-static int kwbimage_generate_config(void *ptr, struct imgtool *params)
+static int kwbimage_generate_config(void *ptr, struct imgtool *itl)
 {
 	struct main_hdr_v0 *mhdr0 = (struct main_hdr_v0 *)ptr;
 	struct main_hdr_v1 *mhdr = (struct main_hdr_v1 *)ptr;
@@ -2310,9 +2309,10 @@ static int kwbimage_generate_config(void *ptr, struct imgtool *params)
 	FILE *f;
 	int i;
 
-	f = fopen(params->outfile, "w");
+	f = fopen(itl->outfile, "w");
 	if (!f) {
-		fprintf(stderr, "Can't open \"%s\": %s\n", params->outfile, strerror(errno));
+		fprintf(stderr, "Can't open \"%s\": %s\n", itl->outfile,
+			strerror(errno));
 		return -1;
 	}
 
@@ -2353,7 +2353,7 @@ static int kwbimage_generate_config(void *ptr, struct imgtool *params)
 		fprintf(f, "SATA_PIO_MODE %u\n", (unsigned)mhdr0->satapiomode);
 
 	if (mhdr->blockid == IBR_HDR_SATA_ID)
-		fprintf(f, "SATA_BLKSZ %u\n", params->bl_len);
+		fprintf(f, "SATA_BLKSZ %u\n", itl->bl_len);
 
 	/*
 	 * Addresses and sizes which are specified by mkimage command line
@@ -2511,13 +2511,13 @@ static int kwbimage_generate_config(void *ptr, struct imgtool *params)
 	return 0;
 }
 
-static int kwbimage_extract_subimage(void *ptr, struct imgtool *params)
+static int kwbimage_extract_subimage(void *ptr, struct imgtool *itl)
 {
 	struct main_hdr_v1 *mhdr = (struct main_hdr_v1 *)ptr;
 	size_t header_size = kwbheader_size(ptr);
 	struct bin_hdr_v0 *bhdr;
 	struct opt_hdr_v1 *ohdr;
-	int idx = params->pflag;
+	int idx = itl->pflag;
 	int cur_idx;
 	uint32_t offset;
 	ulong image;
@@ -2525,7 +2525,7 @@ static int kwbimage_extract_subimage(void *ptr, struct imgtool *params)
 
 	/* Generate kwbimage config file when '-p -1' is specified */
 	if (idx == -1)
-		return kwbimage_generate_config(ptr, params);
+		return kwbimage_generate_config(ptr, itl);
 
 	image = 0;
 	size = 0;
@@ -2535,7 +2535,7 @@ static int kwbimage_extract_subimage(void *ptr, struct imgtool *params)
 		offset = le32_to_cpu(mhdr->srcaddr);
 
 		if (mhdr->blockid == IBR_HDR_SATA_ID)
-			offset *= params->bl_len;
+			offset *= itl->bl_len;
 
 		if (mhdr->blockid == IBR_HDR_PEX_ID && offset == 0xFFFFFFFF)
 			offset = header_size;
@@ -2578,22 +2578,22 @@ static int kwbimage_extract_subimage(void *ptr, struct imgtool *params)
 		}
 	}
 
-	return imagetool_save_subimage(params->outfile, image, size);
+	return imagetool_save_subimage(itl->outfile, image, size);
 }
 
-static int kwbimage_check_params(struct imgtool *params)
+static int kwbimage_check_params(struct imgtool *itl)
 {
-	if (!params->lflag && !params->iflag && !params->pflag &&
-	    (!params->imagename || !strlen(params->imagename))) {
+	if (!itl->lflag && !itl->iflag && !itl->pflag &&
+	    (!itl->imagename || !strlen(itl->imagename))) {
 		char *msg = "Configuration file for kwbimage creation omitted";
 
-		fprintf(stderr, "Error:%s - %s\n", params->cmdname, msg);
+		fprintf(stderr, "Error:%s - %s\n", itl->cmdname, msg);
 		return 1;
 	}
 
-	return (params->dflag && (params->fflag || params->lflag || params->skipcpy)) ||
-		(params->fflag) ||
-		(params->lflag && (params->dflag || params->fflag));
+	return (itl->dflag && (itl->fflag || itl->lflag || itl->skipcpy)) ||
+		(itl->fflag) ||
+		(itl->lflag && (itl->dflag || itl->fflag));
 }
 
 /*
