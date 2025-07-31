@@ -642,6 +642,33 @@ static int process_fit(struct imgtool *itl, struct imgtool_funcs *tfuncs)
 }
 
 /**
+ * open_image() - Open the image file to create/update
+ *
+ * @itl: Image-tool info
+ *
+ * Return: file handle if OK, or -ve on error
+ */
+static int open_image(struct imgtool *itl)
+{
+	int ifd;
+
+	if (itl->lflag || itl->fflag) {
+		ifd = open(itl->imagefile, O_RDONLY | O_BINARY);
+	} else {
+		ifd = open(itl->imagefile,
+			   O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
+	}
+
+	if (ifd < 0) {
+		fprintf(stderr, "%s: Can't open %s: %s\n",
+			itl->cmdname, itl->imagefile, strerror(errno));
+		return -ENOENT;
+	}
+
+	return ifd;
+}
+
+/**
  * run_mkimage() - Run the mkimage tool
  *
  * The program arguments are in params
@@ -665,19 +692,9 @@ static int run_mkimage(struct imgtool *itl)
 	if (itl->fflag && process_fit(itl, tparams))
 		return EXIT_FAILURE;
 
-	if (itl->lflag || itl->fflag) {
-		ifd = open(itl->imagefile, O_RDONLY | O_BINARY);
-	} else {
-		ifd = open(itl->imagefile,
-			   O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
-	}
-
-	if (ifd < 0) {
-		fprintf (stderr, "%s: Can't open %s: %s\n",
-			itl->cmdname, itl->imagefile,
-			strerror(errno));
+	ifd = open_image(itl);
+	if (ifd < 0)
 		return EXIT_FAILURE;
-	}
 
 	if (itl->lflag || itl->fflag) {
 		uint64_t size;
