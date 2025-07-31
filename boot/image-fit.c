@@ -1717,9 +1717,9 @@ int fit_conf_find_compat(const void *fit, const void *fdt)
 		return -EINVAL;
 	}
 
-	fdt_compat = fdt_getprop(fdt, 0, "compatible", &fdt_compat_len);
+	fdt_compat = fdt_getprop(fdt, 0, FIT_COMPATIBLE_PROP, &fdt_compat_len);
 	if (!fdt_compat) {
-		debug("Fdt for comparison has no \"compatible\" property.\n");
+		debug("Fdt for comparison has no 'compatible' property.\n");
 		return -ENXIO;
 	}
 
@@ -1742,7 +1742,7 @@ int fit_conf_find_compat(const void *fit, const void *fdt)
 			continue;
 
 		/* If there's a compat property in the config node, use that. */
-		if (fdt_getprop(fit, noffset, "compatible", NULL)) {
+		if (fdt_getprop(fit, noffset, FIT_COMPATIBLE_PROP, NULL)) {
 			fdt = fit;		  /* search in FIT image */
 			compat_noffset = noffset; /* search under config node */
 		} else {	/* Otherwise extract it from the kernel FDT. */
