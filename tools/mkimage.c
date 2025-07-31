@@ -214,142 +214,142 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 				  longopts, NULL)) != -1) {
 		switch (opt) {
 		case 'a':
-			params.addr = strtoull(optarg, &ptr, 16);
+			itl->addr = strtoull(optarg, &ptr, 16);
 			if (*ptr) {
 				fprintf(stderr, "%s: invalid load address %s\n",
-					params.cmdname, optarg);
+					itl->cmdname, optarg);
 				exit(EXIT_FAILURE);
 			}
 			break;
 		case 'A':
-			params.arch = genimg_get_arch_id(optarg);
-			if (params.arch < 0) {
+			itl->arch = genimg_get_arch_id(optarg);
+			if (itl->arch < 0) {
 				show_valid_options(IH_ARCH);
 				return usage(itl, "Invalid architecture");
 			}
-			params.Aflag = 1;
+			itl->Aflag = 1;
 			break;
 		case 'b':
 			if (add_content(itl, IH_TYPE_FLATDT, optarg)) {
 				fprintf(stderr,
 					"%s: Out of memory adding content '%s'",
-					params.cmdname, optarg);
+					itl->cmdname, optarg);
 				exit(EXIT_FAILURE);
 			}
 			break;
 		case 'B':
-			params.bl_len = strtoull(optarg, &ptr, 16);
+			itl->bl_len = strtoull(optarg, &ptr, 16);
 			if (*ptr) {
 				fprintf(stderr, "%s: invalid block length %s\n",
-					params.cmdname, optarg);
+					itl->cmdname, optarg);
 				exit(EXIT_FAILURE);
 			}
 
 			break;
 		case 'c':
-			params.comment = optarg;
+			itl->comment = optarg;
 			break;
 		case 'C':
-			params.comp = genimg_get_comp_id(optarg);
-			if (params.comp < 0) {
+			itl->comp = genimg_get_comp_id(optarg);
+			if (itl->comp < 0) {
 				show_valid_options(IH_COMP);
 				return usage(itl, "Invalid compression type");
 			}
 			break;
 		case 'd':
-			params.datafile = optarg;
-			params.dflag = 1;
+			itl->datafile = optarg;
+			itl->dflag = 1;
 			break;
 		case 'D':
-			params.dtc = optarg;
+			itl->dtc = optarg;
 			break;
 		case 'e':
-			params.ep = strtoull(optarg, &ptr, 16);
+			itl->ep = strtoull(optarg, &ptr, 16);
 			if (*ptr) {
 				fprintf(stderr, "%s: invalid entry point %s\n",
-					params.cmdname, optarg);
+					itl->cmdname, optarg);
 				exit(EXIT_FAILURE);
 			}
-			params.eflag = 1;
+			itl->eflag = 1;
 			break;
 		case 'E':
-			params.external_data = true;
+			itl->external_data = true;
 			break;
 		case 'f':
 			datafile = optarg;
 			if (!strcmp(datafile, "auto"))
-				params.auto_fit = AF_HASHED_IMG;
+				itl->auto_fit = AF_HASHED_IMG;
 			else if (!strcmp(datafile, "auto-conf"))
-				params.auto_fit = AF_SIGNED_CONF;
+				itl->auto_fit = AF_SIGNED_CONF;
 			/* fallthrough */
 		case 'F':
 			/*
 			 * The flattened image tree (FIT) format
 			 * requires a flattened device tree image type
 			 */
-			params.type = IH_TYPE_FLATDT;
-			params.fflag = 1;
+			itl->type = IH_TYPE_FLATDT;
+			itl->fflag = 1;
 			break;
 		case 'g':
-			params.keyname = optarg;
+			itl->keyname = optarg;
 			break;
 		case 'G':
-			params.keyfile = optarg;
+			itl->keyfile = optarg;
 			break;
 		case 'i':
-			params.fit_ramdisk = optarg;
+			itl->fit_ramdisk = optarg;
 			break;
 		case 'k':
-			params.keydir = optarg;
+			itl->keydir = optarg;
 			break;
 		case 'K':
-			params.keydest = optarg;
+			itl->keydest = optarg;
 			break;
 		case 'l':
-			params.lflag = 1;
+			itl->lflag = 1;
 			break;
 		case 'n':
-			params.imagename = optarg;
+			itl->imagename = optarg;
 			break;
 		case 'N':
-			params.engine_id = optarg;
+			itl->engine_id = optarg;
 			break;
 		case 'o':
-			params.algo_name = optarg;
+			itl->algo_name = optarg;
 			break;
 		case 'O':
-			params.os = genimg_get_os_id(optarg);
-			if (params.os < 0) {
+			itl->os = genimg_get_os_id(optarg);
+			if (itl->os < 0) {
 				show_valid_options(IH_OS);
 				return usage(itl, "Invalid operating system");
 			}
 			break;
 		case 'p':
-			params.external_offset = strtoull(optarg, &ptr, 16);
+			itl->external_offset = strtoull(optarg, &ptr, 16);
 			if (*ptr) {
 				fprintf(stderr, "%s: invalid offset size %s\n",
-					params.cmdname, optarg);
+					itl->cmdname, optarg);
 				exit(EXIT_FAILURE);
 			}
 			break;
 		case 'q':
-			params.quiet = 1;
+			itl->quiet = 1;
 			break;
 		case 'r':
-			params.require_keys = 1;
+			itl->require_keys = 1;
 			break;
 		case 'R':
 			/*
 			 * This entry is for the second configuration
 			 * file, if only one is not enough.
 			 */
-			params.imagename2 = optarg;
+			itl->imagename2 = optarg;
 			break;
 		case 's':
-			params.skipcpy = 1;
+			itl->skipcpy = 1;
 			break;
 		case 't':
-			params.reset_timestamp = 1;
+			itl->reset_timestamp = 1;
 			break;
 		case 'T':
 			if (strcmp(optarg, "list") == 0) {
@@ -363,13 +363,13 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 			}
 			break;
 		case 'v':
-			params.vflag++;
+			itl->vflag++;
 			break;
 		case 'V':
 			printf("mkimage version %s\n", PLAIN_VERSION);
 			exit(EXIT_SUCCESS);
 		case 'x':
-			params.xflag++;
+			itl->xflag++;
 			break;
 		default:
 			return usage(itl, "Invalid option");
@@ -378,17 +378,17 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 
 	/* The last parameter is expected to be the imagefile */
 	if (optind < argc)
-		params.imagefile = argv[optind];
+		itl->imagefile = argv[optind];
 
-	if (params.auto_fit == AF_SIGNED_CONF) {
-		if (!params.keyname || !params.algo_name)
+	if (itl->auto_fit == AF_SIGNED_CONF) {
+		if (!itl->keyname || !itl->algo_name)
 			return usage(itl,
-				"Missing key/algo for auto-FIT with signed configs (use -g -o)");
-	} else if (params.auto_fit == AF_HASHED_IMG && params.keyname) {
-		params.auto_fit = AF_SIGNED_IMG;
-		if (!params.algo_name)
+				     "Missing key/algo for auto-FIT with signed configs (use -g -o)");
+	} else if (itl->auto_fit == AF_HASHED_IMG && itl->keyname) {
+		itl->auto_fit = AF_SIGNED_IMG;
+		if (!itl->algo_name)
 			return usage(itl,
-				     "Missing algorithm for auto-FIT with signed images (use -g)");
+				"Missing algorithm for auto-FIT with signed images (use -g)");
 	}
 
 	/*
@@ -396,22 +396,22 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 	 * in the FIT, which is separate from the file's image type (which
 	 * will always be IH_TYPE_FLATDT in this case).
 	 */
-	if (params.type == IH_TYPE_FLATDT) {
-		params.fit_image_type = type ? type : IH_TYPE_KERNEL;
+	if (itl->type == IH_TYPE_FLATDT) {
+		itl->fit_image_type = type ? type : IH_TYPE_KERNEL;
 		/* For auto-FIT, datafile has to be provided with -d */
-		if (!params.auto_fit)
-			params.datafile = datafile;
-		else if (!params.datafile)
+		if (!itl->auto_fit)
+			itl->datafile = datafile;
+		else if (!itl->datafile)
 			return usage(itl,
 				     "Missing data file for auto-FIT (use -d)");
-	} else if (params.lflag || type != IH_TYPE_INVALID) {
-		if (type == IH_TYPE_SCRIPT && !params.datafile)
+	} else if (itl->lflag || type != IH_TYPE_INVALID) {
+		if (type == IH_TYPE_SCRIPT && !itl->datafile)
 			return usage(itl,
 				     "Missing data file for script (use -d)");
-		params.type = type;
+		itl->type = type;
 	}
 
-	if (!params.imagefile)
+	if (!itl->imagefile)
 		return usage(itl, "Missing output filename");
 
 	return 0;
