@@ -129,8 +129,15 @@ static int fit_calc_size(struct imgtool *itl)
 	return total_size;
 }
 
-static int fdt_property_file(struct imgtool *itl, void *fdt, const char *name,
-			     const char *fname)
+/**
+ * fdt_property_file() - Create a property using the contents of a file
+ *
+ * @itl: Image-tool info
+ * @fdt: Devicetree to write to
+ * @fname: Filename of file whose contents are to be written into the'data'
+ *	property
+ */
+static int fdt_property_file(struct imgtool *itl, void *fdt, const char *fname)
 {
 	struct stat sbuf;
 	void *ptr;
@@ -150,7 +157,7 @@ static int fdt_property_file(struct imgtool *itl, void *fdt, const char *name,
 		goto err;
 	}
 
-	ret = fdt_property_placeholder(fdt, "data", sbuf.st_size, &ptr);
+	ret = fdt_property_placeholder(fdt, FIT_DATA_PROP, sbuf.st_size, &ptr);
 	if (ret)
 		goto err;
 	ret = read(fd, ptr, sbuf.st_size);
@@ -291,7 +298,7 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 	 * Put data last since it is large. SPL may only load the first part
 	 * of the DT, so this way it can access all the above fields.
 	 */
-	ret = fdt_property_file(itl, fdt, FIT_DATA_PROP, itl->datafile);
+	ret = fdt_property_file(itl, fdt, itl->datafile);
 	if (ret)
 		return ret;
 	fit_add_hash_or_sign(itl, fdt, true);
@@ -308,8 +315,7 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 
 		get_basename(str, sizeof(str), cont->fname);
 		fdt_property_string(fdt, FIT_DESC_PROP, str);
-		ret = fdt_property_file(itl, fdt, FIT_DATA_PROP,
-					cont->fname);
+		ret = fdt_property_file(itl, fdt, cont->fname);
 		if (ret)
 			return ret;
 		fdt_property_string(fdt, FIT_TYPE_PROP, typename);
@@ -333,8 +339,7 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 		fdt_property_string(fdt, FIT_ARCH_PROP,
 				    genimg_get_arch_short_name(itl->arch));
 
-		ret = fdt_property_file(itl, fdt, FIT_DATA_PROP,
-					itl->fit_ramdisk);
+		ret = fdt_property_file(itl, fdt, itl->fit_ramdisk);
 		if (ret)
 			return ret;
 		fit_add_hash_or_sign(itl, fdt, true);
