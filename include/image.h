@@ -1186,6 +1186,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 #define FIT_STANDALONE_PROP	"standalone"
 #define FIT_SCRIPT_PROP		"script"
 #define FIT_LOAD_ONLY_PROP	"load-only"
+#define FIT_COMPATIBLE_PROP	"compatible"
 
 #define FIT_MAX_HASH_LEN	HASH_MAX_DIGEST_SIZE
 
