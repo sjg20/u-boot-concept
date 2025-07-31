@@ -669,6 +669,80 @@ static int open_image(struct imgtool *itl)
 }
 
 /**
+ * list_or_process() - List the image, or do processing on it
+ *
+ * @itl: Image-tool info
+ * @tfuncs: image-tool functions
+ * @ifd: File handle of file to process
+ *
+ * Return: file handle if OK, or -ve on error
+ */
+static int list_or_process(struct imgtool *itl, struct imgtool_funcs *tfuncs,
+			   int ifd)
+{
+	struct stat sbuf;
+	uint64_t size;
+	void *ptr;
+	int ret;
+
+	if (fstat(ifd, &sbuf) < 0) {
+		fprintf(stderr, "%s: Can't stat %s: %s\n", itl->cmdname,
+			itl->imagefile, strerror(errno));
+		return EXIT_FAILURE;
+	}
+
+	if ((sbuf.st_mode & S_IFMT) == S_IFBLK) {
+#ifdef __linux__
+#if defined(__linux__) && defined(_IOR) && !defined(BLKGETSIZE64)
+#define BLKGETSIZE64 _IOR(0x12, 114, size_t)	/* return device size in bytes (u64 *arg) */
+#endif
+		if (ioctl(ifd, BLKGETSIZE64, &size) < 0) {
+			fprintf(stderr,
+				"%s: failed to get size of block device \"%s\"\n",
+				itl->cmdname, itl->imagefile);
+			return EXIT_FAILURE;
+		}
+#else
+		fprintf(stderr,
+			"%s: \"%s\" is block device, don't know how to get its size\n",
+			itl->cmdname, itl->imagefile);
+		return EXIT_FAILURE;
+#endif
+	} else if (tfuncs && sbuf.st_size < (off_t)tfuncs->header_size) {
+		fprintf(stderr,
+			"%s: Bad size: \"%s\" is not valid image: size %llu < %u\n",
+			itl->cmdname, itl->imagefile,
+			(unsigned long long)sbuf.st_size,
+			tfuncs->header_size);
+		return EXIT_FAILURE;
+		size = sbuf.st_size;
+	} else {
+		size = sbuf.st_size;
+	}
+
+	ptr = mmap(0, size, PROT_READ, MAP_SHARED, ifd, 0);
+	if (ptr == MAP_FAILED) {
+		fprintf(stderr, "%s: Can't read %s: %s\n", itl->cmdname,
+			itl->imagefile, strerror(errno));
+		return EXIT_FAILURE;
+	}
+
+	/*
+	 * Verify the header format based on the expected header for image
+	 * type in titl-> If tfuncs is NULL simply check all image types
+	 * to find one that matches our header.
+	 */
+	ret = imagetool_verify_print_header(ptr, &sbuf, tfuncs, itl);
+
+	(void)munmap((void *)ptr, sbuf.st_size);
+	(void)close(ifd);
+	if (!ret)
+		summary_show(&itl->summary, itl->imagefile, itl->keydest);
+
+	return ret;
+}
+
+/**
  * run_mkimage() - Run the mkimage tool
  *
  * The program arguments are in params
@@ -680,7 +754,6 @@ static int run_mkimage(struct imgtool *itl)
 	struct imgtool_funcs *tparams = NULL;
 	struct stat sbuf;
 	int pad_len = 0;
-	int retval = 0;
 	size_t map_len;
 	int ifd = -1;
 	char *ptr;
@@ -696,68 +769,8 @@ static int run_mkimage(struct imgtool *itl)
 	if (ifd < 0)
 		return EXIT_FAILURE;
 
-	if (itl->lflag || itl->fflag) {
-		uint64_t size;
-		/*
-		 * list header information of existing image
-		 */
-		if (fstat(ifd, &sbuf) < 0) {
-			fprintf (stderr, "%s: Can't stat %s: %s\n",
-				itl->cmdname, itl->imagefile,
-				strerror(errno));
-			return EXIT_FAILURE;
-		}
-
-		if ((sbuf.st_mode & S_IFMT) == S_IFBLK) {
-#ifdef __linux__
-#if defined(__linux__) && defined(_IOR) && !defined(BLKGETSIZE64)
-#define BLKGETSIZE64 _IOR(0x12,114,size_t)	/* return device size in bytes (u64 *arg) */
-#endif
-			if (ioctl(ifd, BLKGETSIZE64, &size) < 0) {
-				fprintf (stderr,
-					"%s: failed to get size of block device \"%s\"\n",
-					itl->cmdname, itl->imagefile);
-				return EXIT_FAILURE;
-			}
-#else
-			fprintf (stderr,
-				"%s: \"%s\" is block device, don't know how to get its size\n",
-				itl->cmdname, itl->imagefile);
-			return EXIT_FAILURE;
-#endif
-		} else if (tparams && sbuf.st_size < (off_t)tparams->header_size) {
-			fprintf (stderr,
-				"%s: Bad size: \"%s\" is not valid image: size %llu < %u\n",
-				itl->cmdname, itl->imagefile,
-				(unsigned long long) sbuf.st_size,
-				tparams->header_size);
-			return EXIT_FAILURE;
-		} else {
-			size = sbuf.st_size;
-		}
-
-		ptr = mmap(0, size, PROT_READ, MAP_SHARED, ifd, 0);
-		if (ptr == MAP_FAILED) {
-			fprintf (stderr, "%s: Can't read %s: %s\n",
-				itl->cmdname, itl->imagefile,
-				strerror(errno));
-			return EXIT_FAILURE;
-		}
-
-		/*
-		 * Verifies the header format based on the expected header for image
-		 * type in titl-> If tparams is NULL simply check all image types
-		 * to find one that matches our header.
-		 */
-		retval = imagetool_verify_print_header(ptr, &sbuf, tparams, itl);
-
-		(void) munmap((void *)ptr, sbuf.st_size);
-		(void) close (ifd);
-		if (!retval)
-			summary_show(&itl->summary, itl->imagefile, itl->keydest);
-
-		return retval;
-	}
+	if (itl->lflag || itl->fflag)
+		return list_or_process(itl, tparams, ifd);
 
 	if (!itl->skipcpy && itl->type != IH_TYPE_MULTI && itl->type != IH_TYPE_SCRIPT) {
 		if (!itl->datafile) {
