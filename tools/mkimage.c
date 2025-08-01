@@ -387,6 +387,8 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 			return usage(itl,
 				"Missing algorithm for auto-FIT with signed images (use -g)");
 	}
+	if (itl->auto_fit)
+		itl->reset_timestamp = 1;
 
 	/*
 	 * For auto-generated FIT images we need to know the image type to put
