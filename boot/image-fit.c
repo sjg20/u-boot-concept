@@ -348,6 +348,16 @@ static void fit_conf_print(const void *fit, int noffset, const char *p)
 		printf("%s\n", uname);
 	}
 
+	/* Show the list of compatible strings */
+	for (i = 0; uname = fdt_stringlist_get(fit, noffset,
+				FIT_COMPATIBLE_PROP, i, NULL), uname; i++) {
+		if (!i)
+			printf("%s  Compatible:   ", p);
+		else
+			printf("%s                ", p);
+		printf("%s\n", uname);
+	}
+
 	/* Process all hash subnodes of the component configuration node */
 	for (ndepth = 0, noffset = fdt_next_node(fit, noffset, &ndepth);
 	     (noffset >= 0) && (ndepth > 0);
@@ -480,8 +490,8 @@ void fit_print_contents(const void *fit)
  */
 void fit_image_print(const void *fit, int image_noffset, const char *p)
 {
-	const char *desc;
 	uint8_t type, arch, os, comp = IH_COMP_NONE;
+	const char *desc;
 	size_t size;
 	ulong load, entry;
 	const void *data;
