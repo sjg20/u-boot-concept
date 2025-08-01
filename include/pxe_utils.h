@@ -23,20 +23,28 @@
  * take a 'include file getter' function.
  */
 
-/*
- * Describes a single label given in a pxe file.
+/**
+ * struct pxe_label - describes a single label in a pxe file
  *
- * Create these with the 'label_create' function given below.
+ * Create these with label_create()
  *
- * name - the name of the menu as given on the 'menu label' line.
- * kernel_label - the kernel label, including FIT config if present.
- * kernel - the path to the kernel file to use for this label.
- * append - kernel command line to use when booting this label
- * initrd - path to the initrd to use for this label.
- * attempted - 0 if we haven't tried to boot this label, 1 if we have.
- * localboot - 1 if this label specified 'localboot', 0 otherwise.
- * kaslrseed - 1 if generate kaslrseed from hw_rng
- * list - lets these form a list, which a pxe_menu struct will hold.
+ * @num: String version of the ID number of the label, e.g. "1"
+ * @name: name of the 'label' line
+ * @menu: name of the menu as given on the 'menu label' line
+ * @kernel_label: the kernel label, including FIT config if present
+ * @kernel: the path to the kernel file to use for this label
+ * @config: FIT configuration to use (after '#'), or NULL if none
+ * @append: kernel command line to use when booting this label
+ * @initrd: path to the initrd to use for this label.
+ * @fdt: path to FDT to use
+ * @fdtdir: path to FDT directory to use
+ * @fdtoverlays: space-separated list of paths of FDT overlays to apply
+ * @ipappend: flags for appending IP address (0x1) and MAC address (0x3)
+ * @attempted: 0 if we haven't tried to boot this label, 1 if we have
+ * @localboot: 1 if this label specified 'localboot', 0 otherwise
+ * @localboot_val: value of the localboot parameter
+ * @kaslrseed: 1 to generate kaslrseed from hw_rng
+ * @list: lets these form a list, which a pxe_menu struct will hold.
  */
 struct pxe_label {
 	char num[4];
