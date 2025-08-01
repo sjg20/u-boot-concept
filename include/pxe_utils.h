@@ -121,6 +121,8 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
  *	@initrd_addr_str)
  * @initrd_str: initrd string to process (only used if @initrd_addr_str)
  * @conf_fdt: string containing the FDT address
+ * @restart: true to use BOOTM_STATE_RESTART instead of BOOTM_STATE_START (only
+ *	supported with FIT / bootm)
  */
 struct pxe_context {
 	/**
@@ -152,6 +154,7 @@ struct pxe_context {
 	char *initrd_filesize;
 	char *initrd_str;
 	char *conf_fdt;
+	bool restart;
 };
 
 /**

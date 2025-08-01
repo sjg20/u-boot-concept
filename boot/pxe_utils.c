@@ -570,8 +570,13 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 
 	if (IS_ENABLED(CONFIG_CMD_BOOTM) && (fmt == IMAGE_FORMAT_FIT ||
 	    fmt == IMAGE_FORMAT_LEGACY)) {
+		int states;
+
+		states = ctx->restart ? BOOTM_STATE_RESTART : BOOTM_STATE_START;
 		log_debug("using bootm\n");
-		ret = bootm_run(&bmi);
+		ret = boot_run(&bmi, "ext", states | BOOTM_STATE_FINDOS |
+			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
+			BOOTM_STATE_LOADOS);
 	/* Try booting an AArch64 Linux kernel image */
 	} else if (IS_ENABLED(CONFIG_CMD_BOOTI) && fmt == IMAGE_FORMAT_BOOTI) {
 		log_debug("using booti\n");
