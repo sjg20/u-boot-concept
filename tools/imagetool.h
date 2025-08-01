@@ -111,6 +111,7 @@ struct imgtool {
 	const char *engine_id;	/* Engine to use for signing */
 	bool reset_timestamp;	/* Reset the timestamp on an existing image */
 	struct image_summary summary;	/* results of signing process */
+	bool load_only;		/* true to create a load-only FIT */
 };
 
 /** struct imgtool_funcs - image-type-specific variables and callbacks */
