@@ -136,8 +136,11 @@ static int fit_calc_size(struct imgtool *itl)
  * @fdt: Devicetree to write to
  * @fname: Filename of file whose contents are to be written into the'data'
  *	property
+ * @bufp: If non-null, returns a pointer to the data on success
+ * Return: 0 if OK, -1 on error
  */
-static int fdt_property_file(struct imgtool *itl, void *fdt, const char *fname)
+static int fdt_property_file(struct imgtool *itl, void *fdt, const char *fname,
+			     const char **bufp)
 {
 	struct stat sbuf;
 	void *ptr;
@@ -166,6 +169,8 @@ static int fdt_property_file(struct imgtool *itl, void *fdt, const char *fname)
 			itl->cmdname, fname, strerror(errno));
 		goto err;
 	}
+	if (bufp)
+		*bufp = ptr;
 	close(fd);
 
 	return 0;
@@ -298,7 +303,7 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 	 * Put data last since it is large. SPL may only load the first part
 	 * of the DT, so this way it can access all the above fields.
 	 */
-	ret = fdt_property_file(itl, fdt, itl->datafile);
+	ret = fdt_property_file(itl, fdt, itl->datafile, NULL);
 	if (ret)
 		return ret;
 	fit_add_hash_or_sign(itl, fdt, true);
@@ -307,6 +312,9 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 	/* Now the device tree files if available */
 	upto = 0;
 	for (cont = itl->content_head; cont; cont = cont->next) {
+		const char *buf, *compat;
+		int len;
+
 		if (cont->type != IH_TYPE_FLATDT)
 			continue;
 		typename = genimg_get_type_short_name(cont->type);
@@ -315,7 +323,7 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 
 		get_basename(str, sizeof(str), cont->fname);
 		fdt_property_string(fdt, FIT_DESC_PROP, str);
-		ret = fdt_property_file(itl, fdt, cont->fname);
+		ret = fdt_property_file(itl, fdt, cont->fname, &buf);
 		if (ret)
 			return ret;
 		fdt_property_string(fdt, FIT_TYPE_PROP, typename);
@@ -323,6 +331,11 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 				    genimg_get_arch_short_name(itl->arch));
 		fdt_property_string(fdt, FIT_COMP_PROP,
 				    genimg_get_comp_short_name(IH_COMP_NONE));
+		if (!fdt_check_header(buf)) {
+			compat = fdt_getprop(buf, 0, FIT_COMPATIBLE_PROP, &len);
+			cont->compat = compat;
+			cont->compat_len = len;
+		}
 		fit_add_hash_or_sign(itl, fdt, true);
 		if (ret)
 			return ret;
@@ -339,7 +352,7 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 		fdt_property_string(fdt, FIT_ARCH_PROP,
 				    genimg_get_arch_short_name(itl->arch));
 
-		ret = fdt_property_file(itl, fdt, itl->fit_ramdisk);
+		ret = fdt_property_file(itl, fdt, itl->fit_ramdisk, NULL);
 		if (ret)
 			return ret;
 		fit_add_hash_or_sign(itl, fdt, true);
@@ -393,6 +406,10 @@ static void fit_write_configs(struct imgtool *itl, char *fdt)
 
 		snprintf(str, sizeof(str), FIT_FDT_PROP "-%d", upto);
 		fdt_property_string(fdt, FIT_FDT_PROP, str);
+		if (cont->compat)
+			fdt_property(fdt, FIT_COMPATIBLE_PROP, cont->compat,
+				     cont->compat_len);
+
 		fit_add_hash_or_sign(itl, fdt, false);
 		fdt_end_node(fdt);
 	}
