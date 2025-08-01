@@ -58,11 +58,13 @@ int extlinux_set_property(struct udevice *dev, const char *property,
  * @allow_abs_path: true to allow absolute paths
  * @bootfile: Bootfile whose directory loaded files are relative to, NULL if
  *	none
+ * @restart: true to use BOOTM_STATE_RESTART instead of BOOTM_STATE_START (only
+ *	supported with FIT / bootm)
  * Return: 0 if OK, -ve error code on failure
  */
 int extlinux_boot(struct udevice *dev, struct bootflow *bflow,
 		  pxe_getfile_func getfile, bool allow_abs_path,
-		  const char *bootfile);
+		  const char *bootfile, bool restart);
 
 /**
  * extlinux_read_all() - read all files for a bootflow
