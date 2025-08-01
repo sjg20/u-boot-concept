@@ -15,9 +15,9 @@ import pytest
 
 import utils
 # pylint: disable=E0611
-from tests import fs_helper
 from fs_helper import DiskHelper, FsHelper
 from test_android import test_abootimg
+from img.vbe import setup_vbe_image
 
 def mkdir_cond(dirname):
     """Create a directory if it doesn't already exist
@@ -642,6 +642,7 @@ def test_ut_dm_init_bootstd(ubman):
     setup_efi_image(ubman)
     setup_ubuntu_image(ubman, 3, 'flash')
     setup_localboot_image(ubman)
+    setup_vbe_image(ubman)
 
     # Restart so that the new mmc1.img is picked up
     ubman.restart_uboot()
