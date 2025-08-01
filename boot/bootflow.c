@@ -28,6 +28,8 @@ static const char *const bootflow_img[BFI_COUNT - BFI_FIRST] = {
 	"logo",
 	"efi",
 	"cmdline",
+	"vbe-state",
+	"vbe-oem-fit",
 };
 
 /**
