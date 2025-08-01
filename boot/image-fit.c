@@ -1726,6 +1726,7 @@ int fit_conf_find_compat(const void *fit, const void *fdt)
 	/*
 	 * Loop over the configurations in the FIT image.
 	 */
+	printf("Looking for best match...");
 	for (noffset = fdt_next_node(fit, confs_noffset, &ndepth);
 			(noffset >= 0) && (ndepth > 0);
 			noffset = fdt_next_node(fit, noffset, &ndepth)) {
@@ -1795,9 +1796,10 @@ int fit_conf_find_compat(const void *fit, const void *fdt)
 		}
 	}
 	if (!best_match_offset) {
-		debug("No match found.\n");
+		printf("no match found\n");
 		return -ENOENT;
 	}
+	printf("found\n");
 
 	return best_match_offset;
 }
