@@ -184,6 +184,7 @@ static int bootflow_cmd_scan_e(struct unit_test_state *uts)
 {
 	ut_assertok(bootstd_test_drop_bootdev_order(uts));
 
+	ut_assertok(run_command("bootmeth order ", 0));
 	ut_assertok(run_command("bootflow scan -aleGH", 0));
 	ut_assert_nextline("Scanning for bootflows in all bootdevs");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
@@ -193,24 +194,28 @@ static int bootflow_cmd_scan_e(struct unit_test_state *uts)
 	ut_assert_nextline("     ** No partition found, err=-93: Protocol not supported");
 	ut_assert_nextline("  1  efi          media   mmc          0  mmc2.bootdev.whole        ");
 	ut_assert_nextline("     ** No partition found, err=-93: Protocol not supported");
+	ut_assert_nextline("  2  vbe          media   mmc          0  mmc2.bootdev.whole        ");
+	ut_assert_nextline("     ** No partition found, err=-93: Protocol not supported");
 
 	ut_assert_nextline("Scanning bootdev 'mmc1.bootdev':");
-	ut_assert_nextline("  2  extlinux     media   mmc          0  mmc1.bootdev.whole        ");
+	ut_assert_nextline("  3  extlinux     media   mmc          0  mmc1.bootdev.whole        ");
 	ut_assert_nextline("     ** No partition found, err=-2: No such file or directory");
-	ut_assert_nextline("  3  efi          media   mmc          0  mmc1.bootdev.whole        ");
+	ut_assert_nextline("  4  efi          media   mmc          0  mmc1.bootdev.whole        ");
 	ut_assert_nextline("     ** No partition found, err=-2: No such file or directory");
-	ut_assert_nextline("  4  extlinux     ready   mmc          1  mmc1.bootdev.part_1       /extlinux/extlinux.conf");
+	ut_assert_nextline("  5  vbe          media   mmc          0  mmc1.bootdev.whole        ");
+	ut_assert_nextline("     ** No partition found, err=-2: No such file or directory");
+	ut_assert_nextline("  6  extlinux     ready   mmc          1  mmc1.bootdev.part_1       /extlinux/extlinux.conf");
 	ut_assert_nextline(
-		"  5  efi          fs      mmc          1  mmc1.bootdev.part_1       /EFI/BOOT/%s",
+		"  7  efi          fs      mmc          1  mmc1.bootdev.part_1       /EFI/BOOT/%s",
 		efi_get_basename());
 
 	ut_assert_skip_to_line("Scanning bootdev 'mmc0.bootdev':");
 	ut_assert_skip_to_line(
-		" 3f  efi          media   mmc          0  mmc0.bootdev.whole        ");
+		" 5f  vbe          media   mmc          0  mmc0.bootdev.whole        ");
 	ut_assert_nextline("     ** No partition found, err=-93: Protocol not supported");
 	ut_assert_nextline("No more bootdevs");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("(64 bootflows, 1 valid)");
+	ut_assert_nextline("(96 bootflows, 1 valid)");
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow list", 0));
@@ -219,11 +224,9 @@ static int bootflow_cmd_scan_e(struct unit_test_state *uts)
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("  0  extlinux     media   mmc          0  mmc2.bootdev.whole        ");
 	ut_assert_nextline("  1  efi          media   mmc          0  mmc2.bootdev.whole        ");
-	ut_assert_skip_to_line(
-		"  4  extlinux     ready   mmc          1  mmc1.bootdev.part_1       /extlinux/extlinux.conf");
-	ut_assert_skip_to_line(" 3f  efi          media   mmc          0  mmc0.bootdev.whole        ");
+	ut_assert_skip_to_line(" 5f  vbe          media   mmc          0  mmc0.bootdev.whole        ");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("(64 bootflows, 1 valid)");
+	ut_assert_nextline("(96 bootflows, 1 valid)");
 	ut_assert_console_end();
 
 	return 0;
@@ -304,7 +307,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 		    bootflow_scan_first(NULL, NULL, &iter, BOOTFLOWIF_ALL |
 					BOOTFLOWIF_SKIP_GLOBAL |
 					BOOTFLOWIF_ONLY_BOOTABLE, &bflow));
-	ut_asserteq(2, iter.num_methods);
+	ut_asserteq(3, iter.num_methods);
 	ut_asserteq(0, iter.cur_method);
 	ut_asserteq(0, iter.part);
 	ut_asserteq(0, iter.max_part);
@@ -320,7 +323,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
 
 	ut_asserteq(-EPROTONOSUPPORT, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(2, iter.num_methods);
+	ut_asserteq(3, iter.num_methods);
 	ut_asserteq(1, iter.cur_method);
 	ut_asserteq(0, iter.part);
 	ut_asserteq(0, iter.max_part);
@@ -329,9 +332,20 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
 	bootflow_free(&bflow);
 
+	/* now the VBE boothmeth */
+	ut_asserteq(-EPROTONOSUPPORT, bootflow_scan_next(&iter, &bflow));
+	ut_asserteq(3, iter.num_methods);
+	ut_asserteq(2, iter.cur_method);
+	ut_asserteq(0, iter.part);
+	ut_asserteq(0, iter.max_part);
+	ut_asserteq_str("vbe", iter.method->name);
+	ut_asserteq(0, bflow.err);
+	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	bootflow_free(&bflow);
+
 	/* The next device is mmc1.bootdev - at first we use the whole device */
 	ut_asserteq(-ENOENT, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(2, iter.num_methods);
+	ut_asserteq(3, iter.num_methods);
 	ut_asserteq(0, iter.cur_method);
 	ut_asserteq(0, iter.part);
 	ut_asserteq(0x1e, iter.max_part);
@@ -341,7 +355,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	bootflow_free(&bflow);
 
 	ut_asserteq(-ENOENT, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(2, iter.num_methods);
+	ut_asserteq(3, iter.num_methods);
 	ut_asserteq(1, iter.cur_method);
 	ut_asserteq(0, iter.part);
 	ut_asserteq(0x1e, iter.max_part);
@@ -350,9 +364,20 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
 	bootflow_free(&bflow);
 
-	/* Then more to partition 1 where we find something */
+	/* now the VBE boothmeth */
+	ut_asserteq(-ENOENT, bootflow_scan_next(&iter, &bflow));
+	ut_asserteq(3, iter.num_methods);
+	ut_asserteq(2, iter.cur_method);
+	ut_asserteq(0, iter.part);
+	ut_asserteq(0x1e, iter.max_part);
+	ut_asserteq_str("vbe", iter.method->name);
+	ut_asserteq(0, bflow.err);
+	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	bootflow_free(&bflow);
+
+	/* Then move to partition 1 where we find something */
 	ut_assertok(bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(2, iter.num_methods);
+	ut_asserteq(3, iter.num_methods);
 	ut_asserteq(0, iter.cur_method);
 	ut_asserteq(1, iter.part);
 	ut_asserteq(0x1e, iter.max_part);
@@ -362,7 +387,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	bootflow_free(&bflow);
 
 	ut_asserteq(-ENOENT, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(2, iter.num_methods);
+	ut_asserteq(3, iter.num_methods);
 	ut_asserteq(1, iter.cur_method);
 	ut_asserteq(1, iter.part);
 	ut_asserteq(0x1e, iter.max_part);
@@ -371,9 +396,19 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq(BOOTFLOWST_FS, bflow.state);
 	bootflow_free(&bflow);
 
+	ut_asserteq(-ENOENT, bootflow_scan_next(&iter, &bflow));
+	ut_asserteq(3, iter.num_methods);
+	ut_asserteq(2, iter.cur_method);
+	ut_asserteq(1, iter.part);
+	ut_asserteq(0x1e, iter.max_part);
+	ut_asserteq_str("vbe", iter.method->name);
+	ut_asserteq(0, bflow.err);
+	ut_asserteq(BOOTFLOWST_FS, bflow.state);
+	bootflow_free(&bflow);
+
 	/* Then more to partition 2 which exists but is not bootable */
 	ut_asserteq(-EINVAL, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(2, iter.num_methods);
+	ut_asserteq(3, iter.num_methods);
 	ut_asserteq(0, iter.cur_method);
 	ut_asserteq(2, iter.part);
 	ut_asserteq(0x1e, iter.max_part);
@@ -441,7 +476,7 @@ static int bootflow_iter_disable(struct unit_test_state *uts)
 	/* Try to boot the bootmgr flow, which will fail */
 	console_record_reset_enable();
 	ut_assertok(bootflow_scan_first(NULL, NULL, &iter, 0, &bflow));
-	ut_asserteq(3, iter.num_methods);
+	ut_asserteq(4, iter.num_methods);
 	ut_asserteq_str("sandbox", iter.method->name);
 	ut_assertok(inject_response(uts));
 	ut_asserteq(-ENOTSUPP, bootflow_run_boot(&iter, &bflow));
@@ -450,7 +485,7 @@ static int bootflow_iter_disable(struct unit_test_state *uts)
 	ut_assert_console_end();
 
 	/* Check that the sandbox bootmeth has been removed */
-	ut_asserteq(2, iter.num_methods);
+	ut_asserteq(3, iter.num_methods);
 	for (i = 0; i < iter.num_methods; i++)
 		ut_assert(strcmp("sandbox", iter.method_order[i]->name));
 

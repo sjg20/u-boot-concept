@@ -12,6 +12,10 @@ import os.path
 import sys
 import pytest
 
+# Bring in the U-Boot libraries
+our_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(our_path, '../../tools'))
+
 if __name__ == '__main__':
     # argv; py.test test_directory_name user-supplied-arguments
     args = [os.path.dirname(__file__) + '/tests']
