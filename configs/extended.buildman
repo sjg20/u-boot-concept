@@ -1,0 +1,12 @@
+# Build RISC-V QEMU builds with ACPI
+name: acpi
+fragment: acpi
+targets:
+  qemu-riscv*
+
+# Build Android variant of 'k3' boards, with DFU
+name: am62x_dfu
+fragment: am62x_r5_usbdfu
+fragment: am62x_a53_android
+targets:
+  CONFIG_SYS_SOC="k3"
