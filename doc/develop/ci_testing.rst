@@ -117,6 +117,12 @@ WORLD_BUILD
 
         git push ci -o ci.variable=WORLD_BUILD=0
 
+TEST_SPEC
+    Set to the test spec to use when running a test.py tests. This overrides
+    the spec provided by the job. For example::
+
+        git push ci -o ci.variable=TEST_SPEC=bootstd
+
 Using the lab
 -------------
 

@@ -8,6 +8,7 @@ variables:
   MIRROR_DOCKER: docker.io
   TEST_SUITES: "1"
   TEST_PY: "1"
+  TEST_SPEC: ""
   WORLD_BUILD: "1"
   LAB_ONLY: ""
   SJG_LAB: ""
@@ -114,11 +115,17 @@ stages:
         export bl1=/tmp/bl1.bin;
         export PATH=/opt/Base_RevC_AEMvA_pkg/models/Linux64_GCC-9.3:${PATH};
       fi
+    - if [[ -n "${TEST_SPEC}" ]]; then
+        SPEC="${TEST_SPEC}";
+        echo 'Using provided test spec ${TEST_SPEC}"';
+      else
+        SPEC="${TEST_PY_TEST_SPEC}";
+      fi
     # "${var:+"-k $var"}" expands to "" if $var is empty, "-k $var" if not
     - export PATH=/opt/qemu/bin:test/hooks/bin:${PATH};
       export PYTHONPATH=test/hooks/py/travis-ci;
       ./test/py/test.py -ra --bd ${TEST_PY_BD} ${TEST_PY_ID} ${TEST_PY_EXTRA}
-        ${TEST_PY_TEST_SPEC:+"-k ${TEST_PY_TEST_SPEC}"}
+        ${SPEC:+"-k ${SPEC}"}
         --build-dir "$UBOOT_TRAVIS_BUILD_DIR"
         --junitxml=/tmp/${TEST_PY_BD}/results.xml
   artifacts:
