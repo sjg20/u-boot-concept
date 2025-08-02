@@ -63,7 +63,8 @@ class FsHelper:
 
         # Use a default filename; the caller can adjust it
         leaf = f'{prefix}.{fs_type}.img'
-        self.fs_img = os.path.join(config.persistent_data_dir, leaf)
+        self.fs_img = os.path.join(
+            config.persistent_data_dir if config else '', leaf)
 
         # Some distributions do not add /sbin to the default PATH, where mkfs
         # lives
