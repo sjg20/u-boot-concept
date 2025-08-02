@@ -55,7 +55,7 @@ class ConsoleExecAttach(ConsoleBase):
         Returns:
             A spawn.Spawn object that is attached to U-Boot.
         """
-        super().get_spawn()
+        self.prepare_for_spawn()
         args = [self.config.board_type, self.config.board_identity]
         s = Spawn(['u-boot-test-console'] + args)
 
