@@ -8,7 +8,7 @@ ifndef CONFIG_XPL_BUILD
 obj-$(CONFIG_BOOT_RETRY) += bootretry.o
 obj-$(CONFIG_BOOT) += bootm.o bootm_os.o
 
-obj-$(CONFIG_PXE_UTILS) += pxe_utils.o
+obj-$(CONFIG_PXE_UTILS) += pxe_utils.o pxe_parse.o
 
 endif
 

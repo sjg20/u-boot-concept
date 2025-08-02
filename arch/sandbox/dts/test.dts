@@ -128,6 +128,10 @@
 			compatible = "u-boot,distro-efi";
 		};
 
+		vbe {
+			compatible = "vbe,abrec-os";
+		};
+
 		theme {
 			font-size = <30>;
 			menu-inset = <3>;
@@ -1174,6 +1178,13 @@
 		status = "disabled";
 		compatible = "sandbox,mmc";
 		filename = "mmc9.img";
+	};
+
+	/* This is used for VBE ABrec tests */
+	mmc10 {
+		status = "disabled";
+		compatible = "sandbox,mmc";
+		filename = "mmc10.img";
 	};
 
 	pch {
