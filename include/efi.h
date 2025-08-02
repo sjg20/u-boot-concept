@@ -23,6 +23,8 @@
 #include <net.h>
 #endif
 
+struct bootflow;
+
 /* Type INTN in UEFI specification */
 #define efi_intn_t ssize_t
 /* Type UINTN in UEFI specification*/
@@ -676,6 +678,17 @@ void efi_putc(struct efi_priv *priv, const char ch);
 int efi_stub_exit_boot_services(void);
 
 /**
+ * efi_app_exit_boot_services() - Handle the exit-boot-service procedure
+ *
+ * Tell EFI we don't want their boot services anymore
+ *
+ * This is only available in the app
+ *
+ * Return: 0 if OK, non-zero on error
+ */
+int efi_app_exit_boot_services(struct efi_priv *priv, uint key);
+
+/**
  * efi_get_mmap() - Get the memory map from EFI
  *
  * This is used in the app. The caller must free *@descp when done
@@ -757,7 +770,28 @@ void efi_dump_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
 			bool skip_bs);
 
 /**
- * calculate_paths() - Calculate the device and image patch from strings
+ * dram_init_banksize_from_memmap() - Set up U-Boot's DRAM from a memory map
+ *
+ * @desc: pointer to EFI memory map table
+ * @size: size of the table in bytes
+ * @desc_size: size of each @desc_base record
+ * Return: Number of banks written
+ */
+int dram_init_banksize_from_memmap(struct efi_mem_desc *desc, int size,
+				   int desc_size);
+
+void check_keyboard(const char *msg);
+
+/**
+ * efi_free_pool() - free memory from pool
+ *
+ * @buffer:	start of memory to be freed
+ * Return:	status code
+ */
+efi_status_t efi_free_pool(void *buffer);
+
+/**
+ * efi_calculate_paths() - Calculate the device and image patch from strings
  *
  * @dev:		device, e.g. "MMC"
  * @devnr:		number of the device, e.g. "1:2"
@@ -766,43 +800,22 @@ void efi_dump_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
  * @image_pathp:	returns EFI image path
  * Return: EFI_SUCCESS on success, else error code
  */
-efi_status_t calculate_paths(const char *dev, const char *devnr,
-			     const char *path,
-			     struct efi_device_path **device_pathp,
-			     struct efi_device_path **image_pathp);
-
+efi_status_t efi_calculate_paths(const char *dev, const char *devnr,
+			         const char *path,
+				 struct efi_device_path **device_pathp,
+				 struct efi_device_path **image_pathp);
 /**
- * efi_binary_run_dp() - run loaded UEFI image
+ * efi_calc_dev_name() - Calculate the device name to give to EFI
  *
- * @image:	memory address of the UEFI image
- * @size:	size of the UEFI image
- * @fdt:	device-tree
- * @initrd:	initrd
- * @initrd_sz:	initrd size
- * @dp_dev:	EFI device-path
- * @dp_img:	EFI image-path
+ * If not supported, this shows an error.
  *
- * Execute an EFI binary image loaded at @image.
- * @size may be zero if the binary is loaded with U-Boot load command.
- *
- * Return:	status code
+ * Return name, or NULL if not supported
  */
+const char *efi_calc_dev_name(struct bootflow *bflow);
+
 efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
 			       void *initrd, size_t initrd_sz,
 			       struct efi_device_path *dp_dev,
 			       struct efi_device_path *dp_img);
-
-/**
- * efi_run_image() - run loaded UEFI image
- *
- * @source_buffer:	memory address of the UEFI image
- * @source_size:	size of the UEFI image
- * @dp_dev:		EFI device-path
- * @dp_img:		EFI image-path
- * Return:		status code
- */
-efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
-			   struct efi_device_path *dp_dev,
-			   struct efi_device_path *dp_img);
 
 #endif /* _LINUX_EFI_H */

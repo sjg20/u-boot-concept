@@ -6,6 +6,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <dm.h>
 #include <efi.h>
 #include <efi_api.h>
@@ -189,8 +191,8 @@ static int setup_block(void)
 		 * Show the device name if we created one. Otherwise indicate
 		 * that it is a partition.
 		 */
-		printf("%2d: %-12s %ls\n", i, dev ? dev->name : "<partition>",
-		       name);
+		log_debug("%2d: %-12s %ls\n", i,
+			  dev ? dev->name : "<partition>", name);
 	}
 	boot->free_pool(handle);
 

@@ -187,7 +187,7 @@ int efi_init_early(void)
 	efi_status_t ret;
 
 	/* Allow unaligned memory access */
-	allow_unaligned();
+	// allow_unaligned();
 
 	if (IS_ENABLED(CONFIG_EFI_LOG)) {
 		ret = efi_log_init();
@@ -196,18 +196,18 @@ int efi_init_early(void)
 	}
 
 	/* Initialize root node */
-	ret = efi_root_node_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
+	// ret = efi_root_node_register();
+	// if (ret != EFI_SUCCESS)
+		// goto out;
 
 	ret = efi_console_register();
 	if (ret != EFI_SUCCESS)
 		goto out;
 
 	/* Initialize EFI driver uclass */
-	ret = efi_driver_init();
-	if (ret != EFI_SUCCESS)
-		goto out;
+	// ret = efi_driver_init();
+	// if (ret != EFI_SUCCESS)
+		// goto out;
 
 	return 0;
 out:

@@ -103,8 +103,8 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 	image_addr = buffer;
 	image_size = buffer_size;
 
-	ret = calculate_paths(dev, devnr, path, &bootefi_device_path,
-			      &bootefi_image_path);
+	ret = efi_calculate_paths(dev, devnr, path, &bootefi_device_path,
+				  &bootefi_image_path);
 	if (ret) {
 		log_debug("- efi_dp_from_name() failed, err=%lx\n", ret);
 		efi_clear_bootdev();

@@ -162,7 +162,7 @@ static int initr_reloc_global_data(void)
 	 */
 	efi_save_gd();
 
-	efi_runtime_relocate(gd->relocaddr, NULL);
+	// efi_runtime_relocate(gd->relocaddr, NULL);
 #endif
 
 	return 0;

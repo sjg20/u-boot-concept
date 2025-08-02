@@ -188,6 +188,13 @@ enum event_t {
 	EVT_BOOTM_FINAL,
 
 	/**
+	 * @EVT_BOOTM_PRE_PREP:
+	 * Triggered immediately before doing the OS prep (BOOTM_STATE_OS_PREP).
+	 * At this point the OS is expected to continue to boot
+	 */
+	EVT_BOOTM_PRE_PREP,
+
+	/**
 	 * @EVT_COUNT:
 	 * This constants holds the maximum event number + 1 and is used when
 	 * looping over all event classes.

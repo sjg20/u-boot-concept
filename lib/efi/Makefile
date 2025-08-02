@@ -6,4 +6,4 @@
 obj-y += basename.o
 obj-y += device_path.o
 obj-y += memory.o
-obj-y += run.o
+obj-y += run_helper.o

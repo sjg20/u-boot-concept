@@ -53,6 +53,7 @@ const char *const type_name[] = {
 	/* booting */
 	"boot_os_addr",
 	"bootm_final",
+	"bootm_pre_prep",
 };
 
 _Static_assert(ARRAY_SIZE(type_name) == EVT_COUNT, "event type_name size");

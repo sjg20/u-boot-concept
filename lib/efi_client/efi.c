@@ -11,12 +11,14 @@
  */
 
 #include <debug_uart.h>
-#include <errno.h>
 #include <malloc.h>
 #include <linux/err.h>
 #include <linux/types.h>
 #include <efi.h>
 #include <efi_api.h>
+#include <asm/global_data.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 enum {
 	/* magic number to trigger gdb breakpoint */
@@ -160,34 +162,64 @@ int efi_init(struct efi_priv *priv, const char *banner, efi_handle_t image,
 	return 0;
 }
 
-void *efi_malloc(struct efi_priv *priv, int size, efi_status_t *retp)
+static bool efi_mem_type_is_usable(u32 type)
 {
-	struct efi_boot_services *boot = priv->boot;
-	void *buf = NULL;
-
-	*retp = boot->allocate_pool(priv->image_data_type, size, &buf);
-
-	return buf;
+	switch (type) {
+	case EFI_CONVENTIONAL_MEMORY:
+	case EFI_LOADER_DATA:
+	case EFI_LOADER_CODE:
+	case EFI_BOOT_SERVICES_CODE:
+	case EFI_BOOT_SERVICES_DATA:
+	case EFI_ACPI_RECLAIM_MEMORY:
+	case EFI_RUNTIME_SERVICES_CODE:
+	case EFI_RUNTIME_SERVICES_DATA:
+		return true;
+	case EFI_RESERVED_MEMORY_TYPE:
+	case EFI_UNUSABLE_MEMORY:
+	case EFI_UNACCEPTED_MEMORY_TYPE:
+	case EFI_MMAP_IO:
+	case EFI_MMAP_IO_PORT:
+	case EFI_PERSISTENT_MEMORY_TYPE:
+	default:
+		return false;
+	}
 }
 
-void efi_free(struct efi_priv *priv, void *ptr)
+int dram_init_banksize_from_memmap(struct efi_mem_desc *desc, int size,
+				   int desc_size)
 {
-	struct efi_boot_services *boot = priv->boot;
+	struct efi_mem_desc *end;
+	int bank = 0;
+	int num_banks;
+	ulong start, max_addr = 0;
+	bool first = true;
 
-	boot->free_pool(ptr);
-}
+	end = (struct efi_mem_desc *)((ulong)desc + size);
+	for (num_banks = 0;
+	     desc < end && num_banks < CONFIG_NR_DRAM_BANKS;
+	     desc = efi_get_next_mem_desc(desc, desc_size)) {
+		/*
+		 * We only use conventional memory and ignore
+		 * anything less than 1MB.
+		 */
+		log_info("EFI bank #%d: start %llx, size %llx type %u\n",
+			 bank, desc->physical_start,
+			 desc->num_pages << EFI_PAGE_SHIFT, desc->type);
+		if (!efi_mem_type_is_usable(desc->type)) {
+			printf("not usable\n");
+			continue;
+		}
+		if (first) {
+			start = desc->physical_start;
+			first = false;
+		}
+		max_addr = max((u64)max_addr, desc->physical_start +
+				 (desc->num_pages << EFI_PAGE_SHIFT));
+	}
 
-void *efi_alloc(size_t size)
-{
-	struct efi_priv *priv = efi_get_priv();
-	efi_status_t ret;
+	gd->bd->bi_dram[num_banks].start = start;
+	gd->bd->bi_dram[num_banks].size = max_addr - start;
+	num_banks++;
 
-	return efi_malloc(priv, size, &ret);
-}
-
-void efi_free_pool(void *ptr)
-{
-	struct efi_priv *priv = efi_get_priv();
-
-	efi_free(priv, ptr);
+	return num_banks;
 }
