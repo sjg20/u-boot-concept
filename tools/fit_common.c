@@ -25,13 +25,12 @@
 
 #define COPYFILE_BUFSIZE (64 * 1024)
 
-void fit_print_header(const void *fit, struct image_tool_params *params)
+void fit_print_header(const void *fit, struct imgtool *itl)
 {
 	fit_print_contents(fit);
 }
 
-int fit_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+int fit_verify_header(unsigned char *ptr, int image_size, struct imgtool *itl)
 {
 	int ret;
 

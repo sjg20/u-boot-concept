@@ -34,14 +34,14 @@ static int gpimage_check_image_types(uint8_t type)
 }
 
 static int gpimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				 struct imgtool *itl)
 {
 	struct gp_header *gph = (struct gp_header *)ptr;
 
 	return gph_verify_header(gph, 1);
 }
 
-static void gpimage_print_header(const void *ptr, struct image_tool_params *params)
+static void gpimage_print_header(const void *ptr, struct imgtool *itl)
 {
 	const struct gp_header *gph = (struct gp_header *)ptr;
 
@@ -49,11 +49,11 @@ static void gpimage_print_header(const void *ptr, struct image_tool_params *para
 }
 
 static void gpimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+			       struct imgtool *itl)
 {
 	struct gp_header *gph = (struct gp_header *)ptr;
 
-	gph_set_header(gph, sbuf->st_size - GPIMAGE_HDR_SIZE, params->addr, 1);
+	gph_set_header(gph, sbuf->st_size - GPIMAGE_HDR_SIZE, itl->addr, 1);
 }
 
 /*

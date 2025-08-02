@@ -185,22 +185,22 @@ static void add_end_cmd(void)
 	pbl_size += 4;
 }
 
-void pbl_load_uboot(int ifd, struct image_tool_params *params)
+void pbl_load_uboot(int ifd, struct imgtool *itl)
 {
 	FILE *fp_uboot;
 	int size, ret;
 
 	/* parse the rcw.cfg file. */
-	pbl_parser(params->imagename);
+	pbl_parser(itl->imagename);
 
 	/* parse the pbi.cfg file. */
-	if (params->imagename2[0] != '\0')
-		pbl_parser(params->imagename2);
+	if (itl->imagename2[0] != '\0')
+		pbl_parser(itl->imagename2);
 
-	if (params->datafile) {
-		fp_uboot = fopen(params->datafile, "r");
+	if (itl->datafile) {
+		fp_uboot = fopen(itl->datafile, "r");
 		if (fp_uboot == NULL) {
-			printf("Error: %s open failed\n", params->datafile);
+			printf("Error: %s open failed\n", itl->datafile);
 			exit(EXIT_FAILURE);
 		}
 
@@ -218,7 +218,7 @@ void pbl_load_uboot(int ifd, struct image_tool_params *params)
 	size = pbl_size;
 	if (write(ifd, (const void *)&mem_buf, size) != size) {
 		fprintf(stderr, "Write error on %s: %s\n",
-			params->imagefile, strerror(errno));
+			itl->imagefile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 }
@@ -232,12 +232,12 @@ static int pblimage_check_image_types(uint8_t type)
 }
 
 static int pblimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				  struct imgtool *itl)
 {
 	struct pbl_header *pbl_hdr = (struct pbl_header *) ptr;
 	uint32_t rcwheader;
 
-	if (params->arch == IH_ARCH_ARM)
+	if (itl->arch == IH_ARCH_ARM)
 		rcwheader = RCW_ARM_HEADER;
 	else
 		rcwheader = RCW_PPC_HEADER;
@@ -259,30 +259,30 @@ static int pblimage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void pblimage_print_header(const void *ptr, struct image_tool_params *params)
+static void pblimage_print_header(const void *ptr, struct imgtool *itl)
 {
 	printf("Image Type:   Freescale PBL Boot Image\n");
 }
 
 static void pblimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct imgtool *itl)
 {
 	/*nothing need to do, pbl_load_uboot takes care of whole file. */
 }
 
-int pblimage_check_params(struct image_tool_params *params)
+int pblimage_check_params(struct imgtool *itl)
 {
 	FILE *fp_uboot;
 	int fd;
 	struct stat st;
 
-	if (!params)
+	if (!itl)
 		return EXIT_FAILURE;
 
-	if (params->datafile) {
-		fp_uboot = fopen(params->datafile, "r");
+	if (itl->datafile) {
+		fp_uboot = fopen(itl->datafile, "r");
 		if (fp_uboot == NULL) {
-			printf("Error: %s open failed\n", params->datafile);
+			printf("Error: %s open failed\n", itl->datafile);
 			exit(EXIT_FAILURE);
 		}
 		fd = fileno(fp_uboot);
@@ -298,18 +298,18 @@ int pblimage_check_params(struct image_tool_params *params)
 		fclose(fp_uboot);
 	}
 
-	if (params->arch == IH_ARCH_ARM) {
+	if (itl->arch == IH_ARCH_ARM) {
 		arch_flag = IH_ARCH_ARM;
 		pbi_crc_cmd1 = 0x61;
 		pbi_crc_cmd2 = 0;
-		pbl_cmd_initaddr = params->addr & PBL_ADDR_24BIT_MASK;
+		pbl_cmd_initaddr = itl->addr & PBL_ADDR_24BIT_MASK;
 		pbl_cmd_initaddr |= PBL_ACS_CONT_CMD;
 		pbl_cmd_initaddr += uboot_size;
 		pbl_end_cmd[0] = 0x09610000;
 		pbl_end_cmd[1] = 0x00000000;
 		pbl_end_cmd[2] = 0x096100c0;
 		pbl_end_cmd[3] = 0x00000000;
-	} else if (params->arch == IH_ARCH_PPC) {
+	} else if (itl->arch == IH_ARCH_PPC) {
 		arch_flag = IH_ARCH_PPC;
 		pbi_crc_cmd1 = 0x13;
 		pbi_crc_cmd2 = 0x80;

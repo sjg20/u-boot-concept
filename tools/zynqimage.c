@@ -139,7 +139,7 @@ static void zynqimage_default_header(struct zynq_header *ptr)
 
 /* mkimage glue functions */
 static int zynqimage_verify_header(unsigned char *ptr, int image_size,
-		struct image_tool_params *params)
+				   struct imgtool *itl)
 {
 	struct zynq_header *zynqhdr = (struct zynq_header *)ptr;
 
@@ -163,7 +163,7 @@ static int zynqimage_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void zynqimage_print_header(const void *ptr, struct image_tool_params *params)
+static void zynqimage_print_header(const void *ptr, struct imgtool *itl)
 {
 	struct zynq_header *zynqhdr = (struct zynq_header *)ptr;
 	int i;
@@ -198,12 +198,12 @@ static void zynqimage_print_header(const void *ptr, struct image_tool_params *pa
 	}
 }
 
-static int zynqimage_check_params(struct image_tool_params *params)
+static int zynqimage_check_params(struct imgtool *itl)
 {
-	if (!params)
+	if (!itl)
 		return 0;
 
-	if (params->addr != 0x0) {
+	if (itl->addr != 0x0) {
 		fprintf(stderr, "Error: Load Address cannot be specified.\n");
 		return -1;
 	}
@@ -211,13 +211,13 @@ static int zynqimage_check_params(struct image_tool_params *params)
 	/*
 	 * If the entry point is specified ensure it is 64 byte aligned.
 	 */
-	if (params->eflag && (params->ep % 64 != 0)) {
+	if (itl->eflag && (itl->ep % 64 != 0)) {
 		fprintf(stderr,
 			"Error: Entry Point must be aligned to a 64-byte boundary.\n");
 		return -1;
 	}
 
-	return !(params->lflag || params->dflag);
+	return !(itl->lflag || itl->dflag);
 }
 
 static int zynqimage_check_image_types(uint8_t type)
@@ -266,7 +266,7 @@ static void zynqimage_parse_initparams(struct zynq_header *zynqhdr,
 }
 
 static void zynqimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-		struct image_tool_params *params)
+				 struct imgtool *itl)
 {
 	struct zynq_header *zynqhdr = (struct zynq_header *)ptr;
 	zynqimage_default_header(zynqhdr);
@@ -277,12 +277,12 @@ static void zynqimage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	zynqhdr->image_size = cpu_to_le32((uint32_t)sbuf->st_size);
 	zynqhdr->image_stored_size = zynqhdr->image_size;
 	zynqhdr->image_load = 0x0;
-	if (params->eflag)
-		zynqhdr->image_load = cpu_to_le32((uint32_t)params->ep);
+	if (itl->eflag)
+		zynqhdr->image_load = cpu_to_le32((uint32_t)itl->ep);
 
 	/* User can pass in text file with init list */
-	if (strlen(params->imagename2))
-		zynqimage_parse_initparams(zynqhdr, params->imagename2);
+	if (strlen(itl->imagename2))
+		zynqimage_parse_initparams(zynqhdr, itl->imagename2);
 
 	zynqhdr->checksum = zynqimage_checksum(zynqhdr);
 }

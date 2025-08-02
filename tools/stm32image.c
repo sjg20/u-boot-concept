@@ -78,7 +78,7 @@ static int stm32image_check_image_types(uint8_t type)
 }
 
 static int stm32image_verify_header(unsigned char *ptr, int image_size,
-				    struct image_tool_params *params)
+				    struct imgtool *itl)
 {
 	struct stm32_header *stm32hdr = (struct stm32_header *)ptr;
 	int i;
@@ -99,7 +99,7 @@ static int stm32image_verify_header(unsigned char *ptr, int image_size,
 	return 0;
 }
 
-static void stm32image_print_header(const void *ptr, struct image_tool_params *params)
+static void stm32image_print_header(const void *ptr, struct imgtool *itl)
 {
 	struct stm32_header *stm32hdr = (struct stm32_header *)ptr;
 
@@ -121,14 +121,14 @@ static void stm32image_print_header(const void *ptr, struct image_tool_params *p
 }
 
 static void stm32image_set_header(void *ptr, struct stat *sbuf, int ifd,
-				  struct image_tool_params *params)
+				  struct imgtool *itl)
 {
 	struct stm32_header *stm32hdr = (struct stm32_header *)ptr;
 
 	stm32image_default_header(stm32hdr);
 
-	stm32hdr->load_address = cpu_to_le32(params->addr);
-	stm32hdr->image_entry_point = cpu_to_le32(params->ep);
+	stm32hdr->load_address = cpu_to_le32(itl->addr);
+	stm32hdr->image_entry_point = cpu_to_le32(itl->ep);
 	stm32hdr->image_length = cpu_to_le32((uint32_t)sbuf->st_size -
 					     sizeof(struct stm32_header));
 	stm32hdr->image_checksum =

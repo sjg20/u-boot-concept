@@ -12,7 +12,7 @@
 static void usage(void);
 
 /* parameters initialized by core will be used by the image type code */
-static struct image_tool_params params;
+static struct imgtool params;
 
 /*
  * dumpimage_extract_subimage -
@@ -25,8 +25,8 @@ static struct image_tool_params params;
  * returns negative if input image format does not match with any of
  * supported image types
  */
-static int dumpimage_extract_subimage(struct image_type_params *tparams,
-		void *ptr, struct stat *sbuf)
+static int dumpimage_extract_subimage(struct imgtool_funcs *tparams,
+				      void *ptr, struct stat *sbuf)
 {
 	int retval = -1;
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 	struct stat sbuf;
 	char *ptr;
 	int retval = EXIT_SUCCESS;
-	struct image_type_params *tparams = NULL;
+	struct imgtool_funcs *tparams = NULL;
 
 	params.cmdname = *argv;
 

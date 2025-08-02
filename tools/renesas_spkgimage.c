@@ -115,19 +115,19 @@ static int spkgimage_parse_config_file(char *filename)
 	return 0;
 }
 
-static int spkgimage_check_params(struct image_tool_params *params)
+static int spkgimage_check_params(struct imgtool *itl)
 {
-	if (!params->addr) {
+	if (!itl->addr) {
 		fprintf(stderr, "Error: Load Address must be set.\n");
 		return -EINVAL;
 	}
 
-	if (!params->imagename || !params->imagename[0]) {
+	if (!itl->imagename || !itl->imagename[0]) {
 		fprintf(stderr, "Error: Image name must be set.\n");
 		return -EINVAL;
 	}
 
-	if (!params->datafile) {
+	if (!itl->datafile) {
 		fprintf(stderr, "Error: Data filename must be set.\n");
 		return -EINVAL;
 	}
@@ -136,7 +136,7 @@ static int spkgimage_check_params(struct image_tool_params *params)
 }
 
 static int spkgimage_verify_header(unsigned char *ptr, int size,
-				   struct image_tool_params *param)
+				   struct imgtool *param)
 {
 	struct spkg_file *file = (struct spkg_file *)ptr;
 	struct spkg_hdr *header = (struct spkg_hdr *)ptr;
@@ -182,8 +182,7 @@ static int spkgimage_verify_header(unsigned char *ptr, int size,
 	return 0;
 }
 
-static void spkgimage_print_header(const void *ptr,
-				   struct image_tool_params *image)
+static void spkgimage_print_header(const void *ptr, struct imgtool *image)
 {
 	const struct spkg_hdr *h = ptr;
 	uint32_t offset = le32_to_cpu(h->execution_offset);
@@ -216,25 +215,25 @@ static inline uint32_t roundup(uint32_t x, uint32_t y)
 	return ((x + y - 1) / y) * y;
 }
 
-static int spkgimage_vrec_header(struct image_tool_params *params,
-				 struct image_type_params *tparams)
+static int spkgimage_vrec_header(struct imgtool *itl,
+				 struct imgtool_funcs *tparams)
 {
 	struct stat s;
 	struct spkg_file *out_buf;
 
 	/* Parse the config file */
-	if (spkgimage_parse_config_file(params->imagename)) {
+	if (spkgimage_parse_config_file(itl->imagename)) {
 		fprintf(stderr, "Error parsing config file\n");
 		exit(EXIT_FAILURE);
 	}
 
 	/* Get size of input data file */
-	if (stat(params->datafile, &s)) {
+	if (stat(itl->datafile, &s)) {
 		fprintf(stderr, "Could not stat data file: %s: %s\n",
-			params->datafile, strerror(errno));
+			itl->datafile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	params->orig_file_size = s.st_size;
+	itl->orig_file_size = s.st_size;
 
 	/* Determine size of resulting SPKG file */
 	uint32_t header_len = SPKG_HEADER_SIZE * SPKG_HEADER_COUNT;
@@ -258,8 +257,8 @@ static int spkgimage_vrec_header(struct image_tool_params *params,
 		.ecc_scheme = conf.ecc_scheme,
 		.ecc_bytes = conf.ecc_bytes,
 		.payload_length = cpu_to_le32(payload_len << 8),
-		.load_address = cpu_to_le32(params->addr),
-		.execution_offset = cpu_to_le32(params->ep - params->addr),
+		.load_address = cpu_to_le32(itl->addr),
+		.execution_offset = cpu_to_le32(itl->ep - itl->addr),
 	};
 	header.crc = crc32(0, (uint8_t *)&header,
 			   sizeof(header) - SPKG_CRC_SIZE);
@@ -282,15 +281,15 @@ static int spkgimage_vrec_header(struct image_tool_params *params,
 }
 
 static void spkgimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				 struct image_tool_params *params)
+				 struct imgtool *itl)
 {
 	uint8_t *payload = ptr + SPKG_HEADER_SIZE * SPKG_HEADER_COUNT;
-	uint8_t *file_end = payload + conf.blp_len + params->orig_file_size;
+	uint8_t *file_end = payload + conf.blp_len + itl->orig_file_size;
 	uint8_t *crc_buf = file_end + conf.padding;
 	uint32_t crc;
 
 	/* Make room for the Dummy BLp header */
-	memmove(payload + conf.blp_len, payload, params->orig_file_size);
+	memmove(payload + conf.blp_len, payload, itl->orig_file_size);
 
 	/* Fill the SPKG with the Dummy BLp */
 	memset(payload, 0x88, conf.blp_len);

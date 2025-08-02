@@ -46,17 +46,17 @@ struct spl_hdr {
 	unsigned int zero2[91];
 };
 
-static int sfspl_check_params(struct image_tool_params *params)
+static int sfspl_check_params(struct imgtool *itl)
 {
 	/* Only the RISC-V architecture is supported */
-	if (params->Aflag && params->arch != IH_ARCH_RISCV)
+	if (itl->Aflag && itl->arch != IH_ARCH_RISCV)
 		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
 }
 
 static int sfspl_verify_header(unsigned char *buf, int size,
-			       struct image_tool_params *params)
+			       struct imgtool *itl)
 {
 	struct spl_hdr *hdr = (void *)buf;
 	unsigned int hdr_size = le32_to_cpu(hdr->hdr_size);
@@ -86,8 +86,7 @@ static int sfspl_verify_header(unsigned char *buf, int size,
 	return EXIT_SUCCESS;
 }
 
-static void sfspl_print_header(const void *buf,
-			       struct image_tool_params *params)
+static void sfspl_print_header(const void *buf, struct imgtool *itl)
 {
 	struct spl_hdr *hdr = (void *)buf;
 	unsigned int hdr_size = le32_to_cpu(hdr->hdr_size);
@@ -97,8 +96,7 @@ static void sfspl_print_header(const void *buf,
 	printf("Payload size: %u\n", file_size);
 }
 
-static int sfspl_image_extract_subimage(void *ptr,
-					struct image_tool_params *params)
+static int sfspl_image_extract_subimage(void *ptr, struct imgtool *itl)
 {
 	struct spl_hdr *hdr = (void *)ptr;
 	unsigned char *buf = ptr;
@@ -106,12 +104,12 @@ static int sfspl_image_extract_subimage(void *ptr,
 	unsigned int hdr_size = le32_to_cpu(hdr->hdr_size);
 	unsigned int file_size = le32_to_cpu(hdr->file_size);
 
-	if (params->pflag) {
-		printf("Invalid image index %d\n", params->pflag);
+	if (itl->pflag) {
+		printf("Invalid image index %d\n", itl->pflag);
 		return EXIT_FAILURE;
 	}
 
-	fd = open(params->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	fd = open(itl->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1) {
 		perror("Cannot open file");
 		return EXIT_FAILURE;
@@ -134,13 +132,13 @@ static int sfspl_check_image_type(uint8_t type)
 }
 
 static void sfspl_set_header(void *buf, struct stat *sbuf, int infd,
-			     struct image_tool_params *params)
+			     struct imgtool *itl)
 {
 	struct spl_hdr *hdr = buf;
 	unsigned int file_size;
 	unsigned int crc;
 
-	file_size = params->file_size - sizeof(struct spl_hdr);
+	file_size = itl->file_size - sizeof(struct spl_hdr);
 	crc = crc32(0, &((unsigned char *)buf)[sizeof(struct spl_hdr)],
 		    file_size);
 
@@ -152,8 +150,7 @@ static void sfspl_set_header(void *buf, struct stat *sbuf, int infd,
 	hdr->crc32 = cpu_to_le32(crc);
 }
 
-static int sfspl_vrec_header(struct image_tool_params *params,
-			     struct image_type_params *tparams)
+static int sfspl_vrec_header(struct imgtool *itl, struct imgtool_funcs *tparams)
 {
 	tparams->hdr = calloc(sizeof(struct spl_hdr), 1);
 

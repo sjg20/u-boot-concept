@@ -113,7 +113,7 @@ static int get_ais_table_id(uint32_t *ptr)
 	return -1;
 }
 
-static void aisimage_print_header(const void *hdr, struct image_tool_params *params)
+static void aisimage_print_header(const void *hdr, struct imgtool *itl)
 {
 	struct ais_header *ais_hdr = (struct ais_header *)hdr;
 	uint32_t *ptr;
@@ -157,7 +157,7 @@ static void aisimage_print_header(const void *hdr, struct image_tool_params *par
 }
 
 static uint32_t *ais_insert_cmd_header(uint32_t cmd, uint32_t nargs,
-	uint32_t *parms, struct image_type_params *tparams,
+	uint32_t *parms, struct imgtool_funcs *tparams,
 	uint32_t *ptr)
 {
 	int i;
@@ -174,23 +174,23 @@ static uint32_t *ais_insert_cmd_header(uint32_t cmd, uint32_t nargs,
 
 }
 
-static uint32_t *ais_alloc_buffer(struct image_tool_params *params)
+static uint32_t *ais_alloc_buffer(struct imgtool *itl)
 {
 	int dfd;
 	struct stat sbuf;
-	char *datafile = params->datafile;
+	char *datafile = itl->datafile;
 	uint32_t *ptr;
 
 	dfd = open(datafile, O_RDONLY|O_BINARY);
 	if (dfd < 0) {
 		fprintf(stderr, "%s: Can't open %s: %s\n",
-			params->cmdname, datafile, strerror(errno));
+			itl->cmdname, datafile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	if (fstat(dfd, &sbuf) < 0) {
 		fprintf(stderr, "%s: Can't stat %s: %s\n",
-			params->cmdname, datafile, strerror(errno));
+			itl->cmdname, datafile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
@@ -206,7 +206,7 @@ static uint32_t *ais_alloc_buffer(struct image_tool_params *params)
 			+ MAX_CMD_BUFFER);
 	if (!ptr) {
 		fprintf(stderr, "%s: malloc return failure: %s\n",
-			params->cmdname, strerror(errno));
+			itl->cmdname, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
@@ -215,31 +215,30 @@ static uint32_t *ais_alloc_buffer(struct image_tool_params *params)
 	return ptr;
 }
 
-static uint32_t *ais_copy_image(struct image_tool_params *params,
-	uint32_t *aisptr)
+static uint32_t *ais_copy_image(struct imgtool *itl, uint32_t *aisptr)
 
 {
 	int dfd;
 	struct stat sbuf;
-	char *datafile = params->datafile;
+	char *datafile = itl->datafile;
 	void *ptr;
 
 	dfd = open(datafile, O_RDONLY|O_BINARY);
 	if (dfd < 0) {
 		fprintf(stderr, "%s: Can't open %s: %s\n",
-			params->cmdname, datafile, strerror(errno));
+			itl->cmdname, datafile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	if (fstat(dfd, &sbuf) < 0) {
 		fprintf(stderr, "%s: Can't stat %s: %s\n",
-			params->cmdname, datafile, strerror(errno));
+			itl->cmdname, datafile, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	ptr = mmap(0, sbuf.st_size, PROT_READ, MAP_SHARED, dfd, 0);
 	*aisptr++ = AIS_CMD_LOAD;
-	*aisptr++ = params->ep;
+	*aisptr++ = itl->ep;
 	*aisptr++ = sbuf.st_size;
 	memcpy((void *)aisptr, ptr, sbuf.st_size);
 	aisptr += ALIGN(sbuf.st_size, WORD_ALIGN0) / sizeof(uint32_t);
@@ -251,8 +250,8 @@ static uint32_t *ais_copy_image(struct image_tool_params *params,
 
 }
 
-static int aisimage_generate(struct image_tool_params *params,
-	struct image_type_params *tparams)
+static int aisimage_generate(struct imgtool *itl,
+			     struct imgtool_funcs *tparams)
 {
 	FILE *fd = NULL;
 	char *line = NULL;
@@ -263,7 +262,7 @@ static int aisimage_generate(struct image_tool_params *params,
 	int32_t cmd;
 	uint32_t nargs, cmd_parms[10];
 	uint32_t value, size;
-	char *name = params->imagename;
+	char *name = itl->imagename;
 	uint32_t *aishdr;
 
 	fd = fopen(name, "r");
@@ -283,7 +282,7 @@ static int aisimage_generate(struct image_tool_params *params,
 	 * Start allocating a buffer suitable for most command
 	 * The buffer is then reallocated if it is too small
 	 */
-	aishdr = ais_alloc_buffer(params);
+	aishdr = ais_alloc_buffer(itl);
 	tparams->hdr = aishdr;
 	*aishdr++ = AIS_MAGIC_WORD;
 
@@ -348,11 +347,11 @@ static int aisimage_generate(struct image_tool_params *params,
 	}
 	fclose(fd);
 
-	aishdr = ais_copy_image(params, aishdr);
+	aishdr = ais_copy_image(itl, aishdr);
 
 	/* Add Jmp & Close */
 	*aishdr++ = AIS_CMD_JMPCLOSE;
-	*aishdr++ = params->ep;
+	*aishdr++ = itl->ep;
 
 	size = (aishdr - (uint32_t *)tparams->hdr) * sizeof(uint32_t);
 	tparams->header_size = size;
@@ -369,7 +368,7 @@ static int aisimage_check_image_types(uint8_t type)
 }
 
 static int aisimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				  struct imgtool *itl)
 {
 	struct ais_header *ais_hdr = (struct ais_header *)ptr;
 
@@ -383,18 +382,18 @@ static int aisimage_verify_header(unsigned char *ptr, int image_size,
 }
 
 static void aisimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct imgtool *itl)
 {
 }
 
-int aisimage_check_params(struct image_tool_params *params)
+int aisimage_check_params(struct imgtool *itl)
 {
-	if (!params)
+	if (!itl)
 		return CFG_INVALID;
-	if (!strlen(params->imagename)) {
+	if (!strlen(itl->imagename)) {
 		fprintf(stderr, "Error: %s - Configuration file not specified, "
 			"it is needed for aisimage generation\n",
-			params->cmdname);
+			itl->cmdname);
 		return CFG_INVALID;
 	}
 	/*
@@ -403,10 +402,10 @@ int aisimage_check_params(struct image_tool_params *params)
 	 * parameters are not sent at the same time
 	 * For example, if list is required a data image must not be provided
 	 */
-	return	(params->dflag && (params->fflag || params->lflag)) ||
-		(params->fflag && (params->dflag || params->lflag)) ||
-		(params->lflag && (params->dflag || params->fflag)) ||
-		(params->xflag) || !(strlen(params->imagename));
+	return	(itl->dflag && (itl->fflag || itl->lflag)) ||
+		(itl->fflag && (itl->dflag || itl->lflag)) ||
+		(itl->lflag && (itl->dflag || itl->fflag)) ||
+		(itl->xflag) || !(strlen(itl->imagename));
 }
 
 /*

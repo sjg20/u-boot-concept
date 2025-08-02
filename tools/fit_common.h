@@ -10,18 +10,17 @@
 #include "mkimage.h"
 #include <image.h>
 
-void fit_print_header(const void *fit, struct image_tool_params *params);
+void fit_print_header(const void *fit, struct imgtool *itl);
 
 /**
  * Verify the format of FIT header pointed to by ptr
  *
  * @ptr: image header to be verified
  * @image_size: size of while image
- * @params: mkimage parameters
+ * @itl: mkimage parameters
  * Return: 0 if OK, -1 on error
  */
-int fit_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params);
+int fit_verify_header(unsigned char *ptr, int image_size, struct imgtool *itl);
 
 int fit_check_image_types(uint8_t type);
 

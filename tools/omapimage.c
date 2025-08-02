@@ -37,7 +37,7 @@ static int omapimage_check_image_types(uint8_t type)
 }
 
 static int omapimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				   struct imgtool *itl)
 {
 	struct ch_toc *toc = (struct ch_toc *)ptr;
 	struct gp_header *gph = (struct gp_header *)(ptr+OMAP_CH_HDR_SIZE);
@@ -85,7 +85,7 @@ static void omapimage_print_section(struct ch_settings *chs)
 		chs->flags);
 }
 
-static void omapimage_print_header(const void *ptr, struct image_tool_params *params)
+static void omapimage_print_header(const void *ptr, struct imgtool *itl)
 {
 	const struct ch_toc *toc = (struct ch_toc *)ptr;
 	const struct gp_header *gph =
@@ -124,7 +124,7 @@ static int toc_offset(void *hdr, void *member)
 }
 
 static void omapimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				 struct imgtool *itl)
 {
 	struct ch_toc *toc = (struct ch_toc *)ptr;
 	struct ch_settings *chs = (struct ch_settings *)
@@ -144,10 +144,9 @@ static void omapimage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	toc++;
 	memset(toc, 0xff, sizeof(*toc));
 
-	gph_set_header(gph, sbuf->st_size - OMAP_CH_HDR_SIZE,
-		       params->addr, 0);
+	gph_set_header(gph, sbuf->st_size - OMAP_CH_HDR_SIZE, itl->addr, 0);
 
-	if (strncmp(params->imagename, "byteswap", 8) == 0) {
+	if (strncmp(itl->imagename, "byteswap", 8) == 0) {
 		do_swap32 = 1;
 		int swapped = 0;
 		uint32_t *data = (uint32_t *)ptr;

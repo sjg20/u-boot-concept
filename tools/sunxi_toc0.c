@@ -667,9 +667,9 @@ err:
 	return ret;
 }
 
-static int toc0_check_params(struct image_tool_params *params)
+static int toc0_check_params(struct imgtool *itl)
 {
-	if (!params->dflag)
+	if (!itl->dflag)
 		return -EINVAL;
 
 	/*
@@ -704,12 +704,12 @@ static int toc0_check_params(struct image_tool_params *params)
 	 *  Note that until the ROTPK_HASH eFuse is programmed, any "root key"
 	 *  will be accepted by the BROM.
 	 */
-	if (params->keydir) {
-		if (asprintf(&fw_key_file, "%s/%s", params->keydir, fw_key_file) < 0)
+	if (itl->keydir) {
+		if (asprintf(&fw_key_file, "%s/%s", itl->keydir, fw_key_file) < 0)
 			return -ENOMEM;
-		if (asprintf(&key_item_file, "%s/%s", params->keydir, key_item_file) < 0)
+		if (asprintf(&key_item_file, "%s/%s", itl->keydir, key_item_file) < 0)
 			return -ENOMEM;
-		if (asprintf(&root_key_file, "%s/%s", params->keydir, root_key_file) < 0)
+		if (asprintf(&root_key_file, "%s/%s", itl->keydir, root_key_file) < 0)
 			return -ENOMEM;
 	}
 
@@ -717,7 +717,7 @@ static int toc0_check_params(struct image_tool_params *params)
 }
 
 static int toc0_verify_header(unsigned char *buf, int image_size,
-			      struct image_tool_params *params)
+			      struct imgtool *itl)
 {
 	int ret = EXIT_FAILURE;
 	RSA *root_key = NULL;
@@ -757,7 +757,7 @@ static const char *toc0_item_name(uint32_t name)
 	return "(unknown)";
 }
 
-static void toc0_print_header(const void *buf, struct image_tool_params *params)
+static void toc0_print_header(const void *buf, struct imgtool *itl)
 {
 	const struct toc0_main_info *main_info = buf;
 	const struct toc0_item_info *item_info = (void *)(main_info + 1);
@@ -802,7 +802,7 @@ static void toc0_print_header(const void *buf, struct image_tool_params *params)
 }
 
 static void toc0_set_header(void *buf, struct stat *sbuf, int ifd,
-			    struct image_tool_params *params)
+			    struct imgtool *itl)
 {
 	uint32_t key_item_len = 0;
 	uint8_t *key_item = NULL;
@@ -866,10 +866,10 @@ static void toc0_set_header(void *buf, struct stat *sbuf, int ifd,
 	if (key_item || fw_key != root_key)
 		pr_warn("Only H6 supports separate root and firmware keys\n");
 
-	ret = toc0_create(buf, params->file_size, root_key, fw_key,
+	ret = toc0_create(buf, itl->file_size, root_key, fw_key,
 			  key_item, key_item_len,
 			  buf + TOC0_DEFAULT_HEADER_LEN,
-			  params->orig_file_size, params->addr);
+			  itl->orig_file_size, itl->addr);
 
 err:
 	OPENSSL_free(key_item);
@@ -888,16 +888,15 @@ static int toc0_check_image_type(uint8_t type)
 	return type == IH_TYPE_SUNXI_TOC0 ? 0 : 1;
 }
 
-static int toc0_vrec_header(struct image_tool_params *params,
-			    struct image_type_params *tparams)
+static int toc0_vrec_header(struct imgtool *itl, struct imgtool_funcs *tparams)
 {
 	tparams->hdr = calloc(tparams->header_size, 1);
 
 	/* Save off the unpadded data size for SHA256 calculation. */
-	params->orig_file_size = params->file_size - TOC0_DEFAULT_HEADER_LEN;
+	itl->orig_file_size = itl->file_size - TOC0_DEFAULT_HEADER_LEN;
 
 	/* Return padding to 8K blocks. */
-	return ALIGN(params->file_size, PAD_SIZE) - params->file_size;
+	return ALIGN(itl->file_size, PAD_SIZE) - itl->file_size;
 }
 
 U_BOOT_IMAGE_TYPE(

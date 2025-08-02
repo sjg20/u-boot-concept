@@ -59,7 +59,7 @@ static uint8_t vybridimage_sw_ecc(uint8_t byte)
 }
 
 static int vybridimage_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+				     struct imgtool *itl)
 {
 	struct nand_page_0_boot_header *hdr =
 		(struct nand_page_0_boot_header *)ptr;
@@ -93,7 +93,7 @@ static int vybridimage_verify_header(unsigned char *ptr, int image_size,
 }
 
 static void vybridimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				   struct imgtool *itl)
 {
 	struct nand_page_0_boot_header *hdr =
 		(struct nand_page_0_boot_header *)ptr;
@@ -134,7 +134,7 @@ static void vybridimage_print_hdr_field(struct nand_page_0_boot_header *hdr,
 	printf("header.fcb[%d] = %08x\n", idx, hdr->fcb[idx]);
 }
 
-static void vybridimage_print_header(const void *ptr, struct image_tool_params *params)
+static void vybridimage_print_header(const void *ptr, struct imgtool *itl)
 {
 	struct nand_page_0_boot_header *hdr =
 		(struct nand_page_0_boot_header *)ptr;

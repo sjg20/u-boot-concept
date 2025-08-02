@@ -9,13 +9,13 @@
 
 #include <image.h>
 
-struct image_type_params *imagetool_get_type(int type)
+struct imgtool_funcs *imagetool_get_type(int type)
 {
-	struct image_type_params **curr;
+	struct imgtool_funcs **curr;
 	INIT_SECTION(image_type);
 
-	struct image_type_params **start = __start_image_type;
-	struct image_type_params **end = __stop_image_type;
+	struct imgtool_funcs **start = __start_image_type;
+	struct imgtool_funcs **end = __stop_image_type;
 
 	for (curr = start; curr != end; curr++) {
 		if ((*curr)->check_image_type) {
@@ -29,24 +29,24 @@ struct image_type_params *imagetool_get_type(int type)
 static int imagetool_verify_print_header_by_type(
 	void *ptr,
 	struct stat *sbuf,
-	struct image_type_params *tparams,
-	struct image_tool_params *params);
+	struct imgtool_funcs *tparams,
+	struct imgtool *itl);
 
 int imagetool_verify_print_header(
 	void *ptr,
 	struct stat *sbuf,
-	struct image_type_params *tparams,
-	struct image_tool_params *params)
+	struct imgtool_funcs *tparams,
+	struct imgtool *itl)
 {
 	int retval = -1;
-	struct image_type_params **curr;
+	struct imgtool_funcs **curr;
 	INIT_SECTION(image_type);
 
-	struct image_type_params **start = __start_image_type;
-	struct image_type_params **end = __stop_image_type;
+	struct imgtool_funcs **start = __start_image_type;
+	struct imgtool_funcs **end = __stop_image_type;
 
 	if (tparams)
-		return imagetool_verify_print_header_by_type(ptr, sbuf, tparams, params);
+		return imagetool_verify_print_header_by_type(ptr, sbuf, tparams, itl);
 
 	for (curr = start; curr != end; curr++) {
 		/*
@@ -57,7 +57,7 @@ int imagetool_verify_print_header(
 			continue;
 		if ((*curr)->verify_header) {
 			retval = (*curr)->verify_header((unsigned char *)ptr,
-						     sbuf->st_size, params);
+						     sbuf->st_size, itl);
 
 			if (retval == 0) {
 				/*
@@ -65,12 +65,12 @@ int imagetool_verify_print_header(
 				 * successful
 				 */
 				if ((*curr)->print_header) {
-					if (!params->quiet)
-						(*curr)->print_header(ptr, params);
+					if (!itl->quiet)
+						(*curr)->print_header(ptr, itl);
 				} else {
 					fprintf(stderr,
 						"%s: print_header undefined for %s\n",
-						params->cmdname, (*curr)->name);
+						itl->cmdname, (*curr)->name);
 				}
 				break;
 			}
@@ -79,7 +79,7 @@ int imagetool_verify_print_header(
 
 	if (retval != 0) {
 		fprintf(stderr, "%s: cannot detect image type\n",
-			params->cmdname);
+			itl->cmdname);
 	}
 
 	return retval;
@@ -88,36 +88,36 @@ int imagetool_verify_print_header(
 static int imagetool_verify_print_header_by_type(
 	void *ptr,
 	struct stat *sbuf,
-	struct image_type_params *tparams,
-	struct image_tool_params *params)
+	struct imgtool_funcs *tparams,
+	struct imgtool *itl)
 {
 	int retval = -1;
 
 	if (tparams->verify_header) {
 		retval = tparams->verify_header((unsigned char *)ptr,
-						sbuf->st_size, params);
+						sbuf->st_size, itl);
 
 		if (retval == 0) {
 			/*
 			 * Print the image information if verify is successful
 			 */
 			if (tparams->print_header) {
-				if (!params->quiet)
-					tparams->print_header(ptr, params);
+				if (!itl->quiet)
+					tparams->print_header(ptr, itl);
 			} else {
 				fprintf(stderr,
 					"%s: print_header undefined for %s\n",
-					params->cmdname, tparams->name);
+					itl->cmdname, tparams->name);
 			}
 		} else {
 			fprintf(stderr,
 				"%s: verify_header failed for %s with exit code %d\n",
-				params->cmdname, tparams->name, retval);
+				itl->cmdname, tparams->name, retval);
 		}
 
 	} else {
 		fprintf(stderr, "%s: verify_header undefined for %s\n",
-			params->cmdname, tparams->name);
+			itl->cmdname, tparams->name);
 	}
 
 	return retval;
@@ -150,7 +150,7 @@ int imagetool_save_subimage(
 	return 0;
 }
 
-int imagetool_get_filesize(struct image_tool_params *params, const char *fname)
+int imagetool_get_filesize(struct imgtool *itl, const char *fname)
 {
 	struct stat sbuf;
 	int fd;
@@ -158,13 +158,13 @@ int imagetool_get_filesize(struct image_tool_params *params, const char *fname)
 	fd = open(fname, O_RDONLY | O_BINARY);
 	if (fd < 0) {
 		fprintf(stderr, "%s: Can't open %s: %s\n",
-			params->cmdname, fname, strerror(errno));
+			itl->cmdname, fname, strerror(errno));
 		return -1;
 	}
 
 	if (fstat(fd, &sbuf) < 0) {
 		fprintf(stderr, "%s: Can't stat %s: %s\n",
-			params->cmdname, fname, strerror(errno));
+			itl->cmdname, fname, strerror(errno));
 		close(fd);
 		return -1;
 	}

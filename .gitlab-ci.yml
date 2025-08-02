@@ -6,6 +6,10 @@ include:
 variables:
   DEFAULT_TAG: ""
   MIRROR_DOCKER: docker.io
+  TEST_SUITES: "1"
+  TEST_PY: "1"
+  TEST_SPEC: ""
+  WORLD_BUILD: "1"
   LAB_ONLY: ""
   SJG_LAB: ""
   PLATFORM: linux/amd64,linux/arm64
@@ -23,10 +27,10 @@ default:
 
 # We run some tests in different order, to catch some failures quicker.
 stages:
-  - testsuites
+  - test_suites
   - test.py
   - sjg-lab
-  - world build
+  - world_build
   - version_bump
   - release
 
@@ -34,10 +38,15 @@ stages:
   stage: test.py
   retry: 2 # QEMU may be too slow, etc.
   rules:
-    - if: $LAB_ONLY != "1"
-      when: always
     - if: $LAB_ONLY == "1"
       when: never
+    - if: $TEST_PY == "1"
+      when: always
+    - if: $TEST_PY == $CI_JOB_NAME
+      when: always
+    - if: $TEST_PY == $TEST_PY_BD
+      when: always
+    - when: never
   before_script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
     # qemu_arm64_lwip_defconfig is the same as qemu_arm64 but with NET_LWIP enabled.
@@ -106,11 +115,17 @@ stages:
         export bl1=/tmp/bl1.bin;
         export PATH=/opt/Base_RevC_AEMvA_pkg/models/Linux64_GCC-9.3:${PATH};
       fi
+    - if [[ -n "${TEST_SPEC}" ]]; then
+        SPEC="${TEST_SPEC}";
+        echo 'Using provided test spec ${TEST_SPEC}"';
+      else
+        SPEC="${TEST_PY_TEST_SPEC}";
+      fi
     # "${var:+"-k $var"}" expands to "" if $var is empty, "-k $var" if not
     - export PATH=/opt/qemu/bin:test/hooks/bin:${PATH};
       export PYTHONPATH=test/hooks/py/travis-ci;
       ./test/py/test.py -ra --bd ${TEST_PY_BD} ${TEST_PY_ID} ${TEST_PY_EXTRA}
-        ${TEST_PY_TEST_SPEC:+"-k ${TEST_PY_TEST_SPEC}"}
+        ${SPEC:+"-k ${SPEC}"}
         --build-dir "$UBOOT_TRAVIS_BUILD_DIR"
         --junitxml=/tmp/${TEST_PY_BD}/results.xml
   artifacts:
@@ -124,12 +139,13 @@ stages:
     expire_in: 1 week
 
 .world_build:
-  stage: world build
+  stage: world_build
   rules:
-    - if: $LAB_ONLY != "1"
-      when: always
     - if: $LAB_ONLY == "1"
       when: never
+    - if: $WORLD_BUILD == "1"
+      when: always
+    - when: never
 
 build all 32bit ARM platforms:
   extends: .world_build
@@ -206,16 +222,17 @@ build all other platforms:
         exit $ret;
       fi;
 
-.testsuites:
-  stage: testsuites
+.test_suites:
+  stage: test_suites
   rules:
-    - if: $LAB_ONLY != "1"
-      when: always
     - if: $LAB_ONLY == "1"
       when: never
+    - if: $TEST_SUITES == "1"
+      when: always
+    - when: never
 
 check for new CONFIG symbols outside Kconfig:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
     # If grep succeeds and finds a match the test fails as we should
@@ -228,7 +245,7 @@ check for new CONFIG symbols outside Kconfig:
 
 # build documentation
 docs:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - python3 -m venv /tmp/venvhtml
     - . /tmp/venvhtml/bin/activate
@@ -238,13 +255,13 @@ docs:
 
 # ensure all configs have MAINTAINERS entries
 Check for configs without MAINTAINERS entry:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - ./tools/buildman/buildman --maintainer-check
 
 # Ensure host tools build
 Build tools-only and envtools:
-  extends: .testsuites
+  extends: .test_suites
   tags:
     - single
   script:
@@ -252,8 +269,8 @@ Build tools-only and envtools:
       make mrproper;
       make tools-only_config envtools -j$(nproc)
 
-Run binman, buildman, dtoc, Kconfig and patman testsuites:
-  extends: .testsuites
+Run binman, buildman, dtoc, Kconfig and patman test suites:
+  extends: .test_suites
   script:
     - git config --global user.name "GitLab CI Runner";
       git config --global user.email trini@konsulko.com;
@@ -282,7 +299,7 @@ Run binman, buildman, dtoc, Kconfig and patman testsuites:
 
 # Check for any pylint regressions
 Run pylint:
-  extends: .testsuites
+  extends: .test_suites
   tags:
     - single
   script:
@@ -306,7 +323,7 @@ Run pylint:
 
 # Check for pre-schema driver model tags
 Check for pre-schema tags:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}";
     # If grep succeeds and finds a match the test fails as we should
@@ -315,7 +332,7 @@ Check for pre-schema tags:
 
 # Check we can package the Python tools
 Check packing of Python tools:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - make pip
 
@@ -632,11 +649,6 @@ coreboot test.py:
     # Environment:
     #   SRC  - source tree
     #   OUT  - output directory for builds
-    - if [[ -n ${SJG_LAB} ]]; then
-        if [[ "${SJG_LAB}" != "${ROLE}" && "${SJG_LAB}" != "1" ]]; then
-          exit 0;
-        fi;
-      fi
     - export SRC="$(pwd)"
     - export OUT="${SRC}/build/${ROLE}"
     - export OUT_EXTRA="${SRC}/build/${ROLE}_extra"

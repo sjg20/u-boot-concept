@@ -117,7 +117,7 @@ void zynqmpimage_default_header(struct zynqmp_header *ptr)
 
 /* mkimage glue functions */
 static int zynqmpimage_verify_header(unsigned char *ptr, int image_size,
-		struct image_tool_params *params)
+				     struct imgtool *itl)
 {
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 
@@ -263,7 +263,7 @@ static void print_partition(const void *ptr, const struct partition_header *ph)
 	printf("    Checksum   : 0x%08x\n", le32_to_cpu(ph->checksum));
 }
 
-void zynqmpimage_print_header(const void *ptr, struct image_tool_params *params)
+void zynqmpimage_print_header(const void *ptr, struct imgtool *itl)
 {
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 	struct partition_header *ph;
@@ -311,12 +311,12 @@ void zynqmpimage_print_header(const void *ptr, struct image_tool_params *params)
 	free(dynamic_header);
 }
 
-static int zynqmpimage_check_params(struct image_tool_params *params)
+static int zynqmpimage_check_params(struct imgtool *itl)
 {
-	if (!params)
+	if (!itl)
 		return 0;
 
-	if (params->addr != 0x0) {
+	if (itl->addr != 0x0) {
 		fprintf(stderr, "Error: Load Address cannot be specified.\n");
 		return -1;
 	}
@@ -324,13 +324,13 @@ static int zynqmpimage_check_params(struct image_tool_params *params)
 	/*
 	 * If the entry point is specified ensure it is 64 byte aligned.
 	 */
-	if (params->eflag && (params->ep % 64 != 0)) {
+	if (itl->eflag && (itl->ep % 64 != 0)) {
 		fprintf(stderr,
 			"Error: Entry Point must be aligned to a 64-byte boundary.\n");
 		return -1;
 	}
 
-	return !(params->lflag || params->dflag || params->outfile);
+	return !(itl->lflag || itl->dflag || itl->outfile);
 }
 
 static int zynqmpimage_check_image_types(uint8_t type)
@@ -439,7 +439,7 @@ static void zynqmpimage_parse_initparams(struct zynqmp_header *zynqhdr,
 }
 
 static void zynqmpimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-		struct image_tool_params *params)
+				   struct imgtool *itl)
 {
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 	zynqmpimage_default_header(zynqhdr);
@@ -447,20 +447,20 @@ static void zynqmpimage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	/* place image directly after header */
 	zynqhdr->image_offset =
 		cpu_to_le32((uint32_t)sizeof(struct zynqmp_header));
-	zynqhdr->image_size = cpu_to_le32(params->file_size -
+	zynqhdr->image_size = cpu_to_le32(itl->file_size -
 					  sizeof(struct zynqmp_header));
 	zynqhdr->image_stored_size = zynqhdr->image_size;
 	zynqhdr->image_load = 0xfffc0000;
-	if (params->eflag)
-		zynqhdr->image_load = cpu_to_le32((uint32_t)params->ep);
+	if (itl->eflag)
+		zynqhdr->image_load = cpu_to_le32((uint32_t)itl->ep);
 
 	/* PMUFW */
 	if (fpmu)
-		zynqmpimage_pmufw(zynqhdr, params->imagename);
+		zynqmpimage_pmufw(zynqhdr, itl->imagename);
 
 	/* User can pass in text file with init list */
-	if (strlen(params->imagename2))
-		zynqmpimage_parse_initparams(zynqhdr, params->imagename2);
+	if (strlen(itl->imagename2))
+		zynqmpimage_parse_initparams(zynqhdr, itl->imagename2);
 
 	zynqhdr->checksum = zynqmpimage_checksum(zynqhdr);
 }
@@ -478,31 +478,31 @@ static int zynqmpimage_partition_extract(struct zynqmp_header *zynqhdr,
 /**
  * zynqmpimage_extract_contents - retrieve a sub-image component from the image
  * @ptr: pointer to the image header
- * @params: command line parameters
+ * @itl: image-tool info
  *
  * returns:
  *     zero in case of success or a negative value if fail.
  */
-static int zynqmpimage_extract_contents(void *ptr, struct image_tool_params *params)
+static int zynqmpimage_extract_contents(void *ptr, struct imgtool *itl)
 {
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 	struct partition_header *ph;
 	int i;
 
 	for_each_zynqmp_part(zynqhdr, i, ph) {
-		if (i == params->pflag)
-			return zynqmpimage_partition_extract(ptr, ph, params->outfile);
+		if (i == itl->pflag)
+			return zynqmpimage_partition_extract(ptr, ph, itl->outfile);
 	}
 
 	printf("No partition found\n");
 	return -1;
 }
 
-static int zynqmpimage_vrec_header(struct image_tool_params *params,
-				   struct image_type_params *tparams)
+static int zynqmpimage_vrec_header(struct imgtool *itl,
+				   struct imgtool_funcs *tparams)
 {
 	struct stat path_stat;
-	char *filename = params->imagename;
+	char *filename = itl->imagename;
 	int err;
 
 	/* Handle static case without PMUFW */

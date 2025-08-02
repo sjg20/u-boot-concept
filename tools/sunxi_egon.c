@@ -15,21 +15,21 @@
 #define PAD_SIZE			8192
 #define PAD_SIZE_MIN			512
 
-static int egon_get_arch(struct image_tool_params *params)
+static int egon_get_arch(struct imgtool *itl)
 {
-	if (params->Aflag)
-		return params->arch;
+	if (itl->Aflag)
+		return itl->arch;
 
 	/* For compatibility, assume ARM when no architecture specified */
 	return IH_ARCH_ARM;
 }
 
-static int egon_check_params(struct image_tool_params *params)
+static int egon_check_params(struct imgtool *itl)
 {
 	/*
 	 * Check whether the architecture is supported.
 	 */
-	switch (egon_get_arch(params)) {
+	switch (egon_get_arch(itl)) {
 	case IH_ARCH_ARM:
 	case IH_ARCH_RISCV:
 		break;
@@ -38,11 +38,11 @@ static int egon_check_params(struct image_tool_params *params)
 	}
 
 	/* We need a binary image file. */
-	return !params->dflag;
+	return !itl->dflag;
 }
 
 static int egon_verify_header(unsigned char *ptr, int image_size,
-			      struct image_tool_params *params)
+			      struct imgtool *itl)
 {
 	const struct boot_file_head *header = (void *)ptr;
 	uint32_t length;
@@ -51,7 +51,7 @@ static int egon_verify_header(unsigned char *ptr, int image_size,
 	 * First 4 bytes must be a branch instruction of the corresponding
 	 * architecture.
 	 */
-	switch (egon_get_arch(params)) {
+	switch (egon_get_arch(itl)) {
 	case IH_ARCH_ARM:
 		if ((le32_to_cpu(header->b_instruction) & 0xff000000) != 0xea000000)
 			return EXIT_FAILURE;
@@ -82,7 +82,7 @@ static int egon_verify_header(unsigned char *ptr, int image_size,
 	return EXIT_SUCCESS;
 }
 
-static void egon_print_header(const void *buf, struct image_tool_params *params)
+static void egon_print_header(const void *buf, struct imgtool *itl)
 {
 	const struct boot_file_head *header = buf;
 
@@ -104,7 +104,7 @@ static void egon_print_header(const void *buf, struct image_tool_params *params)
 }
 
 static void egon_set_header(void *buf, struct stat *sbuf, int infd,
-			    struct image_tool_params *params)
+			    struct imgtool *itl)
 {
 	struct boot_file_head *header = buf;
 	uint32_t *buf32 = buf;
@@ -115,7 +115,7 @@ static void egon_set_header(void *buf, struct stat *sbuf, int infd,
 	 * Different architectures need different first instruction to
 	 * branch to the body.
 	 */
-	switch (egon_get_arch(params)) {
+	switch (egon_get_arch(itl)) {
 	case IH_ARCH_ARM:
 		/* Generate an ARM branch instruction to jump over the header. */
 		value = 0xea000000 | (sizeof(struct boot_file_head) / 4 - 2);
@@ -143,17 +143,17 @@ static void egon_set_header(void *buf, struct stat *sbuf, int infd,
 
 	memcpy(header->magic, BOOT0_MAGIC, sizeof(header->magic));
 	header->check_sum = cpu_to_le32(BROM_STAMP_VALUE);
-	header->length = cpu_to_le32(params->file_size);
+	header->length = cpu_to_le32(itl->file_size);
 
 	memcpy(header->spl_signature, SPL_SIGNATURE, 3);
 	header->spl_signature[3] = SPL_ENV_HEADER_VERSION;
 
 	/* If an image name has been provided, use it as the DT name. */
-	if (params->imagename && params->imagename[0]) {
-		if (strlen(params->imagename) > sizeof(header->string_pool) - 1)
+	if (itl->imagename && itl->imagename[0]) {
+		if (strlen(itl->imagename) > sizeof(header->string_pool) - 1)
 			printf("WARNING: DT name too long for SPL header!\n");
 		else {
-			strcpy((char *)header->string_pool, params->imagename);
+			strcpy((char *)header->string_pool, itl->imagename);
 			value = offsetof(struct boot_file_head, string_pool);
 			header->dt_name_offset = cpu_to_le32(value);
 			header->spl_signature[3] = SPL_DT_HEADER_VERSION;
@@ -171,15 +171,14 @@ static int egon_check_image_type(uint8_t type)
 	return type == IH_TYPE_SUNXI_EGON ? 0 : 1;
 }
 
-static int egon_vrec_header(struct image_tool_params *params,
-			    struct image_type_params *tparams)
+static int egon_vrec_header(struct imgtool *itl, struct imgtool_funcs *tparams)
 {
-	int pad_size = ALIGN(params->bl_len ?: PAD_SIZE, PAD_SIZE_MIN);
+	int pad_size = ALIGN(itl->bl_len ?: PAD_SIZE, PAD_SIZE_MIN);
 
 	tparams->hdr = calloc(sizeof(struct boot_file_head), 1);
 
 	/* Return padding to complete blocks. */
-	return ALIGN(params->file_size, pad_size) - params->file_size;
+	return ALIGN(itl->file_size, pad_size) - itl->file_size;
 }
 
 U_BOOT_IMAGE_TYPE(

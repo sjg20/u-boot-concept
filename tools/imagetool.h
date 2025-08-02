@@ -48,11 +48,13 @@ enum af_mode {
 };
 
 /*
+ * struct imgtool() - Defines mkimage/dumpimage parameters and variables
+ *
  * This structure defines all such variables those are initialized by
- * mkimage and dumpimage main core and need to be referred by image
- * type specific functions
+ * mkimage and dumpimage main core and need to be referred by
+ * image-type-specific functions
  */
-struct image_tool_params {
+struct imgtool {
 	int dflag;
 	int eflag;
 	int fflag;
@@ -101,10 +103,8 @@ struct image_tool_params {
 	struct image_summary summary;	/* results of signing process */
 };
 
-/*
- * image type specific variables and callback functions
- */
-struct image_type_params {
+/** struct imgtool_funcs - image-type-specific variables and callbacks */
+struct imgtool_funcs {
 	/* name is an identification tag string for added support */
 	char *name;
 	/*
@@ -122,7 +122,7 @@ struct image_type_params {
 	 *
 	 * Returns 1 if parameter check is successful
 	 */
-	int (*check_params) (struct image_tool_params *);
+	int (*check_params)(struct imgtool *itl);
 	/*
 	 * This function is used by list command (i.e. mkimage -l <filename>)
 	 * image type verification code must be put here
@@ -130,17 +130,17 @@ struct image_type_params {
 	 * Returns 0 if image header verification is successful
 	 * otherwise, returns respective negative error codes
 	 */
-	int (*verify_header) (unsigned char *, int, struct image_tool_params *);
+	int (*verify_header)(unsigned char *, int, struct imgtool *itl);
 	/* Prints image information abstracting from image header */
-	void (*print_header) (const void *, struct image_tool_params *);
+	void (*print_header)(const void *, struct imgtool *itl);
 	/*
 	 * The header or image contents need to be set as per image type to
 	 * be generated using this callback function.
 	 * further output file post processing (for ex. checksum calculation,
 	 * padding bytes etc..) can also be done in this callback function.
 	 */
-	void (*set_header) (void *, struct stat *, int,
-					struct image_tool_params *);
+	void (*set_header)(void *data, struct stat *sbuf, int ifd,
+			   struct imgtool *itl);
 	/*
 	 * This function is used by the command to retrieve a component
 	 * (sub-image) from the image (i.e. dumpimage -p <position>
@@ -150,7 +150,7 @@ struct image_type_params {
 	 * Returns 0 if the file was successfully retrieved from the image,
 	 * or a negative value on error.
 	 */
-	int (*extract_subimage)(void *, struct image_tool_params *);
+	int (*extract_subimage)(void *, struct imgtool *itl);
 	/*
 	 * Some image generation support for ex (default image type) supports
 	 * more than one type_ids, this callback function is used to check
@@ -159,17 +159,16 @@ struct image_type_params {
 	 */
 	int (*check_image_type) (uint8_t);
 	/* This callback function will be executed if fflag is defined */
-	int (*fflag_handle) (struct image_tool_params *);
+	int (*fflag_handle)(struct imgtool *itl);
 	/*
 	 * This callback function will be executed for variable size record
 	 * It is expected to build this header in memory and return its length
-	 * and a pointer to it by using image_type_params.header_size and
-	 * image_type_params.hdr. The return value shall indicate if an
+	 * and a pointer to it by using imgtool_funcs.header_size and
+	 * imgtool_funcs.hdr. The return value shall indicate if an
 	 * additional padding should be used when copying the data image
 	 * by returning the padding length.
 	 */
-	int (*vrec_header) (struct image_tool_params *,
-		struct image_type_params *);
+	int (*vrec_header)(struct imgtool *itl, struct imgtool_funcs *funcs);
 };
 
 /**
@@ -179,11 +178,11 @@ struct image_type_params {
  * checks the input type for each supported image type
  *
  * if successful,
- *     returns respective image_type_params pointer if success
+ *     returns respective imgtool_funcs pointer if success
  * if input type_id is not supported by any of image_type_support
  *     returns NULL
  */
-struct image_type_params *imagetool_get_type(int type);
+struct imgtool_funcs *imagetool_get_type(int type);
 
 /*
  * imagetool_verify_print_header() - verifies the image header
@@ -195,7 +194,7 @@ struct image_type_params *imagetool_get_type(int type);
  * @ptr: pointer the the image header
  * @sbuf: stat information about the file pointed to by ptr
  * @tparams: image type parameters or NULL
- * @params: mkimage parameters
+ * @itl: mkimage parameters
  *
  * Return: 0 on success, negative if input image format does not match with
  * the given image type
@@ -203,8 +202,8 @@ struct image_type_params *imagetool_get_type(int type);
 int imagetool_verify_print_header(
 	void *ptr,
 	struct stat *sbuf,
-	struct image_type_params *tparams,
-	struct image_tool_params *params);
+	struct imgtool_funcs *tparams,
+	struct imgtool *itl);
 
 /**
  * imagetool_save_subimage - store data into a file
@@ -229,11 +228,11 @@ int imagetool_save_subimage(
  * This function prints a message if an error occurs, showing the error that
  * was obtained.
  *
- * @params:	mkimage parameters
+ * @itl:	mkimage parameters
  * @fname:	filename to check
  * Return: size of file, or -ve value on error
  */
-int imagetool_get_filesize(struct image_tool_params *params, const char *fname);
+int imagetool_get_filesize(struct imgtool *itl, const char *fname);
 
 /**
  * imagetool_get_source_date() - Get timestamp for build output.
@@ -256,11 +255,11 @@ time_t imagetool_get_source_date(
  * for ex. default_image.c, fit_image.c
  */
 
-void pbl_load_uboot(int fd, struct image_tool_params *mparams);
-int zynqmpbif_copy_image(int fd, struct image_tool_params *mparams);
-int imx8image_copy_image(int fd, struct image_tool_params *mparams);
-int imx8mimage_copy_image(int fd, struct image_tool_params *mparams);
-int rockchip_copy_image(int fd, struct image_tool_params *mparams);
+void pbl_load_uboot(int fd, struct imgtool *mparams);
+int zynqmpbif_copy_image(int fd, struct imgtool *mparams);
+int imx8image_copy_image(int fd, struct imgtool *mparams);
+int imx8mimage_copy_image(int fd, struct imgtool *mparams);
+int rockchip_copy_image(int fd, struct imgtool *mparams);
 
 #define ___cat(a, b) a ## b
 #define __cat(a, b) ___cat(a, b)
@@ -286,14 +285,14 @@ int rockchip_copy_image(int fd, struct image_tool_params *mparams);
 	} while (0)
 #define SECTION(name)   __attribute__((section("__DATA, " #name)))
 
-struct image_type_params **__start_image_type, **__stop_image_type;
+struct imgtool_funcs **__start_image_type, **__stop_image_type;
 #else
 #define INIT_SECTION(name) /* no-op for ELF */
 #define SECTION(name)   __attribute__((section(#name)))
 
 /* We construct a table of pointers in an ELF section (pointers generally
  * go unpadded by gcc).  ld creates boundary syms for us. */
-extern struct image_type_params *__start_image_type[], *__stop_image_type[];
+extern struct imgtool_funcs *__start_image_type[], *__stop_image_type[];
 #endif /* __MACH__ */
 
 #if !defined(__used)
@@ -318,7 +317,7 @@ extern struct image_type_params *__start_image_type[], *__stop_image_type[];
 		_fflag_handle, \
 		_vrec_header \
 	) \
-	static struct image_type_params __cat(image_type_, _id) = \
+	static struct imgtool_funcs __cat(image_type_, _id) = \
 	{ \
 		.name = _name, \
 		.header_size = _header_size, \
@@ -332,7 +331,7 @@ extern struct image_type_params *__start_image_type[], *__stop_image_type[];
 		.fflag_handle = _fflag_handle, \
 		.vrec_header = _vrec_header \
 	}; \
-	static struct image_type_params *SECTION(image_type) __used \
+	static struct imgtool_funcs *SECTION(image_type) __used \
 		__cat(image_type_ptr_, _id) = &__cat(image_type_, _id)
 
 #endif /* _IMAGETOOL_H_ */

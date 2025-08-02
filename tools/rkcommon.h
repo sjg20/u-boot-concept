@@ -21,7 +21,7 @@ enum {
  *
  * Return: 0 if OK, -1 if ERROR.
  */
-int rkcommon_check_params(struct image_tool_params *params);
+int rkcommon_check_params(struct imgtool *itl);
 
 /**
  * rkcommon_get_spl_hdr() - get 4-bytes spl hdr for a Rockchip boot image
@@ -29,7 +29,7 @@ int rkcommon_check_params(struct image_tool_params *params);
  * Rockchip's bootrom requires the spl loader to start with a 4-bytes
  * header. The content of this header depends on the chip type.
  */
-const char *rkcommon_get_spl_hdr(struct image_tool_params *params);
+const char *rkcommon_get_spl_hdr(struct imgtool *itl);
 
 /**
  * rkcommon_get_spl_size() - get spl size for a Rockchip boot image
@@ -39,7 +39,7 @@ const char *rkcommon_get_spl_hdr(struct image_tool_params *params);
  * for the bootrom.
  * The spl loader size should be sram size minus reserved size(if needed)
  */
-int rkcommon_get_spl_size(struct image_tool_params *params);
+int rkcommon_get_spl_size(struct imgtool *itl);
 
 /**
  * rkcommon_set_header() - set up the header for a Rockchip boot image
@@ -49,7 +49,7 @@ int rkcommon_get_spl_size(struct image_tool_params *params);
  * @buf:	Pointer to header place (must be at least 2KB in size)
  */
 void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
-			 struct image_tool_params *params);
+			 struct imgtool *itl);
 
 /**
  * rkcommon_verify_header() - verify the header for a Rockchip boot image
@@ -58,8 +58,7 @@ void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
  * @file_size:	Size of entire bootable image file (incl. all padding)
  * Return: 0 if OK
  */
-int rkcommon_verify_header(unsigned char *buf, int size,
-			   struct image_tool_params *params);
+int rkcommon_verify_header(unsigned char *buf, int size, struct imgtool *itl);
 
 /**
  * rkcommon_print_header() - print the header for a Rockchip boot image
@@ -68,7 +67,7 @@ int rkcommon_verify_header(unsigned char *buf, int size,
  *
  * @buf:	Pointer to the image (can be a read-only file-mapping)
  */
-void rkcommon_print_header(const void *buf, struct image_tool_params *params);
+void rkcommon_print_header(const void *buf, struct imgtool *itl);
 
 /**
  * rkcommon_need_rc4_spl() - check if rc4 encoded spl is required
@@ -78,7 +77,7 @@ void rkcommon_print_header(const void *buf, struct image_tool_params *params);
  * handle unencrypted binaries.
  * Return: true or false depending on rc4 being required.
  */
-bool rkcommon_need_rc4_spl(struct image_tool_params *params);
+bool rkcommon_need_rc4_spl(struct imgtool *itl);
 
 /**
  * rkcommon_rc4_encode_spl() - encode the spl binary
@@ -95,13 +94,12 @@ void rkcommon_rc4_encode_spl(void *buf, unsigned int offset, unsigned int size);
 /**
  * rkcommon_vrec_header() - allocate memory for the header
  *
- * @params:     Pointer to the tool params structure
+ * @itl:        Pointer to the tool params structure
  * @tparams:    Pointer tot the image type structure (for setting
  *              the header and header_size)
  *
  * Return: 0 (always)
  */
-int rkcommon_vrec_header(struct image_tool_params *params,
-			 struct image_type_params *tparams);
+int rkcommon_vrec_header(struct imgtool *itl, struct imgtool_funcs *tparams);
 
 #endif
