@@ -157,11 +157,12 @@ build all 32bit ARM platforms:
       . /tmp/venv/bin/activate;
       pip install -r tools/binman/requirements.txt
         -r tools/buildman/requirements.txt
+    - echo "riscv = riscv32" >> ~/.buildman
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
-      ./tools/buildman/buildman -o /tmp -PEWM arm -x aarch64 || ret=$?;
+      ./tools/buildman/buildman -o /tmp -PEWM arm -x aarch64 -X || ret=$?;
       if [[ $ret -ne 0 ]]; then
-        ./tools/buildman/buildman -o /tmp -seP;
+        ./tools/buildman/buildman -o /tmp -sePX;
         exit $ret;
       fi;
 
@@ -175,12 +176,13 @@ build all 64bit ARM platforms:
       . /tmp/venv/bin/activate;
       pip install -r tools/binman/requirements.txt
         -r tools/buildman/requirements.txt
+    - echo "riscv = riscv32" >> ~/.buildman
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
       pip install -r tools/buildman/requirements.txt;
-      ./tools/buildman/buildman -o /tmp -PEWM aarch64 || ret=$?;
+      ./tools/buildman/buildman -o /tmp -PEWM aarch64 -X || ret=$?;
       if [[ $ret -ne 0 ]]; then
-        ./tools/buildman/buildman -o /tmp -seP;
+        ./tools/buildman/buildman -o /tmp -sePX;
         exit $ret;
       fi;
 
@@ -194,11 +196,12 @@ build all PowerPC platforms:
       . /tmp/venv/bin/activate;
       pip install -r tools/binman/requirements.txt
         -r tools/buildman/requirements.txt
+    - echo "riscv = riscv32" >> ~/.buildman
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
-      ./tools/buildman/buildman -o /tmp -P -E -W powerpc || ret=$?;
+      ./tools/buildman/buildman -o /tmp -P -E -W -X powerpc || ret=$?;
       if [[ $ret -ne 0 ]]; then
-        ./tools/buildman/buildman -o /tmp -seP;
+        ./tools/buildman/buildman -o /tmp -sePX;
         exit $ret;
       fi;
 
@@ -214,11 +217,12 @@ build all other platforms:
       . /tmp/venv/bin/activate;
       pip install -r tools/binman/requirements.txt
         -r tools/buildman/requirements.txt
+    - echo "riscv = riscv32" >> ~/.buildman
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
-      ./tools/buildman/buildman -o /tmp -PEWM -x arm,powerpc,xtensa || ret=$?;
+      ./tools/buildman/buildman -o /tmp -PEWM -x arm,powerpc,xtensa -X || ret=$?;
       if [[ $ret -ne 0 ]]; then
-        ./tools/buildman/buildman -o /tmp -seP;
+        ./tools/buildman/buildman -o /tmp -sePX;
         exit $ret;
       fi;
 
