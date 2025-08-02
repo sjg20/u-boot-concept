@@ -245,13 +245,13 @@ class ConsoleBase():
         self.at_prompt_logevt = None
         self.lab_mode = False
         self.u_boot_version_string = None
-        self.prepare_for_spawn()
+        self.reset()
         # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
         self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
 
         self.eval_patterns()
 
-    def prepare_for_spawn(self):
+    def reset(self):
         """Reset all settings as we are about to spawn a new connection"""
         self.buf = ''
         self.output = ''
@@ -261,10 +261,13 @@ class ConsoleBase():
         self.logfile_read = None
 
     def get_spawn(self):
-        # This is not called, ssubclass must define this.
-        # Return a value to avoid:
-        #   console_base.py:348:12: E1128: Assigning result of a function
-        #   call, where the function returns None (assignment-from-none)
+        """This must be called by subclasses, to reset the system
+
+        Return a value to avoid:
+           console_base.py:348:12: E1128: Assigning result of a function
+           call, where the function returns None (assignment-from-none)
+        """
+        self.reset()
         return spawn.Spawn([])
 
     def eval_patterns(self):

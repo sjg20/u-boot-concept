@@ -476,19 +476,6 @@ the timestamp is assumed to have been set previously.
 This section documents the formats of the primary and secondary configuration
 options for each image type which supports them.
 .
-.TQ
-.B \-\-load\-only
-Permit creation of a load-only FIT.
-.IP
-Normally a FIT has an OS image included and mkimage expects this. With this
-option, a special FIT can be created which only has devicetrees. This can be
-loaded before the normal 'OS' devicetree. This option sets the load-only
-property in each generated configuration and allows the OS image to be missing.
-.
-.SH CONFIGURATION
-This section documents the formats of the primary and secondary configuration
-options for each image type which supports them.
-.
 .SS aisimage
 The primary configuration is a file containing a series of
 .I AIS

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Verified Boot for Embedded (VBE) 'abrec' method (for firmware)
+ * Verified Boot for Embedded (VBE) 'abrec' method
  *
  * Copyright 2024 Google LLC
  * Written by Simon Glass <sjg@chromium.org>

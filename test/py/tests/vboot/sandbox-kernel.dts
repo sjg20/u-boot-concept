@@ -2,5 +2,6 @@
 
 / {
 	model = "Sandbox Verified Boot Test";
-	compatible = "none";
+	compatible = "sandbox";
+
 };

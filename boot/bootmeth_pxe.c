@@ -140,7 +140,7 @@ static int extlinux_pxe_read_file(struct udevice *dev, struct bootflow *bflow,
 static int extlinux_pxe_boot(struct udevice *dev, struct bootflow *bflow)
 {
 	return extlinux_boot(dev, bflow, extlinux_pxe_getfile, false,
-			     bflow->subdir, false);
+			     bflow->subdir);
 }
 
 #if CONFIG_IS_ENABLED(BOOTSTD_FULL)

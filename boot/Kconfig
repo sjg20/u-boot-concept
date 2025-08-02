@@ -130,7 +130,6 @@ config FIT_VERBOSE
 
 config FIT_BEST_MATCH
 	bool "Select the best match for the kernel device tree"
-	default y if SANDBOX
 	help
 	  When no configuration is explicitly selected, default to the
 	  one whose fdt's compatibility field best matches that of
@@ -813,19 +812,6 @@ config BOOTMETH_VBE_ABREC
 	help
 	  Enables support for VBE 'abrec' boot. This allows updating one of an
 	  A or B firmware image in boot media such as MMC. The new firmware is
-	  tried and if it boots, it is copied to the other image, so that both
-	  A and B have the same version. If neither firmware image passes the
-	  verification step, a recovery image is booted. This method will
-	  eventually provide rollback protection as well.
-
-config BOOTMETH_VBE_ABREC_OS
-	bool "Bootdev support for VBE 'a/b/recovery' method for the OS"
-	imply SPL_CRC8
-	imply VPL_CRC8
-	default y if SANDBOX
-	help
-	  Enables support for VBE 'abrec' boot. This allows updating one of an
-	  A or B Operating System in boot media such as MMC. The new OS is
 	  tried and if it boots, it is copied to the other image, so that both
 	  A and B have the same version. If neither firmware image passes the
 	  verification step, a recovery image is booted. This method will

@@ -17,9 +17,6 @@
 struct bootflow;
 struct udevice;
 
-#define VBE_STATE_FNAME		"vbe-state"
-#define VBE_OEM_FIT_FNAME	"oem.fit"
-
 /**
  * struct abrec_priv - information read from the device tree
  *
@@ -33,7 +30,6 @@ struct udevice;
  * @version_offset: Offset from from area_start of the VBE version info
  * @version_size: Size of the version info
  * @storage: Storage device to use, in the form <uclass><devnum>, e.g. "mmc1"
- * @oem_devicetree: true if we should read an OEM devicetree
  */
 struct abrec_priv {
 	u32 area_start;
@@ -44,7 +40,6 @@ struct abrec_priv {
 	u32 version_offset;
 	u32 version_size;
 	const char *storage;
-	bool oem_devicetree;
 };
 
 /** struct abrec_state - state information read from media

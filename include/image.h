@@ -1186,7 +1186,6 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 #define FIT_STANDALONE_PROP	"standalone"
 #define FIT_SCRIPT_PROP		"script"
 #define FIT_LOAD_ONLY_PROP	"load-only"
-#define FIT_COMPATIBLE_PROP	"compatible"
 
 #define FIT_MAX_HASH_LEN	HASH_MAX_DIGEST_SIZE
 
@@ -1235,19 +1234,7 @@ static inline const char *fit_get_name(const void *fit_hdr,
 	return fdt_get_name(fit_hdr, noffset, len);
 }
 
-/**
- * fit_get_desc() - get a node's 'description' property
- *
- * @fit: pointer to the FIT format image header
- * @noffset: node offset
- * @desc: Returns pointer to description, on success
- * Return: 0 on success, -1 on failure
- *
- * fit_get_desc() reads description property from a given node, if
- * description is found pointer to it is returned in third call argument.
- */
-int fit_get_desc(const void *fit, int noffset, const char **descp);
-
+int fit_get_desc(const void *fit, int noffset, char **desc);
 int fit_get_timestamp(const void *fit, int noffset, time_t *timestamp);
 
 int fit_image_get_node(const void *fit, const char *image_uname);

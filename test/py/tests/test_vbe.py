@@ -3,8 +3,6 @@
 #
 # Test addition of VBE
 
-import os
-
 import pytest
 
 import fit_util
@@ -120,23 +118,3 @@ def test_vbe_os_request(ubman):
         output = ubman.run_command_list(cmd.splitlines())
 
     assert 'failures: 0' in output[-1]
-
-@pytest.mark.boardspec('sandbox')
-def test_vbe_extlinux_fit_no_oem(ubman):
-    """Test reading a FIT from an extlinux.conf file"""
-    fname = os.path.join(ubman.config.persistent_data_dir, 'vbe0.img')
-    ubman.run_command(f'host bind 0 {fname}')
-
-    ubman.run_command('ut -f bootstd vbe_test_abrec_no_oem_norun')
-    result = ubman.run_command('echo $?')
-    assert '0' == result
-
-@pytest.mark.boardspec('sandbox')
-def test_vbe_extlinux_fit_oem(ubman):
-    """Test reading an OEM FIT, then an OS FIT from an extlinux.conf file"""
-    fname = os.path.join(ubman.config.persistent_data_dir, 'vbe1.img')
-    ubman.run_command(f'host bind 0 {fname}')
-
-    ubman.run_command('ut -f bootstd vbe_test_abrec_oem_norun')
-    result = ubman.run_command('echo $?')
-    assert '0' == result

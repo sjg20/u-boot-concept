@@ -120,16 +120,12 @@ struct bootflow {
 /**
  * bootflow_img_t: Supported image types
  *
- * This uses image_type_t for most types, but extends it. See the names in
- * bootflow_img[]
+ * This uses image_type_t for most types, but extends it
  *
  * @BFI_EXTLINUX_CFG: extlinux configuration-file
  * @BFI_LOGO: logo image
  * @BFI_EFI: EFI PE image
  * @BFI_CMDLINE: OS command-line string
- * @BFI_VBE_STATE: Verified Boot for Embedded (VBE) state
- * @BFI_VBE_OEM_FIT: Verified Boot for Embedded (VBE) OEM FIT containing
- *	devicetrees
  */
 enum bootflow_img_t {
 	BFI_FIRST = IH_TYPE_COUNT,
@@ -137,8 +133,6 @@ enum bootflow_img_t {
 	BFI_LOGO,
 	BFI_EFI,
 	BFI_CMDLINE,
-	BFI_VBE_STATE,
-	BFI_VBE_OEM_FIT,
 
 	BFI_COUNT,
 };

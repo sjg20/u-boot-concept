@@ -155,10 +155,6 @@ static int add_content(struct imgtool *itl, int type, const char *fname)
 static const char optstring[] =
 	"a:A:b:B:c:C:d:D:e:Ef:Fg:G:i:k:K:ln:N:o:O:p:qrR:stT:vVx";
 
-enum {
-	OPT_LOAD_ONLY	= 1,
-};
-
 static const struct option longopts[] = {
 	{ "load-address", required_argument, NULL, 'a' },
 	{ "architecture", required_argument, NULL, 'A' },
@@ -193,7 +189,6 @@ static const struct option longopts[] = {
 	{ "verbose", no_argument, NULL, 'v' },
 	{ "version", no_argument, NULL, 'V' },
 	{ "xip", no_argument, NULL, 'x' },
-	{ "load-only", no_argument, NULL, OPT_LOAD_ONLY },
 	{ /* sentinel */ },
 };
 
@@ -365,9 +360,6 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 		case 'x':
 			itl->xflag++;
 			break;
-		case OPT_LOAD_ONLY:
-			itl->load_only = true;
-			break;
 		default:
 			return usage(itl, "Invalid option");
 		}
@@ -387,8 +379,6 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 			return usage(itl,
 				"Missing algorithm for auto-FIT with signed images (use -g)");
 	}
-	if (itl->auto_fit)
-		itl->reset_timestamp = 1;
 
 	/*
 	 * For auto-generated FIT images we need to know the image type to put
@@ -400,7 +390,7 @@ static int process_args(struct imgtool *itl, int argc, char **argv)
 		/* For auto-FIT, datafile has to be provided with -d */
 		if (!itl->auto_fit)
 			itl->datafile = datafile;
-		else if (!itl->datafile && type != IH_TYPE_FLATDT)
+		else if (!itl->datafile)
 			return usage(itl,
 				     "Missing data file for auto-FIT (use -d)");
 	} else if (itl->lflag || type != IH_TYPE_INVALID) {
