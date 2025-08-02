@@ -632,11 +632,6 @@ coreboot test.py:
     # Environment:
     #   SRC  - source tree
     #   OUT  - output directory for builds
-    - if [[ -n ${SJG_LAB} ]]; then
-        if [[ "${SJG_LAB}" != "${ROLE}" && "${SJG_LAB}" != "1" ]]; then
-          exit 0;
-        fi;
-      fi
     - export SRC="$(pwd)"
     - export OUT="${SRC}/build/${ROLE}"
     - export OUT_EXTRA="${SRC}/build/${ROLE}_extra"
