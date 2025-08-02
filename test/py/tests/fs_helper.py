@@ -116,25 +116,21 @@ class FsHelper:
             fsi.truncate(self.size_mb << 20)
         self._do_cleanup = True
 
-        try:
-            mkfs_opt, fs_lnxtype = self._get_fs_args()
-            check_call(f'mkfs.{fs_lnxtype} {mkfs_opt} {fs_img}', shell=True,
-                    stdout=DEVNULL if self.quiet else None)
+        mkfs_opt, fs_lnxtype = self._get_fs_args()
+        check_call(f'mkfs.{fs_lnxtype} {mkfs_opt} {fs_img}', shell=True,
+                stdout=DEVNULL if self.quiet else None)
 
-            if self.fs_type.startswith('ext'):
-                sb_content = check_output(f'tune2fs -l {fs_img}',
-                                        shell=True).decode()
-                if 'metadata_csum' in sb_content:
-                    check_call(f'tune2fs -O ^metadata_csum {fs_img}', shell=True)
-            elif fs_lnxtype == 'exfat':
-                check_call(f'fattools cp {self.srcdir}/* {fs_img}', shell=True)
-            elif self.srcdir and os.listdir(self.srcdir):
-                flags = f"-smpQ{'' if self.quiet else 'v'}"
-                check_call(f'mcopy -i {fs_img} {flags} {self.srcdir}/* ::/',
-                        shell=True)
-        except CalledProcessError:
-            os.remove(fs_img)
-            raise
+        if self.fs_type.startswith('ext'):
+            sb_content = check_output(f'tune2fs -l {fs_img}',
+                                    shell=True).decode()
+            if 'metadata_csum' in sb_content:
+                check_call(f'tune2fs -O ^metadata_csum {fs_img}', shell=True)
+        elif fs_lnxtype == 'exfat':
+            check_call(f'fattools cp {self.srcdir}/* {fs_img}', shell=True)
+        elif self.srcdir and os.listdir(self.srcdir):
+            flags = f"-smpQ{'' if self.quiet else 'v'}"
+            check_call(f'mcopy -i {fs_img} {flags} {self.srcdir}/* ::/',
+                    shell=True)
 
     def setup(self):
         """Set up the srcdir ready to receive files"""
