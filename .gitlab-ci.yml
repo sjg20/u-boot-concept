@@ -23,10 +23,10 @@ default:
 
 # We run some tests in different order, to catch some failures quicker.
 stages:
-  - testsuites
+  - test_suites
   - test.py
   - sjg-lab
-  - world build
+  - world_build
   - version_bump
   - release
 
@@ -124,7 +124,7 @@ stages:
     expire_in: 1 week
 
 .world_build:
-  stage: world build
+  stage: world_build
   rules:
     - if: $LAB_ONLY != "1"
       when: always
@@ -206,8 +206,8 @@ build all other platforms:
         exit $ret;
       fi;
 
-.testsuites:
-  stage: testsuites
+.test_suites:
+  stage: test_suites
   rules:
     - if: $LAB_ONLY != "1"
       when: always
@@ -215,7 +215,7 @@ build all other platforms:
       when: never
 
 check for new CONFIG symbols outside Kconfig:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
     # If grep succeeds and finds a match the test fails as we should
@@ -228,7 +228,7 @@ check for new CONFIG symbols outside Kconfig:
 
 # build documentation
 docs:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - python3 -m venv /tmp/venvhtml
     - . /tmp/venvhtml/bin/activate
@@ -238,13 +238,13 @@ docs:
 
 # ensure all configs have MAINTAINERS entries
 Check for configs without MAINTAINERS entry:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - ./tools/buildman/buildman --maintainer-check
 
 # Ensure host tools build
 Build tools-only and envtools:
-  extends: .testsuites
+  extends: .test_suites
   tags:
     - single
   script:
@@ -252,8 +252,8 @@ Build tools-only and envtools:
       make mrproper;
       make tools-only_config envtools -j$(nproc)
 
-Run binman, buildman, dtoc, Kconfig and patman testsuites:
-  extends: .testsuites
+Run binman, buildman, dtoc, Kconfig and patman test suites:
+  extends: .test_suites
   script:
     - git config --global user.name "GitLab CI Runner";
       git config --global user.email trini@konsulko.com;
@@ -282,7 +282,7 @@ Run binman, buildman, dtoc, Kconfig and patman testsuites:
 
 # Check for any pylint regressions
 Run pylint:
-  extends: .testsuites
+  extends: .test_suites
   tags:
     - single
   script:
@@ -306,7 +306,7 @@ Run pylint:
 
 # Check for pre-schema driver model tags
 Check for pre-schema tags:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}";
     # If grep succeeds and finds a match the test fails as we should
@@ -315,7 +315,7 @@ Check for pre-schema tags:
 
 # Check we can package the Python tools
 Check packing of Python tools:
-  extends: .testsuites
+  extends: .test_suites
   script:
     - make pip
 
