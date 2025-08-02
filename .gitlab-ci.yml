@@ -6,6 +6,9 @@ include:
 variables:
   DEFAULT_TAG: ""
   MIRROR_DOCKER: docker.io
+  TEST_SUITES: "1"
+  TEST_PY: "1"
+  WORLD_BUILD: "1"
   LAB_ONLY: ""
   SJG_LAB: ""
   PLATFORM: linux/amd64,linux/arm64
@@ -34,10 +37,15 @@ stages:
   stage: test.py
   retry: 2 # QEMU may be too slow, etc.
   rules:
-    - if: $LAB_ONLY != "1"
-      when: always
     - if: $LAB_ONLY == "1"
       when: never
+    - if: $TEST_PY == "1"
+      when: always
+    - if: $TEST_PY == $CI_JOB_NAME
+      when: always
+    - if: $TEST_PY == $TEST_PY_BD
+      when: always
+    - when: never
   before_script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
     # qemu_arm64_lwip_defconfig is the same as qemu_arm64 but with NET_LWIP enabled.
@@ -126,10 +134,11 @@ stages:
 .world_build:
   stage: world_build
   rules:
-    - if: $LAB_ONLY != "1"
-      when: always
     - if: $LAB_ONLY == "1"
       when: never
+    - if: $WORLD_BUILD == "1"
+      when: always
+    - when: never
 
 build all 32bit ARM platforms:
   extends: .world_build
@@ -209,10 +218,11 @@ build all other platforms:
 .test_suites:
   stage: test_suites
   rules:
-    - if: $LAB_ONLY != "1"
-      when: always
     - if: $LAB_ONLY == "1"
       when: never
+    - if: $TEST_SUITES == "1"
+      when: always
+    - when: never
 
 check for new CONFIG symbols outside Kconfig:
   extends: .test_suites

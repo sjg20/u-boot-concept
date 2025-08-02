@@ -95,6 +95,28 @@ testing cycle to edit these pipelines in separate local commits to pair them
 down to just the jobs you're interested in.  These changes must be removed
 prior to submission.
 
+Available variables are:
+
+TEST_SUITES
+    Set to 0 to disable the test_suites stage::
+
+        git push ci -o ci.variable=TEST_SUITES=0
+
+TEST_PY
+    Set to 0 to disable the test.py stage, or set to the job name to run just
+    that job, or set to the board name to run all tests for that board:
+
+    For example::
+
+        git push ci -o ci.variable=TEST_PY=0
+        git push ci -o ci.variable=TEST_PY=sandbox
+        git push ci -o ci.variable=TEST_PY='sandbox with clang test.py'
+
+WORLD_BUILD
+    Set to 0 to disable the world_build stage::
+
+        git push ci -o ci.variable=WORLD_BUILD=0
+
 Using the lab
 -------------
 
@@ -113,7 +135,9 @@ To request that the lab runs::
 
     git push ci -o ci.variable=SJG_LAB=1 <branch>
 
-To request that *only* the lab runs::
+To request that *only* the lab runs, you can set TEST_PY=0 and TEST_SUITES=0
+and WORD_BUILD=0 as above. But as a shortcut you can use the LAB_ONLY
+variables::
 
     git push ci -o ci.variable=SJG_LAB=1 ci.variable=LAB_ONLY=1 <branch>
 
