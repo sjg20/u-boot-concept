@@ -31,8 +31,6 @@ enum vbe_phase_t {
 /**
  * enum vbe_pick_t - indicates which firmware is picked
  *
- * The names are in pick_names[]
- *
  * @VBEFT_A: Firmware A
  * @VBEFT_B: Firmware B
  * @VBEFT_RECOVERY: Recovery firmware
@@ -41,8 +39,6 @@ enum vbe_pick_t {
 	VBEP_A,
 	VBEP_B,
 	VBEP_RECOVERY,
-
-	VBEP_COUNT,
 };
 
 /**
@@ -74,15 +70,6 @@ static inline enum vbe_phase_t vbe_phase(void)
 
 	return VBE_PHASE_OS;
 }
-
-/**
- * struct vbe_bflow_priv - Information attached to the VBE bootflow
- *
- * @pick: Boot path to pick for the current boot
- */
-struct vbe_bflow_priv {
-	enum vbe_pick_t pick_slot;
-};
 
 /**
  * vbe_list() - List the VBE bootmeths

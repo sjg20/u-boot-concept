@@ -676,8 +676,7 @@ int boot_get_fpga(struct bootm_headers *images)
 		}
 
 		conf_noffset = fit_image_get_node(buf, uname);
-		compatible = fdt_getprop(buf, conf_noffset, FIT_COMPATIBLE_PROP,
-					 NULL);
+		compatible = fdt_getprop(buf, conf_noffset, "compatible", NULL);
 		if (!compatible) {
 			printf("'fpga' image without 'compatible' property\n");
 		} else {

@@ -95,7 +95,7 @@ static int extlinux_setup(struct udevice *dev, struct bootflow *bflow,
 
 int extlinux_boot(struct udevice *dev, struct bootflow *bflow,
 		  pxe_getfile_func getfile, bool allow_abs_path,
-		  const char *bootfile, bool restart)
+		  const char *bootfile)
 {
 	struct extlinux_plat *plat = dev_get_plat(dev);
 	ulong addr;
@@ -109,7 +109,6 @@ int extlinux_boot(struct udevice *dev, struct bootflow *bflow,
 				     bootfile, &plat->ctx);
 		if (ret)
 			return log_msg_ret("elb", ret);
-		plat->ctx.restart = restart;
 		addr = map_to_sysmem(bflow->buf);
 		ret = pxe_process(&plat->ctx, addr, false);
 	}

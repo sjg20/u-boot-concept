@@ -23,28 +23,20 @@
  * take a 'include file getter' function.
  */
 
-/**
- * struct pxe_label - describes a single label in a pxe file
+/*
+ * Describes a single label given in a pxe file.
  *
- * Create these with label_create()
+ * Create these with the 'label_create' function given below.
  *
- * @num: String version of the ID number of the label, e.g. "1"
- * @name: name of the 'label' line
- * @menu: name of the menu as given on the 'menu label' line
- * @kernel_label: the kernel label, including FIT config if present
- * @kernel: the path to the kernel file to use for this label
- * @config: FIT configuration to use (after '#'), or NULL if none
- * @append: kernel command line to use when booting this label
- * @initrd: path to the initrd to use for this label.
- * @fdt: path to FDT to use
- * @fdtdir: path to FDT directory to use
- * @fdtoverlays: space-separated list of paths of FDT overlays to apply
- * @ipappend: flags for appending IP address (0x1) and MAC address (0x3)
- * @attempted: 0 if we haven't tried to boot this label, 1 if we have
- * @localboot: 1 if this label specified 'localboot', 0 otherwise
- * @localboot_val: value of the localboot parameter
- * @kaslrseed: 1 to generate kaslrseed from hw_rng
- * @list: lets these form a list, which a pxe_menu struct will hold.
+ * name - the name of the menu as given on the 'menu label' line.
+ * kernel_label - the kernel label, including FIT config if present.
+ * kernel - the path to the kernel file to use for this label.
+ * append - kernel command line to use when booting this label
+ * initrd - path to the initrd to use for this label.
+ * attempted - 0 if we haven't tried to boot this label, 1 if we have.
+ * localboot - 1 if this label specified 'localboot', 0 otherwise.
+ * kaslrseed - 1 if generate kaslrseed from hw_rng
+ * list - lets these form a list, which a pxe_menu struct will hold.
  */
 struct pxe_label {
 	char num[4];
@@ -129,8 +121,6 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
  *	@initrd_addr_str)
  * @initrd_str: initrd string to process (only used if @initrd_addr_str)
  * @conf_fdt: string containing the FDT address
- * @restart: true to use BOOTM_STATE_RESTART instead of BOOTM_STATE_START (only
- *	supported with FIT / bootm)
  */
 struct pxe_context {
 	/**
@@ -162,7 +152,6 @@ struct pxe_context {
 	char *initrd_filesize;
 	char *initrd_str;
 	char *conf_fdt;
-	bool restart;
 };
 
 /**
@@ -334,29 +323,5 @@ int pxe_probe(struct pxe_context *ctx, ulong pxefile_addr_r, bool prompt);
  * Return: Does not return, on success, otherwise returns a -ve error code
  */
 int pxe_do_boot(struct pxe_context *ctx);
-
-/*
- * Entry point for parsing a menu file. nest_level indicates how many times
- * we've nested in includes.  It will be 1 for the top level menu file.
- *
- * Returns 1 on success, < 0 on error.
- */
-int parse_pxefile_top(struct pxe_context *ctx, char *p, ulong base,
-		      struct pxe_menu *cfg, int nest_level);
-
-/**
- * label_destroy() - free the memory used by a pxe_label
- *
- * This frees @label itself as well as memory used by its name,
- * kernel, config, append, initrd, fdt, fdtdir and fdtoverlay members, if
- * they're non-NULL.
- *
- * So - be sure to only use dynamically allocated memory for the members of
- * the pxe_label struct, unless you want to clean it up first. These are
- * currently only created by the pxe file parsing code.
- *
- * @label: Label to free
- */
-void label_destroy(struct pxe_label *label);
 
 #endif /* __PXE_UTILS_H */

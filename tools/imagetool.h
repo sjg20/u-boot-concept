@@ -32,21 +32,11 @@
 
 #define IH_ARCH_DEFAULT		IH_ARCH_INVALID
 
-/*
- * struct content_info - info about a file to be placed into the FIT
- *
- * @next: Pointer to next record, or NULL if this is the last
- * @type: File type (IH_TYPE_...)
- * @fname: Filename containing the data to add
- * @compat: Pointer to compatible property, if an FDT
- * @compat_len: Length of the compatible property
- */
+/* Information about a file that needs to be placed into the FIT */
 struct content_info {
 	struct content_info *next;
-	int type;
+	int type;		/* File type (IH_TYPE_...) */
 	const char *fname;
-	const char *compat;
-	int compat_len;
 };
 
 /* FIT auto generation modes */
@@ -111,7 +101,6 @@ struct imgtool {
 	const char *engine_id;	/* Engine to use for signing */
 	bool reset_timestamp;	/* Reset the timestamp on an existing image */
 	struct image_summary summary;	/* results of signing process */
-	bool load_only;		/* true to create a load-only FIT */
 };
 
 /** struct imgtool_funcs - image-type-specific variables and callbacks */

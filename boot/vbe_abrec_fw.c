@@ -150,7 +150,6 @@ static int abrec_run_vpl(struct udevice *blk, struct spl_image_info *image,
 		ub_size = binman_sym(ulong, u_boot_b, size);
 		break;
 	case VBEP_RECOVERY:
-	case VBEP_COUNT:
 		offset = binman_sym(ulong, spl_recovery, image_pos);
 		size = binman_sym(ulong, spl_recovery, size);
 		ub_offset = binman_sym(ulong, u_boot_recovery, image_pos);

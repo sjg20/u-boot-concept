@@ -14,4 +14,3 @@ Standard Boot
    cros
    script
    sandbox
-   vbe_os

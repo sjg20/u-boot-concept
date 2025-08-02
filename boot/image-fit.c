@@ -294,8 +294,11 @@ static void fit_image_print_verification_data(const void *fit, int noffset,
  */
 static void fit_conf_print(const void *fit, int noffset, const char *p)
 {
-	const char *uname, *desc;
-	int ret, ndepth, i;
+	char *desc;
+	const char *uname;
+	int ret;
+	int fdt_index, loadables_index;
+	int ndepth;
 
 	/* Mandatory properties */
 	ret = fit_get_desc(fit, noffset, &desc);
@@ -321,11 +324,11 @@ static void fit_conf_print(const void *fit, int noffset, const char *p)
 	if (uname)
 		printf("%s  Firmware:     %s\n", p, uname);
 
-	for (i = 0;
+	for (fdt_index = 0;
 	     uname = fdt_stringlist_get(fit, noffset, FIT_FDT_PROP,
-					i, NULL), uname;
-	     i++) {
-		if (!i)
+					fdt_index, NULL), uname;
+	     fdt_index++) {
+		if (fdt_index == 0)
 			printf("%s  FDT:          ", p);
 		else
 			printf("%s                ", p);
@@ -337,24 +340,15 @@ static void fit_conf_print(const void *fit, int noffset, const char *p)
 		printf("%s  FPGA:         %s\n", p, uname);
 
 	/* Print out all of the specified loadables */
-	for (i = 0;
+	for (loadables_index = 0;
 	     uname = fdt_stringlist_get(fit, noffset, FIT_LOADABLE_PROP,
-					i, NULL), uname;
-	     i++) {
-		if (!i)
+					loadables_index, NULL), uname;
+	     loadables_index++) {
+		if (loadables_index == 0) {
 			printf("%s  Loadables:    ", p);
-		else
+		} else {
 			printf("%s                ", p);
-		printf("%s\n", uname);
-	}
-
-	/* Show the list of compatible strings */
-	for (i = 0; uname = fdt_stringlist_get(fit, noffset,
-				FIT_COMPATIBLE_PROP, i, NULL), uname; i++) {
-		if (!i)
-			printf("%s  Compatible:   ", p);
-		else
-			printf("%s                ", p);
+		}
 		printf("%s\n", uname);
 	}
 
@@ -383,7 +377,7 @@ static void fit_conf_print(const void *fit, int noffset, const char *p)
  */
 void fit_print_contents(const void *fit)
 {
-	const char *desc;
+	char *desc;
 	char *uname;
 	int images_noffset;
 	int confs_noffset;
@@ -490,8 +484,8 @@ void fit_print_contents(const void *fit)
  */
 void fit_image_print(const void *fit, int image_noffset, const char *p)
 {
+	char *desc;
 	uint8_t type, arch, os, comp = IH_COMP_NONE;
-	const char *desc;
 	size_t size;
 	ulong load, entry;
 	const void *data;
@@ -596,17 +590,28 @@ void fit_image_print(const void *fit, int image_noffset, const char *p)
 	}
 }
 
-int fit_get_desc(const void *fit, int noffset, const char **descp)
+/**
+ * fit_get_desc - get node description property
+ * @fit: pointer to the FIT format image header
+ * @noffset: node offset
+ * @desc: double pointer to the char, will hold pointer to the description
+ *
+ * fit_get_desc() reads description property from a given node, if
+ * description is found pointer to it is returned in third call argument.
+ *
+ * returns:
+ *     0, on success
+ *     -1, on failure
+ */
+int fit_get_desc(const void *fit, int noffset, char **desc)
 {
-	const char *desc;
 	int len;
 
-	desc = (char *)fdt_getprop(fit, noffset, FIT_DESC_PROP, &len);
-	if (!desc) {
+	*desc = (char *)fdt_getprop(fit, noffset, FIT_DESC_PROP, &len);
+	if (*desc == NULL) {
 		fit_get_debug(fit, noffset, FIT_DESC_PROP, len);
-		return -ENOENT;
+		return -1;
 	}
-	*descp = desc;
 
 	return 0;
 }
@@ -1727,16 +1732,15 @@ int fit_conf_find_compat(const void *fit, const void *fdt)
 		return -EINVAL;
 	}
 
-	fdt_compat = fdt_getprop(fdt, 0, FIT_COMPATIBLE_PROP, &fdt_compat_len);
+	fdt_compat = fdt_getprop(fdt, 0, "compatible", &fdt_compat_len);
 	if (!fdt_compat) {
-		debug("Fdt for comparison has no 'compatible' property.\n");
+		debug("Fdt for comparison has no \"compatible\" property.\n");
 		return -ENXIO;
 	}
 
 	/*
 	 * Loop over the configurations in the FIT image.
 	 */
-	printf("Looking for best match...");
 	for (noffset = fdt_next_node(fit, confs_noffset, &ndepth);
 			(noffset >= 0) && (ndepth > 0);
 			noffset = fdt_next_node(fit, noffset, &ndepth)) {
@@ -1752,7 +1756,7 @@ int fit_conf_find_compat(const void *fit, const void *fdt)
 			continue;
 
 		/* If there's a compat property in the config node, use that. */
-		if (fdt_getprop(fit, noffset, FIT_COMPATIBLE_PROP, NULL)) {
+		if (fdt_getprop(fit, noffset, "compatible", NULL)) {
 			fdt = fit;		  /* search in FIT image */
 			compat_noffset = noffset; /* search under config node */
 		} else {	/* Otherwise extract it from the kernel FDT. */
@@ -1806,10 +1810,9 @@ int fit_conf_find_compat(const void *fit, const void *fdt)
 		}
 	}
 	if (!best_match_offset) {
-		printf("no match found\n");
+		debug("No match found.\n");
 		return -ENOENT;
 	}
-	printf("found\n");
 
 	return best_match_offset;
 }
@@ -1935,7 +1938,7 @@ int fit_conf_get_prop_node(const void *fit, int noffset, const char *prop_name,
 static int fit_get_data_tail(const void *fit, int noffset,
 			     const void **data, size_t *size)
 {
-	const char *desc;
+	char *desc;
 
 	if (noffset < 0)
 		return noffset;

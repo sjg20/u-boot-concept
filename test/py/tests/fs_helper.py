@@ -7,7 +7,6 @@
 
 import re
 import os
-import shutil
 from subprocess import call, check_call, check_output, CalledProcessError
 from subprocess import DEVNULL
 import tempfile
@@ -64,21 +63,16 @@ class FsHelper:
 
         # Use a default filename; the caller can adjust it
         leaf = f'{prefix}.{fs_type}.img'
-        if config:
-            self.fs_img = os.path.join(config.persistent_data_dir, leaf)
-            if os.path.exists(self.fs_img):
-                os.remove(self.fs_img)
-        else:
-            self.fs_img = leaf
+        self.fs_img = os.path.join(config.persistent_data_dir, leaf)
 
         # Some distributions do not add /sbin to the default PATH, where mkfs
         # lives
         if '/sbin' not in os.environ["PATH"].split(os.pathsep):
             os.environ["PATH"] += os.pathsep + '/sbin'
 
-        self.tmpdir = None
         self.srcdir = None
-        self._do_cleanup = False
+        self.tmpdir = None
+        self._do_cleanup = True
 
     def _get_fs_args(self):
         """Get the mkfs options and program to use
@@ -114,43 +108,38 @@ class FsHelper:
         fs_img = self.fs_img
         with open(fs_img, 'wb') as fsi:
             fsi.truncate(self.size_mb << 20)
-        self._do_cleanup = True
 
-        mkfs_opt, fs_lnxtype = self._get_fs_args()
-        check_call(f'mkfs.{fs_lnxtype} {mkfs_opt} {fs_img}', shell=True,
-                stdout=DEVNULL if self.quiet else None)
+        try:
+            mkfs_opt, fs_lnxtype = self._get_fs_args()
+            check_call(f'mkfs.{fs_lnxtype} {mkfs_opt} {fs_img}', shell=True,
+                    stdout=DEVNULL if self.quiet else None)
 
-        if self.fs_type.startswith('ext'):
-            sb_content = check_output(f'tune2fs -l {fs_img}',
-                                    shell=True).decode()
-            if 'metadata_csum' in sb_content:
-                check_call(f'tune2fs -O ^metadata_csum {fs_img}', shell=True)
-        elif fs_lnxtype == 'exfat':
-            check_call(f'fattools cp {self.srcdir}/* {fs_img}', shell=True)
-        elif self.srcdir and os.listdir(self.srcdir):
-            flags = f"-smpQ{'' if self.quiet else 'v'}"
-            check_call(f'mcopy -i {fs_img} {flags} {self.srcdir}/* ::/',
-                    shell=True)
+            if self.fs_type.startswith('ext'):
+                sb_content = check_output(f'tune2fs -l {fs_img}',
+                                        shell=True).decode()
+                if 'metadata_csum' in sb_content:
+                    check_call(f'tune2fs -O ^metadata_csum {fs_img}', shell=True)
+            elif fs_lnxtype == 'exfat':
+                check_call(f'fattools cp {self.srcdir}/* {fs_img}', shell=True)
+            elif self.srcdir and os.listdir(self.srcdir):
+                flags = f"-smpQ{'' if self.quiet else 'v'}"
+                check_call(f'mcopy -i {fs_img} {flags} {self.srcdir}/* ::/',
+                        shell=True)
+        except CalledProcessError:
+            os.remove(fs_img)
+            raise
 
     def setup(self):
         """Set up the srcdir ready to receive files"""
         if not self.srcdir:
-            if self.config:
-                self.srcdir = os.path.join(self.config.persistent_data_dir,
-                                           f'{self.prefix}.{self.fs_type}.tmp')
-                if os.path.exists(self.srcdir):
-                    shutil.rmtree(self.srcdir)
-                os.mkdir(self.srcdir)
-            else:
-                self.tmpdir = tempfile.TemporaryDirectory('fs_helper')
-                self.srcdir = self.tmpdir.name
+            self.tmpdir = tempfile.TemporaryDirectory('fs_helper')
+            self.srcdir = self.tmpdir.name
 
     def cleanup(self):
-        """Remove created image"""
+        """Remove created files"""
         if self.tmpdir:
             self.tmpdir.cleanup()
-        if self._do_cleanup:
-            os.remove(self.fs_img)
+        os.remove(self.fs_img)
 
     def __enter__(self):
         self.setup()
@@ -199,8 +188,6 @@ class DiskHelper:
         self.fs_list = []
         self.fname = os.path.join('' if cur_dir else config.persistent_data_dir,
                                   f'{prefix}{devnum}.img')
-        self.remove_img = True
-        self._do_cleanup = False
 
     def add_fs(self, fs_img, part_type, bootable=False):
         """Add a new filesystem
@@ -230,7 +217,6 @@ class DiskHelper:
         img_size = pos
         try:
             check_call(f'qemu-img create {self.fname} {img_size}M', shell=True)
-            self._do_cleanup = True
             check_call(f'printf "{spec}" | sfdisk {self.fname}', shell=True)
         except CalledProcessError:
             os.remove(self.fname)
@@ -244,17 +230,15 @@ class DiskHelper:
             pos += fsi.size_mb
         return self.fname
 
-    def cleanup(self):
+    def cleanup(self, remove_full_img=False):
         """Remove created file"""
-        if self._do_cleanup:
-            os.remove(self.fname)
+        os.remove(self.fname)
 
     def __enter__(self):
         return self
 
     def __exit__(self, extype, value, traceback):
-        if self.remove_img:
-            self.cleanup()
+        self.cleanup()
 
 
 def mk_fs(config, fs_type, size, prefix, src_dir=None, size_gran = 0x100000,
