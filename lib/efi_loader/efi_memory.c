@@ -712,6 +712,7 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
 
 	provided_map_size = *memory_map_size;
 
+	// if (IS_ENABLED(CONFIG_EFI_APP))
 	map_entries = list_count_nodes(&efi_mem);
 
 	map_size = map_entries * sizeof(struct efi_mem_desc);
@@ -847,7 +848,8 @@ int efi_memory_init(void)
 	efi_add_known_memory_from_efi();
 #endif
 
-	add_u_boot_and_runtime();
+	if (!IS_ENABLED(CONFIG_EFI_APP))
+		add_u_boot_and_runtime();
 
 #ifdef CONFIG_EFI_LOADER_BOUNCE_BUFFER
 	/* Request a 32bit 64MB bounce buffer region */

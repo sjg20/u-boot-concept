@@ -705,6 +705,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		return 1;
 	}
 
+
 	/* for FIT, append the configuration identifier */
 	snprintf(fit_addr, sizeof(fit_addr), "%lx%s", kern_addr,
 		 label->config ? label->config : "");

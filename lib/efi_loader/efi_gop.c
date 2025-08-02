@@ -508,7 +508,7 @@ efi_status_t efi_gop_register(void)
 
 	gopobj = calloc(1, sizeof(*gopobj));
 	if (!gopobj) {
-		printf("ERROR: Out of memory\n");
+		printf("ERROR: Out of memory1\n");
 		return EFI_OUT_OF_RESOURCES;
 	}
 

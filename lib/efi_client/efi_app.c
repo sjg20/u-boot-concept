@@ -41,10 +41,12 @@ int do_elf_reloc_fixups(void)
 	return 0;
 }
 
+#if 0
 int efi_init_obj_list(void)
 {
 	return EFI_SUCCESS;
 }
+#endif
 
 int efi_info_get(enum efi_entry_t type, void **datap, int *sizep)
 {
@@ -168,6 +170,50 @@ static void scan_tables(struct efi_system_table *sys_table)
 	}
 }
 
+struct efi_event {
+};
+
+void check_keyboard(const char *msg)
+{
+	struct efi_system_table *syst = efi_get_sys_table();
+	struct efi_boot_services *boot = efi_get_boot();
+	struct efi_simple_text_input_protocol *cin = syst->con_in;
+	struct efi_event *timer;
+	efi_uintn_t index;
+	efi_status_t ret;
+
+	printf("check_keyboard (%s): ", msg);
+
+	ret = boot->create_event(EVT_TIMER, TPL_APPLICATION, NULL, NULL, &timer);
+	if (ret != EFI_SUCCESS) {
+		printf("could not create event\n");
+		return;
+	}
+
+	ret = boot->set_timer(timer, EFI_TIMER_PERIODIC, 1000 * 1000 / 100);
+	ret = cin->reset(cin, true);
+	for (;;) {
+		struct efi_input_key key;
+		struct efi_event *events[2] = {cin->wait_for_key, timer};
+
+		// ret = boot->wait_for_event(2, &cin->wait_for_key, &index);
+		ret = boot->wait_for_event(2, events, &index);
+		if (ret) {
+			printf("error\n");
+			continue;
+		}
+		if (index) {
+			printf(".");
+			continue;
+		}
+		printf("#");
+		ret = cin->read_key_stroke(cin, &key);
+		if (ret)
+			continue;
+		printf("%x ", key.unicode_char);
+	}
+}
+
 /**
  * efi_main() - Start an EFI image
  *
@@ -215,6 +261,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 
 	printf("starting\n");
 
+
 	board_init_f(GD_FLG_SKIP_RELOC);
 	board_init_r(NULL, 0);
 	free_memory(priv);
@@ -238,6 +285,7 @@ static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 	return -EINPROGRESS;
 }
 
+#if 0
 /*
  * Attempt to relocate the kernel to somewhere the firmware isn't using
  */
@@ -274,7 +322,92 @@ int board_fixup_os(void *ctx, struct event *evt)
 
 	return 0;
 }
-EVENT_SPY_FULL(EVT_BOOT_OS_ADDR, board_fixup_os);
+#endif
+
+
+int efi_app_exit_boot_services(struct efi_priv *priv, uint key)
+{
+	const struct efi_boot_services *boot = priv->boot;
+	int ret;
+
+	ret = boot->exit_boot_services(priv->parent_image, key);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+#if 0
+static int efi_setup_dram(void)
+{
+	struct efi_mem_desc *desc;
+	int desc_size;
+	uint version;
+	// ofnode node;
+	// void *fdt;
+	int size;
+	uint key;
+	int ret;
+	int banks;
+
+	printf("setup DRAM\n");
+	ret = efi_get_mmap(&desc, &size, &key, &desc_size, &version);
+	if (ret) {
+		printf("app: Failed to get EFI memory map\n");
+		return -EINVAL;
+	}
+
+	banks = dram_init_banksize_from_memmap(desc, size, desc_size);
+	printf("%d memory banks\n", banks);
+	run_command("bdinfo", 0);
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_BOOTM_PRE_PREP, efi_setup_dram);
+#endif
+
+int ft_system_setup(void *fdt, struct bd_info *bd)
+{
+	// const struct event_ft_fixup *fixup = &event->data.ft_fixup;
+	struct efi_mem_desc *desc;
+	int desc_size;
+	uint version;
+	// ofnode node;
+	// void *fdt;
+	int size;
+	uint key;
+	int ret;
+
+	printf("fixup memory\n");
+	ret = fdt_fixup_memory(fdt, 0x40000000, 0x100000000);
+	if (ret) {
+		printf("failed fixup memory\n");
+		return ret;
+	}
+
+	printf("add_reserved_memory\n");
+	ret = efi_get_mmap(&desc, &size, &key, &desc_size, &version);
+	if (ret)
+		return log_msg_ret("erm", ret);
+
+	efi_print_mem_table(desc, size, desc_size, false);
+	// ret = fdt_fixup_memory(fdt, u64 start, u64 size);
+
+	run_command("fdt print\n", 0);
+	// node = oftree_path(fixup->tree, "/reserved-memory");
+	// printf("node: %s\n", ofnode_name(node));
+
+#if 0
+		int fdtdec_add_reserved_memory(void *blob, const char *basename,
+			       const struct fdt_memory *carveout,
+			       const char **compatibles, unsigned int count,
+			       uint32_t *phandlep, unsigned long flags)
+#endif
+
+	return 0;
+}
+
+// EVENT_SPY_FULL(EVT_FT_FIXUP, add_reserved_memory);
 
 static const struct udevice_id efi_sysreset_ids[] = {
 	{ .compatible = "efi,reset" },

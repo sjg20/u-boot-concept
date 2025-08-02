@@ -1309,6 +1309,8 @@ efi_status_t efi_console_register(void)
 	efi_status_t r;
 	struct efi_device_path *dp;
 
+	return 0;
+
 	/* Install protocols on root node */
 	r = efi_install_multiple_protocol_interfaces(&efi_root,
 						     &efi_guid_text_output_protocol,
@@ -1322,6 +1324,7 @@ efi_status_t efi_console_register(void)
 	/* Create console node and install device path protocols */
 	if (CONFIG_IS_ENABLED(DM_SERIAL)) {
 		dp = efi_dp_from_uart();
+		printf("dp %p\n", dp);
 		if (!dp)
 			goto out_of_memory;
 
@@ -1330,6 +1333,7 @@ efi_status_t efi_console_register(void)
 
 		/* Install device path */
 		r = efi_add_protocol(&uart_obj, &efi_guid_device_path, dp);
+		printf("r %lx\n", r);
 		if (r != EFI_SUCCESS)
 			goto out_of_memory;
 	}
@@ -1350,12 +1354,15 @@ efi_status_t efi_console_register(void)
 		return r;
 	}
 	/* 5000 ns cycle is sufficient for 2 MBaud */
-	r = efi_set_timer(console_timer_event, EFI_TIMER_PERIODIC, 50);
+	r = efi_set_timer(console_timer_event, EFI_TIMER_PERIODIC, 5000);
 	if (r != EFI_SUCCESS)
 		printf("ERROR: Failed to set console timer\n");
+
+	printf("console ready\n");
+
 	return r;
 out_of_memory:
-	printf("ERROR: Out of memory\n");
+	printf("ERROR: Out of memory2\n");
 	return r;
 }
 
