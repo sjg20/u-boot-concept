@@ -726,7 +726,13 @@ void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 
 	debug("%s: Relocating to offset=%lx\n", __func__, offset);
 	for (; (uintptr_t)rel < (uintptr_t)__efi_runtime_rel_stop; rel++) {
-		ulong base = CONFIG_TEXT_BASE;
+		ulong base;
+
+#ifdef CONFIG_TEXT_BASE
+		base = CONFIG_TEXT_BASE;
+#else
+		base = (ulong)_start;
+#endif
 		ulong *p;
 		ulong newaddr;
 
@@ -745,7 +751,7 @@ void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 		switch (rel->info & R_MASK) {
 		case R_RELATIVE:
 #ifdef IS_RELA
-		newaddr = rel->addend + offset - CONFIG_TEXT_BASE;
+		newaddr = rel->addend + offset - base;
 #else
 		newaddr = *p - lastoff + offset;
 #endif

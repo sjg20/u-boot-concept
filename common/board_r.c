@@ -162,7 +162,7 @@ static int initr_reloc_global_data(void)
 	 */
 	efi_save_gd();
 
-	efi_runtime_relocate(gd->relocaddr, NULL);
+	// efi_runtime_relocate(gd->relocaddr, NULL);
 #endif
 
 	return 0;
@@ -560,6 +560,7 @@ static int run_main_loop(void)
 
 static void initcall_run_r(void)
 {
+	printf("hi\n");
 	/*
 	 * Please do not add logic to this function (variables, if (), etc.).
 	 * For simplicity it should remain an ordered list of function calls.
@@ -598,6 +599,7 @@ static void initcall_run_r(void)
 #if CONFIG_IS_ENABLED(ADDR_MAP)
 	INITCALL(init_addr_map);
 #endif
+	printf("hia\n");
 #if CONFIG_IS_ENABLED(ARM) || CONFIG_IS_ENABLED(RISCV) || \
     CONFIG_IS_ENABLED(SANDBOX)
 	INITCALL(board_init);	/* Setup chipselects */
@@ -613,7 +615,9 @@ static void initcall_run_r(void)
 #endif
 	INITCALL(initr_lmb);
 #if CONFIG_IS_ENABLED(EFI_LOADER)
+	printf("hi2\n");
 	INITCALL(efi_memory_init);
+	printf("hi3\n");
 #endif
 #if CONFIG_IS_ENABLED(BINMAN_FDT)
 	INITCALL(initr_binman);
@@ -659,6 +663,7 @@ static void initcall_run_r(void)
 	INITCALL(cpu_init_r);
 #endif
 #if CONFIG_IS_ENABLED(EFI_LOADER)
+	printf("hi4\n");
 	INITCALL(efi_init_early);
 #endif
 #if CONFIG_IS_ENABLED(CMD_NAND)
