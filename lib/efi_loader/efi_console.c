@@ -1355,7 +1355,7 @@ efi_status_t efi_console_register(void)
 		printf("ERROR: Failed to set console timer\n");
 	return r;
 out_of_memory:
-	printf("ERROR: Out of memory\n");
+	printf("ERROR: Out of memory2\n");
 	return r;
 }
 

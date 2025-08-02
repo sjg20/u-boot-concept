@@ -450,6 +450,7 @@ static int lmb_map_update_notify(phys_addr_t addr, phys_size_t size, u8 op,
 	u64 pages;
 	efi_status_t status;
 
+	return 0;
 	if (op != MAP_OP_RESERVE && op != MAP_OP_FREE && op != MAP_OP_ADD) {
 		log_err("Invalid map update op received (%d)\n", op);
 		return -1;
@@ -616,16 +617,21 @@ void lmb_add_memory(void)
 	u64 ram_top = gd->ram_top;
 	struct bd_info *bd = gd->bd;
 
+	printf("add %d\n", __LINE__);
 	if (CONFIG_IS_ENABLED(LMB_ARCH_MEM_MAP))
 		return lmb_arch_add_memory();
 
 	/* Assume a 4GB ram_top if not defined */
+	printf("add %d %llx\n", __LINE__, ram_top);
 	if (!ram_top)
 		ram_top = 0x100000000ULL;
 
+	printf("add %d\n", __LINE__);
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
 		size = bd->bi_dram[i].size;
 		if (size) {
+			printf("start %llx size %llx\n", bd->bi_dram[i].start,
+			       size);
 			lmb_add(bd->bi_dram[i].start, size);
 
 			/*
@@ -638,6 +644,7 @@ void lmb_add_memory(void)
 						  LMB_NOOVERWRITE);
 		}
 	}
+	printf("add %d\n", __LINE__);
 }
 
 static long lmb_add_region(struct alist *lmb_rgn_lst, phys_addr_t base,
@@ -935,19 +942,23 @@ int lmb_init(void)
 {
 	int ret;
 
+	printf("lmb 1\n");
 	ret = lmb_setup(false);
 	if (ret) {
 		log_info("Unable to init LMB\n");
 		return ret;
 	}
+	printf("lmb 2\n");
 
 	lmb_add_memory();
+	printf("lmb 3\n");
 
 	/* Reserve the U-Boot image region once U-Boot has relocated */
 	if (xpl_phase() == PHASE_SPL)
 		lmb_reserve_common_spl();
 	else if (xpl_phase() == PHASE_BOARD_R)
 		lmb_reserve_common((void *)gd->fdt_blob);
+	printf("lmb 4\n");
 
 	return 0;
 }

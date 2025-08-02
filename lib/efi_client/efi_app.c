@@ -41,10 +41,12 @@ int do_elf_reloc_fixups(void)
 	return 0;
 }
 
+#if 0
 int efi_init_obj_list(void)
 {
 	return EFI_SUCCESS;
 }
+#endif
 
 int efi_info_get(enum efi_entry_t type, void **datap, int *sizep)
 {
