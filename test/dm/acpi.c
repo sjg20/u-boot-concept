@@ -883,16 +883,16 @@ static int dm_test_acpi_get_end(struct unit_test_state *uts)
 	ut_assert_nextline("Name              Base   Size  Detail");
 	ut_assert_nextlinen("--");
 	ut_assert_nextline("RSDP                 0     24  v02 U-BOOT");
-	ut_assert_nextline(
-		"RSDT                30     30  v01 U-BOOT U-BOOTBL 20250101 INTL 0");
-	ut_assert_nextline(
-		"XSDT                e0     3c  v01 U-BOOT U-BOOTBL 20250101 INTL 0");
-	ut_assert_nextline(
-		"TST3               240     24  v00 U-BOOT U-BOOTBL 20250101 INTL 0");
-	ut_assert_nextline(
-		"TST1               264     24  v00 U-BOOT U-BOOTBL 20250101 INTL 0");
-	ut_assert_nextline(
-		"TST2               288     24  v00 U-BOOT U-BOOTBL 20250101 INTL 0");
+	ut_assert_nextlinen(
+		"RSDT                30     30  v01 U-BOOT U-BOOTBL 202");
+	ut_assert_nextlinen(
+		"XSDT                e0     3c  v01 U-BOOT U-BOOTBL 202");
+	ut_assert_nextlinen(
+		"TST3               240     24  v00 U-BOOT U-BOOTBL 202");
+	ut_assert_nextlinen(
+		"TST1               264     24  v00 U-BOOT U-BOOTBL 202");
+	ut_assert_nextlinen(
+		"TST2               288     24  v00 U-BOOT U-BOOTBL 202");
 
 	/* Restore previous ACPI tables */
 	gd_set_acpi_start(acpi_start);
