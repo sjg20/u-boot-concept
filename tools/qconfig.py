@@ -9,7 +9,7 @@ Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 Author: Simon Glass <sjg@chromium.org>
 """
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 import collections
 from contextlib import ExitStack
 import doctest
@@ -290,14 +290,12 @@ class KconfigParser:
     re_arch = re.compile(r'CONFIG_SYS_ARCH="(.*)"')
     re_cpu = re.compile(r'CONFIG_SYS_CPU="(.*)"')
 
-    def __init__(self, args, build_dir):
+    def __init__(self, build_dir):
         """Create a new parser.
 
         Args:
-          args (Namespace): program arguments
           build_dir: Build directory.
         """
-        self.args = args
         self.dotconfig = os.path.join(build_dir, '.config')
         self.autoconf = os.path.join(build_dir, 'include', 'autoconf.mk')
         self.spl_autoconf = os.path.join(build_dir, 'spl', 'include',
@@ -374,7 +372,8 @@ class Slot:
 
         Args:
           toolchains: Toolchains object containing toolchains.
-          args: Program arguments
+          args: Program arguments; this class uses build_db, verbose,
+                force_sync, dry_run, exit_on_error
           progress: A progress indicator.
           devnull: A file object of '/dev/null'.
           make_cmd: command name of GNU Make.
@@ -392,7 +391,7 @@ class Slot:
         self.reference_src_dir = reference_src_dir
         self.db_queue = db_queue
         self.col = progress.col
-        self.parser = KconfigParser(args, self.build_dir)
+        self.parser = KconfigParser(self.build_dir)
         self.state = STATE_IDLE
         self.failed_boards = set()
         self.defconfig = None
@@ -471,7 +470,7 @@ class Slot:
                 self.current_src_dir = None
                 self.do_defconfig()
             elif self.args.build_db:
-                self.do_build_db()
+                self.do_add_to_db()
             else:
                 self.do_savedefconfig()
         elif self.state == STATE_SAVEDEFCONFIG:
@@ -525,7 +524,7 @@ class Slot:
                                      cwd=self.current_src_dir)
         self.state = STATE_AUTOCONF
 
-    def do_build_db(self):
+    def do_add_to_db(self):
         """Add the board to the database"""
         configs = {}
         for line in read_file(os.path.join(self.build_dir, AUTO_CONF_PATH)):
@@ -617,7 +616,8 @@ class Slots:
 
         Args:
             toolchains (Toolchains): Toolchains object containing toolchains
-            args (Namespace): Program arguments
+            args (Namespace): Program arguments; this class uses build_db,
+                verbose, force_sync, dry_run, exit_on_error, jobs,
             progress (Progress): A progress indicator.
             reference_src_dir (str): Determine the true starting config state
                 from this source tree (None for none)
@@ -721,7 +721,9 @@ def move_config(args):
     """Build database or sync config options to defconfig files.
 
     Args:
-        args (Namespace): Program arguments
+        args (Namespace): Program arguments; this class uses build_db,
+            verbose, force_sync, dry_run, exit_on_error, jobs, git_ref,
+            defconfigs, defconfiglist, nocolour
 
     Returns:
         tuple:
@@ -1118,23 +1120,21 @@ def defconfig_matches(configs, re_match, re_val):
                 return True
     return False
 
-def do_find_config(config_list, list_format):
-    """Find boards with a given combination of CONFIGs
+def find_config(dbase, config_list):
+    """Find all defconfigs which match a config list
 
     Args:
         config_list (list of str): List of CONFIG options to check (each a regex
             consisting of a config option, with or without a CONFIG_ prefix. If
             an option is preceded by a tilde (~) then it must be false,
             otherwise it must be true)
-        list_format (bool): True to write in 'list' format, one board name per
-            line
 
-    Returns:
-        int: exit code (0 for success)
+    Return:
+        set: matching defconfig, without the '_defconfig' suffix
     """
-    _, all_defconfigs, config_db, _ = read_database()
-
     # Start with all defconfigs
+    _, all_defconfigs, config_db, _ = dbase
+
     out = all_defconfigs
 
     # Work through each config in turn
@@ -1161,10 +1161,31 @@ def do_find_config(config_list, list_format):
             has_cfg = defconfig_matches(config_db[defc], re_match, re_val)
             if has_cfg == want:
                 out.add(defc)
+
+    result = {c.split('_defconfig')[0] for c in out}
+
+    return result
+
+def do_find_config(config_list, list_format):
+    """Find boards with a given combination of CONFIGs
+
+    Args:
+        config_list (list of str): List of CONFIG options to check (each a regex
+            consisting of a config option, with or without a CONFIG_ prefix. If
+            an option is preceded by a tilde (~) then it must be false,
+            otherwise it must be true)
+        list_format (bool): True to write in 'list' format, one board name per
+            line
+
+    Returns:
+        int: exit code (0 for success)
+    """
+    dbase = read_database()
+    out = find_config(dbase, config_list)
     if not list_format:
         print(f'{len(out)} matches')
     sep = '\n' if list_format else ' '
-    print(sep.join(item.split('_defconfig')[0] for item in sorted(list(out))))
+    print(sep.join(sorted(list(out))))
     return 0
 
 
@@ -1694,6 +1715,41 @@ def do_tests():
         return 1
     unittest.main()
     return 0
+
+
+def ensure_database(threads):
+    """Return a qconfig database so that Kconfig options can be queried
+
+    If a database exists, it is assumed to be up-to-date. If not, one is built,
+    which can take a few minutes.
+
+    Args:
+        threads (int): Number of threads to use when processing
+
+    Returns:
+        tuple:
+            set of all config options seen (each a str)
+            set of all defconfigs seen (each a str)
+            dict of configs for each defconfig:
+                key: defconfig name, e.g. "MPC8548CDS_legacy_defconfig"
+                value: dict:
+                    key: CONFIG option
+                    value: Value of option
+            dict of defconfigs for each config:
+                key: CONFIG option
+                value: set of boards using that option
+    """
+    if not os.path.exists(CONFIG_DATABASE):
+        print('Building qconfig.db database')
+        args = Namespace(build_db=True, verbose=False, force_sync=False,
+                         dry_run=False, exit_on_error=False, jobs=threads,
+                         git_ref=None, defconfigs=None, defconfiglist=None,
+                         nocolour=False)
+        config_db, progress = move_config(args)
+
+        write_db(config_db, progress)
+
+    return read_database()
 
 
 def main():
