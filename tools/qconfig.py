@@ -471,7 +471,7 @@ class Slot:
                 self.current_src_dir = None
                 self.do_defconfig()
             elif self.args.build_db:
-                self.do_build_db()
+                self.do_add_to_db()
             else:
                 self.do_savedefconfig()
         elif self.state == STATE_SAVEDEFCONFIG:
@@ -525,7 +525,7 @@ class Slot:
                                      cwd=self.current_src_dir)
         self.state = STATE_AUTOCONF
 
-    def do_build_db(self):
+    def do_add_to_db(self):
         """Add the board to the database"""
         configs = {}
         for line in read_file(os.path.join(self.build_dir, AUTO_CONF_PATH)):
