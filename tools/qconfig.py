@@ -372,7 +372,8 @@ class Slot:
 
         Args:
           toolchains: Toolchains object containing toolchains.
-          args: Program arguments
+          args: Program arguments; this class uses build_db, verbose,
+                force_sync, dry_run, exit_on_error
           progress: A progress indicator.
           devnull: A file object of '/dev/null'.
           make_cmd: command name of GNU Make.
@@ -615,7 +616,8 @@ class Slots:
 
         Args:
             toolchains (Toolchains): Toolchains object containing toolchains
-            args (Namespace): Program arguments
+            args (Namespace): Program arguments; this class uses build_db,
+                verbose, force_sync, dry_run, exit_on_error, jobs,
             progress (Progress): A progress indicator.
             reference_src_dir (str): Determine the true starting config state
                 from this source tree (None for none)
@@ -719,7 +721,9 @@ def move_config(args):
     """Build database or sync config options to defconfig files.
 
     Args:
-        args (Namespace): Program arguments
+        args (Namespace): Program arguments; this class uses build_db,
+            verbose, force_sync, dry_run, exit_on_error, jobs, git_ref,
+            defconfigs, defconfiglist, nocolour
 
     Returns:
         tuple:
