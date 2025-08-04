@@ -1,73 +1,91 @@
 # .gitlab-ci-release.yml
 
-# Job to automatically update the version in the Makefile and push a commit.
-# This runs on a schedule and only acts when a final release is due.
-version:bump:
+version:update_and_commit:
   stage: version_bump
-  image: alpine:3.18 # A small image with git and bash
+  image: alpine:3.18
   rules:
     # Run only on scheduled pipelines targeting the 'master' branch.
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_REF_NAME == "master"'
   script:
     - |
-      echo "Checking if a final release is scheduled today..."
-      MONTH=$(date +%-m)
-      DAY_OF_WEEK=$(date +%-u)
-      DAY_OF_MONTH=$(date +%-d)
+      echo "Determining release type and updating Makefile..."
 
-      # Only proceed on the first Monday of an even-numbered month.
-      if ! { [ $((MONTH % 2)) -eq 0 ] && [ "$DAY_OF_WEEK" -eq 1 ] && [ "$DAY_OF_MONTH" -le 7 ]; }; then
-        echo "Not a final release day. Nothing to do."
-        exit 0
-      fi
-
-      echo "✅ Final release day detected. Updating Makefile..."
-
-      # Set up Git
       apk add --no-cache git
       git config --global user.name "GitLab CI"
       git config --global user.email "gitlab-ci@${CI_SERVER_HOST}"
 
-      # Set the new version details
+      MONTH=$(date +%-m)
+      DAY_OF_WEEK=$(date +%-u)
+      DAY_OF_MONTH=$(date +%-d)
       NEW_VERSION=$(date +%Y)
       NEW_PATCHLEVEL=$(printf "%02d" $MONTH)
 
-      # Use sed to update the Makefile
-      sed -i "s/^VERSION = .*/VERSION = $NEW_VERSION/" Makefile
-      sed -i "s/^PATCHLEVEL = .*/PATCHLEVEL = $NEW_PATCHLEVEL/" Makefile
-      sed -i "s/^SUBLEVEL = .*/SUBLEVEL =/" Makefile
-      sed -i "s/^EXTRAVERSION = .*/EXTRAVERSION =/" Makefile
+      if [ $((MONTH % 2)) -eq 0 ] && [ "$DAY_OF_WEEK" -eq 1 ] && [ "$DAY_OF_MONTH" -le 7 ]; then
+        # This is a Final Release
+        TAG_NAME="$NEW_VERSION.$NEW_PATCHLEVEL"
+        COMMIT_MESSAGE="chore: Bump version for final release $TAG_NAME"
+        echo "✅ This is a Final Release: $TAG_NAME"
 
-      # If there are no changes, exit.
+        # --- Update Makefile for a FINAL release ---
+        sed -i "s/^VERSION = .*/VERSION = $NEW_VERSION/" Makefile
+        sed -i "s/^PATCHLEVEL = .*/PATCHLEVEL = $NEW_PATCHLEVEL/" Makefile
+        sed -i "s/^SUBLEVEL = .*/SUBLEVEL =/" Makefile
+        sed -i "s/^EXTRAVERSION = .*/EXTRAVERSION =/" Makefile # EXTRAVERSION is blank for final
+
+      else
+        # This is a Release Candidate
+        RC_INDEX=$(( (DAY_OF_MONTH - 1) / 14 + 1 ))
+        TAG_NAME="$NEW_VERSION.$NEW_PATCHLEVEL-rc${RC_INDEX}"
+        COMMIT_MESSAGE="chore: Bump version for release candidate $TAG_NAME"
+        echo "✅ This is a Release Candidate: $TAG_NAME"
+
+        # --- Update Makefile for an RC release ---
+        EXTRA_VERSION_VAL="-rc${RC_INDEX}"
+        sed -i "s/^VERSION = .*/VERSION = $NEW_VERSION/" Makefile
+        sed -i "s/^PATCHLEVEL = .*/PATCHLEVEL = $NEW_PATCHLEVEL/" Makefile
+        sed -i "s/^SUBLEVEL = .*/SUBLEVEL =/" Makefile
+        sed -i "s/^EXTRAVERSION = .*/EXTRAVERSION = $EXTRA_VERSION_VAL/" Makefile # Set EXTRAVERSION to -rcX
+      fi
+
       if git diff --quiet Makefile; then
-        echo "Makefile is already up-to-date."
+        echo "Makefile is already up-to-date for version $TAG_NAME."
         exit 0
       fi
 
-      # Commit and push the changes
       echo "Pushing version bump to master branch..."
       git add Makefile
-      COMMIT_MESSAGE="chore: Bump version to $NEW_VERSION.$NEW_PATCHLEVEL"
       git commit -m "$COMMIT_MESSAGE"
-      # The GIT_WRITE_TOKEN is a variable you need to create (see setup below)
       git push "https://gitlab-ci-token:${GIT_WRITE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" HEAD:master
 
-# Job to create the release. This job now triggers from the commit pushed by the 'version:bump' job.
-release:create:
+release:create_tag:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
-    # Run only on commits to master with a specific commit message.
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /^chore: Bump version to/'
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /^chore: Bump version for/'
   script:
     - |
       echo "🚀 Release commit detected. Creating GitLab Release..."
-      # Extract the tag name directly from the commit message (e.g., "2025.08")
-      TAG_NAME=$(echo "$CI_COMMIT_MESSAGE" | sed -n 's/chore: Bump version to //p')
-      RELEASE_TITLE="Release $TAG_NAME"
+
+      TAG_NAME=$(echo "$CI_COMMIT_MESSAGE" | awk '{print $NF}')
+      RELEASE_TITLE=$(echo "$CI_COMMIT_MESSAGE" | sed -e 's/chore: Bump version for/Release/' -e "s/$TAG_NAME//")
+
+      echo "Extracted Tag Name: $TAG_NAME"
+      echo "Generated Release Title: $RELEASE_TITLE"
 
       release-cli create \
         --name "$RELEASE_TITLE" \
         --tag-name "$TAG_NAME" \
         --description "Automated release created by GitLab CI for commit $CI_COMMIT_SHORT_SHA." \
         --ref "$CI_COMMIT_SHA"
+
+      echo "🔧 Creating secondary 'c'-prefixed tag..."
+      apk add --no-cache git
+      git config --global user.name "GitLab CI"
+      git config --global user.email "gitlab-ci@${CI_SERVER_HOST}"
+
+      C_TAG_NAME="c${TAG_NAME}"
+      echo "Secondary tag name is: $C_TAG_NAME"
+
+      git tag "$C_TAG_NAME" "$CI_COMMIT_SHA"
+      git push "https://gitlab-ci-token:${GIT_WRITE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "$C_TAG_NAME"
+      echo "✅ Successfully pushed secondary tag."
