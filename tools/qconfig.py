@@ -9,7 +9,7 @@ Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 Author: Simon Glass <sjg@chromium.org>
 """
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 import collections
 from contextlib import ExitStack
 import doctest
@@ -1715,6 +1715,41 @@ def do_tests():
         return 1
     unittest.main()
     return 0
+
+
+def ensure_database(threads):
+    """Return a qconfig database so that Kconfig options can be queried
+
+    If a database exists, it is assumed to be up-to-date. If not, one is built,
+    which can take a few minutes.
+
+    Args:
+        threads (int): Number of threads to use when processing
+
+    Returns:
+        tuple:
+            set of all config options seen (each a str)
+            set of all defconfigs seen (each a str)
+            dict of configs for each defconfig:
+                key: defconfig name, e.g. "MPC8548CDS_legacy_defconfig"
+                value: dict:
+                    key: CONFIG option
+                    value: Value of option
+            dict of defconfigs for each config:
+                key: CONFIG option
+                value: set of boards using that option
+    """
+    if not os.path.exists(CONFIG_DATABASE):
+        print('Building qconfig.db database')
+        args = Namespace(build_db=True, verbose=False, force_sync=False,
+                         dry_run=False, exit_on_error=False, jobs=threads,
+                         git_ref=None, defconfigs=None, defconfiglist=None,
+                         nocolour=False)
+        config_db, progress = move_config(args)
+
+        write_db(config_db, progress)
+
+    return read_database()
 
 
 def main():
