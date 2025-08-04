@@ -290,14 +290,12 @@ class KconfigParser:
     re_arch = re.compile(r'CONFIG_SYS_ARCH="(.*)"')
     re_cpu = re.compile(r'CONFIG_SYS_CPU="(.*)"')
 
-    def __init__(self, args, build_dir):
+    def __init__(self, build_dir):
         """Create a new parser.
 
         Args:
-          args (Namespace): program arguments
           build_dir: Build directory.
         """
-        self.args = args
         self.dotconfig = os.path.join(build_dir, '.config')
         self.autoconf = os.path.join(build_dir, 'include', 'autoconf.mk')
         self.spl_autoconf = os.path.join(build_dir, 'spl', 'include',
@@ -392,7 +390,7 @@ class Slot:
         self.reference_src_dir = reference_src_dir
         self.db_queue = db_queue
         self.col = progress.col
-        self.parser = KconfigParser(args, self.build_dir)
+        self.parser = KconfigParser(self.build_dir)
         self.state = STATE_IDLE
         self.failed_boards = set()
         self.defconfig = None
