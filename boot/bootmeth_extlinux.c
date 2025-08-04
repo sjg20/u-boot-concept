@@ -166,7 +166,8 @@ static int extlinux_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 
 static int extlinux_local_boot(struct udevice *dev, struct bootflow *bflow)
 {
-	return extlinux_boot(dev, bflow, extlinux_getfile, true, bflow->fname);
+	return extlinux_boot(dev, bflow, extlinux_getfile, true, bflow->fname,
+			     false);
 }
 
 #if CONFIG_IS_ENABLED(BOOTSTD_FULL)

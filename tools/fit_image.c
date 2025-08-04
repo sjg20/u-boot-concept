@@ -100,12 +100,14 @@ err_keydest:
 static int fit_calc_size(struct imgtool *itl)
 {
 	struct content_info *cont;
-	int size, total_size;
+	int size, total_size = 0;
 
-	size = imagetool_get_filesize(itl, itl->datafile);
-	if (size < 0)
-		return -1;
-	total_size = size;
+	if (itl->datafile) {
+		size = imagetool_get_filesize(itl, itl->datafile);
+		if (size < 0)
+			return -1;
+		total_size += size;
+	}
 
 	if (itl->fit_ramdisk) {
 		size = imagetool_get_filesize(itl, itl->fit_ramdisk);
@@ -129,8 +131,18 @@ static int fit_calc_size(struct imgtool *itl)
 	return total_size;
 }
 
-static int fdt_property_file(struct imgtool *itl, void *fdt, const char *name,
-			     const char *fname)
+/**
+ * fdt_property_file() - Create a property using the contents of a file
+ *
+ * @itl: Image-tool info
+ * @fdt: Devicetree to write to
+ * @fname: Filename of file whose contents are to be written into the'data'
+ *	property
+ * @bufp: If non-null, returns a pointer to the data on success
+ * Return: 0 if OK, -1 on error
+ */
+static int fdt_property_file(struct imgtool *itl, void *fdt, const char *fname,
+			     const char **bufp)
 {
 	struct stat sbuf;
 	void *ptr;
@@ -150,7 +162,7 @@ static int fdt_property_file(struct imgtool *itl, void *fdt, const char *name,
 		goto err;
 	}
 
-	ret = fdt_property_placeholder(fdt, "data", sbuf.st_size, &ptr);
+	ret = fdt_property_placeholder(fdt, FIT_DATA_PROP, sbuf.st_size, &ptr);
 	if (ret)
 		goto err;
 	ret = read(fd, ptr, sbuf.st_size);
@@ -159,6 +171,8 @@ static int fdt_property_file(struct imgtool *itl, void *fdt, const char *name,
 			itl->cmdname, fname, strerror(errno));
 		goto err;
 	}
+	if (bufp)
+		*bufp = ptr;
 	close(fd);
 
 	return 0;
@@ -273,33 +287,40 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 	fdt_begin_node(fdt, "images");
 
 	/* First the main image */
-	typename = genimg_get_type_short_name(itl->fit_image_type);
-	snprintf(str, sizeof(str), "%s-1", typename);
-	fdt_begin_node(fdt, str);
-	fdt_property_string(fdt, FIT_DESC_PROP, itl->imagename);
-	fdt_property_string(fdt, FIT_TYPE_PROP, typename);
-	fdt_property_string(fdt, FIT_ARCH_PROP,
-			    genimg_get_arch_short_name(itl->arch));
-	fdt_property_string(fdt, FIT_OS_PROP,
-			    genimg_get_os_short_name(itl->os));
-	fdt_property_string(fdt, FIT_COMP_PROP,
-			    genimg_get_comp_short_name(itl->comp));
-	fdt_property_u32(fdt, FIT_LOAD_PROP, itl->addr);
-	fdt_property_u32(fdt, FIT_ENTRY_PROP, itl->ep);
+	if (itl->datafile) {
+		typename = genimg_get_type_short_name(itl->fit_image_type);
+		snprintf(str, sizeof(str), "%s-1", typename);
+		fdt_begin_node(fdt, str);
+		fdt_property_string(fdt, FIT_DESC_PROP, itl->imagename);
+		fdt_property_string(fdt, FIT_TYPE_PROP, typename);
+		fdt_property_string(fdt, FIT_ARCH_PROP,
+				    genimg_get_arch_short_name(itl->arch));
+		fdt_property_string(fdt, FIT_OS_PROP,
+				    genimg_get_os_short_name(itl->os));
+		fdt_property_string(fdt, FIT_COMP_PROP,
+				    genimg_get_comp_short_name(itl->comp));
+		fdt_property_u32(fdt, FIT_LOAD_PROP, itl->addr);
+		fdt_property_u32(fdt, FIT_ENTRY_PROP, itl->ep);
 
-	/*
-	 * Put data last since it is large. SPL may only load the first part
-	 * of the DT, so this way it can access all the above fields.
-	 */
-	ret = fdt_property_file(itl, fdt, FIT_DATA_PROP, itl->datafile);
-	if (ret)
-		return ret;
-	fit_add_hash_or_sign(itl, fdt, true);
-	fdt_end_node(fdt);
+		/*
+		 * Put data last since it is large. SPL may only load the first
+		 * part of the DT, so this way it can access all the above
+		 * fields. If the FIT is converted to use external data, then
+		 * there is no benefit here, but also no loss.
+		 */
+		ret = fdt_property_file(itl, fdt, itl->datafile, NULL);
+		if (ret)
+			return ret;
+		fit_add_hash_or_sign(itl, fdt, true);
+		fdt_end_node(fdt);
+	}
 
 	/* Now the device tree files if available */
 	upto = 0;
 	for (cont = itl->content_head; cont; cont = cont->next) {
+		const char *buf, *compat;
+		int len;
+
 		if (cont->type != IH_TYPE_FLATDT)
 			continue;
 		typename = genimg_get_type_short_name(cont->type);
@@ -308,8 +329,7 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 
 		get_basename(str, sizeof(str), cont->fname);
 		fdt_property_string(fdt, FIT_DESC_PROP, str);
-		ret = fdt_property_file(itl, fdt, FIT_DATA_PROP,
-					cont->fname);
+		ret = fdt_property_file(itl, fdt, cont->fname, &buf);
 		if (ret)
 			return ret;
 		fdt_property_string(fdt, FIT_TYPE_PROP, typename);
@@ -317,6 +337,11 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 				    genimg_get_arch_short_name(itl->arch));
 		fdt_property_string(fdt, FIT_COMP_PROP,
 				    genimg_get_comp_short_name(IH_COMP_NONE));
+		if (!fdt_check_header(buf)) {
+			compat = fdt_getprop(buf, 0, FIT_COMPATIBLE_PROP, &len);
+			cont->compat = compat;
+			cont->compat_len = len;
+		}
 		fit_add_hash_or_sign(itl, fdt, true);
 		if (ret)
 			return ret;
@@ -333,8 +358,7 @@ static int fit_write_images(struct imgtool *itl, char *fdt)
 		fdt_property_string(fdt, FIT_ARCH_PROP,
 				    genimg_get_arch_short_name(itl->arch));
 
-		ret = fdt_property_file(itl, fdt, FIT_DATA_PROP,
-					itl->fit_ramdisk);
+		ret = fdt_property_file(itl, fdt, itl->fit_ramdisk, NULL);
 		if (ret)
 			return ret;
 		fit_add_hash_or_sign(itl, fdt, true);
@@ -388,6 +412,12 @@ static void fit_write_configs(struct imgtool *itl, char *fdt)
 
 		snprintf(str, sizeof(str), FIT_FDT_PROP "-%d", upto);
 		fdt_property_string(fdt, FIT_FDT_PROP, str);
+		if (itl->load_only)
+			fdt_property(fdt, FIT_LOAD_ONLY_PROP, NULL, 0);
+		if (cont->compat)
+			fdt_property(fdt, FIT_COMPATIBLE_PROP, cont->compat,
+				     cont->compat_len);
+
 		fit_add_hash_or_sign(itl, fdt, false);
 		fdt_end_node(fdt);
 	}
@@ -411,16 +441,26 @@ static void fit_write_configs(struct imgtool *itl, char *fdt)
 
 static int fit_build_fdt(struct imgtool *itl, char *fdt, int size)
 {
+	const struct content_info *cont;
+	bool has_fdt;
 	int ret;
+
+	has_fdt = false;
+	for (cont = itl->content_head; cont; cont = cont->next) {
+		if (cont->type == IH_TYPE_FLATDT) {
+			has_fdt = true;
+			break;
+		}
+	}
 
 	ret = fdt_create(fdt, size);
 	if (ret)
 		return ret;
 	fdt_finish_reservemap(fdt);
 	fdt_begin_node(fdt, "");
-	fdt_property_strf(fdt, FIT_DESC_PROP,
-			  "%s image with one or more FDT blobs",
-			  genimg_get_type_name(itl->fit_image_type));
+	fdt_property_strf(fdt, FIT_DESC_PROP, "%s image%s",
+			  genimg_get_type_name(itl->fit_image_type),
+			  has_fdt ? " with one or more FDT blobs" : "");
 	fdt_property_strf(fdt, "creator", "U-Boot mkimage %s", PLAIN_VERSION);
 	fdt_property_u32(fdt, "#address-cells", 1);
 	ret = fit_write_images(itl, fdt);

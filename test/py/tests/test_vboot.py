@@ -113,8 +113,8 @@ TESTDATA += [pytest.param(*v, marks=pytest.mark.slow) for v in TESTDATA_IN[1:]]
 @pytest.mark.requiredtool('openssl')
 @pytest.mark.parametrize("name,sha_algo,padding,sign_options,required,full_test,algo_arg,global_sign",
                          TESTDATA)
-def test_vboot(ubman, name, sha_algo, padding, sign_options, required,
-               full_test, algo_arg, global_sign):
+def test_vboot_base(ubman, name, sha_algo, padding, sign_options, required,
+                    full_test, algo_arg, global_sign):
     """Test verified boot signing with mkimage and verification with 'bootm'.
 
     This works using sandbox only as it needs to update the device tree used
