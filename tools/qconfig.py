@@ -1118,23 +1118,21 @@ def defconfig_matches(configs, re_match, re_val):
                 return True
     return False
 
-def do_find_config(config_list, list_format):
-    """Find boards with a given combination of CONFIGs
+def find_config(dbase, config_list):
+    """Find all defconfigs which match a config list
 
     Args:
         config_list (list of str): List of CONFIG options to check (each a regex
             consisting of a config option, with or without a CONFIG_ prefix. If
             an option is preceded by a tilde (~) then it must be false,
             otherwise it must be true)
-        list_format (bool): True to write in 'list' format, one board name per
-            line
 
-    Returns:
-        int: exit code (0 for success)
+    Return:
+        set: matching defconfig, without the '_defconfig' suffix
     """
-    _, all_defconfigs, config_db, _ = read_database()
-
     # Start with all defconfigs
+    _, all_defconfigs, config_db, _ = dbase
+
     out = all_defconfigs
 
     # Work through each config in turn
@@ -1161,10 +1159,31 @@ def do_find_config(config_list, list_format):
             has_cfg = defconfig_matches(config_db[defc], re_match, re_val)
             if has_cfg == want:
                 out.add(defc)
+
+    result = {c.split('_defconfig')[0] for c in out}
+
+    return result
+
+def do_find_config(config_list, list_format):
+    """Find boards with a given combination of CONFIGs
+
+    Args:
+        config_list (list of str): List of CONFIG options to check (each a regex
+            consisting of a config option, with or without a CONFIG_ prefix. If
+            an option is preceded by a tilde (~) then it must be false,
+            otherwise it must be true)
+        list_format (bool): True to write in 'list' format, one board name per
+            line
+
+    Returns:
+        int: exit code (0 for success)
+    """
+    dbase = read_database()
+    out = find_config(dbase, config_list)
     if not list_format:
         print(f'{len(out)} matches')
     sep = '\n' if list_format else ' '
-    print(sep.join(item.split('_defconfig')[0] for item in sorted(list(out))))
+    print(sep.join(sorted(list(out))))
     return 0
 
 
