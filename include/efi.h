@@ -773,4 +773,17 @@ efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
 			       struct efi_device_path *dp_dev,
 			       struct efi_device_path *dp_img);
 
+/**
+ * efi_run_image() - run loaded UEFI image
+ *
+ * @source_buffer:	memory address of the UEFI image
+ * @source_size:	size of the UEFI image
+ * @dp_dev:		EFI device-path
+ * @dp_img:		EFI image-path
+ * Return:		status code
+ */
+efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
+			   struct efi_device_path *dp_dev,
+			   struct efi_device_path *dp_img);
+
 #endif /* _LINUX_EFI_H */
