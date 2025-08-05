@@ -737,4 +737,40 @@ static inline bool efi_use_host_arch(void)
  */
 int efi_get_pxe_arch(void);
 
+/**
+ * calculate_paths() - Calculate the device and image patch from strings
+ *
+ * @dev:		device, e.g. "MMC"
+ * @devnr:		number of the device, e.g. "1:2"
+ * @path:		path to file loaded
+ * @device_pathp:	returns EFI device path
+ * @image_pathp:	returns EFI image path
+ * Return: EFI_SUCCESS on success, else error code
+ */
+efi_status_t calculate_paths(const char *dev, const char *devnr,
+			     const char *path,
+			     struct efi_device_path **device_pathp,
+			     struct efi_device_path **image_pathp);
+
+/**
+ * efi_binary_run_dp() - run loaded UEFI image
+ *
+ * @image:	memory address of the UEFI image
+ * @size:	size of the UEFI image
+ * @fdt:	device-tree
+ * @initrd:	initrd
+ * @initrd_sz:	initrd size
+ * @dp_dev:	EFI device-path
+ * @dp_img:	EFI image-path
+ *
+ * Execute an EFI binary image loaded at @image.
+ * @size may be zero if the binary is loaded with U-Boot load command.
+ *
+ * Return:	status code
+ */
+efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
+			       void *initrd, size_t initrd_sz,
+			       struct efi_device_path *dp_dev,
+			       struct efi_device_path *dp_img);
+
 #endif /* _LINUX_EFI_H */
