@@ -73,6 +73,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 		log_err("Loading image failed\n");
 		goto out;
 	}
+	log_info("Loaded\n");
 
 	ret = do_bootefi_exec(handle, NULL);
 

@@ -4,6 +4,7 @@
  * Copyright 2023 Google LLC
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_EFI
 
 #include <blk.h>
