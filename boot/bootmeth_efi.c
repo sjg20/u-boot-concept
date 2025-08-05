@@ -281,13 +281,34 @@ static int distro_efi_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 
 static int distro_efi_boot(struct udevice *dev, struct bootflow *bflow)
 {
+	int size = SZ_1G;
 	ulong kernel, fdt;
 	int ret;
 
 	log_debug("distro EFI boot\n");
-	kernel = env_get_hex("kernel_addr_r", 0);
+	if (IS_ENABLED(CONFIG_EFI_APP)) {
+		struct efi_priv *priv = efi_get_priv();
+		efi_status_t eret;
+		void *ptr;
+
+		/*
+		 * we don't expect the app to be larger than 64M and in fact,
+		 * for Linux, it is typically only a few MB
+		 */
+		size = SZ_64M;
+		ptr = efi_malloc(priv, size, &eret);
+		if (!ptr) {
+			log_err("Out of memory for image (%x bytes): err=%lx\n",
+				size, eret);
+			return -ENOMEM;
+		}
+		kernel = map_to_sysmem(ptr);
+	} else {
+		kernel = env_get_hex("kernel_addr_r", 0);
+	}
+
 	if (!bootmeth_uses_network(bflow)) {
-		ret = efiload_read_file(bflow, kernel, SZ_1G);
+		ret = efiload_read_file(bflow, kernel, size);
 		if (ret)
 			return log_msg_ret("read", ret);
 
