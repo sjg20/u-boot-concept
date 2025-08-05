@@ -52,7 +52,7 @@ static bool bootmeth_uses_network(struct bootflow *bflow)
 	    device_get_uclass_id(media) == UCLASS_ETH;
 }
 
-static int efiload_read_file(struct bootflow *bflow, ulong addr)
+static int efiload_read_file(struct bootflow *bflow, ulong addr, ulong max_size)
 {
 	struct blk_desc *desc = NULL;
 	ulong size;
@@ -61,12 +61,13 @@ static int efiload_read_file(struct bootflow *bflow, ulong addr)
 	if (bflow->blk)
 		 desc = dev_get_uclass_plat(bflow->blk);
 
-	size = SZ_1G;
+	size = max_size;
 	ret = bootmeth_common_read_file(bflow->method, bflow, bflow->fname,
 					addr, BFI_EFI, &size);
 	if (ret)
 		return log_msg_ret("rdf", ret);
 	bflow->buf = map_sysmem(addr, bflow->size);
+	bflow->size = size;
 
 	return 0;
 }
@@ -286,7 +287,7 @@ static int distro_efi_boot(struct udevice *dev, struct bootflow *bflow)
 	log_debug("distro EFI boot\n");
 	kernel = env_get_hex("kernel_addr_r", 0);
 	if (!bootmeth_uses_network(bflow)) {
-		ret = efiload_read_file(bflow, kernel);
+		ret = efiload_read_file(bflow, kernel, SZ_1G);
 		if (ret)
 			return log_msg_ret("read", ret);
 
