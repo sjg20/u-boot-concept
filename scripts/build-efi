@@ -83,8 +83,7 @@ class BuildEfi:
                 '-drive', f'if=pflash,format=raw,file={var_store}'
                 ]
             extra += ['-drive',
-                      f'id=hd0,file={self.img},if=none,format=raw',
-                      '-device', 'virtio-blk-device,drive=hd0']
+                      f'if=virtio,file={self.img},format=raw,id=hd0']
         else:  # x86
             if self.helper.bitness == 64:
                 qemu_arch = 'x86_64'
@@ -128,8 +127,8 @@ class BuildEfi:
         cmd = [qemu]
         cmd += '-m', mem
         cmd += '-nic', 'none'
-        self.helper.add_qemu_args(self.args, cmd)
         cmd += extra
+        self.helper.add_qemu_args(self.args, cmd, base_hd=1)
         tout.info(' '.join(cmd))
         command.run(*cmd)
 

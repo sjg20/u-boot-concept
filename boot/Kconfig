@@ -823,6 +823,7 @@ config BOOTMETH_VBE_ABREC_OS
 	imply SPL_CRC8
 	imply VPL_CRC8
 	default y if SANDBOX && !SPL
+	default y if EFI_CLIENT
 	help
 	  Enables support for VBE 'abrec' boot. This allows updating one of an
 	  A or B Operating System in boot media such as MMC. The new OS is
