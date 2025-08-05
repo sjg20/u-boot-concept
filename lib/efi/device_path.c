@@ -1033,7 +1033,7 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 	if (path && !file)
 		return EFI_INVALID_PARAMETER;
 
-	if (IS_ENABLED(CONFIG_EFI_BINARY_EXEC) &&
+	if (IS_ENABLED(CONFIG_EFI_LOADER) &&
 	    (!strcmp(dev, "Mem") || !strcmp(dev, "hostfs")))  {
 		/* loadm command and semihosting */
 		efi_get_image_parameters(&image_ptr, &image_size);
