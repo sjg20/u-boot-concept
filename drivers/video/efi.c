@@ -29,6 +29,17 @@ static const struct efi_framebuffer {
 	[EFI_GOT_BGRA8] = { {16, 8}, {8, 8}, {0, 8}, {24, 8} },
 };
 
+/**
+ * struct efi_video_priv - private information for this driver
+ *
+ * @fb: Framebuffer address
+ * @gop: Pointer to the EFI GOP struct
+ */
+struct efi_video_priv {
+	u64 fb;
+	struct efi_gop *gop;
+};
+
 static void efi_find_pixel_bits(u32 mask, u8 *pos, u8 *size)
 {
 	u8 first, len;
@@ -55,15 +66,16 @@ static void efi_find_pixel_bits(u32 mask, u8 *pos, u8 *size)
 /**
  * get_mode_info() - Ask EFI for the mode information
  *
- * Gets info from the graphics-output protocol
+ * Get info from the graphics-output protocol and retain the GOP protocol itself
  *
  * @vesa: Place to put the mode information
- * @fbp: Returns the address of the frame buffer
+ * @priv: Pointer to priv data
  * @infop: Returns a pointer to the mode info
  * Returns: 0 if OK, -ENOSYS if boot services are not available, -ENOTSUPP if
  * the protocol is not supported by EFI
  */
-static int get_mode_info(struct vesa_mode_info *vesa, u64 *fbp,
+static int get_mode_info(struct vesa_mode_info *vesa,
+			 struct efi_video_priv *priv,
 			 struct efi_gop_mode_info **infop)
 {
 	efi_guid_t efi_gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
@@ -83,7 +95,8 @@ static int get_mode_info(struct vesa_mode_info *vesa, u64 *fbp,
 		  (ulong)mode->fb_base, (ulong)mode->fb_size);
 
 	vesa->phys_base_ptr = mode->fb_base;
-	*fbp = mode->fb_base;
+	priv->fb = mode->fb_base;
+	priv->gop = gop;
 	vesa->x_resolution = mode->info->width;
 	vesa->y_resolution = mode->info->height;
 	*infop = mode->info;
@@ -123,16 +136,17 @@ static int get_mode_from_entry(struct vesa_mode_info *vesa, u64 *fbp,
 	return 0;
 }
 
-static int save_vesa_mode(struct vesa_mode_info *vesa, u64 *fbp)
+static int save_vesa_mode(struct vesa_mode_info *vesa,
+			  struct efi_video_priv *priv)
 {
 	const struct efi_framebuffer *fbinfo;
 	struct efi_gop_mode_info *info;
 	int ret;
 
 	if (IS_ENABLED(CONFIG_EFI_APP))
-		ret = get_mode_info(vesa, fbp, &info);
+		ret = get_mode_info(vesa, priv, &info);
 	else
-		ret = get_mode_from_entry(vesa, fbp, &info);
+		ret = get_mode_from_entry(vesa, &priv->fb, &info);
 	if (ret) {
 		printf("EFI graphics output protocol not found (err=%dE)\n",
 		       ret);
@@ -185,20 +199,20 @@ static int efi_video_probe(struct udevice *dev)
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct vesa_state mode_info;
 	struct vesa_mode_info *vesa = &mode_info.vesa;
-	u64 fb;
-	int ret;
+	struct efi_video_priv *priv = dev_get_priv(dev);
+	long ret;
 
 	/* Initialize vesa_mode_info structure */
-	ret = save_vesa_mode(vesa, &fb);
+	ret = save_vesa_mode(vesa, priv);
 	if (ret)
 		goto err;
 
-	ret = vesa_setup_video_priv(vesa, fb, uc_priv, plat);
+	ret = vesa_setup_video_priv(vesa, priv->fb, uc_priv, plat);
 	if (ret)
 		goto err;
 
 	printf("Video: %dx%dx%d @ %lx\n", uc_priv->xsize, uc_priv->ysize,
-	       vesa->bits_per_pixel, (ulong)fb);
+	       vesa->bits_per_pixel, (ulong)priv->fb);
 
 	return 0;
 
@@ -209,19 +223,20 @@ err:
 
 static int efi_video_bind(struct udevice *dev)
 {
-	if (IS_ENABLED(CONFIG_VIDEO_COPY)) {
-		struct video_uc_plat *plat = dev_get_uclass_plat(dev);
-		struct vesa_mode_info vesa;
-		int ret;
-		u64 fb;
+	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	struct efi_video_priv tmp_priv;
 
-		/*
-		 * Initialise vesa_mode_info structure so we can figure out the
-		 * required framebuffer size. If something goes wrong, just do
-		 * without a copy framebuffer
-		 */
-		ret = save_vesa_mode(&vesa, &fb);
-		if (!ret) {
+	struct vesa_mode_info vesa;
+	int ret;
+
+	/*
+	 * Initialise vesa_mode_info structure so we can figure out the
+	 * required framebuffer size. If something goes wrong, just do
+	 * without a copy framebuffer
+	 */
+	ret = save_vesa_mode(&vesa, &tmp_priv);
+	if (!ret) {
+		if (IS_ENABLED(CONFIG_VIDEO_COPY)) {
 			/* this is not reached if the EFI call failed */
 			plat->copy_size = vesa.bytes_per_scanline *
 				vesa.y_resolution;
@@ -242,4 +257,5 @@ U_BOOT_DRIVER(efi_video) = {
 	.of_match = efi_video_ids,
 	.bind	= efi_video_bind,
 	.probe	= efi_video_probe,
+	.priv_auto	= sizeof(struct efi_video_priv),
 };
