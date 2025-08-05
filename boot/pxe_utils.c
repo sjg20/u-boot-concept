@@ -50,6 +50,8 @@ int pxe_get_file_size(ulong *sizep)
 	return 0;
 }
 
+#ifdef CONFIG_NETDEVICES
+
 /**
  * format_mac_pxe() - obtain a MAC address in the PXE format
  *
@@ -83,6 +85,7 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len)
 
 	return 1;
 }
+#endif /* CONFIG_NETDEVICES */
 
 /**
  * get_relfile() - read a file relative to the PXE file

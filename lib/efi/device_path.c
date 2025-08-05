@@ -813,6 +813,8 @@ struct efi_device_path *efi_dp_from_uart(void)
 	return buf;
 }
 
+#ifdef CONFIG_NETDEVICES
+
 struct efi_device_path __maybe_unused *efi_dp_from_eth(struct udevice *dev)
 {
 	void *buf, *start;
@@ -936,6 +938,8 @@ struct efi_device_path *efi_dp_from_http(const char *server, struct udevice *dev
 
 	return dp2;
 }
+
+#endif /* NETDEVICES */
 
 /* Construct a device-path for memory-mapped image */
 struct efi_device_path *efi_dp_from_mem(uint32_t memory_type, void *start_ptr,
