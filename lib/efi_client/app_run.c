@@ -58,12 +58,20 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 			   struct efi_device_path *dp_img)
 {
 	struct efi_boot_services *boot = efi_get_boot();
-	efi_handle_t handle;
 	struct efi_device_path *msg_path, *file_path;
+	efi_handle_t handle;
 	efi_status_t ret;
 
 	file_path = efi_dp_concat(dp_dev, dp_img, 0);
 	msg_path = dp_img;
+
+	log_info("Setting up root node\n");
+	ret = efi_root_node_register();
+	if (ret != EFI_SUCCESS) {
+		log_err("Failed to set up root node\n");
+		goto out;
+	}
+
 
 	log_info("Booting %pD\n", msg_path);
 

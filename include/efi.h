@@ -16,6 +16,7 @@
 #ifndef _EFI_H
 #define _EFI_H
 
+#include <linux/list.h>
 #include <linux/linkage.h>
 #include <linux/string.h>
 #include <linux/types.h>
@@ -569,6 +570,57 @@ extern char _binary_u_boot_bin_start[], _binary_u_boot_bin_end[], _binary_u_boot
 /* Use internal device tree when starting UEFI application */
 #define EFI_FDT_USE_INTERNAL NULL
 
+/* GUID of the U-Boot root node */
+extern const efi_guid_t efi_u_boot_guid;
+
+/* GUID of the device path */
+extern const efi_guid_t efi_guid_device_path;
+
+/**
+ * enum efi_object_type - type of EFI object
+ *
+ * In UnloadImage we must be able to identify if the handle relates to a
+ * started image.
+ */
+enum efi_object_type {
+	/** @EFI_OBJECT_TYPE_UNDEFINED: undefined image type */
+	EFI_OBJECT_TYPE_UNDEFINED = 0,
+	/** @EFI_OBJECT_TYPE_U_BOOT_FIRMWARE: U-Boot firmware */
+	EFI_OBJECT_TYPE_U_BOOT_FIRMWARE,
+	/** @EFI_OBJECT_TYPE_LOADED_IMAGE: loaded image (not started) */
+	EFI_OBJECT_TYPE_LOADED_IMAGE,
+	/** @EFI_OBJECT_TYPE_STARTED_IMAGE: started image */
+	EFI_OBJECT_TYPE_STARTED_IMAGE,
+};
+
+/**
+ * struct efi_object - dereferenced EFI handle
+ *
+ * @link:	pointers to put the handle into a linked list
+ * @protocols:	linked list with the protocol interfaces installed on this
+ *		handle
+ * @type:	image type if the handle relates to an image
+ * @dev:	pointer to the DM device which is associated with this EFI handle
+ *
+ * UEFI offers a flexible and expandable object model. The objects in the UEFI
+ * API are devices, drivers, and loaded images. struct efi_object is our storage
+ * structure for these objects.
+ *
+ * When including this structure into a larger structure always put it first so
+ * that when deleting a handle the whole encompassing structure can be freed.
+ *
+ * A pointer to this structure is referred to as a handle. Typedef efi_handle_t
+ * has been created for such pointers.
+ */
+struct efi_object {
+	/* Every UEFI object is part of a global object list */
+	struct list_head link;
+	/* The list of protocols */
+	struct list_head protocols;
+	enum efi_object_type type;
+	struct udevice *dev;
+};
+
 /**
  * efi_get_priv() - Get access to the EFI-private information
  *
@@ -792,5 +844,12 @@ efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
 efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 			   struct efi_device_path *dp_dev,
 			   struct efi_device_path *dp_img);
+
+/**
+ * efi_root_node_register() - init the root node
+ *
+ * Sets up efi_root so that it can be passed any app that we start
+ */
+efi_status_t efi_root_node_register(void);
 
 #endif /* _LINUX_EFI_H */

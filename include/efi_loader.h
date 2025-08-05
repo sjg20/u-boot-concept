@@ -307,8 +307,6 @@ uint16_t *efi_dp_str(struct efi_device_path *dp);
 /* GUID for the auto generated boot menu entry */
 extern const efi_guid_t efi_guid_bootmenu_auto_generated;
 
-/* GUID of the U-Boot root node */
-extern const efi_guid_t efi_u_boot_guid;
 #ifdef CONFIG_SANDBOX
 /* GUID of U-Boot host device on sandbox */
 extern const efi_guid_t efi_guid_host_dev;
@@ -319,7 +317,6 @@ extern const efi_guid_t efi_block_io_guid;
 extern const efi_guid_t efi_net_guid;
 extern const efi_guid_t efi_global_variable_guid;
 extern const efi_guid_t efi_guid_console_control;
-extern const efi_guid_t efi_guid_device_path;
 /* GUID of the EFI system partition */
 extern const efi_guid_t efi_system_partition_guid;
 /* GUID of the EFI_DRIVER_BINDING_PROTOCOL */
@@ -412,51 +409,6 @@ struct efi_handler {
 	const efi_guid_t guid;
 	void *protocol_interface;
 	struct list_head open_infos;
-};
-
-/**
- * enum efi_object_type - type of EFI object
- *
- * In UnloadImage we must be able to identify if the handle relates to a
- * started image.
- */
-enum efi_object_type {
-	/** @EFI_OBJECT_TYPE_UNDEFINED: undefined image type */
-	EFI_OBJECT_TYPE_UNDEFINED = 0,
-	/** @EFI_OBJECT_TYPE_U_BOOT_FIRMWARE: U-Boot firmware */
-	EFI_OBJECT_TYPE_U_BOOT_FIRMWARE,
-	/** @EFI_OBJECT_TYPE_LOADED_IMAGE: loaded image (not started) */
-	EFI_OBJECT_TYPE_LOADED_IMAGE,
-	/** @EFI_OBJECT_TYPE_STARTED_IMAGE: started image */
-	EFI_OBJECT_TYPE_STARTED_IMAGE,
-};
-
-/**
- * struct efi_object - dereferenced EFI handle
- *
- * @link:	pointers to put the handle into a linked list
- * @protocols:	linked list with the protocol interfaces installed on this
- *		handle
- * @type:	image type if the handle relates to an image
- * @dev:	pointer to the DM device which is associated with this EFI handle
- *
- * UEFI offers a flexible and expandable object model. The objects in the UEFI
- * API are devices, drivers, and loaded images. struct efi_object is our storage
- * structure for these objects.
- *
- * When including this structure into a larger structure always put it first so
- * that when deleting a handle the whole encompassing structure can be freed.
- *
- * A pointer to this structure is referred to as a handle. Typedef efi_handle_t
- * has been created for such pointers.
- */
-struct efi_object {
-	/* Every UEFI object is part of a global object list */
-	struct list_head link;
-	/* The list of protocols */
-	struct list_head protocols;
-	enum efi_object_type type;
-	struct udevice *dev;
 };
 
 enum efi_image_auth_status {
@@ -609,8 +561,6 @@ efi_status_t efi_tcg2_measure_efi_app_invocation(struct efi_loaded_image_obj *ha
 efi_status_t efi_tcg2_measure_efi_app_exit(void);
 /* Measure DTB */
 efi_status_t efi_tcg2_measure_dtb(void *dtb);
-/* Called by bootefi to initialize root node */
-efi_status_t efi_root_node_register(void);
 /* Called by bootefi to initialize runtime */
 efi_status_t efi_initialize_system_table(void);
 /* efi_runtime_detach() - detach unimplemented runtime functions */
