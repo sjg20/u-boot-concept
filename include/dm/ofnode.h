@@ -79,6 +79,16 @@ oftree oftree_from_fdt(void *fdt);
  */
 ofnode noffset_to_ofnode(ofnode other_node, int of_offset);
 
+/**
+ * oftree_dispose() - Dispose of an oftree
+ *
+ * This can be used to dispose of a tree that has been created (other than
+ * the control FDT which must not be disposed)
+ *
+ * @tree: Tree to dispose
+ */
+void oftree_dispose(oftree tree);
+
 #else /* !OFNODE_MULTI_TREE */
 static inline void oftree_reset(void) {}
 
@@ -125,6 +135,8 @@ static inline ofnode noffset_to_ofnode(ofnode other_node, int of_offset)
 
 	return node;
 }
+
+static inline void oftree_dispose(oftree tree) {}
 
 #endif /* OFNODE_MULTI_TREE */
 
@@ -374,16 +386,6 @@ static inline oftree oftree_from_np(struct device_node *root)
 
 	return tree;
 }
-
-/**
- * oftree_dispose() - Dispose of an oftree
- *
- * This can be used to dispose of a tree that has been created (other than
- * the control FDT which must not be disposed)
- *
- * @tree: Tree to dispose
- */
-void oftree_dispose(oftree tree);
 
 /**
  * ofnode_name_eq() - Check a node name ignoring its unit address
