@@ -126,7 +126,7 @@ sct_mnt = /mnt/sct
             else:
                 shutil.copy2(tmp.name, fname)
 
-    def add_qemu_args(self, args, cmd):
+    def add_qemu_args(self, args, cmd, base_hd=0):
         """Add QEMU arguments according to the selected options
 
         This helps in creating the command-line used to run QEMU.
@@ -134,6 +134,7 @@ sct_mnt = /mnt/sct
         Args:
             args (list of str): Existing arguments to add to
             cmd (argparse.Namespace): Program arguments
+            base_hd (int): Base number to use for QEMU hd device
         """
         cmdline = []
         if args.kernel:
@@ -171,10 +172,11 @@ sct_mnt = /mnt/sct
                         cmd.extend([
                             '-device',
                             f'virtio-scsi-pci,id=scsi0,{MODERN_PCI}',
-                            '-device', f'scsi-hd,bus=scsi0.0,drive=hd{i}'])
+                            '-device',
+                            f'scsi-hd,bus=scsi0.0,drive=hd{base_hd + i}'])
                     cmd.extend([
                         '-drive',
-                        f'if={iface},file={disk},format=raw,id=hd{i}'])
+                        f'if={iface},file={disk},format=raw,id=hd{base_hd + i}'])
                 else:
                     tout.warning(f"Disk image '{disk}' not found")
 
