@@ -1428,6 +1428,7 @@ struct efi_hii_config_access_protocol {
 #define EFI_GOT_RGBA8		0
 #define EFI_GOT_BGRA8		1
 #define EFI_GOT_BITMASK		2
+#define EFI_GOT_BITBLT		3
 
 struct efi_gop_mode_info {
 	u32 version;
@@ -1459,6 +1460,21 @@ struct efi_gop_pixel {
 #define EFI_BLT_BUFFER_TO_VIDEO		2
 #define EFI_BLT_VIDEO_TO_VIDEO		3
 
+/**
+ * enum efi_gop_blt_op - blt() operations for efi_gop
+ *
+ * @EFI_GOP_BLIT_VIDEO_FILL: Fill an area
+ * @EFI_GOP_BLIT_READ: Read from video to a buffer
+ * @EFI_GOP_BLIT_WRITE: Write from a buffer to video
+ * @EFI_GOP_BLIT_COPY: Copy from one video area to another
+ */
+enum efi_gop_blt_op {
+	EFI_GOP_BLIT_VIDEO_FILL,
+	EFI_GOP_BLIT_READ,
+	EFI_GOP_BLIT_WRITE,
+	EFI_GOP_BLIT_COPY,
+};
+
 struct efi_gop {
 	efi_status_t (EFIAPI *query_mode)(struct efi_gop *this, u32 mode_number,
 					  efi_uintn_t *size_of_info,
@@ -1466,7 +1482,8 @@ struct efi_gop {
 	efi_status_t (EFIAPI *set_mode)(struct efi_gop *this, u32 mode_number);
 	efi_status_t (EFIAPI *blt)(struct efi_gop *this,
 				   struct efi_gop_pixel *buffer,
-				   u32 operation, efi_uintn_t sx,
+				   enum efi_gop_blt_op operation,
+				   efi_uintn_t sx,
 				   efi_uintn_t sy, efi_uintn_t dx,
 				   efi_uintn_t dy, efi_uintn_t width,
 				   efi_uintn_t height, efi_uintn_t delta);
