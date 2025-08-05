@@ -197,9 +197,6 @@ static inline void efi_net_set_addr(struct efi_ipv4_address *ip,
 	EFI_GUID(0xb2ac5fc9, 0x92b7, 0x4acd, \
 		 0xae, 0xac, 0x11, 0xe8, 0x18, 0xc3, 0x13, 0x0c)
 
-/* Use internal device tree when starting UEFI application */
-#define EFI_FDT_USE_INTERNAL NULL
-
 /* Root node */
 extern efi_handle_t efi_root;
 
