@@ -605,6 +605,13 @@ struct efi_system_table *efi_get_sys_table(void);
 struct efi_boot_services *efi_get_boot(void);
 
 /**
+ * efi_get_parent_image() - Get the handle of the parent image
+ *
+ * Return: parent-image handle
+ */
+efi_handle_t efi_get_parent_image(void);
+
+/**
  * efi_get_ram_base() - Find the base of RAM
  *
  * This is used when U-Boot is built as an EFI application.

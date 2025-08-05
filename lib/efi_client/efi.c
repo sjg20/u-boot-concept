@@ -65,6 +65,11 @@ struct efi_boot_services *efi_get_boot(void)
 	return global_priv->boot;
 }
 
+efi_handle_t efi_get_parent_image(void)
+{
+	return global_priv->parent_image;
+}
+
 unsigned long efi_get_ram_base(void)
 {
 	return global_priv->ram_base;
