@@ -39,15 +39,6 @@ config EFI_LOADER
 
 if EFI_LOADER
 
-config EFI_BINARY_EXEC
-	bool "Execute UEFI binary"
-	default y
-	help
-	  Select this option if you want to execute the UEFI binary after
-	  loading it with U-Boot load commands or other methods.
-	  You may enable CMD_BOOTEFI_BINARY so that you can use bootefi
-	  command to do that.
-
 config EFI_SECURE_BOOT
 	bool "Enable EFI secure boot support"
 	depends on EFI_LOADER && FIT_SIGNATURE
