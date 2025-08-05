@@ -161,7 +161,8 @@ sct_mnt = /mnt/sct
             else:
                 cmd.extend([
                     '-drive',
-                    f'if=virtio,file={os_path},format=raw,id=hd0,readonly=on'])
+                    f'if=virtio,file={os_path},format=raw,id=hd{base_hd},readonly=on'])
+            base_hd += 1
 
         if args.disk:
             for i, d in enumerate(args.disk):
