@@ -398,7 +398,7 @@ if BOOT
 
 config BOOTM_EFI
 	bool "Support booting UEFI FIT images"
-	depends on EFI_BINARY_EXEC && FIT
+	depends on EFI_BINARY_EXEC && EFI_LOADER && FIT
 	default y
 	help
 	  Support booting UEFI FIT images via the bootm command.
