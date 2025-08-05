@@ -34,11 +34,35 @@ static const struct efi_framebuffer {
  *
  * @fb: Framebuffer address
  * @gop: Pointer to the EFI GOP struct
+ * @use_blit: true to use a blit operation to draw on the display, false to use
+ *	the normal bitmap display
  */
 struct efi_video_priv {
 	u64 fb;
 	struct efi_gop *gop;
+	bool use_blit;
 };
+
+static int efi_video_sync(struct udevice *dev)
+{
+	struct video_priv *vid_priv = dev_get_uclass_priv(dev);
+	struct efi_video_priv *priv = dev_get_priv(dev);
+	efi_status_t ret;
+
+	if (priv->use_blit) {
+		/* redraw the entire display */
+		ret = priv->gop->blt(priv->gop, vid_priv->fb,
+				     EFI_GOP_BLIT_WRITE, 0, 0, 0, 0,
+				     vid_priv->xsize, vid_priv->ysize,
+				     vid_priv->line_length);
+		if (ret) {
+			log_err("GOP Blt failed: %lx\n", ret);
+			return -EIO;
+		}
+	}
+
+	return 0;
+}
 
 static void efi_find_pixel_bits(u32 mask, u8 *pos, u8 *size)
 {
@@ -185,6 +209,20 @@ static int save_vesa_mode(struct vesa_mode_info *vesa,
 				       vesa->reserved_mask_size;
 		vesa->bytes_per_scanline = (info->pixels_per_scanline *
 					    vesa->bits_per_pixel) / 8;
+	} else if (info->pixel_format == EFI_GOT_BITBLT) {
+		priv->use_blit = true;
+		vesa->x_resolution = info->width;
+		vesa->y_resolution = info->height;
+		vesa->red_mask_pos = 0;
+		vesa->red_mask_size = 8;
+		vesa->green_mask_pos = 8;
+		vesa->green_mask_size = 8;
+		vesa->blue_mask_pos = 16;
+		vesa->blue_mask_size = 8;
+		vesa->reserved_mask_pos = 24;
+		vesa->reserved_mask_size = 8;
+		vesa->bits_per_pixel = 32;
+		vesa->bytes_per_scanline = info->pixels_per_scanline * 4;
 	} else {
 		log_err("Unknown framebuffer format: %d\n", info->pixel_format);
 		return -EINVAL;
@@ -207,6 +245,8 @@ static int efi_video_probe(struct udevice *dev)
 	if (ret)
 		goto err;
 
+	if (priv->use_blit)
+		priv->fb = plat->base;
 	ret = vesa_setup_video_priv(vesa, priv->fb, uc_priv, plat);
 	if (ret)
 		goto err;
@@ -242,9 +282,15 @@ static int efi_video_bind(struct udevice *dev)
 				vesa.y_resolution;
 		}
 	}
+	if (tmp_priv.use_blit)
+		plat->size = vesa.bytes_per_scanline * vesa.y_resolution;
 
 	return 0;
 }
+
+const static struct video_ops efi_video_ops = {
+	.video_sync	= efi_video_sync,
+};
 
 static const struct udevice_id efi_video_ids[] = {
 	{ .compatible = "efi-fb" },
@@ -257,5 +303,6 @@ U_BOOT_DRIVER(efi_video) = {
 	.of_match = efi_video_ids,
 	.bind	= efi_video_bind,
 	.probe	= efi_video_probe,
+	.ops	= &efi_video_ops,
 	.priv_auto	= sizeof(struct efi_video_priv),
 };
