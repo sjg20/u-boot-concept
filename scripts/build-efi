@@ -76,7 +76,7 @@ class BuildEfi:
         if self.args.arch == 'arm':
             qemu_arch = 'aarch64'
             extra += ['--machine', 'virt', '-cpu', 'max']
-            bios = os.path.join(efi_dir, 'OVMF-pure-efi.aarch64.fd.64m')
+            bios = os.path.join(efi_dir, 'OVMF-simon.aarch64.fd.64m')
             var_store = os.path.join(efi_dir, 'varstore.img')
             extra += [
                 '-drive', f'if=pflash,format=raw,file={bios},readonly=on',
