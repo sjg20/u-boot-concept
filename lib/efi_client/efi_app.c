@@ -46,7 +46,7 @@ void efi_add_known_memory(void)
 {
 	struct efi_priv *priv = efi_get_priv();
 
-	efi_add_memory_map(priv->ram_base, priv->ram_base,
+	efi_add_memory_map(priv->ram_base, CONFIG_EFI_RAM_SIZE,
 			   EFI_CONVENTIONAL_MEMORY);
 }
 

@@ -613,7 +613,7 @@ static void initcall_run_r(void)
 #if CONFIG_IS_ENABLED(CLOCKS)
 	INITCALL(set_cpu_clk_info);
 #endif
-	INITCALL(initr_lmb);
+	// INITCALL(initr_lmb);
 #if CONFIG_IS_ENABLED(EFI_LOADER)
 	printf("hi2\n");
 	INITCALL(efi_memory_init);

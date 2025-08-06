@@ -461,6 +461,7 @@ static uint64_t efi_find_free_memory(uint64_t len, uint64_t max_addr)
 	 * logic below and can just reuse it as return pointer.
 	 */
 	max_addr &= ~EFI_PAGE_MASK;
+	printf("find free max_addr %llx\n", max_addr);
 
 	list_for_each_entry(lmem, &efi_mem, link) {
 		uint64_t desc_len = lmem->num_pages << EFI_PAGE_SHIFT;
@@ -468,6 +469,8 @@ static uint64_t efi_find_free_memory(uint64_t len, uint64_t max_addr)
 		uint64_t curmax = min(max_addr, desc_end);
 		uint64_t ret = curmax - len;
 
+		printf("lmem->base %llx desc len %llx desc_end %llx curmax %llx ret %llx",
+		       lmem->base, desc_len, desc_end, curmax, ret);
 		/* We only take memory from free RAM */
 		if (lmem->type != EFI_CONVENTIONAL_MEMORY)
 			continue;
@@ -563,6 +566,7 @@ static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 
 	/* Reserve that map in our memory maps */
 	ret = efi_add_memory_map_pg(addr, pages, memory_type, true);
+	printf("alloc addr %llx memoryp %p %d\n", addr, memory, __LINE__);
 	if (ret != EFI_SUCCESS) {
 		printf("alloc %d\n", __LINE__);
 		/* Map would overlap, bail out */
@@ -570,6 +574,7 @@ static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 	}
 
 	*memory = addr;
+	printf("stack %p\n", &len);
 
 	return EFI_SUCCESS;
 }
@@ -677,6 +682,8 @@ static efi_status_t efi_allocate_pool_(enum efi_memory_type pool_type,
 	u64 num_pages = efi_size_in_pages(size +
 					  sizeof(struct efi_pool_allocation));
 
+	printf("pool pool_type %d size %lx bufferp %p\n", pool_type, size,
+	       buffer);
 	if (!buffer)
 		return EFI_INVALID_PARAMETER;
 

@@ -1309,6 +1309,7 @@ efi_status_t efi_console_register(void)
 	efi_status_t r;
 	struct efi_device_path *dp;
 
+	printf("con %d\n", __LINE__);
 	/* Install protocols on root node */
 	r = efi_install_multiple_protocol_interfaces(&efi_root,
 						     &efi_guid_text_output_protocol,
@@ -1318,42 +1319,56 @@ efi_status_t efi_console_register(void)
 						     &efi_guid_text_input_ex_protocol,
 						     &efi_con_in_ex,
 						     NULL);
+	printf("con %d\n", __LINE__);
 
 	/* Create console node and install device path protocols */
 	if (CONFIG_IS_ENABLED(DM_SERIAL)) {
+	printf("con %d\n", __LINE__);
 		dp = efi_dp_from_uart();
 		if (!dp)
 			goto out_of_memory;
+	printf("con %d\n", __LINE__);
 
 		/* Hook UART up to the device list */
 		efi_add_handle(&uart_obj);
+	printf("con %d\n", __LINE__);
 
 		/* Install device path */
 		r = efi_add_protocol(&uart_obj, &efi_guid_device_path, dp);
 		if (r != EFI_SUCCESS)
 			goto out_of_memory;
+	printf("con %d\n", __LINE__);
 	}
+	printf("con %d\n", __LINE__);
 
 	/* Create console events */
 	r = efi_create_event(EVT_NOTIFY_WAIT, TPL_CALLBACK, efi_key_notify,
 			     NULL, NULL, &efi_con_in.wait_for_key);
+	printf("con %d\n", __LINE__);
 	if (r != EFI_SUCCESS) {
 		printf("ERROR: Failed to register WaitForKey event\n");
 		return r;
 	}
+	printf("con %d\n", __LINE__);
 	efi_con_in_ex.wait_for_key_ex = efi_con_in.wait_for_key;
 	r = efi_create_event(EVT_TIMER | EVT_NOTIFY_SIGNAL, TPL_CALLBACK,
 			     efi_console_timer_notify, NULL, NULL,
 			     &console_timer_event);
+	printf("con %d\n", __LINE__);
 	if (r != EFI_SUCCESS) {
 		printf("ERROR: Failed to register console event\n");
 		return r;
 	}
+	printf("con %d\n", __LINE__);
 	/* 5000 ns cycle is sufficient for 2 MBaud */
 	r = efi_set_timer(console_timer_event, EFI_TIMER_PERIODIC, 50);
+	printf("con %d\n", __LINE__);
 	if (r != EFI_SUCCESS)
 		printf("ERROR: Failed to set console timer\n");
+	printf("con %d\n", __LINE__);
 	return r;
+
+	return 0;
 out_of_memory:
 	printf("ERROR: Out of memory2\n");
 	return r;
