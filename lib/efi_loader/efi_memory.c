@@ -281,8 +281,9 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	struct mem_node *newlist;
 	bool carve_again;
 	uint64_t carved_pages = 0;
-	struct efi_event *evt;
+	// struct efi_event *evt;
 
+	printf("add start %llx pages %llx line %d\n", start, pages, __LINE__);
 	EFI_PRINT("%s: 0x%llx 0x%llx %d %s\n", __func__,
 		  start, pages, memory_type, overlap_conventional ?
 		  "yes" : "no");
@@ -292,6 +293,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 
 	if (!pages)
 		return EFI_SUCCESS;
+	printf("add %d\n", __LINE__);
 
 	++efi_memory_map_key;
 	newlist = calloc(1, sizeof(*newlist));
@@ -313,6 +315,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 		newlist->attribute = EFI_MEMORY_WB;
 		break;
 	}
+	printf("add %d\n", __LINE__);
 
 	/* Add our new map */
 	do {
@@ -356,8 +359,10 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 			}
 		}
 	} while (carve_again);
+	printf("add %d\n", __LINE__);
 
 	if (overlap_conventional && (carved_pages != pages)) {
+		printf("add %d\n", __LINE__);
 		/*
 		 * The payload wanted to have RAM overlaps, but we overlapped
 		 * with an unallocated region. Error out.
@@ -368,11 +373,14 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 
 	/* Add our new map */
         list_add_tail(&newlist->link, &efi_mem);
+	printf("add %d\n", __LINE__);
 
 	/* And make sure memory is listed in descending order */
 	efi_mem_sort();
+	printf("add %d\n", __LINE__);
 
 	/* Notify that the memory map was changed */
+	/*
 	list_for_each_entry(evt, &efi_events, link) {
 		if (evt->group &&
 		    !guidcmp(evt->group,
@@ -381,6 +389,8 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 			break;
 		}
 	}
+	*/
+	printf("add %d\n", __LINE__);
 
 	return EFI_SUCCESS;
 }
@@ -439,35 +449,47 @@ static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 	efi_status_t ret;
 	phys_addr_t addr;
 
+	printf("alloc %d\n", __LINE__);
 	/* Check import parameters */
 	if (memory_type >= EFI_PERSISTENT_MEMORY_TYPE &&
 	    memory_type <= 0x6FFFFFFF)
 		return EFI_INVALID_PARAMETER;
-	if (!memory)
+	printf("alloc %d\n", __LINE__);
+	if (!memory) {
+		printf("alloc %d\n", __LINE__);
 		return EFI_INVALID_PARAMETER;
+	}
 	len = (u64)pages << EFI_PAGE_SHIFT;
 	/* Catch possible overflow on 64bit systems */
+	printf("alloc %d\n", __LINE__);
 	if (sizeof(efi_uintn_t) == sizeof(u64) &&
 	    (len >> EFI_PAGE_SHIFT) != (u64)pages)
 		return EFI_OUT_OF_RESOURCES;
+	printf("alloc %d\n", __LINE__);
 
 	flags = LMB_NOOVERWRITE | LMB_NONOTIFY;
 	switch (type) {
 	case EFI_ALLOCATE_ANY_PAGES:
 		/* Any page */
+	printf("alloc %d\n", __LINE__);
 		addr = (u64)lmb_alloc_base_flags(len, EFI_PAGE_SIZE,
 						 LMB_ALLOC_ANYWHERE, flags);
-		if (!addr)
+		if (!addr) {
+			printf("out of memory size size %llx line %d\n",
+			       len, __LINE__);
 			return EFI_OUT_OF_RESOURCES;
+		}
 		break;
 	case EFI_ALLOCATE_MAX_ADDRESS:
 		/* Max address */
+	printf("alloc %d\n", __LINE__);
 		addr = (u64)lmb_alloc_base_flags(len, EFI_PAGE_SIZE, *memory,
 						 flags);
 		if (!addr)
 			return EFI_OUT_OF_RESOURCES;
 		break;
 	case EFI_ALLOCATE_ADDRESS:
+	printf("alloc %d\n", __LINE__);
 		if (*memory & EFI_PAGE_MASK)
 			return EFI_NOT_FOUND;
 
@@ -479,16 +501,20 @@ static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 		/* UEFI doesn't specify other allocation types */
 		return EFI_INVALID_PARAMETER;
 	}
+	printf("alloc %d\n", __LINE__);
 
 	/* Reserve that map in our memory maps */
 	ret = efi_add_memory_map_pg(addr, pages, memory_type, true);
+	printf("alloc addr %llx memoryp %p %d\n", addr, memory, __LINE__);
 	if (ret != EFI_SUCCESS) {
+		printf("alloc %d\n", __LINE__);
 		/* Map would overlap, bail out */
 		lmb_free_flags(addr, (u64)pages << EFI_PAGE_SHIFT, flags);
 		return  EFI_OUT_OF_RESOURCES;
 	}
 
 	*memory = addr;
+	printf("stack %p\n", &len);
 
 	return EFI_SUCCESS;
 }
@@ -598,6 +624,8 @@ static efi_status_t efi_allocate_pool_(enum efi_memory_type pool_type,
 	u64 num_pages = efi_size_in_pages(size +
 					  sizeof(struct efi_pool_allocation));
 
+	printf("pool pool_type %d size %lx bufferp %p\n", pool_type, size,
+	       buffer);
 	if (!buffer)
 		return EFI_INVALID_PARAMETER;
 
