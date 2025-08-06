@@ -495,6 +495,7 @@ efi_status_t efi_install_fdt(void *fdt)
 	}
 
 	/* Prepare device tree for payload */
+	log_info("Installing internal FDT from %p\n", fdt);
 	ret = copy_fdt(&fdt);
 	if (ret) {
 		log_err("out of memory\n");
