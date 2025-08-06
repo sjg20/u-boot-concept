@@ -11,7 +11,6 @@
 #include <efi_log.h>
 #include <efi_stub.h>
 #include <init.h>
-#include <lmb.h>
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
@@ -446,14 +445,68 @@ static efi_status_t efi_check_allocated(u64 addr, bool must_be_allocated)
 	return EFI_NOT_FOUND;
 }
 
+/**
+ * efi_find_free_memory() - find free memory pages
+ *
+ * @len:	size of memory area needed
+ * @max_addr:	highest address to allocate
+ * Return:	pointer to free memory area or 0
+ */
+static uint64_t efi_find_free_memory(uint64_t len, uint64_t max_addr)
+{
+	struct mem_node *lmem;
+
+	/*
+	 * Prealign input max address, so we simplify our matching
+	 * logic below and can just reuse it as return pointer.
+	 */
+	max_addr &= ~EFI_PAGE_MASK;
+
+	list_for_each_entry(lmem, &efi_mem, link) {
+		uint64_t desc_len = lmem->num_pages << EFI_PAGE_SHIFT;
+		uint64_t desc_end = lmem->base + desc_len;
+		uint64_t curmax = min(max_addr, desc_end);
+		uint64_t ret = curmax - len;
+
+		/* We only take memory from free RAM */
+		if (lmem->type != EFI_CONVENTIONAL_MEMORY)
+			continue;
+
+		/* Out of bounds for max_addr */
+		if ((ret + len) > max_addr)
+			continue;
+
+		/* Out of bounds for upper map limit */
+		if ((ret + len) > desc_end)
+			continue;
+
+		/* Out of bounds for lower map limit */
+		if (ret < lmem->base)
+			continue;
+
+		/* Return the highest address in this map within bounds */
+		return ret;
+	}
+
+	return 0;
+}
+
+/**
+ * efi_allocate_pages - allocate memory pages
+ *
+ * @type:		type of allocation to be performed
+ * @memory_type:	usage type of the allocated memory
+ * @pages:		number of pages to be allocated
+ * @memory:		allocated memory
+ * Return:		status code
+ */
 static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 					enum efi_memory_type memory_type,
 					efi_uintn_t pages, uint64_t *memory)
 {
 	u64 len;
-	uint flags;
 	efi_status_t ret;
-	phys_addr_t addr;
+	uint64_t addr;
 
 	printf("alloc %d\n", __LINE__);
 	/* Check import parameters */
@@ -473,24 +526,22 @@ static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 		return EFI_OUT_OF_RESOURCES;
 	printf("alloc %d\n", __LINE__);
 
-	flags = LMB_NOOVERWRITE | LMB_NONOTIFY;
 	switch (type) {
 	case EFI_ALLOCATE_ANY_PAGES:
 		/* Any page */
 	printf("alloc %d\n", __LINE__);
-		addr = (u64)lmb_alloc_base_flags(len, EFI_PAGE_SIZE,
-						 LMB_ALLOC_ANYWHERE, flags);
-		if (!addr) {
+		addr = efi_find_free_memory(len, -1ULL);
+		if (!addr)
 			printf("out of memory size size %llx line %d\n",
 			       len, __LINE__);
+		addr = efi_find_free_memory(len, -1ULL);
+		if (!addr)
 			return EFI_OUT_OF_RESOURCES;
-		}
 		break;
 	case EFI_ALLOCATE_MAX_ADDRESS:
 		/* Max address */
 	printf("alloc %d\n", __LINE__);
-		addr = (u64)lmb_alloc_base_flags(len, EFI_PAGE_SIZE, *memory,
-						 flags);
+		addr = efi_find_free_memory(len, *memory);
 		if (!addr)
 			return EFI_OUT_OF_RESOURCES;
 		break;
@@ -498,10 +549,11 @@ static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 	printf("alloc %d\n", __LINE__);
 		if (*memory & EFI_PAGE_MASK)
 			return EFI_NOT_FOUND;
-
-		addr = (u64)lmb_alloc_addr_flags(*memory, len, flags);
-		if (!addr)
+		/* Exact address, reserve it. The addr is already in *memory. */
+		ret = efi_check_allocated(*memory, false);
+		if (ret != EFI_SUCCESS)
 			return EFI_NOT_FOUND;
+		addr = *memory;
 		break;
 	default:
 		/* UEFI doesn't specify other allocation types */
@@ -514,8 +566,7 @@ static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 	if (ret != EFI_SUCCESS) {
 		printf("alloc %d\n", __LINE__);
 		/* Map would overlap, bail out */
-		lmb_free_flags(addr, (u64)pages << EFI_PAGE_SHIFT, flags);
-		return  EFI_OUT_OF_RESOURCES;
+		return EFI_OUT_OF_RESOURCES;
 	}
 
 	*memory = addr;
@@ -539,8 +590,6 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 
 static efi_status_t efi_free_pages_(uint64_t memory, efi_uintn_t pages)
 {
-	u64 len;
-	long status;
 	efi_status_t ret;
 
 	ret = efi_check_allocated(memory, true);
@@ -554,9 +603,9 @@ static efi_status_t efi_free_pages_(uint64_t memory, efi_uintn_t pages)
 		return EFI_INVALID_PARAMETER;
 	}
 
-	len = (u64)pages << EFI_PAGE_SHIFT;
-	status = lmb_free_flags(memory, len, LMB_NOOVERWRITE);
-	if (status)
+	ret = efi_add_memory_map_pg(memory, pages, EFI_CONVENTIONAL_MEMORY,
+				    false);
+	if (ret != EFI_SUCCESS)
 		return EFI_NOT_FOUND;
 
 	return ret;

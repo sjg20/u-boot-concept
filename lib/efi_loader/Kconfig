@@ -21,7 +21,6 @@ config EFI_LOADER
 	select DM_EVENT
 	select EVENT_DYNAMIC
 	select LIB_UUID
-	select LMB
 	select OF_LIBFDT
 	imply PARTITION_UUIDS
 	select REGEX
