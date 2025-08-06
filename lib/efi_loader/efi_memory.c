@@ -289,6 +289,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	uint64_t carved_pages = 0;
 	struct efi_event *evt;
 
+	printf("add %d\n", __LINE__);
 	EFI_PRINT("%s: 0x%llx 0x%llx %d %s\n", __func__,
 		  start, pages, memory_type, overlap_conventional ?
 		  "yes" : "no");
@@ -298,6 +299,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 
 	if (!pages)
 		return EFI_SUCCESS;
+	printf("add %d\n", __LINE__);
 
 	++efi_memory_map_key;
 	newlist = calloc(1, sizeof(*newlist));
@@ -319,6 +321,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 		newlist->attribute = EFI_MEMORY_WB;
 		break;
 	}
+	printf("add %d\n", __LINE__);
 
 	/* Add our new map */
 	do {
@@ -362,6 +365,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 			}
 		}
 	} while (carve_again);
+	printf("add %d\n", __LINE__);
 
 	if (overlap_conventional && (carved_pages != pages)) {
 		/*
@@ -374,11 +378,14 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 
 	/* Add our new map */
         list_add_tail(&newlist->link, &efi_mem);
+	printf("add %d\n", __LINE__);
 
 	/* And make sure memory is listed in descending order */
 	efi_mem_sort();
+	printf("add %d\n", __LINE__);
 
 	/* Notify that the memory map was changed */
+	/*
 	list_for_each_entry(evt, &efi_events, link) {
 		if (evt->group &&
 		    !guidcmp(evt->group,
@@ -387,6 +394,8 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 			break;
 		}
 	}
+	*/
+	printf("add %d\n", __LINE__);
 
 	return EFI_SUCCESS;
 }
