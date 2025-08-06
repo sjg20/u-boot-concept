@@ -362,10 +362,10 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		return EFI_UNSUPPORTED;
 
 	if (bflow->flags & BOOTFLOWF_USE_BUILTIN_FDT) {
-		log_debug("Booting with built-in fdt\n");
+		log_info("Booting with built-in fdt\n");
 		fdt = EFI_FDT_USE_INTERNAL;
 	} else {
-		log_debug("Booting with external fdt\n");
+		log_info("Booting with external fdt\n");
 		fdt = map_sysmem(bflow->fdt_addr, 0);
 	}
 	ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device, image);
