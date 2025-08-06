@@ -560,7 +560,6 @@ static int run_main_loop(void)
 
 static void initcall_run_r(void)
 {
-	printf("hi\n");
 	/*
 	 * Please do not add logic to this function (variables, if (), etc.).
 	 * For simplicity it should remain an ordered list of function calls.
@@ -599,7 +598,6 @@ static void initcall_run_r(void)
 #if CONFIG_IS_ENABLED(ADDR_MAP)
 	INITCALL(init_addr_map);
 #endif
-	printf("hia\n");
 #if CONFIG_IS_ENABLED(ARM) || CONFIG_IS_ENABLED(RISCV) || \
     CONFIG_IS_ENABLED(SANDBOX)
 	INITCALL(board_init);	/* Setup chipselects */
@@ -613,11 +611,9 @@ static void initcall_run_r(void)
 #if CONFIG_IS_ENABLED(CLOCKS)
 	INITCALL(set_cpu_clk_info);
 #endif
-	// INITCALL(initr_lmb);
+	INITCALL(initr_lmb);
 #if CONFIG_IS_ENABLED(EFI_LOADER)
-	printf("hi2\n");
 	INITCALL(efi_memory_init);
-	printf("hi3\n");
 #endif
 #if CONFIG_IS_ENABLED(BINMAN_FDT)
 	INITCALL(initr_binman);
@@ -663,9 +659,7 @@ static void initcall_run_r(void)
 	INITCALL(cpu_init_r);
 #endif
 #if CONFIG_IS_ENABLED(EFI_LOADER)
-	printf("hi4\n");
 	INITCALL(efi_init_early);
-	printf("hi4a\n");
 #endif
 #if CONFIG_IS_ENABLED(CMD_NAND)
 	INITCALL(initr_nand);

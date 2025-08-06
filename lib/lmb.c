@@ -450,7 +450,6 @@ static int lmb_map_update_notify(phys_addr_t addr, phys_size_t size, u8 op,
 	u64 pages;
 	efi_status_t status;
 
-	return 0;
 	if (op != MAP_OP_RESERVE && op != MAP_OP_FREE && op != MAP_OP_ADD) {
 		log_err("Invalid map update op received (%d)\n", op);
 		return -1;

@@ -186,38 +186,31 @@ int efi_init_early(void)
 {
 	efi_status_t ret;
 
-	printf("early %d\n", __LINE__);
 	/* Allow unaligned memory access */
 	allow_unaligned();
-	printf("early %d\n", __LINE__);
 
 	if (IS_ENABLED(CONFIG_EFI_LOG)) {
 		ret = efi_log_init();
 		if (ret)
 			return -ENOSPC;
 	}
-	printf("early %d\n", __LINE__);
 
 	/* Initialize root node */
 	ret = efi_root_node_register();
 	if (ret != EFI_SUCCESS)
 		goto out;
-	printf("early %d\n", __LINE__);
 
 	ret = efi_console_register();
 	if (ret != EFI_SUCCESS)
 		goto out;
-	printf("early %d\n", __LINE__);
 
 	/* Initialize EFI driver uclass */
 	ret = efi_driver_init();
 	if (ret != EFI_SUCCESS)
 		goto out;
-	printf("early %d\n", __LINE__);
 
 	return 0;
 out:
-	printf("early %d\n", __LINE__);
 	/* never re-init UEFI subsystem */
 	efi_obj_list_initialized = ret;
 

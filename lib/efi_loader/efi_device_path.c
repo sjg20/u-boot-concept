@@ -865,6 +865,7 @@ struct efi_device_path *efi_dp_from_uart(void)
 	struct efi_device_path_uart *uart;
 	size_t dpsize = dp_size(dm_root()) + sizeof(*uart) + sizeof(EFI_DP_END);
 
+	printf("dpsize %zx\n", dpsize);
 	buf = efi_alloc(dpsize);
 	if (!buf)
 		return NULL;

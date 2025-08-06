@@ -281,7 +281,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	struct mem_node *newlist;
 	bool carve_again;
 	uint64_t carved_pages = 0;
-	// struct efi_event *evt;
+	struct efi_event *evt;
 
 	printf("add start %llx pages %llx line %d\n", start, pages, __LINE__);
 	EFI_PRINT("%s: 0x%llx 0x%llx %d %s\n", __func__,
@@ -380,7 +380,6 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	printf("add %d\n", __LINE__);
 
 	/* Notify that the memory map was changed */
-	/*
 	list_for_each_entry(evt, &efi_events, link) {
 		if (evt->group &&
 		    !guidcmp(evt->group,
@@ -389,7 +388,6 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 			break;
 		}
 	}
-	*/
 	printf("add %d\n", __LINE__);
 
 	return EFI_SUCCESS;
