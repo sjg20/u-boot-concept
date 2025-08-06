@@ -73,10 +73,6 @@ SECTIONS
 		*(.data.efi_runtime*)
                 __efi_runtime_stop = .;
 
-                __efi_runtime_rel_start = .;
-		*(.rel*.efi_runtime)
-		*(.rel*.efi_runtime.*)
-                __efi_runtime_rel_stop = .;
 	}
 
 	_data_size = _edata - _data;
@@ -93,6 +89,14 @@ SECTIONS
 		*(.rela.ctors*)
 		*(.rela.dtors*)
 		*(.rela__u_boot_list*)
+	}
+
+	. = ALIGN(8);
+	.efi_runtime_rel : {
+                __efi_runtime_rel_start = .;
+		*(.rel*.efi_runtime)
+		*(.rel*.efi_runtime.*)
+                __efi_runtime_rel_stop = .;
 	}
 
 	. = ALIGN(4096);
