@@ -772,8 +772,10 @@ efi_status_t efi_create_event(uint32_t type, efi_uintn_t notify_tpl,
 
 	ret = efi_allocate_pool(pool_type, sizeof(struct efi_event),
 				(void **)&evt);
-	if (ret != EFI_SUCCESS)
+	if (ret != EFI_SUCCESS) {
+		printf("efi_create_event OOM %d\n", __LINE__);
 		return ret;
+	}
 	memset(evt, 0, sizeof(struct efi_event));
 	evt->type = type;
 	evt->notify_tpl = notify_tpl;

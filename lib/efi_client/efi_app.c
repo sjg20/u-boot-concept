@@ -13,6 +13,7 @@
 #include <dm.h>
 #include <efi.h>
 #include <efi_api.h>
+#include <efi_loader.h>
 #include <efi_stub.h>
 #include <errno.h>
 #include <image.h>
@@ -39,6 +40,14 @@ int copy_uboot_to_ram(void)
 int do_elf_reloc_fixups(void)
 {
 	return 0;
+}
+
+void efi_add_known_memory(void)
+{
+	struct efi_priv *priv = efi_get_priv();
+
+	efi_add_memory_map(priv->ram_base, priv->ram_base,
+			   EFI_CONVENTIONAL_MEMORY);
 }
 
 #if 0

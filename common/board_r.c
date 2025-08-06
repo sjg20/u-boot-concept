@@ -665,6 +665,7 @@ static void initcall_run_r(void)
 #if CONFIG_IS_ENABLED(EFI_LOADER)
 	printf("hi4\n");
 	INITCALL(efi_init_early);
+	printf("hi4a\n");
 #endif
 #if CONFIG_IS_ENABLED(CMD_NAND)
 	INITCALL(initr_nand);
