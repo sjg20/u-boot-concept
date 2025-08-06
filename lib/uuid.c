@@ -275,6 +275,10 @@ static const struct {
 	{ "EFI_MEMORY_TYPE", EFI_MEMORY_TYPE },
 	{ "EFI_MEM_STATUS_CODE_REC", EFI_MEM_STATUS_CODE_REC },
 	{ "EFI_GUID_EFI_ACPI1", EFI_GUID_EFI_ACPI1 },
+	{ "CRC32 Guided Section Extraction", EFI_GUIDED_SECTION_EXTRACTION },
+	{ "Debug Image Info", EFI_DEBUG_IMAGE_INFO_TABLE },
+	{ "Memory Attribute", EFI_ACPI_MCFG_TABLE_GUID },
+	{ "Random-number-generator Algorithms", EFI_RNG_ALGORITHM_GUID },
 #endif
 #endif /* !USE_HOSTCC */
 };

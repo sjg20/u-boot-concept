@@ -1331,7 +1331,7 @@ efi_status_t efi_console_register(void)
 
 		/* Install device path */
 		r = efi_add_protocol(&uart_obj, &efi_guid_device_path, dp);
-		printf("r %llx\n", r);
+		printf("r %lx\n", r);
 		if (r != EFI_SUCCESS)
 			goto out_of_memory;
 	}
