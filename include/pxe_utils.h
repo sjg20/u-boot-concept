@@ -127,7 +127,7 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
  * @label: Label to process
  * @kernel_addr: String containing kernel address (cannot be NULL)
  * @initrd_addr: initaddr address (0 if none)
- * @initrd_filesize: String containing initrd size (only used if @initrd_addr)
+ * @initrd_size: initrd size (only used if @initrd_addr)
  * @initrd_str: initrd string to process (only used if @initrd_addr)
  * @conf_fdt: string containing the FDT address
  * @restart: true to use BOOTM_STATE_RESTART instead of BOOTM_STATE_START (only
@@ -160,7 +160,7 @@ struct pxe_context {
 	struct pxe_label *label;
 	char *kernel_addr;
 	ulong initrd_addr;
-	char *initrd_filesize;
+	ulong initrd_size;
 	char *initrd_str;
 	char *conf_fdt;
 	bool restart;
