@@ -1180,6 +1180,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 			struct event_os_load data;
 
 			data.addr = images->os.load;
+			log_debug("notify EVT_BOOT_OS_ADDR\n");
 			ret = event_notify(EVT_BOOT_OS_ADDR, &data,
 					   sizeof(data));
 			if (ret)
