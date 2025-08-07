@@ -654,7 +654,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	char initrd_str[28] = "";
 	char mac_str[29] = "";
 	char ip_str[68] = "";
-	char *fit_addr = NULL;
+	char fit_addr[200];
 	const char *conf_fdt_str;
 	ulong conf_fdt = 0;
 	ulong addr;
@@ -699,14 +699,8 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	}
 	/* for FIT, append the configuration identifier */
 	if (label->config) {
-		int len = strlen(kernel_addr) + strlen(label->config) + 1;
-
-		fit_addr = malloc(len);
-		if (!fit_addr) {
-			printf("malloc fail (FIT address)\n");
-			return 1;
-		}
-		snprintf(fit_addr, len, "%s%s", kernel_addr, label->config);
+		snprintf(fit_addr, sizeof(fit_addr), "%s%s", kernel_addr,
+			 label->config);
 		kernel_addr = fit_addr;
 	}
 
@@ -723,13 +717,13 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		if (ret < 0) {
 			printf("Skipping %s for failure retrieving initrd\n",
 			       label->name);
-			goto cleanup;
+			return 1;
 		}
 		initrd_size = size;
 		size = snprintf(initrd_str, sizeof(initrd_str), "%lx:%lx",
 				initrd_addr, size);
 		if (size >= sizeof(initrd_str))
-			goto cleanup;
+			return 1;
 	}
 
 	if (label->ipappend & 0x1) {
@@ -759,7 +753,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 			       strlen(label->append ?: ""),
 			       strlen(ip_str), strlen(mac_str),
 			       sizeof(bootargs));
-			goto cleanup;
+			return 1;
 		}
 
 		if (label->append)
@@ -833,9 +827,6 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	label_run_boot(ctx, label, kernel_addr, initrd_addr, initrd_size,
 		       initrd_str, conf_fdt_str, conf_fdt);
 	/* ignore the error value since we are going to fail anyway */
-
-cleanup:
-	free(fit_addr);
 
 	return 1;	/* returning is always failure */
 }
