@@ -653,7 +653,8 @@ static int generate_localboot(struct pxe_label *label)
  */
 static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 {
-	char *kern_addr_str = NULL;
+	char *kern_addr_str;
+	ulong kern_addr = 0;
 	ulong initrd_addr = 0;
 	ulong initrd_size = 0;
 	char initrd_str[28] = "";
@@ -697,21 +698,20 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		return 1;
 	}
 
-	kern_addr_str = env_get("kernel_addr_r");
-	if (!kern_addr_str) {
+	kern_addr = env_get_hex("kernel_addr_r", 0);
+	if (!kern_addr) {
 		printf("No kernel_addr_r available for kernel\n");
 		return 1;
 	}
+
 	/* for FIT, append the configuration identifier */
-	if (label->config) {
-		snprintf(fit_addr, sizeof(fit_addr), "%s%s", kern_addr_str,
-			 label->config);
-		kern_addr_str = fit_addr;
-	}
+	snprintf(fit_addr, sizeof(fit_addr), "%lx%s", kern_addr,
+		 label->config ? label->config : "");
+	kern_addr_str = fit_addr;
 
 	/* For FIT, the label can be identical to kernel one */
 	if (label->initrd && !strcmp(label->kernel_label, label->initrd)) {
-		initrd_addr = hextoul(kern_addr_str, NULL);
+		initrd_addr = kern_addr;
 	} else if (label->initrd) {
 		ulong size;
 		int ret;
@@ -786,11 +786,9 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	}
 
 	if (!conf_fdt_str) {
-		ulong kernel_addr_r;
 		void *buf;
 
-		kernel_addr_r = genimg_get_kernel_addr(kern_addr_str);
-		buf = map_sysmem(kernel_addr_r, 0);
+		buf = map_sysmem(kern_addr, 0);
 		if (genimg_get_format(buf) != IMAGE_FORMAT_FIT) {
 			if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
 			    strcmp("-", label->fdt))
