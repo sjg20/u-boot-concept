@@ -129,7 +129,8 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
  * @initrd_addr: initaddr address (0 if none)
  * @initrd_size: initrd size (only used if @initrd_addr)
  * @initrd_str: initrd string to process (only used if @initrd_addr)
- * @conf_fdt: string containing the FDT address
+ * @conf_fdt_str: FDT-address string
+ * @conf_fdt: FDT address
  * @restart: true to use BOOTM_STATE_RESTART instead of BOOTM_STATE_START (only
  *	supported with FIT / bootm)
  */
@@ -163,6 +164,7 @@ struct pxe_context {
 	ulong initrd_size;
 	char *initrd_str;
 	char *conf_fdt_str;
+	ulong conf_fdt;
 	bool restart;
 };
 
