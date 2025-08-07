@@ -162,7 +162,7 @@ struct pxe_context {
 	ulong initrd_addr;
 	ulong initrd_size;
 	char *initrd_str;
-	char *conf_fdt;
+	char *conf_fdt_str;
 	bool restart;
 };
 
