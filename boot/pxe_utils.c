@@ -540,14 +540,14 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
  * @initrd_addr: String containing initrd address (0 if none)
  * @initrd_size: initrd size (only used if @initrd_addr)
  * @initrd_str: initrd string to process (only used if @initrd_addr)
- * @conf_fdt: string containing the FDT address
+ * @conf_fdt_str: string containing the FDT address
  * Return: does not return on success, or returns 0 if the boot command
  * returned, or -ve error value on error
  */
 static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 			  char *kernel_addr, ulong initrd_addr,
 			  ulong initrd_size, char *initrd_str,
-			  const char *conf_fdt)
+			  const char *conf_fdt_str)
 {
 	char rstr[BOOTM_STRLEN];
 	struct bootm_info bmi;
@@ -558,8 +558,8 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 
 	bootm_init(&bmi);
 
-	bmi.conf_fdt = conf_fdt;
 	bmi.addr_img = kernel_addr;
+	bmi.conf_fdt = conf_fdt_str;
 	bootm_x86_set(&bmi, bzimage_addr, hextoul(kernel_addr, NULL));
 
 	if (initrd_addr) {
@@ -655,7 +655,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	char mac_str[29] = "";
 	char ip_str[68] = "";
 	char *fit_addr = NULL;
-	const char *conf_fdt;
+	const char *conf_fdt_str;
 	ulong addr;
 	int ret;
 
@@ -773,18 +773,18 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		printf("append: %s\n", finalbootargs);
 	}
 
-	conf_fdt = env_get("fdt_addr_r");
-	ret = label_process_fdt(ctx, label, kernel_addr, &conf_fdt);
+	conf_fdt_str = env_get("fdt_addr_r");
+	ret = label_process_fdt(ctx, label, kernel_addr, &conf_fdt_str);
 	if (ret)
 		return ret;
 
-	if (!conf_fdt) {
+	if (!conf_fdt_str) {
 		if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
 		    strcmp("-", label->fdt))
-			conf_fdt = env_get("fdt_addr");
+			conf_fdt_str = env_get("fdt_addr");
 	}
 
-	if (!conf_fdt) {
+	if (!conf_fdt_str) {
 		ulong kernel_addr_r;
 		void *buf;
 
@@ -793,12 +793,12 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		if (genimg_get_format(buf) != IMAGE_FORMAT_FIT) {
 			if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
 			    strcmp("-", label->fdt))
-				conf_fdt = env_get("fdtcontroladdr");
+				conf_fdt_str = env_get("fdtcontroladdr");
 		}
 		unmap_sysmem(buf);
 	}
-	if (ctx->bflow && conf_fdt)
-		ctx->bflow->fdt_addr = hextoul(conf_fdt, NULL);
+	if (ctx->bflow && conf_fdt_str)
+		ctx->bflow->fdt_addr = hextoul(conf_fdt_str, NULL);
 
 	if (IS_ENABLED(CONFIG_BOOTSTD_FULL) && ctx->no_boot) {
 		ctx->label = label;
@@ -808,16 +808,16 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 			ctx->initrd_size = initrd_size;
 			ctx->initrd_str = strdup(initrd_str);
 		}
-		ctx->conf_fdt = strdup(conf_fdt);
+		ctx->conf_fdt_str = strdup(conf_fdt_str);
 		log_debug("Saving label '%s':\n", label->name);
-		log_debug("- kernel_addr '%s' conf_fdt '%s'\n",
-			  ctx->kernel_addr, ctx->conf_fdt);
+		log_debug("- kernel_addr '%s' conf_fdt_str '%s'\n",
+			  ctx->kernel_addr, ctx->conf_fdt_str);
 		if (initrd_addr) {
 			log_debug("- initrd addr %lx filesize %lx str '%s'\n",
 				  ctx->initrd_addr, ctx->initrd_size,
 				  ctx->initrd_str);
 		}
-		if (!ctx->kernel_addr || (conf_fdt && !ctx->conf_fdt) ||
+		if (!ctx->kernel_addr || (conf_fdt_str && !ctx->conf_fdt_str) ||
 		    (initrd_addr && !ctx->initrd_str)) {
 			printf("malloc fail (saving label)\n");
 			return 1;
@@ -826,7 +826,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	}
 
 	label_run_boot(ctx, label, kernel_addr, initrd_addr, initrd_size,
-		       initrd_str, conf_fdt);
+		       initrd_str, conf_fdt_str);
 	/* ignore the error value since we are going to fail anyway */
 
 cleanup:
@@ -1125,7 +1125,7 @@ int pxe_do_boot(struct pxe_context *ctx)
 
 	ret = label_run_boot(ctx, ctx->label, ctx->kernel_addr,
 			     ctx->initrd_addr, ctx->initrd_size,
-			     ctx->initrd_str, ctx->conf_fdt);
+			     ctx->initrd_str, ctx->conf_fdt_str);
 	if (ret)
 		return log_msg_ret("lrb", ret);
 
