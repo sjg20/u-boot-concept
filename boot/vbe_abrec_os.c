@@ -211,13 +211,12 @@ static int vbe_abrec_boot(struct udevice *dev, struct bootflow *bflow)
 	img = bootflow_img_find(bflow, BFI_VBE_OEM_FIT);
 	if (img) {
 		struct bootm_info bmi;
-		char addr_str[30];
+		char addr_str[BOOTM_STRLEN];
 		int states;
 
 		printf("Loading OEM devicetree from FIT\n");
 		bootm_init(&bmi);
-		snprintf(addr_str, sizeof(addr_str), "%lx", img->addr);
-		bmi.addr_img = addr_str;
+		bootm_set_addr_img(&bmi, img->addr, addr_str);
 		bmi.cmd_name = "vbe_os";
 		states = BOOTM_STATE_START | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |

@@ -142,7 +142,7 @@ static int qfw_read_all(struct udevice *dev, struct bootflow *bflow)
 static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
 {
 	const struct bootflow_img *simg, *kimg, *rimg;
-	char conf_fdt[20], conf_ramdisk[40], addr_img_str[20];
+	char conf_fdt[BOOTM_STRLEN], addr_img[BOOTM_STRLEN], conf_ramdisk[40];
 	struct bootm_info bmi;
 	int ret;
 
@@ -153,10 +153,8 @@ static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
 
 	ret = booti_run(&bmi);
 	bootm_init(&bmi);
-	snprintf(conf_fdt, sizeof(conf_fdt), "%lx",
-		 (ulong)map_to_sysmem(gd->fdt_blob));
-	snprintf(addr_img_str, sizeof(addr_img_str), "%lx", kimg->addr);
-	bmi.addr_img = addr_img_str;
+	bootm_set_conf_fdt(&bmi, map_to_sysmem(gd->fdt_blob), conf_fdt);
+	bootm_set_addr_img(&bmi, kimg->addr, addr_img);
 	snprintf(conf_ramdisk, sizeof(conf_ramdisk), "%lx:%lx", rimg->addr,
 		 rimg->size);
 	bmi.conf_ramdisk = conf_ramdisk;

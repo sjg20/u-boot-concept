@@ -104,6 +104,68 @@ struct bootm_info {
 #define bootm_x86_set(_bmi, _field, _val)
 #endif
 
+/* length of strings needed to hold an address within struct bootm_info */
+enum {
+	BOOTM_STRLEN	= 2 * sizeof(long) + 1,
+};
+
+/**
+ * bootm_set_addr_img() - Set the address of an image
+ *
+ * This only supports setting a single address, with no FIT configuration, etc.
+ *
+ * @bmi: Bootm information
+ * @addr: Address to set
+ * @str: String to hold the address (must be maintained by the caller)
+ */
+void bootm_set_addr_img_(struct bootm_info *bmi, ulong addr,
+			 char str[BOOTM_STRLEN]);
+
+#define bootm_set_addr_img(bmi, addr, str) \
+	({ \
+		_Static_assert(sizeof(str) >= BOOTM_STRLEN, \
+			"string buffer too small"); \
+		bootm_set_addr_img_(bmi, addr, str); \
+	})
+
+/**
+ * bootm_set_conf_ramdisk() - Set the address of a ramdisk
+ *
+ * This only supports setting a single address, with no FIT configuration, etc.
+ *
+ * @bmi: Bootm information
+ * @addr: Address to set
+ * @str: String to hold the address (must be maintained by the caller)
+ */
+void bootm_set_conf_ramdisk_(struct bootm_info *bmi, ulong addr,
+			     char str[BOOTM_STRLEN]);
+
+#define bootm_set_conf_ramdisk(bmi, addr, str) \
+	({ \
+		_Static_assert(sizeof(str) >= BOOTM_STRLEN, \
+			"string buffer too small"); \
+		bootm_set_conf_ramdisk_(bmi, addr, str); \
+	})
+
+/**
+ * bootm_set_conf_fdt() - Set the address of the FDT
+ *
+ * This only supports setting a single address, with no FIT configuration, etc.
+ *
+ * @bmi: Bootm information
+ * @addr: Address to set
+ * @str: String to hold the address (must be maintained by the caller)
+ */
+void bootm_set_conf_fdt_(struct bootm_info *bmi, ulong addr,
+			 char str[BOOTM_STRLEN]);
+
+#define bootm_set_conf_fdt(bmi, addr, str) \
+	({ \
+		_Static_assert(sizeof(str) >= BOOTM_STRLEN, \
+			"string buffer too small"); \
+		bootm_set_conf_fdt_(bmi, addr, str); \
+	})
+
 static inline ulong bootm_len(void)
 {
 #ifdef CONFIG_SYS_BOOTM_LEN
