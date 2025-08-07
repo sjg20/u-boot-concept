@@ -97,13 +97,15 @@ struct pxe_context;
  *
  * @ctx: PXE context
  * @file_path: Full path to filename to read
- * @file_addr: String containing the to which to read the file
+ * @addrp: On entry, address to load file or 0 to reserve an address with lmb;
+ * on exit, address to which the file was loaded
+ * @align: Reservation alignment, if using lmb
  * @type: File type
  * @fileszeip: Returns file size
  */
 typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
-				char *file_addr, enum bootflow_img_t type,
-				ulong *filesizep);
+				ulong *addrp, ulong align,
+				enum bootflow_img_t type, ulong *filesizep);
 
 /**
  * struct pxe_context - context information for PXE parsing
