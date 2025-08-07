@@ -4,6 +4,7 @@
  * Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <bootflow.h>
@@ -563,6 +564,11 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	int ret = 0;
 	void *buf;
 	enum image_fmt_t  fmt;
+
+	log_debug("label '%s' kern_addr_str '%s' kern_addr %lx initrd_addr %lx "
+		  "initrd_size %lx initrd_str '%s' conf_fdt_str '%s' "
+		  "conf_fdt %lx\n", label->name, kern_addr_str, kern_addr,
+		  initrd_addr, initrd_size, initrd_str, conf_fdt_str, conf_fdt);
 
 	bootm_init(&bmi);
 
