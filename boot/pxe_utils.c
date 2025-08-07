@@ -191,7 +191,8 @@ int get_pxelinux_path(struct pxe_context *ctx, const char *file,
  * @ctx: PXE context
  * @file_path: File path to read (relative to the PXE file)
  * @envaddr_name: Name of environment variable which contains the address to
- *	load to
+ *	load to. If this doesn't exist, the address is allocated from LMB
+ * @align: Allocation alignment, if allocating
  * @type: File type
  * @addrp: Returns the address to which the file was loaded, on success
  * @filesizep: Returns the file size in bytes
@@ -200,22 +201,23 @@ int get_pxelinux_path(struct pxe_context *ctx, const char *file,
  *	value < 0 on other error
  */
 static int get_relfile_envaddr(struct pxe_context *ctx, const char *file_path,
-			       const char *envaddr_name,
+			       const char *envaddr_name, ulong align,
 			       enum bootflow_img_t type, ulong *addrp,
 			       ulong *filesizep)
 {
-	ulong addr;
+	ulong addr = 0;
 	char *envaddr;
 	int ret;
 
-	envaddr = from_env(envaddr_name);
-	if (!envaddr)
-		return -ENOENT;
-
-	if (strict_strtoul(envaddr, 16, &addr) < 0)
+	/*
+	 * set the address if we have it, otherwise get_relfile() will reserve
+	 * a space
+	 */
+	envaddr = env_get(envaddr_name);
+	if (envaddr && strict_strtoul(envaddr, 16, &addr) < 0)
 		return -EINVAL;
 
-	ret = get_relfile(ctx, file_path, &addr, 0, type, filesizep);
+	ret = get_relfile(ctx, file_path, &addr, align, type, filesizep);
 	if (ret != 1)
 		return ret;
 	*addrp = addr;
@@ -361,6 +363,7 @@ static void label_boot_fdtoverlay(struct pxe_context *ctx,
 
 		/* Load overlay file */
 		err = get_relfile_envaddr(ctx, overlayfile, "fdtoverlay_addr_r",
+					  SZ_4K,
 					  (enum bootflow_img_t)IH_TYPE_FLATDT,
 					  &addr, NULL);
 		if (err < 0) {
@@ -497,6 +500,7 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
 			int err;
 
 			err = get_relfile_envaddr(ctx, fdtfile, "fdt_addr_r",
+					SZ_4K,
 					(enum bootflow_img_t)IH_TYPE_FLATDT,
 					&addr, NULL);
 
@@ -685,9 +689,9 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		return 1;
 	}
 
-	if (get_relfile_envaddr(ctx, label->kernel, "kernel_addr_r",
-				(enum bootflow_img_t)IH_TYPE_KERNEL, &addr,
-				NULL) < 0) {
+	if (get_relfile_envaddr(ctx, label->kernel, "kernel_addr_r", SZ_2M,
+				(enum bootflow_img_t)IH_TYPE_KERNEL,
+				&addr, NULL) < 0) {
 		printf("Skipping %s for failure retrieving kernel\n",
 		       label->name);
 		return 1;
@@ -713,6 +717,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		int ret;
 
 		ret = get_relfile_envaddr(ctx, label->initrd, "ramdisk_addr_r",
+					  SZ_2M,
 					  (enum bootflow_img_t)IH_TYPE_RAMDISK,
 					  &initrd_addr, &size);
 		if (ret < 0) {
