@@ -94,12 +94,14 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len)
  *
  * @ctx: PXE context
  * @file_path: File path to read (relative to the PXE file)
- * @addr: Address to load file to
+ * @addrp: On entry, address to load file or 0 to reserve an address with lmb;
+ * on exit, address to which the file was loaded
+ * @align: Reservation alignment, if using lmb
  * @filesizep: If not NULL, returns the file size in bytes
  * Returns 1 for success, or < 0 on error
  */
 static int get_relfile(struct pxe_context *ctx, const char *file_path,
-		       unsigned long file_addr, enum bootflow_img_t type,
+		       ulong *addrp, ulong align, enum bootflow_img_t type,
 		       ulong *filesizep)
 {
 	size_t path_len;
@@ -124,7 +126,7 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
 
 	printf("Retrieving file: %s\n", relfile);
 
-	ret = ctx->getfile(ctx, relfile, &file_addr, 0, type, &size);
+	ret = ctx->getfile(ctx, relfile, addrp, align, type, &size);
 	if (ret < 0)
 		return log_msg_ret("get", ret);
 	if (filesizep)
@@ -140,7 +142,7 @@ int get_pxe_file(struct pxe_context *ctx, const char *file_path,
 	int err;
 	char *buf;
 
-	err = get_relfile(ctx, file_path, file_addr, BFI_EXTLINUX_CFG,
+	err = get_relfile(ctx, file_path, &file_addr, 0, BFI_EXTLINUX_CFG,
 			  &size);
 	if (err < 0)
 		return err;
@@ -210,7 +212,7 @@ static int get_relfile_envaddr(struct pxe_context *ctx, const char *file_path,
 	if (strict_strtoul(envaddr, 16, &file_addr) < 0)
 		return -EINVAL;
 
-	return get_relfile(ctx, file_path, file_addr, type, filesizep);
+	return get_relfile(ctx, file_path, &file_addr, 0, type, filesizep);
 }
 
 /**
@@ -976,7 +978,7 @@ void handle_pxe_menu(struct pxe_context *ctx, struct pxe_menu *cfg)
 	if (IS_ENABLED(CONFIG_CMD_BMP)) {
 		/* display BMP if available */
 		if (cfg->bmp) {
-			if (get_relfile(ctx, cfg->bmp, image_load_addr,
+			if (get_relfile(ctx, cfg->bmp, &image_load_addr, 0,
 					BFI_LOGO, NULL)) {
 #if defined(CONFIG_VIDEO)
 				struct udevice *dev;
