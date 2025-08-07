@@ -94,7 +94,7 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len)
  *
  * @ctx: PXE context
  * @file_path: File path to read (relative to the PXE file)
- * @file_addr: Address to load file to
+ * @addr: Address to load file to
  * @filesizep: If not NULL, returns the file size in bytes
  * Returns 1 for success, or < 0 on error
  */
@@ -104,7 +104,6 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
 {
 	size_t path_len;
 	char relfile[MAX_TFTP_PATH_LEN + 1];
-	char addr_buf[18];
 	ulong size;
 	int ret;
 
@@ -125,9 +124,7 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
 
 	printf("Retrieving file: %s\n", relfile);
 
-	sprintf(addr_buf, "%lx", file_addr);
-
-	ret = ctx->getfile(ctx, relfile, addr_buf, type, &size);
+	ret = ctx->getfile(ctx, relfile, &file_addr, 0, type, &size);
 	if (ret < 0)
 		return log_msg_ret("get", ret);
 	if (filesizep)
