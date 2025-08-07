@@ -657,17 +657,6 @@ void efi_puts(struct efi_priv *priv, const char *str);
 void efi_putc(struct efi_priv *priv, const char ch);
 
 /**
- * efi_store_memory_map() - Collect the memory-map info from EFI
- *
- * Collect the memory info and store it for later use, e.g. in calling
- * exit_boot_services()
- *
- * @priv:	Pointer to private EFI structure
- * Returns: 0 if OK, non-zero on error
- */
-int efi_store_memory_map(struct efi_priv *priv);
-
-/**
  * efi_stub_exit_boot_services() - Handle the exit-boot-service procedure
  *
  * Tell EFI we don't want their boot services anymore
