@@ -559,7 +559,6 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 			  char *initrd_str, const char *conf_fdt_str,
 			  ulong conf_fdt)
 {
-	char rstr[BOOTM_STRLEN];
 	struct bootm_info bmi;
 	int ret = 0;
 	void *buf;
