@@ -40,6 +40,8 @@ void bootm_final(enum bootm_final_t flags)
 	 */
 	dm_remove_devices_active();
 
+	ret = event_notify(EVT_BOOT_OS_ADDR, &data,
+
 	bootm_disable_interrupts();
 
 	if (!(flags & BOOTM_FINAL_NO_CLEANUP))

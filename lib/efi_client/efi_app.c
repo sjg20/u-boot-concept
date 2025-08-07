@@ -240,6 +240,7 @@ static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 	return -EINPROGRESS;
 }
 
+#if 0
 /*
  * Attempt to relocate the kernel to somewhere the firmware isn't using
  */
@@ -277,6 +278,7 @@ int board_fixup_os(void *ctx, struct event *evt)
 	return 0;
 }
 EVENT_SPY_FULL(EVT_BOOT_OS_ADDR, board_fixup_os);
+#endif
 
 static const struct udevice_id efi_sysreset_ids[] = {
 	{ .compatible = "efi,reset" },

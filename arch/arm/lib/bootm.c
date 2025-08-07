@@ -327,6 +327,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 		r2 = gd->bd->bi_boot_params;
 
 	if (!fake) {
+		ret = event_notify(EVT_BOOT_OS_ADDR, &data,
 #ifdef CONFIG_ARMV7_NONSEC
 		if (armv7_boot_nonsec()) {
 			armv7_init_nonsec();
