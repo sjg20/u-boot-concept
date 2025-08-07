@@ -24,10 +24,10 @@ int board_exit_boot_services(void *ctx, struct event *evt)
 {
 	struct efi_priv *priv = efi_get_priv();
 	struct efi_mem_desc *desc;
-	int size;
-	uint key;
 	int desc_size;
 	uint version;
+	int size;
+	uint key;
 	int ret;
 
 	printf("Exiting EFI\n");

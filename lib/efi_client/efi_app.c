@@ -277,8 +277,8 @@ int board_fixup_os(void *ctx, struct event *evt)
 
 	return 0;
 }
-EVENT_SPY_FULL(EVT_BOOT_OS_ADDR, board_fixup_os);
 #endif
+
 
 int efi_app_exit_boot_services(struct efi_priv *priv, uint key)
 {
@@ -292,6 +292,68 @@ int efi_app_exit_boot_services(struct efi_priv *priv, uint key)
 	return 0;
 }
 
+static int efi_setup_dram(void)
+{
+	struct efi_mem_desc *desc;
+	int desc_size;
+	uint version;
+	// ofnode node;
+	// void *fdt;
+	int size;
+	uint key;
+	int ret;
+	int banks;
+
+	printf("setup DRAM\n");
+	ret = efi_get_mmap(&desc, &size, &key, &desc_size, &version);
+	if (ret) {
+		printf("app: Failed to get EFI memory map\n");
+		return -EINVAL;
+	}
+
+	banks = dram_init_banksize_from_memmap(desc, size, desc_size);
+	printf("%d memory banks\n", banks);
+	run_command("bdinfo", 0);
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_BOOTM_PRE_PREP, efi_setup_dram);
+
+int ft_system_setup(void *fdt, struct bd_info *bd)
+{
+	// const struct event_ft_fixup *fixup = &event->data.ft_fixup;
+	struct efi_mem_desc *desc;
+	int desc_size;
+	uint version;
+	// ofnode node;
+	// void *fdt;
+	int size;
+	uint key;
+	int ret;
+
+	printf("add_reserved_memory\n");
+	ret = efi_get_mmap(&desc, &size, &key, &desc_size, &version);
+	if (ret)
+		return log_msg_ret("erm", ret);
+
+	efi_print_mem_table(desc, size, desc_size, false);
+	// ret = fdt_fixup_memory(fdt, u64 start, u64 size);
+
+	run_command("fdt print\n", 0);
+	// node = oftree_path(fixup->tree, "/reserved-memory");
+	// printf("node: %s\n", ofnode_name(node));
+
+#if 0
+		int fdtdec_add_reserved_memory(void *blob, const char *basename,
+			       const struct fdt_memory *carveout,
+			       const char **compatibles, unsigned int count,
+			       uint32_t *phandlep, unsigned long flags)
+#endif
+
+	return 0;
+}
+
+// EVENT_SPY_FULL(EVT_FT_FIXUP, add_reserved_memory);
 
 static const struct udevice_id efi_sysreset_ids[] = {
 	{ .compatible = "efi,reset" },

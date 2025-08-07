@@ -734,4 +734,40 @@ static inline bool efi_use_host_arch(void)
  */
 int efi_get_pxe_arch(void);
 
+/**
+ * efi_mem_is_boot_services() - checks if the memory type relates to boot-time
+ *
+ * Return: true if loader code/data or boot-services code/data
+ */
+static inline bool efi_mem_is_boot_services(int type)
+{
+	return type == EFI_LOADER_CODE || type == EFI_LOADER_DATA ||
+		type == EFI_BOOT_SERVICES_CODE ||
+		type == EFI_BOOT_SERVICES_DATA;
+}
+
+/**
+ * efi_print_mem_table() - Display the EFI memory table
+ *
+ * Shows the table returned from efi_get_mmap()
+ *
+ * @desc: pointer to EFI memory map table
+ * @size: size of the table in bytes
+ * @desc_size: size of each @desc_base record
+ * @skip_bs: true to ignore entries related to boot-time
+ */
+void efi_print_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
+			 bool skip_bs);
+
+/**
+ * dram_init_banksize_from_memmap() - Set up U-Boot's DRAM from a memory map
+ *
+ * @desc: pointer to EFI memory map table
+ * @size: size of the table in bytes
+ * @desc_size: size of each @desc_base record
+ * Return: Number of banks written
+ */
+int dram_init_banksize_from_memmap(struct efi_mem_desc *desc, int size,
+				   int desc_size);
+
 #endif /* _LINUX_EFI_H */

@@ -180,6 +180,13 @@ enum event_t {
 	EVT_BOOT_OS_ADDR,
 
 	/**
+	 * @EVT_BOOTM_PRE_PREP:
+	 * Triggered immediately before doing the OS prep (BOOTM_STATE_OS_PREP).
+	 * At this point the OS is expected to continue to boot
+	 */
+	EVT_BOOTM_PRE_PREP,
+
+	/**
 	 * @EVT_BOOTM_FINAL:
 	 * Triggered after any required device-removals are complete, bootstage
 	 * report is shown, etc. and before any machine-specific poking, such as
