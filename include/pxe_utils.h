@@ -126,6 +126,7 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
  * The following are only used when probing for a label
  * @label: Label to process
  * @kern_addr_str: String containing kernel address (cannot be NULL)
+ * @kern_addr: Kernel address (cannot be 0)
  * @initrd_addr: initaddr address (0 if none)
  * @initrd_size: initrd size (only used if @initrd_addr)
  * @initrd_str: initrd string to process (only used if @initrd_addr)
@@ -160,6 +161,7 @@ struct pxe_context {
 	/* information on the selected label to boot */
 	struct pxe_label *label;
 	char *kern_addr_str;
+	ulong kern_addr;
 	ulong initrd_addr;
 	ulong initrd_size;
 	char *initrd_str;
