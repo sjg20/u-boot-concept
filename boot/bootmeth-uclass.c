@@ -84,7 +84,7 @@ int bootmeth_boot(struct udevice *dev, struct bootflow *bflow)
 }
 
 int bootmeth_read_file(struct udevice *dev, struct bootflow *bflow,
-		       const char *file_path, ulong addr,
+		       const char *file_path, ulong *addrp, ulong align,
 		       enum bootflow_img_t type, ulong *sizep)
 {
 	const struct bootmeth_ops *ops = bootmeth_get_ops(dev);
@@ -92,7 +92,7 @@ int bootmeth_read_file(struct udevice *dev, struct bootflow *bflow,
 	if (!ops->read_file)
 		return -ENOSYS;
 
-	return ops->read_file(dev, bflow, file_path, addr, type, sizep);
+	return ops->read_file(dev, bflow, file_path, addrp, align, type, sizep);
 }
 
 int bootmeth_get_bootflow(struct udevice *dev, struct bootflow *bflow)
@@ -395,7 +395,7 @@ int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
 }
 
 int bootmeth_common_read_file(struct udevice *dev, struct bootflow *bflow,
-			      const char *file_path, ulong addr,
+			      const char *file_path, ulong *addrp, ulong align,
 			      enum bootflow_img_t type, ulong *sizep)
 {
 	struct blk_desc *desc = NULL;
@@ -414,18 +414,26 @@ int bootmeth_common_read_file(struct udevice *dev, struct bootflow *bflow,
 	if (ret)
 		return log_msg_ret("size", ret);
 	if (size > *sizep)
-		return log_msg_ret("spc", -ENOSPC);
+		return log_msg_ret("spc", -E2BIG);
 
 	ret = bootmeth_setup_fs(bflow, desc);
 	if (ret)
 		return log_msg_ret("fs", ret);
 
-	ret = fs_legacy_read(file_path, addr, 0, 0, &len_read);
+	if (!*addrp) {
+		phys_addr_t addr = lmb_alloc(size, align);
+
+		if (!addr)
+			return -ENOSPC;
+		*addrp = addr;
+	}
+
+	ret = fs_legacy_read(file_path, *addrp, 0, 0, &len_read);
 	if (ret)
 		return ret;
 	*sizep = len_read;
 
-	if (!bootflow_img_add(bflow, bflow->fname, type, addr, size))
+	if (!bootflow_img_add(bflow, bflow->fname, type, *addrp, size))
 		return log_msg_ret("bci", -ENOMEM);
 
 	return 0;

@@ -115,7 +115,9 @@ struct bootmeth_ops {
 	 * @dev:	Bootmethod device to use
 	 * @bflow:	Bootflow providing info on where to read from
 	 * @file_path:	Path to file (may be absolute or relative)
-	 * @addr:	Address to load file
+	 * @addrp:	On entry, address to load file or 0 to allocate an
+	 *		address; on exit, address to which the file was loaded
+	 * @align:	Allocation alignment, if allocating
 	 * @type:	File type (IH_TYPE_...)
 	 * @sizep:	On entry provides the maximum permitted size; on exit
 	 *		returns the size of the file
@@ -123,7 +125,7 @@ struct bootmeth_ops {
 	 *	-ve value if something else goes wrong
 	 */
 	int (*read_file)(struct udevice *dev, struct bootflow *bflow,
-			 const char *file_path, ulong addr,
+			 const char *file_path, ulong *addrp, ulong align,
 			 enum bootflow_img_t type, ulong *sizep);
 #if CONFIG_IS_ENABLED(BOOTSTD_FULL)
 	/**
@@ -248,7 +250,9 @@ int bootmeth_set_bootflow(struct udevice *dev, struct bootflow *bflow,
  * @dev:	Bootmethod device to use
  * @bflow:	Bootflow providing info on where to read from
  * @file_path:	Path to file (may be absolute or relative)
- * @addr:	Address to load file
+ * @addrp:	On entry, address to load file or 0 to allocate an
+ *		address; on exit, address to which the file was loaded
+ * @align:	Allocation alignment, if allocating
  * @type:	File type (IH_TYPE_...)
  * @sizep:	On entry provides the maximum permitted size; on exit
  *		returns the size of the file
@@ -256,7 +260,7 @@ int bootmeth_set_bootflow(struct udevice *dev, struct bootflow *bflow,
  *	-ve value if something else goes wrong
  */
 int bootmeth_read_file(struct udevice *dev, struct bootflow *bflow,
-		       const char *file_path, ulong addr,
+		       const char *file_path, ulong *addrp, ulong align,
 		       enum bootflow_img_t type, ulong *sizep);
 
 /**
@@ -402,13 +406,17 @@ int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
  * @dev: bootmeth device to read from
  * @bflow: Bootflow information
  * @file_path: Path to file
- * @addr: Address to load file to
+ * @addrp: On entry, address to load file or 0 to allocate an address; on exit,
+ *	address to which the file was loaded
+ * @align: Allocation alignment, if allocating
  * @type: File type (IH_TYPE_...)
  * @sizep: On entry, the maximum file size to accept, on exit the actual file
  *	size read
+ * Return: 0 on success, -E2BIG if the file was too large, -ENOSPC if there is
+ *	no memory available in LMB
  */
 int bootmeth_common_read_file(struct udevice *dev, struct bootflow *bflow,
-			      const char *file_path, ulong addr,
+			      const char *file_path, ulong *addrp, ulong align,
 			      enum bootflow_img_t type, ulong *sizep);
 
 /**

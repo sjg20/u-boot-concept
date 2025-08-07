@@ -63,7 +63,7 @@ static int efiload_read_file(struct bootflow *bflow, ulong addr, ulong max_size)
 
 	size = max_size;
 	ret = bootmeth_common_read_file(bflow->method, bflow, bflow->fname,
-					addr, BFI_EFI, &size);
+					&addr, SZ_2M, BFI_EFI, &size);
 	if (ret)
 		return log_msg_ret("rdf", ret);
 	bflow->buf = map_sysmem(addr, bflow->size);
@@ -139,8 +139,8 @@ static int distro_efi_try_bootflow_files(struct udevice *dev,
 			/* Limit FDT files to 4MB */
 			size = SZ_4M;
 			ret = bootmeth_common_read_file(dev, bflow, fname,
-				fdt_addr, (enum bootflow_img_t)IH_TYPE_FLATDT,
-				&size);
+				&fdt_addr, SZ_4K,
+				(enum bootflow_img_t)IH_TYPE_FLATDT, &size);
 		}
 	}
 
