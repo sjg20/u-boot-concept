@@ -541,13 +541,14 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
  * @initrd_size: initrd size (only used if @initrd_addr)
  * @initrd_str: initrd string to process (only used if @initrd_addr)
  * @conf_fdt_str: string containing the FDT address
+ * @conf_fdt: FDT address (0 if none)
  * Return: does not return on success, or returns 0 if the boot command
  * returned, or -ve error value on error
  */
 static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 			  char *kernel_addr, ulong initrd_addr,
 			  ulong initrd_size, char *initrd_str,
-			  const char *conf_fdt_str)
+			  const char *conf_fdt_str, ulong conf_fdt)
 {
 	struct bootm_info bmi;
 	ulong kernel_addr_r;
@@ -655,6 +656,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	char ip_str[68] = "";
 	char *fit_addr = NULL;
 	const char *conf_fdt_str;
+	ulong conf_fdt = 0;
 	ulong addr;
 	int ret;
 
@@ -796,8 +798,11 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		}
 		unmap_sysmem(buf);
 	}
+	if (conf_fdt_str)
+		conf_fdt = hextoul(conf_fdt_str, NULL);
+
 	if (ctx->bflow && conf_fdt_str)
-		ctx->bflow->fdt_addr = hextoul(conf_fdt_str, NULL);
+		ctx->bflow->fdt_addr = conf_fdt;
 
 	if (IS_ENABLED(CONFIG_BOOTSTD_FULL) && ctx->no_boot) {
 		ctx->label = label;
@@ -808,9 +813,10 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 			ctx->initrd_str = strdup(initrd_str);
 		}
 		ctx->conf_fdt_str = strdup(conf_fdt_str);
+		ctx->conf_fdt = conf_fdt;
 		log_debug("Saving label '%s':\n", label->name);
-		log_debug("- kernel_addr '%s' conf_fdt_str '%s'\n",
-			  ctx->kernel_addr, ctx->conf_fdt_str);
+		log_debug("- kernel_addr '%s' conf_fdt_str '%s' conf_fdt %lx\n",
+			  ctx->kernel_addr, ctx->conf_fdt_str, conf_fdt);
 		if (initrd_addr) {
 			log_debug("- initrd addr %lx filesize %lx str '%s'\n",
 				  ctx->initrd_addr, ctx->initrd_size,
@@ -825,7 +831,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	}
 
 	label_run_boot(ctx, label, kernel_addr, initrd_addr, initrd_size,
-		       initrd_str, conf_fdt_str);
+		       initrd_str, conf_fdt_str, conf_fdt);
 	/* ignore the error value since we are going to fail anyway */
 
 cleanup:
@@ -1124,7 +1130,7 @@ int pxe_do_boot(struct pxe_context *ctx)
 
 	ret = label_run_boot(ctx, ctx->label, ctx->kernel_addr,
 			     ctx->initrd_addr, ctx->initrd_size,
-			     ctx->initrd_str, ctx->conf_fdt_str);
+			     ctx->initrd_str, ctx->conf_fdt_str, ctx->conf_fdt);
 	if (ret)
 		return log_msg_ret("lrb", ret);
 
