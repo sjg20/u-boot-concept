@@ -30,6 +30,7 @@ int board_exit_boot_services(void *ctx, struct event *evt)
 	uint version;
 	int ret;
 
+	printf("Exiting EFI\n");
 	ret = efi_get_mmap(&desc, &size, &key, &desc_size, &version);
 	if (ret) {
 		printf("efi: Failed to get memory map\n");
@@ -40,6 +41,8 @@ int board_exit_boot_services(void *ctx, struct event *evt)
 	if (ret)
 		return ret;
 
-	printf("preboot\n");
+	/* no console output after here as there are no EFI drivers! */
+
+	return 0;
 }
 EVENT_SPY_FULL(EVT_BOOTM_FINAL, board_exit_boot_services);
