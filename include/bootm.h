@@ -58,6 +58,7 @@ enum bootm_final_t {
  * @argv: NULL-terminated list of arguments, or NULL if there are no arguments
  * @ignore_bootm_len: Ignore the value CONFIG_SYS_BOOTM_LEN and use 10x the
  *	compressed length as the maximum uncompressed size
+ * @os_size: Size of the loaded OS image in bytes, 0 if not loaded/not known
  *
  * For zboot:
  * @bzimage_addr: Address of the bzImage to boot, or 0 if the image has already
@@ -84,6 +85,7 @@ struct bootm_info {
 	int argc;
 	char *const *argv;
 	bool ignore_bootm_len;
+	bool os_size;
 
 	/* zboot items */
 #ifdef CONFIG_X86
