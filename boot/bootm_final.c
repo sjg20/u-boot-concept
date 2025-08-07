@@ -7,6 +7,7 @@
 
 #include <bootm.h>
 #include <bootstage.h>
+#include <event.h>
 #include <usb.h>
 #include <dm/root.h>
 
@@ -16,6 +17,8 @@ __weak void board_quiesce_devices(void)
 
 void bootm_final(enum bootm_final_t flags)
 {
+	int ret;
+
 	printf("\nStarting kernel ...%s\n\n", flags & BOOTM_FINAL_FAKE ?
 		"(fake run for tracing)" : "");
 
@@ -40,7 +43,12 @@ void bootm_final(enum bootm_final_t flags)
 	 */
 	dm_remove_devices_active();
 
-	ret = event_notify(EVT_BOOT_OS_ADDR, &data,
+	ret = event_notify_null(EVT_BOOTM_FINAL);
+	if (ret) {
+		printf("Event handler failed to finalise (err %dE\n",
+		       ret);
+		return;
+	}
 
 	bootm_disable_interrupts();
 

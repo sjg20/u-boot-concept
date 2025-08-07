@@ -280,6 +280,19 @@ int board_fixup_os(void *ctx, struct event *evt)
 EVENT_SPY_FULL(EVT_BOOT_OS_ADDR, board_fixup_os);
 #endif
 
+int efi_app_exit_boot_services(struct efi_priv *priv, uint key)
+{
+	const struct efi_boot_services *boot = priv->boot;
+	int ret;
+
+	ret = boot->exit_boot_services(priv->parent_image, key);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+
 static const struct udevice_id efi_sysreset_ids[] = {
 	{ .compatible = "efi,reset" },
 	{ }

@@ -666,6 +666,17 @@ void efi_putc(struct efi_priv *priv, const char ch);
 int efi_stub_exit_boot_services(void);
 
 /**
+ * efi_app_exit_boot_services() - Handle the exit-boot-service procedure
+ *
+ * Tell EFI we don't want their boot services anymore
+ *
+ * This is only available in the app
+ *
+ * Return: 0 if OK, non-zero on error
+ */
+int efi_app_exit_boot_services(struct efi_priv *priv, uint key);
+
+/**
  * efi_get_mmap() - Get the memory map from EFI
  *
  * This is used in the app. The caller must free *@descp when done

@@ -23,9 +23,22 @@ int board_init(void)
 int board_exit_boot_services(void *ctx, struct event *evt)
 {
 	struct efi_priv *priv = efi_get_priv();
+	struct efi_mem_desc *desc;
+	int size;
+	uint key;
+	int desc_size;
+	uint version;
 	int ret;
 
-	ret = efi_store_memory_map(priv);
+	ret = efi_get_mmap(&desc, &size, &key, &desc_size, &version);
+	if (ret) {
+		printf("efi: Failed to get memory map\n");
+		return -EFAULT;
+	}
+
+	ret = efi_app_exit_boot_services(priv, key);
+	if (ret)
+		return ret;
 
 	printf("preboot\n");
 }
