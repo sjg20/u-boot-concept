@@ -691,15 +691,9 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 
 	if (get_relfile_envaddr(ctx, label->kernel, "kernel_addr_r", SZ_2M,
 				(enum bootflow_img_t)IH_TYPE_KERNEL,
-				&addr, NULL) < 0) {
+				&kern_addr, NULL) < 0) {
 		printf("Skipping %s for failure retrieving kernel\n",
 		       label->name);
-		return 1;
-	}
-
-	kern_addr = env_get_hex("kernel_addr_r", 0);
-	if (!kern_addr) {
-		printf("No kernel_addr_r available for kernel\n");
 		return 1;
 	}
 
