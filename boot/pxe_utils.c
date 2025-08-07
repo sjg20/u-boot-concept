@@ -682,6 +682,10 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	}
 
 	kernel_addr = env_get("kernel_addr_r");
+	if (!kernel_addr) {
+		printf("No kernel_addr_r available for kernel\n");
+		return 1;
+	}
 	/* for FIT, append the configuration identifier */
 	if (label->config) {
 		int len = strlen(kernel_addr) + strlen(label->config) + 1;
