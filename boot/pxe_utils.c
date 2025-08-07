@@ -540,7 +540,8 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
  *
  * @ctx: PXE context
  * @label: Label to process
- * @kernel_addr: String containing kernel address (cannot be NULL)
+ * @kern_addr_str: String containing kernel address and possible FIT
+ * configuration (cannot be NULL)
  * @initrd_addr: String containing initrd address (0 if none)
  * @initrd_size: initrd size (only used if @initrd_addr)
  * @initrd_str: initrd string to process (only used if @initrd_addr)
@@ -550,7 +551,7 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
  * returned, or -ve error value on error
  */
 static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
-			  char *kernel_addr, ulong initrd_addr,
+			  char *kern_addr_str, ulong initrd_addr,
 			  ulong initrd_size, char *initrd_str,
 			  const char *conf_fdt_str, ulong conf_fdt)
 {
@@ -563,9 +564,9 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 
 	bootm_init(&bmi);
 
-	bmi.addr_img = kernel_addr;
+	bmi.addr_img = kern_addr_str;
 	bmi.conf_fdt = conf_fdt_str;
-	bootm_x86_set(&bmi, bzimage_addr, hextoul(kernel_addr, NULL));
+	bootm_x86_set(&bmi, bzimage_addr, hextoul(kern_addr_str, NULL));
 
 	if (initrd_addr) {
 		bootm_set_conf_ramdisk(&bmi, initrd_addr, rstr);
@@ -573,7 +574,7 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 		bootm_x86_set(&bmi, initrd_size, initrd_size);
 	}
 
-	kernel_addr_r = genimg_get_kernel_addr(kernel_addr);
+	kernel_addr_r = genimg_get_kernel_addr(kern_addr_str);
 	buf = map_sysmem(kernel_addr_r, 0);
 
 	/*
@@ -663,7 +664,6 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	char fit_addr[60];
 	const char *conf_fdt_str;
 	ulong conf_fdt = 0;
-	ulong addr;
 	int ret;
 
 	label_print(label);
@@ -798,7 +798,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 
 	if (IS_ENABLED(CONFIG_BOOTSTD_FULL) && ctx->no_boot) {
 		ctx->label = label;
-		ctx->kernel_addr = strdup(kern_addr_str);
+		ctx->kern_addr_str = strdup(kern_addr_str);
 		if (initrd_addr) {
 			ctx->initrd_addr = initrd_addr;
 			ctx->initrd_size = initrd_size;
@@ -807,14 +807,14 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		ctx->conf_fdt_str = strdup(conf_fdt_str);
 		ctx->conf_fdt = conf_fdt;
 		log_debug("Saving label '%s':\n", label->name);
-		log_debug("- kernel_addr '%s' conf_fdt_str '%s' conf_fdt %lx\n",
-			  ctx->kernel_addr, ctx->conf_fdt_str, conf_fdt);
+		log_debug("- kern_addr_str '%s' conf_fdt_str '%s' conf_fdt %lx\n",
+			  ctx->kern_addr_str, ctx->conf_fdt_str, conf_fdt);
 		if (initrd_addr) {
 			log_debug("- initrd addr %lx filesize %lx str '%s'\n",
 				  ctx->initrd_addr, ctx->initrd_size,
 				  ctx->initrd_str);
 		}
-		if (!ctx->kernel_addr || (conf_fdt_str && !ctx->conf_fdt_str) ||
+		if (!ctx->kern_addr_str || (conf_fdt_str && !ctx->conf_fdt_str) ||
 		    (initrd_addr && !ctx->initrd_str)) {
 			printf("malloc fail (saving label)\n");
 			return 1;
@@ -1117,7 +1117,7 @@ int pxe_do_boot(struct pxe_context *ctx)
 	if (!ctx->label)
 		return log_msg_ret("pxb", -ENOENT);
 
-	ret = label_run_boot(ctx, ctx->label, ctx->kernel_addr,
+	ret = label_run_boot(ctx, ctx->label, ctx->kern_addr_str,
 			     ctx->initrd_addr, ctx->initrd_size,
 			     ctx->initrd_str, ctx->conf_fdt_str, ctx->conf_fdt);
 	if (ret)
