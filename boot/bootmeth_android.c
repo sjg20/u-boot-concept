@@ -323,7 +323,7 @@ static int android_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 }
 
 static int android_read_file(struct udevice *dev, struct bootflow *bflow,
-			     const char *file_path, ulong addr,
+			     const char *file_path, ulong *addrp, ulong align,
 			     enum bootflow_img_t type, ulong *sizep)
 {
 	/*

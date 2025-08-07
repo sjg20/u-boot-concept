@@ -115,7 +115,7 @@ static int qfw_read_files(struct udevice *dev, struct bootflow *bflow,
 }
 
 static int qfw_read_file(struct udevice *dev, struct bootflow *bflow,
-			 const char *file_path, ulong addr,
+			 const char *file_path, ulong *addrp, ulong align,
 			 enum bootflow_img_t type, ulong *sizep)
 {
 	return -ENOSYS;

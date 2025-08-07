@@ -54,7 +54,7 @@ static int vbe_abrec_getfile(struct pxe_context *ctx, const char *file_path,
 
 	/* Allow up to 1GB */
 	*sizep = 1 << 30;
-	ret = bootmeth_read_file(info->dev, info->bflow, file_path, addr,
+	ret = bootmeth_read_file(info->dev, info->bflow, file_path, &addr, 0,
 				 type, sizep);
 	if (ret)
 		return log_msg_ret("read", ret);
