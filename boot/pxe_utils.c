@@ -578,7 +578,7 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	bmi.os_size = kern_size;
 
 	if (initrd_addr) {
-		bootm_set_conf_ramdisk(&bmi, initrd_addr, rstr);
+		bmi.conf_ramdisk = initrd_str;
 		bootm_x86_set(&bmi, initrd_addr, initrd_addr);
 		bootm_x86_set(&bmi, initrd_size, initrd_size);
 	}

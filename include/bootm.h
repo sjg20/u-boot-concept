@@ -89,7 +89,7 @@ struct bootm_info {
 	int argc;
 	char *const *argv;
 	bool ignore_bootm_len;
-	bool os_size;
+	ulong os_size;
 	ulong kern_comp_addr;
 	ulong kern_comp_size;
 

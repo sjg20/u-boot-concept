@@ -106,6 +106,7 @@ static struct legacy_img_hdr *image_get_kernel(ulong img_addr, int verify)
  * boot_get_kernel() - find kernel image
  *
  * @addr_fit: first argument to bootm: address, fit configuration, etc.
+ * @os_size_in: size of the entire OS file (for FIT it is the size of the FIT)
  * @os_data: pointer to a ulong variable, will hold os data start address
  * @os_len: pointer to a ulong variable, will hold os data length
  *     address and length, otherwise NULL
@@ -118,7 +119,8 @@ static struct legacy_img_hdr *image_get_kernel(ulong img_addr, int verify)
  * Return: 0 on success, -ve on error. -EPROTOTYPE means that the image is in
  * a wrong or unsupported format
  */
-static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
+static int boot_get_kernel(const char *addr_fit, ulong os_size_in,
+			   struct bootm_headers *images,
 			   ulong *os_data, ulong *os_len, const void **kernp)
 {
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
@@ -241,6 +243,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	case IMAGE_FORMAT_BOOTI:
 		log_debug("booti\n");
 		*os_data = img_addr;
+		*os_len = os_size_in;
 		break;
 	default:
 		bootstage_error(BOOTSTAGE_ID_CHECK_IMAGETYPE);
@@ -382,8 +385,9 @@ static int bootm_find_os(struct bootm_info *bmi)
 	int ret;
 
 	/* get kernel image header, start address and length */
-	ret = boot_get_kernel(bmi->addr_img, &images, &images.os.image_start,
-			      &images.os.image_len, &os_hdr);
+	ret = boot_get_kernel(bmi->addr_img, bmi->os_size, &images,
+			      &images.os.image_start, &images.os.image_len,
+			      &os_hdr);
 	if (ret) {
 		/* no OS present, but that is OK */
 		if (ret == -ENOPKG) {
@@ -594,9 +598,11 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 	}
 
 	/* find ramdisk */
+	log_debug("ramdisk\n");
 	ret = boot_get_ramdisk(select, &images, IH_INITRD_ARCH,
 			       &images.rd_start, &images.rd_end);
 	if (ret && ret != -ENOPKG) {
+		log_debug("ramdisk err %d\n", ret);
 		puts("Ramdisk image is corrupt or invalid\n");
 		return 1;
 	}
@@ -606,6 +612,7 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 		return 1;
 
 	if (CONFIG_IS_ENABLED(OF_LIBFDT)) {
+		log_debug("fdt\n");
 		buf = map_sysmem(img_addr, 0);
 
 		/* find flattened device tree */
@@ -627,6 +634,7 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 
 #if CONFIG_IS_ENABLED(FIT)
 	if (IS_ENABLED(CONFIG_FPGA)) {
+		log_debug("fpga");
 		/* find bitstreams */
 		ret = boot_get_fpga(&images);
 		if (ret) {
@@ -1273,9 +1281,10 @@ int boot_run(struct bootm_info *bmi, const char *cmd, int extra_states)
 		states |= BOOTM_STATE_RAMDISK;
 	states |= extra_states;
 
-	log_debug("cmd '%s' states %x addr_img '%s' conf_ramdisk '%s' conf_fdt '%s' images %p\n",
+	log_debug("cmd '%s' states %x addr_img '%s' conf_ramdisk '%s' "
+		  "conf_fdt '%s' os_size %lx images %p\n",
 		  cmd, states, bmi->addr_img, bmi->conf_ramdisk, bmi->conf_fdt,
-		  bmi->images);
+		  bmi->os_size, bmi->images);
 
 	return bootm_run_states(bmi, states);
 }
