@@ -652,7 +652,7 @@ static int generate_localboot(struct pxe_label *label)
  */
 static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 {
-	char *kernel_addr = NULL;
+	char *kern_addr_str = NULL;
 	ulong initrd_addr = 0;
 	ulong initrd_size = 0;
 	char initrd_str[28] = "";
@@ -696,21 +696,21 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		return 1;
 	}
 
-	kernel_addr = env_get("kernel_addr_r");
-	if (!kernel_addr) {
+	kern_addr_str = env_get("kernel_addr_r");
+	if (!kern_addr_str) {
 		printf("No kernel_addr_r available for kernel\n");
 		return 1;
 	}
 	/* for FIT, append the configuration identifier */
 	if (label->config) {
-		snprintf(fit_addr, sizeof(fit_addr), "%s%s", kernel_addr,
+		snprintf(fit_addr, sizeof(fit_addr), "%s%s", kern_addr_str,
 			 label->config);
-		kernel_addr = fit_addr;
+		kern_addr_str = fit_addr;
 	}
 
 	/* For FIT, the label can be identical to kernel one */
 	if (label->initrd && !strcmp(label->kernel_label, label->initrd)) {
-		initrd_addr = hextoul(kernel_addr, NULL);
+		initrd_addr = hextoul(kern_addr_str, NULL);
 	} else if (label->initrd) {
 		ulong size;
 		int ret;
@@ -774,7 +774,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	}
 
 	conf_fdt_str = env_get("fdt_addr_r");
-	ret = label_process_fdt(ctx, label, kernel_addr, &conf_fdt_str);
+	ret = label_process_fdt(ctx, label, kern_addr_str, &conf_fdt_str);
 	if (ret)
 		return ret;
 
@@ -788,7 +788,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		ulong kernel_addr_r;
 		void *buf;
 
-		kernel_addr_r = genimg_get_kernel_addr(kernel_addr);
+		kernel_addr_r = genimg_get_kernel_addr(kern_addr_str);
 		buf = map_sysmem(kernel_addr_r, 0);
 		if (genimg_get_format(buf) != IMAGE_FORMAT_FIT) {
 			if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
@@ -805,7 +805,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 
 	if (IS_ENABLED(CONFIG_BOOTSTD_FULL) && ctx->no_boot) {
 		ctx->label = label;
-		ctx->kernel_addr = strdup(kernel_addr);
+		ctx->kernel_addr = strdup(kern_addr_str);
 		if (initrd_addr) {
 			ctx->initrd_addr = initrd_addr;
 			ctx->initrd_size = initrd_size;
@@ -829,7 +829,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		return 0;
 	}
 
-	label_run_boot(ctx, label, kernel_addr, initrd_addr, initrd_size,
+	label_run_boot(ctx, label, kern_addr_str, initrd_addr, initrd_size,
 		       initrd_str, conf_fdt_str, conf_fdt);
 	/* ignore the error value since we are going to fail anyway */
 
