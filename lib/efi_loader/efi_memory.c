@@ -712,6 +712,7 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
 
 	provided_map_size = *memory_map_size;
 
+	// if (IS_ENABLED(CONFIG_EFI_APP))
 	map_entries = list_count_nodes(&efi_mem);
 
 	map_size = map_entries * sizeof(struct efi_mem_desc);

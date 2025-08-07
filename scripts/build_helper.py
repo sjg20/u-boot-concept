@@ -267,7 +267,8 @@ sct_mnt = /mnt/sct
     def run(self, qemu_cmd):
         tout.info(f'QEMU:\n{shlex.join(qemu_cmd)}\n')
         try:
-            subprocess.run(qemu_cmd, check=True)
+            if self.args.run:
+                subprocess.run(qemu_cmd, check=True)
         except FileNotFoundError:
             tout.fatal(f"Error: QEMU executable '{self.qemu}' not found")
         except subprocess.CalledProcessError as e:
@@ -309,7 +310,7 @@ def add_common_args(parser):
                         help='Run QEMU with serial only (no display)')
     parser.add_argument(
         '-S', '--scsi', action='store_true',
-        help='Attach root disk using virtio-sci instead of virtio-blk')
+        help='Attach root disk using virtio-scsi instead of virtio-blk')
     parser.add_argument(
         '-t', '--root',
         help='Pass the given root device to linux via root=xxx')
