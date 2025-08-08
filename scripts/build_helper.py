@@ -9,9 +9,11 @@ import contextlib
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
+import time
 
 OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 OUR1_PATH = os.path.dirname(OUR_PATH)
@@ -32,6 +34,8 @@ class Helper:
     def __init__(self, args):
         self.settings = None
         self.imagedir = None
+        self.proc = None
+        self.sock = None
         self.args = args
         self.mem = '512'
         self.bitness = 32 if args.word_32bit else 64
@@ -185,6 +189,94 @@ sct_mnt = /mnt/sct
         cmd.extend(['-object', 'rng-random,filename=/dev/urandom,id=rng0',
                     '-device', 'virtio-rng-pci,rng=rng0'])
 
+    def setup_share(self, qemu_cmd):
+        sock = Path('/tmp/virtiofs.sock')
+        proc = None
+        if self.args.share_dir:
+            virtfs_dir = Path(self.args.share_dir)
+            if not virtfs_dir.is_dir():
+                tout.fatal(f'Error: VirtFS share directory {virtfs_dir} '
+                           f'is not a valid directory')
+
+            virtiofsd = Path('/usr/libexec/virtiofsd')
+            if not virtiofsd.exists():
+                tout.fatal(f'Error: virtiofsd not found at {virtiofsd}')
+
+            # Clean up potential old socket file
+            if sock.exists():
+                try:
+                    sock.unlink()
+                    tout.info(f'Removed old socket file {sock}')
+                except OSError as e:
+                    tout.warning(
+                        f'Warning: Could not remove old socket file {sock}: '
+                        f'{e}')
+
+            qemu_cmd.extend([
+                '-chardev', f'socket,id=char0,path={sock}',
+                '-device',
+                'vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare',
+                '-object',
+                f'memory-backend-file,id=mem,size={self.mem},mem-path=/dev/shm'
+                    ',share=on',
+                '-numa', 'node,memdev=mem'])
+
+            virtiofsd_cmd = [
+                str(virtiofsd),
+                '--socket-path', str(sock),
+                '--shared-dir', str(virtfs_dir),
+                '--cache', 'auto']
+            try:
+                # Use Popen to run virtiofsd in the background
+                proc = subprocess.Popen(virtiofsd_cmd, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+                # Give virtiofsd a moment to start and create the socket
+                time.sleep(0.5)
+                if not sock.exists() and proc.poll() is not None:
+                    stdout, stderr = proc.communicate()
+                    tout.error('Error starting virtiofsd. Exit code: '
+                               f'{proc.returncode}')
+                    if stdout:
+                        tout.error(f"virtiofsd stdout:\n{stdout.decode()}")
+                    if stderr:
+                        tout.error(f"virtiofsd stderr:\n{stderr.decode()}")
+                    tout.fatal('Failed')
+                self.proc = proc
+                self.sock = sock
+
+            except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+                tout.fatal(f'Failed to start virtiofsd: {exc}')
+
+    def cleanup_share(self):
+        # Clean up virtiofsd process and socket if it was started
+        if self.proc:
+            tout.info('Terminating virtiofsd')
+            self.proc.terminate()
+            try:
+                self.proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                tout.warning(
+                    'virtiofsd did not terminate gracefully; killing')
+                self.proc.kill()
+            if self.sock.exists():
+                try:
+                    self.sock.unlink()
+                except OSError as e_os:
+                    tout.warning('Warning: Could not remove virtiofs '
+                                 f'socket {self.sock}: {e_os}')
+
+    def run(self, qemu_cmd):
+        tout.info(f'QEMU:\n{shlex.join(qemu_cmd)}\n')
+        try:
+            if self.args.run:
+                subprocess.run(qemu_cmd, check=True)
+        except FileNotFoundError:
+            tout.fatal(f"Error: QEMU executable '{self.qemu}' not found")
+        except subprocess.CalledProcessError as e:
+            tout.fatal(f'QEMU execution failed with exit code {e.returncode}')
+        finally:
+            self.cleanup_share()
+
 def add_common_args(parser):
     """Add some arguments which are common to build-efi/qemu scripts
 
@@ -199,6 +291,8 @@ def add_common_args(parser):
                         help="Enable linux console (x86 only)")
     parser.add_argument('-d', '--disk', nargs='*',
                         help='Root disk image file to use with QEMU')
+    parser.add_argument('-D', '--share-dir', metavar='DIR',
+                        help='Directory to share into the guest via virtiofs')
     parser.add_argument('-I', '--initrd',
                         help='Initial ramdisk to run using -initrd')
     parser.add_argument(
