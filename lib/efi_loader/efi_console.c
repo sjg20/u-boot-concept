@@ -1025,6 +1025,7 @@ static efi_status_t EFIAPI efi_cin_read_key_stroke_ex(
 		ret = EFI_NOT_READY;
 		goto out;
 	}
+	printf("got key\n");
 	/*
 	 * CTRL+A - CTRL+Z have to be signaled as a - z.
 	 * SHIFT+CTRL+A - SHIFT+CTRL+Z have to be signaled as A - Z.
@@ -1352,9 +1353,12 @@ efi_status_t efi_console_register(void)
 		return r;
 	}
 	/* 5000 ns cycle is sufficient for 2 MBaud */
-	r = efi_set_timer(console_timer_event, EFI_TIMER_PERIODIC, 50);
+	r = efi_set_timer(console_timer_event, EFI_TIMER_PERIODIC, 5000);
 	if (r != EFI_SUCCESS)
 		printf("ERROR: Failed to set console timer\n");
+
+	printf("console ready\n");
+
 	return r;
 out_of_memory:
 	printf("ERROR: Out of memory2\n");
