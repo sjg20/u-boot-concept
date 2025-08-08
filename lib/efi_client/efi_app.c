@@ -170,6 +170,50 @@ static void scan_tables(struct efi_system_table *sys_table)
 	}
 }
 
+struct efi_event {
+};
+
+void check_keyboard(const char *msg)
+{
+	struct efi_system_table *syst = efi_get_sys_table();
+	struct efi_boot_services *boot = efi_get_boot();
+	struct efi_simple_text_input_protocol *cin = syst->con_in;
+	struct efi_event *timer;
+	efi_uintn_t index;
+	efi_status_t ret;
+
+	printf("check_keyboard (%s): ", msg);
+
+	ret = boot->create_event(EVT_TIMER, TPL_APPLICATION, NULL, NULL, &timer);
+	if (ret != EFI_SUCCESS) {
+		printf("could not create event\n");
+		return;
+	}
+
+	ret = boot->set_timer(timer, EFI_TIMER_PERIODIC, 1000 * 1000 / 100);
+	ret = cin->reset(cin, true);
+	for (;;) {
+		struct efi_input_key key;
+		struct efi_event *events[2] = {cin->wait_for_key, timer};
+
+		// ret = boot->wait_for_event(2, &cin->wait_for_key, &index);
+		ret = boot->wait_for_event(2, events, &index);
+		if (ret) {
+			printf("error\n");
+			continue;
+		}
+		if (index) {
+			printf(".");
+			continue;
+		}
+		printf("#");
+		ret = cin->read_key_stroke(cin, &key);
+		if (ret)
+			continue;
+		printf("%x ", key.unicode_char);
+	}
+}
+
 /**
  * efi_main() - Start an EFI image
  *
@@ -216,6 +260,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	 */
 
 	printf("starting\n");
+
 
 	board_init_f(GD_FLG_SKIP_RELOC);
 	board_init_r(NULL, 0);

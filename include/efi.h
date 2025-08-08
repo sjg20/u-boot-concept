@@ -770,4 +770,6 @@ void efi_print_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
 int dram_init_banksize_from_memmap(struct efi_mem_desc *desc, int size,
 				   int desc_size);
 
+void check_keyboard(const char *msg);
+
 #endif /* _LINUX_EFI_H */

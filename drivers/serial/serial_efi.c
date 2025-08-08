@@ -19,7 +19,9 @@
 struct serial_efi_priv {
 	struct efi_simple_text_input_protocol *con_in;
 	struct efi_simple_text_output_protocol *con_out;
+	struct efi_boot_services *boot;
 	struct efi_input_key key;
+	struct efi_event *timer;
 	bool have_key;
 };
 
@@ -33,12 +35,28 @@ int serial_efi_setbrg(struct udevice *dev, int baudrate)
 
 static int serial_efi_get_key(struct serial_efi_priv *priv)
 {
+	struct efi_simple_text_input_protocol *cin = priv->con_in;
+	efi_uintn_t index;
 	efi_status_t ret;
+
+	// check_keyboard("get_key");
 
 	if (priv->have_key)
 		return 0;
-	if (!priv->con_in)
+	// if (!priv->con_in)
+		// return -EAGAIN;
+
+	struct efi_event *events[2] = {cin->wait_for_key, priv->timer};
+
+	// ret = boot->wait_for_event(2, &cin->wait_for_key, &index);
+	ret = priv->boot->wait_for_event(2, events, &index);
+	if (ret) {
+		log_err("wait_for_event() failed\n");
 		return -EAGAIN;
+	}
+	if (index) {
+		return -EAGAIN;
+	}
 
 	ret = priv->con_in->read_key_stroke(priv->con_in, &priv->key);
 	if (ret == EFI_NOT_READY)
@@ -136,10 +154,22 @@ static int serial_efi_probe(struct udevice *dev)
 {
 	struct efi_system_table *table = efi_get_sys_table();
 	struct serial_efi_priv *priv = dev_get_priv(dev);
+	struct efi_boot_services *boot = efi_get_boot();
+	efi_status_t ret;
 
 	priv->con_in = table->con_in;
 	priv->con_out = table->con_out;
 	priv->con_in->reset(priv->con_in, true);
+	priv->boot = boot;
+
+	ret = boot->create_event(EVT_TIMER, TPL_APPLICATION, NULL, NULL,
+				 &priv->timer);
+	if (ret)
+		return -ECOMM;
+	ret = boot->set_timer(priv->timer, EFI_TIMER_PERIODIC,
+			      1000 * 1000 / 100 /* 1ms in 100ns units */);
+	if (ret)
+		return -ECOMM;
 
 	return 0;
 }
