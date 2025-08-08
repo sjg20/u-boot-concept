@@ -394,66 +394,72 @@ bool efi_dp_is_multi_instance(const struct efi_device_path *dp)
 
 __maybe_unused static unsigned int dp_size(struct udevice *dev)
 {
+	uint parent_size, size;
+
 	if (!dev || !dev->driver)
 		return sizeof(struct efi_device_path_udevice);
+
+	parent_size = dev_get_parent(dev) ? dp_size(dev_get_parent(dev)) : 0;
 
 	switch (device_get_uclass_id(dev)) {
 	case UCLASS_ROOT:
 		/* stop traversing parents at this point: */
 		return sizeof(struct efi_device_path_udevice);
 	case UCLASS_ETH:
-		return dp_size(dev->parent) +
-			sizeof(struct efi_device_path_mac_addr);
+		size = sizeof(struct efi_device_path_mac_addr);
+		break;
 	case UCLASS_BLK:
 		switch (dev->parent->uclass->uc_drv->id) {
 #ifdef CONFIG_IDE
 		case UCLASS_IDE:
-			return dp_size(dev->parent) +
-				sizeof(struct efi_device_path_atapi);
+			size = sizeof(struct efi_device_path_atapi);
+			break;
 #endif
 #if defined(CONFIG_SCSI)
 		case UCLASS_SCSI:
-			return dp_size(dev->parent) +
-				sizeof(struct efi_device_path_scsi);
+			size = sizeof(struct efi_device_path_scsi);
+			break;
 #endif
 #if defined(CONFIG_MMC)
 		case UCLASS_MMC:
-			return dp_size(dev->parent) +
-				sizeof(struct efi_device_path_sd_mmc_path);
+			size = sizeof(struct efi_device_path_sd_mmc_path);
+			break;
 #endif
 #if defined(CONFIG_AHCI) || defined(CONFIG_SATA)
 		case UCLASS_AHCI:
-			return dp_size(dev->parent) +
-				sizeof(struct efi_device_path_sata);
+			size = sizeof(struct efi_device_path_sata);
+			break;
 #endif
 #if defined(CONFIG_NVME)
 		case UCLASS_NVME:
-			return dp_size(dev->parent) +
-				sizeof(struct efi_device_path_nvme);
+			size = sizeof(struct efi_device_path_nvme);
+			break;
 #endif
 #ifdef CONFIG_USB
 		case UCLASS_MASS_STORAGE:
-			return dp_size(dev->parent)
-				+ sizeof(struct efi_device_path_controller);
+			size =  sizeof(struct efi_device_path_controller);
+			break;
 #endif
 		default:
 			/* UCLASS_BLKMAP, UCLASS_HOST, UCLASS_VIRTIO */
-			return dp_size(dev->parent) +
-				sizeof(struct efi_device_path_udevice);
+			size = sizeof(struct efi_device_path_udevice);
+			break;
 		}
 #if defined(CONFIG_MMC)
 	case UCLASS_MMC:
-		return dp_size(dev->parent) +
-			sizeof(struct efi_device_path_sd_mmc_path);
+		size = sizeof(struct efi_device_path_sd_mmc_path);
+		break;
 #endif
 	case UCLASS_MASS_STORAGE:
 	case UCLASS_USB_HUB:
-		return dp_size(dev->parent) +
-			sizeof(struct efi_device_path_usb);
+		size = sizeof(struct efi_device_path_usb);
+		break;
 	default:
-		return dp_size(dev->parent) +
-			sizeof(struct efi_device_path_udevice);
+		size = sizeof(struct efi_device_path_udevice);
+		break;
 	}
+
+	return parent_size + size;
 }
 
 /*
