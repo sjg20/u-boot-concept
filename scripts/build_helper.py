@@ -21,7 +21,6 @@ OUR1_PATH = os.path.dirname(OUR_PATH)
 sys.path.insert(2, os.path.join(OUR1_PATH, 'tools'))
 sys.path.insert(2, os.path.join(OUR1_PATH, 'test/py/tests'))
 
-from u_boot_pylib import command
 from u_boot_pylib import tools
 from u_boot_pylib import tout
 import fs_helper
@@ -36,6 +35,7 @@ class Helper:
         self.args = args
         self.mem = '512'
         self.bitness = 32 if args.word_32bit else 64
+        self.qemu = None
         if self.args.arch == 'arm':
             if self.bitness == 64:
                 self.os_arch = 'arm64'

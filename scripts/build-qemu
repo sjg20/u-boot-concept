@@ -136,7 +136,7 @@ class BuildQemu:
             else:
                 self.board = 'qemu_arm'
                 default_bios = 'u-boot.bin'
-            self.qemu = 'qemu-system-arm'
+            self.helper.qemu = 'qemu-system-arm'
             self.qemu_extra.extend(['-machine', 'virt'])
             if not args.kvm:
                 self.qemu_extra.extend(['-accel', 'tcg'])
@@ -145,16 +145,16 @@ class BuildQemu:
                     self.board = 'qemu_arm64_spl'
                 else:
                     self.board = 'qemu_arm64'
-                self.qemu = 'qemu-system-aarch64'
+                self.helper.qemu = 'qemu-system-aarch64'
                 self.qemu_extra.extend(['-cpu', 'cortex-a57'])
         elif args.arch == 'x86':
             self.board = 'qemu-x86'
             default_bios = 'u-boot.rom'
-            self.qemu = 'qemu-system-i386'
+            self.helper.qemu = 'qemu-system-i386'
             self.qemu_extra.extend(['-machine', 'q35'])
             if self.helper.bitness == 64:
                 self.board = 'qemu-x86_64'
-                self.qemu = 'qemu-system-x86_64'
+                self.helper.qemu = 'qemu-system-x86_64'
         else:
             raise ValueError(f"Invalid arch '{args.arch}'")
 
@@ -259,7 +259,7 @@ class BuildQemu:
         if not self.bios.exists():
             tout.fatal(f"Error: BIOS file '{self.bios}' not found")
 
-        qemu_cmd = [str(self.qemu)]
+        qemu_cmd = [str(self.helper.qemu)]
         if self.bios:
             qemu_cmd.extend(['-bios', str(self.bios)])
         qemu_cmd.extend(self.kvm_params)
@@ -343,7 +343,7 @@ class BuildQemu:
         try:
             subprocess.run(qemu_cmd, check=True)
         except FileNotFoundError:
-            tout.fatal(f"Error: QEMU executable '{self.qemu}' not found")
+            tout.fatal(f"Error: QEMU executable '{self.helper.qemu}' not found")
         except subprocess.CalledProcessError as e:
             tout.fatal(f'QEMU execution failed with exit code {e.returncode}')
         finally:
