@@ -1320,7 +1320,7 @@ efi_status_t efi_console_register(void)
 						     NULL);
 
 	/* Create console node and install device path protocols */
-	if (0 && CONFIG_IS_ENABLED(DM_SERIAL)) {
+	if (CONFIG_IS_ENABLED(DM_SERIAL)) {
 		dp = efi_dp_from_uart();
 		printf("dp %p\n", dp);
 		if (!dp)
@@ -1337,7 +1337,6 @@ efi_status_t efi_console_register(void)
 	}
 
 	/* Create console events */
-#if 0
 	r = efi_create_event(EVT_NOTIFY_WAIT, TPL_CALLBACK, efi_key_notify,
 			     NULL, NULL, &efi_con_in.wait_for_key);
 	if (r != EFI_SUCCESS) {
@@ -1356,7 +1355,7 @@ efi_status_t efi_console_register(void)
 	r = efi_set_timer(console_timer_event, EFI_TIMER_PERIODIC, 5000);
 	if (r != EFI_SUCCESS)
 		printf("ERROR: Failed to set console timer\n");
-#endif
+
 	printf("console ready\n");
 
 	return r;

@@ -53,8 +53,8 @@ static int efi_kbd_tstc(struct udevice *dev)
 	}
 	if (!status)
 		printf("y ");
-	else
-		printf("n ");
+	// else
+		// printf("n ");
 	if (status == EFI_SUCCESS) {
 		priv->have_key = true;
 		return 1;
@@ -128,7 +128,7 @@ static int efi_kbd_start(struct udevice *dev)
 	log_info("efi_kbd_start\n");
 
 	/* reset keyboard to drop anything pressed during UEFI startup */
-	priv->con_in->reset(priv->con_in, false);
+	priv->con_in->reset(priv->con_in, true);
 	priv->have_key = false;
 	log_info("reset done\n");
 
@@ -139,20 +139,22 @@ static int efi_kbd_probe(struct udevice *dev)
 {
 	struct keyboard_priv *uc_priv = dev_get_uclass_priv(dev);
 
-	struct efi_boot_services *boot = efi_get_boot();
+	// struct efi_boot_services *boot = efi_get_boot();
 	struct efi_system_table *systab = efi_get_sys_table();
 	struct stdio_dev *sdev = &uc_priv->sdev;
 	struct efi_kbd_priv *priv = dev_get_priv(dev);
-	efi_status_t eret;
+	// efi_status_t eret;
 	int ret;
-	const efi_guid_t guid = EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID;
+	// const efi_guid_t guid = EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID;
 
 	log_info("keyboard probe '%s'\n", dev->name);
 
+#if 0
 	eret = boot->open_protocol(systab->con_in_handle, &guid,
 				   (void **)&priv->ex_con, NULL, NULL,
 				   EFI_OPEN_PROTOCOL_GET_PROTOCOL);
 	printf("eret %lx\n", eret);
+#endif
 
 	priv->con_in = systab->con_in;
 	if (!priv->con_in) {

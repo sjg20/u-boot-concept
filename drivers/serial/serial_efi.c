@@ -33,10 +33,13 @@ int serial_efi_setbrg(struct udevice *dev, int baudrate)
 
 static int serial_efi_get_key(struct serial_efi_priv *priv)
 {
-	int ret;
+	efi_status_t ret;
 
 	if (priv->have_key)
 		return 0;
+	if (!priv->con_in)
+		return -EAGAIN;
+
 	ret = priv->con_in->read_key_stroke(priv->con_in, &priv->key);
 	if (ret == EFI_NOT_READY)
 		return -EAGAIN;
@@ -134,7 +137,7 @@ static int serial_efi_probe(struct udevice *dev)
 	struct efi_system_table *table = efi_get_sys_table();
 	struct serial_efi_priv *priv = dev_get_priv(dev);
 
-	priv->con_in = table->con_in;
+	// priv->con_in = table->con_in;
 	priv->con_out = table->con_out;
 
 	return 0;
