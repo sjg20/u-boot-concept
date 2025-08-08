@@ -1025,7 +1025,6 @@ static efi_status_t EFIAPI efi_cin_read_key_stroke_ex(
 		ret = EFI_NOT_READY;
 		goto out;
 	}
-	printf("got key\n");
 	/*
 	 * CTRL+A - CTRL+Z have to be signaled as a - z.
 	 * SHIFT+CTRL+A - SHIFT+CTRL+Z have to be signaled as A - Z.
