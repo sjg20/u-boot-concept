@@ -35,7 +35,7 @@ static bool key_is_buffered;
  * @dev: stdio device pointer
  * @return: 1 if a character is available, 0 otherwise.
  */
-static int efi_kbd_tstc(struct stdio_dev *dev)
+static int efi_kbd_tstc(struct udevice *dev)
 {
 	efi_status_t status;
 
@@ -65,7 +65,7 @@ static int efi_kbd_tstc(struct stdio_dev *dev)
  * @dev: stdio device pointer
  * @return: The character code for the pressed key.
  */
-static int efi_kbd_getc(struct stdio_dev *dev)
+static int efi_kbd_getc(struct udevice *dev)
 {
 	/* Wait until tstc() reports a key is ready */
 	while (!efi_kbd_tstc(dev))
@@ -119,7 +119,7 @@ int efi_kbd_start(struct udevice *dev)
 	// if (!efi_is_loaded())
 		// return -1;
 
-	log_info("Initializing EFI keyboard driver...\n");
+	log_info("efi_kbd_start\n");
 
 	/* The host input protocol is in the EFI System Table (ConIn) */
 	host_con_in = systab->con_in;
@@ -128,6 +128,7 @@ int efi_kbd_start(struct udevice *dev)
 		return -1;
 	}
 
+#if 0
 	/*
 	 * Define the new stdio device that uses our EFI-aware functions.
 	 */
@@ -151,7 +152,7 @@ int efi_kbd_start(struct udevice *dev)
 	 */
 	// env_set("stdin", "efi_kbd");
 	// env_set("stderr", "efi_kbd");
-
+#endif
 	log_info("EFI keyboard driver registered as 'efi_kbd'.\n");
 
 	/*
@@ -160,19 +161,28 @@ int efi_kbd_start(struct udevice *dev)
 	 */
 	EFI_CALL(host_con_in->reset(host_con_in, false));
 	key_is_buffered = false;
+	log_info("reset done\n");
 
 	return 0;
 }
 
 int efi_kbd_probe(struct udevice *dev)
 {
-	//printf("keyboard probe\n");
+	// struct keyboard_priv *uc_priv = dev_get_uclass_priv(dev);
+
+	printf("keyboard probe '%s'\n", dev->name);
+	// input->dev = dev;
+	// input->read_keys = efi_kbd_check;
+	// input_allow_repeats(input, true);
+	// strcpy(sdev->name, "cros-ec-keyb");
 
 	return 0;
 }
 
 static const struct keyboard_ops efi_kbd_ops = {
 	.start	= efi_kbd_start,
+	.tstc	= efi_kbd_tstc,
+	.getc	= efi_kbd_getc,
 };
 
 static const struct udevice_id efi_kbd_ids[] = {

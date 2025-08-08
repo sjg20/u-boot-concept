@@ -8,6 +8,8 @@ obj-$(CONFIG_$(PHASE_)OF_CONTROL) += key_matrix.o
 obj-$(CONFIG_$(PHASE_)DM_KEYBOARD) += input.o keyboard-uclass.o
 obj-$(CONFIG_BUTTON_KEYBOARD) += button_kbd.o
 
+obj-$(CONFIG_EFI_KEYB) += efi_keyb.o
+
 ifndef CONFIG_XPL_BUILD
 
 obj-$(CONFIG_APPLE_SPI_KEYB) += apple_spi_kbd.o

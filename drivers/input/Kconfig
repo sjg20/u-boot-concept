@@ -63,6 +63,13 @@ config CROS_EC_KEYB
 	  Messages are used to request key scans from the EC and these are
 	  then decoded into keys by this driver.
 
+config EFI_KEYB
+	bool "Keyboard on top of EFI"
+	depends on DM_KEYBOARD && EFI_APP
+	default y
+	help
+	  blah
+
 config SPL_CROS_EC_KEYB
 	bool "Enable Chrome OS EC keyboard support in SPL"
 	depends on SPL_INPUT
