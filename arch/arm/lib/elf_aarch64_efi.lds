@@ -46,7 +46,7 @@ SECTIONS
 		*(.got)
 		/* U-Boot lists and device tree */
 		. = ALIGN(8);
-		*(SORT(__u_boot_list*));
+		KEEP(*(SORT(__u_boot_list*)));
 		. = ALIGN(8);
 
 		/*
