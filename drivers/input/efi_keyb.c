@@ -168,6 +168,9 @@ int efi_kbd_start(struct udevice *dev)
 
 int efi_kbd_probe(struct udevice *dev)
 {
+	struct keyboard_priv *uc_priv = dev_get_uclass_priv(dev);
+	struct stdio_dev *sdev = &uc_priv->sdev;
+	int ret;
 	// struct keyboard_priv *uc_priv = dev_get_uclass_priv(dev);
 
 	printf("keyboard probe '%s'\n", dev->name);
@@ -175,6 +178,12 @@ int efi_kbd_probe(struct udevice *dev)
 	// input->read_keys = efi_kbd_check;
 	// input_allow_repeats(input, true);
 	// strcpy(sdev->name, "cros-ec-keyb");
+	strcpy(sdev->name, "efi-kbd");
+	ret = input_stdio_register(sdev);
+	if (ret) {
+		log_err("input_stdio_register() failed\n");
+		return ret;
+	}
 
 	return 0;
 }
@@ -197,8 +206,4 @@ U_BOOT_DRIVER(efi_kbd) = {
 	.ops		= &efi_kbd_ops,
 	// .priv_auto	= sizeof(struct efi_kbd_priv),
 	.probe		= efi_kbd_probe,
-};
-
-U_BOOT_DRVINFO(efi_kbd) = {
-	.name = "efi_kbd"
 };
