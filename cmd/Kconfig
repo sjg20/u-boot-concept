@@ -353,8 +353,7 @@ config CMD_BOOTZ
 
 config CMD_BOOTI
 	bool "booti"
-	depends on BOOT
-	depends on ARM64 || RISCV || SANDBOX
+	depends on BOOTI
 	default y
 	help
 	  Boot an AArch64 Linux Kernel image from memory.

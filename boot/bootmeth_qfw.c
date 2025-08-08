@@ -160,7 +160,7 @@ static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
 	bmi.conf_ramdisk = conf_ramdisk;
 
 	ret = -ENOENT;
-	if (IS_ENABLED(CONFIG_CMD_BOOTI))
+	if (IS_ENABLED(CONFIG_BOOTI))
 		ret = booti_run(&bmi);
 	if (ret && IS_ENABLED(CONFIG_CMD_BOOTZ))
 		ret = bootz_run(&bmi);

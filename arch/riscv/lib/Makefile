@@ -7,7 +7,7 @@
 # Rick Chen, Andes Technology Corporation <rick@andestech.com>
 
 obj-$(CONFIG_BOOT) += bootm.o
-obj-$(CONFIG_CMD_BOOTI) += image.o
+obj-$(CONFIG_BOOTI) += image.o
 obj-$(CONFIG_CMD_GO) += boot.o
 obj-y	+= cache.o
 obj-$(CONFIG_SIFIVE_CACHE) += sifive_cache.o

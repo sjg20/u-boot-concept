@@ -507,7 +507,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 #endif
 	case IMAGE_FORMAT_BOOTI:
 		log_debug("booti");
-		if (IS_ENABLED(CONFIG_CMD_BOOTI)) {
+		if (IS_ENABLED(CONFIG_BOOTI)) {
 			if (found_booti_os(bmi, IH_COMP_NONE))
 				return 1;
 			ep_found = true;
@@ -516,7 +516,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 		fallthrough;
 	default:
 		/* any compressed image is probably a booti image */
-		if (IS_ENABLED(CONFIG_CMD_BOOTI)) {
+		if (IS_ENABLED(CONFIG_BOOTI)) {
 			int comp;
 
 			comp = image_decomp_type(os_hdr, 2);
@@ -748,11 +748,11 @@ static int handle_decomp_error(int comp_type, size_t uncomp_size,
  * booti_is_supported() - Check whether a Linux 'Image' is supported
  *
  * @os: OS to check
- * Return: true if CMD_BOOTI is enabled and the arch suports this format
+ * Return: true if BOOTI is enabled and the arch suports this format
  */
 static bool booti_is_supported(struct image_info *os)
 {
-	if (!IS_ENABLED(CONFIG_CMD_BOOTI) || os->os != IH_OS_LINUX)
+	if (!IS_ENABLED(CONFIG_BOOTI) || os->os != IH_OS_LINUX)
 		return false;
 
 	return os->arch == IH_ARCH_ARM64 || os->arch == IH_ARCH_RISCV;
@@ -1440,7 +1440,7 @@ void bootm_init(struct bootm_info *bmi)
 	memset(bmi, '\0', sizeof(struct bootm_info));
 	bmi->boot_progress = true;
 	if (IS_ENABLED(CONFIG_CMD_BOOTM) || IS_ENABLED(CONFIG_CMD_BOOTZ) ||
-	    IS_ENABLED(CONFIG_CMD_BOOTI) || IS_ENABLED(CONFIG_PXE_UTILS))
+	    IS_ENABLED(CONFIG_BOOTI) || IS_ENABLED(CONFIG_PXE_UTILS))
 		bmi->images = &images;
 }
 

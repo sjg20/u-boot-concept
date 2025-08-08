@@ -253,7 +253,7 @@ enum image_fmt_t genimg_get_format(const void *img_addr)
 	if (IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE) &&
 	    is_android_boot_image_header(img_addr))
 		return IMAGE_FORMAT_ANDROID;
-	if (IS_ENABLED(CONFIG_CMD_BOOTI) &&
+	if (IS_ENABLED(CONFIG_BOOTI) &&
 	    booti_is_valid(img_addr))
 		return IMAGE_FORMAT_BOOTI;
 
@@ -264,7 +264,7 @@ enum image_fmt_t genimg_get_format_comp(const void *img_addr)
 {
 	enum image_fmt_t fmt = genimg_get_format(img_addr);
 
-	if (IS_ENABLED(CONFIG_CMD_BOOTI) && fmt == IMAGE_FORMAT_INVALID &&
+	if (IS_ENABLED(CONFIG_BOOTI) && fmt == IMAGE_FORMAT_INVALID &&
 	    image_decomp_type(img_addr, 2) != IH_COMP_NONE)
 		fmt = IMAGE_FORMAT_BOOTI;
 

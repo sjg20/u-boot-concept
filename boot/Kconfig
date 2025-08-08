@@ -453,6 +453,17 @@ config BOOTM_VXWORKS
 	help
 	  Support booting VxWorks images via the bootm command.
 
+config BOOTI
+	bool "Support booting Linux Image format"
+	depends on ARM64 || RISCV || SANDBOX
+	default y
+	help
+	  Boot an AArch64 Linux Kernel image from memory. The image can be
+	  compressed if desired, in which case it is decompressed
+	  automatically.
+
+	  This image is typically create with 'make Image' in Linux.
+
 endif  # BOOT
 
 config PXE_UTILS
@@ -482,7 +493,7 @@ config BOOT_DEFAULTS_CMDS
 	select CMD_DHCP if CMD_NET
 	select CMD_PING if CMD_NET
 	select CMD_PXE if CMD_NET
-	select CMD_BOOTI if ARM64
+	select BOOTI if ARM64
 	select CMD_BOOTZ if ARM && !ARM64
 	imply CMD_MII if NET
 
@@ -1103,7 +1114,7 @@ endif # MEASURED_BOOT
 
 config SYS_BOOTM_LEN
 	hex "Maximum size of a decompresed OS image"
-	depends on CMD_BOOTM || CMD_BOOTI || CMD_BOOTZ || \
+	depends on CMD_BOOTM || BOOTI || CMD_BOOTZ || \
 		LEGACY_IMAGE_FORMAT || SPL_LEGACY_IMAGE_FORMAT
 	default 0x4000000 if PPC || ARM64
 	default 0x1000000 if X86 || ARCH_MX6 || ARCH_MX7
@@ -1192,7 +1203,7 @@ config SYS_FSL_PBL_RCW
 	  Please refer doc/README.pblimage for more details.
 
 config SYS_BOOT_RAMDISK_HIGH
-	depends on CMD_BOOTM || CMD_BOOTI || CMD_BOOTZ
+	depends on CMD_BOOTM || BOOTI || CMD_BOOTZ
 	depends on !(NIOS2 || SANDBOX || SH || XTENSA)
 	def_bool y
 	select LMB

@@ -37,12 +37,12 @@ obj-$(CONFIG_EFI_APP) += $(EFI_CRT0) $(EFI_RELOC)
 obj-$(CONFIG_CPU_V7M) += cmd_boot.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
 obj-$(CONFIG_BOOT) += bootm.o
-obj-$(CONFIG_CMD_BOOTI) += image.o
+obj-$(CONFIG_BOOTI) += image.o
 obj-$(CONFIG_CMD_BOOTZ) += zimage.o
 else
 obj-$(CONFIG_$(PHASE_)FRAMEWORK) += spl.o
 ifdef CONFIG_SPL_FRAMEWORK
-obj-$(CONFIG_CMD_BOOTI) += image.o
+obj-$(CONFIG_BOOTI) += image.o
 obj-$(CONFIG_CMD_BOOTZ) += zimage.o
 endif
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o

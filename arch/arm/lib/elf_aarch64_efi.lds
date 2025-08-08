@@ -59,7 +59,7 @@ SECTIONS
 		*(.scommon)
 		*(.dynbss)
 		*(.bss)
-		*(.bss.*)
+		*(.bss*)
 		*(COMMON)
 		. = ALIGN(512);
 		_bss_end = .;

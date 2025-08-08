@@ -124,7 +124,8 @@ class BuildEfi:
             mem = '4G'
             extra.extend(['-smp', '4'])
         else:
-            mem = '512'
+            mem = '4G'
+            #mem = '512'
 
         if self.args.debug:
             extra.extend(['-s', '-S'])
