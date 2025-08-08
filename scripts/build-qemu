@@ -84,8 +84,6 @@ class BuildQemu:
         if args.sct_run:
             self.helper.mem = '4G'
             self.qemu_extra.extend(['-smp', '4'])
-            # SCT usually runs headlessly
-            self.qemu_extra.extend(['-display', 'none'])
             # For potential interaction within SCT
             self.qemu_extra.extend(['-device', 'qemu-xhci'])
             self.qemu_extra.extend(['-device', 'usb-kbd'])
@@ -270,13 +268,14 @@ class BuildQemu:
             qemu_cmd.extend(['-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',
                              '-device', 'virtio-net-pci,netdev=net0'])
 
-        # Display and Serial
-        # If -e (sct_run) is used, "-display none" is in qemu_extra
-        # If -s (serial_only) is used, we want no display
-        has_display_option = any(
-            item.startswith('-display') for item in self.qemu_extra)
-        if self.args.serial_only and not has_display_option:
+        # SCT usually runs headlessly
+        if self.args.serial_only or self.args.sct_seq:
             qemu_cmd.extend(['-display', 'none'])
+        elif self.args.arch == 'arm':
+            qemu_cmd.extend(['-device', 'virtio-gpu-pci'])
+            qemu_cmd.extend(['-device', 'qemu-xhci', '-device', 'usb-kbd',
+                             '-device', 'usb-tablet'])
+            qemu_cmd.extend(['-display', 'default,show-cursor=on'])
         if not any(item.startswith('-serial') for item in self.qemu_extra):
             qemu_cmd.extend(['-serial', 'mon:stdio'])
 
