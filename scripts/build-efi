@@ -109,6 +109,9 @@ class BuildEfi:
         else:
             if self.args.arch == 'arm':
                 extra += ['-device', 'virtio-gpu-pci']
+                extra += ['-device', 'qemu-xhci', '-device', 'usb-kbd',
+                          '-device', 'usb-tablet']
+                extra += ['-display', 'default,show-cursor=on']
             extra += ['-serial', 'mon:stdio']
             serial_msg = ''
         if self.args.kvm:
