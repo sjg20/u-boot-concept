@@ -348,7 +348,8 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 	efi_print_mem_table(desc, size, desc_size, false);
 	// ret = fdt_fixup_memory(fdt, u64 start, u64 size);
 
-	run_command("fdt print\n", 0);
+	if (IS_ENABLED(CONFIG_CMDLINE))
+		run_command("fdt print\n", 0);
 	// node = oftree_path(fixup->tree, "/reserved-memory");
 	// printf("node: %s\n", ofnode_name(node));
 

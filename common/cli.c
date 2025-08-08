@@ -175,6 +175,9 @@ int run_commandf(const char *fmt, ...)
 	va_list args;
 	int nbytes;
 
+	if (!IS_ENABLED(CONFIG_CMDLINE))
+		return CMD_RET_FAILURE;
+
 	va_start(args, fmt);
 	/*
 	 * Limit the console_buffer space being used to CONFIG_SYS_CBSIZE,

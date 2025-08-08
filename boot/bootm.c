@@ -1331,6 +1331,9 @@ int bootz_run(struct bootm_info *bmi)
 	ulong zi_start, zi_end;
 	int ret;
 
+	if (!IS_ENABLED(CONFIG_CMD_BOOTZ))
+		return -ENOTSUPP;
+
 	ret = bootm_run_states(bmi, BOOTM_STATE_START);
 	if (ret)
 		return ret;
