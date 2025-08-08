@@ -77,14 +77,14 @@ class BuildQemu:
         self.mnt = Path(self.helper.get_setting('sct_mnt', '/mnt/sct'))
 
         self.qemu_extra = []
-        self.mem = '512M'  # Default QEMU memory
+        self.helper.mem = '512M'  # Default QEMU memory
 
         if args.disk:
-            self.mem = '4G'
+            self.helper.mem = '4G'
             self.qemu_extra.extend(['-smp', '4'])
 
         if args.sct_run:
-            self.mem = '4G'
+            self.helper.mem = '4G'
             self.qemu_extra.extend(['-smp', '4'])
             # SCT usually runs headlessly
             self.qemu_extra.extend(['-display', 'none'])
@@ -105,7 +105,7 @@ class BuildQemu:
             args.serial_only = True  # SCT implies serial output
 
         if args.os:
-            self.mem = '4G'
+            self.helper.mem = '4G'
             self.qemu_extra.extend(['-smp', '4'])
 
         self.kvm_params = []
@@ -263,7 +263,7 @@ class BuildQemu:
         if self.bios:
             qemu_cmd.extend(['-bios', str(self.bios)])
         qemu_cmd.extend(self.kvm_params)
-        qemu_cmd.extend(['-m', self.mem])
+        qemu_cmd.extend(['-m', self.helper.mem])
 
         if not self.args.sct_run and not self.qboot:
             qemu_cmd.extend(['-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',
@@ -311,8 +311,8 @@ class BuildQemu:
                 '-device',
                 'vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare',
                 '-object',
-                f'memory-backend-file,id=mem,size={self.mem},mem-path=/dev/shm'
-                    ',share=on',
+                f'memory-backend-file,id=mem,size={self.helper.mem},'
+                    'mem-path=/dev/shm,share=on',
                 '-numa', 'node,memdev=mem'])
 
             virtiofsd_cmd = [

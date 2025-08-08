@@ -34,6 +34,7 @@ class Helper:
         self.settings = None
         self.imagedir = None
         self.args = args
+        self.mem = '512'
         self.bitness = 32 if args.word_32bit else 64
         if self.args.arch == 'arm':
             if self.bitness == 64:
