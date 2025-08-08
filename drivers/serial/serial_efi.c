@@ -137,8 +137,9 @@ static int serial_efi_probe(struct udevice *dev)
 	struct efi_system_table *table = efi_get_sys_table();
 	struct serial_efi_priv *priv = dev_get_priv(dev);
 
-	// priv->con_in = table->con_in;
+	priv->con_in = table->con_in;
 	priv->con_out = table->con_out;
+	priv->con_in->reset(priv->con_in, true);
 
 	return 0;
 }

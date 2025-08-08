@@ -1309,6 +1309,8 @@ efi_status_t efi_console_register(void)
 	efi_status_t r;
 	struct efi_device_path *dp;
 
+	return 0;
+
 	/* Install protocols on root node */
 	r = efi_install_multiple_protocol_interfaces(&efi_root,
 						     &efi_guid_text_output_protocol,
