@@ -297,8 +297,7 @@ class BuildQemu:
         if self.args.sct_run and self.seq_fname:
             self.update_sct_sequence()
 
-        if self.args.run:
-            self.run_qemu()
+        self.run_qemu()
 
 
 def main():
