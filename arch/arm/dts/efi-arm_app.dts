@@ -23,6 +23,11 @@
 		compatible = "efi,reset";
 		bootph-all;
 	};
+
+	efi-keyboard {
+		compatible = "efi-keyboard";
+	};
+
 	efi-fb {
 		compatible = "efi-fb";
 		bootph-some-ram;

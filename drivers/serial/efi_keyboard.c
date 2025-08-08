@@ -13,6 +13,7 @@
 #include <efi_loader.h>
 #include <efi.h>
 #include <log.h>
+#include <keyboard.h>
 #include <stdio_dev.h>
 #include <dm.h>
 #include <linux/delay.h>
@@ -88,10 +89,13 @@ static int efi_kbd_getc(struct stdio_dev *dev)
 
 	/* Handle important non-Unicode keys */
 	switch (key_buffer.scan_code) {
-	case SCAN_CODE_BACKSPACE:
-		return '\b'; /* Backspace */
-	case SCAN_CODE_ESC:
-		return 0x1b; /* Escape */
+	case '\b':
+	case '\e':
+		return key_buffer.scan_code;
+	// case SCAN_CODE_BACKSPACE:
+		// return '\b'; /* Backspace */
+	// case SCAN_CODE_ESC:
+		// return 0x1b; /* Escape */
 	default:
 		/* Ignore other special keys (arrows, function keys, etc.) */
 		return 0;
@@ -106,16 +110,19 @@ static int efi_kbd_getc(struct stdio_dev *dev)
  *
  * @return: 0 on success, -1 on failure.
  */
-int efi_keyboard_init(void)
+int efi_kbd_start(struct udevice *dev)
 {
-	/* This driver is only useful when U-Boot is loaded via EFI */
-	if (!efi_is_loaded())
-		return -1;
+	struct efi_system_table *systab = efi_get_sys_table();
+	// struct efi_priv *priv = efi_get_priv();
 
-	log_debug("Initializing EFI keyboard driver...\n");
+	/* This driver is only useful when U-Boot is loaded via EFI */
+	// if (!efi_is_loaded())
+		// return -1;
+
+	log_info("Initializing EFI keyboard driver...\n");
 
 	/* The host input protocol is in the EFI System Table (ConIn) */
-	host_con_in = efi_st->ConIn;
+	host_con_in = systab->con_in;
 	if (!host_con_in) {
 		log_err("EFI: Host Simple Text Input Protocol not found!\n");
 		return -1;
@@ -142,8 +149,8 @@ int efi_keyboard_init(void)
 	 * command line use this driver for input. stderr is aliased to
 	 * allow for cancellation of operations with Ctrl+C.
 	 */
-	env_set("stdin", "efi_kbd");
-	env_set("stderr", "efi_kbd");
+	// env_set("stdin", "efi_kbd");
+	// env_set("stderr", "efi_kbd");
 
 	log_info("EFI keyboard driver registered as 'efi_kbd'.\n");
 
@@ -156,3 +163,32 @@ int efi_keyboard_init(void)
 
 	return 0;
 }
+
+int efi_kbd_probe(struct udevice *dev)
+{
+	//printf("keyboard probe\n");
+
+	return 0;
+}
+
+static const struct keyboard_ops efi_kbd_ops = {
+	.start	= efi_kbd_start,
+};
+
+static const struct udevice_id efi_kbd_ids[] = {
+	{ .compatible = "efi-keyboard" },
+	{ }
+};
+
+U_BOOT_DRIVER(efi_kbd) = {
+	.name		= "efi_kbd",
+	.id		= UCLASS_KEYBOARD,
+	.of_match	= efi_kbd_ids,
+	.ops		= &efi_kbd_ops,
+	// .priv_auto	= sizeof(struct efi_kbd_priv),
+	.probe		= efi_kbd_probe,
+};
+
+U_BOOT_DRVINFO(efi_kbd) = {
+	.name = "efi_kbd"
+};
