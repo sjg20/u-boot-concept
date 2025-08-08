@@ -292,6 +292,7 @@ int efi_app_exit_boot_services(struct efi_priv *priv, uint key)
 	return 0;
 }
 
+#if 0
 static int efi_setup_dram(void)
 {
 	struct efi_mem_desc *desc;
@@ -318,6 +319,7 @@ static int efi_setup_dram(void)
 	return 0;
 }
 EVENT_SPY_SIMPLE(EVT_BOOTM_PRE_PREP, efi_setup_dram);
+#endif
 
 int ft_system_setup(void *fdt, struct bd_info *bd)
 {
@@ -330,6 +332,13 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 	int size;
 	uint key;
 	int ret;
+
+	printf("fixup memory\n");
+	ret = fdt_fixup_memory(fdt, 0x40000000, 0x100000000);
+	if (ret) {
+		printf("failed fixup memory\n");
+		return ret;
+	}
 
 	printf("add_reserved_memory\n");
 	ret = efi_get_mmap(&desc, &size, &key, &desc_size, &version);

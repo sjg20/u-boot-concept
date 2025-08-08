@@ -291,11 +291,14 @@ static bool efi_mem_type_is_usable(u32 type)
 	case EFI_LOADER_DATA:
 	case EFI_LOADER_CODE:
 	case EFI_BOOT_SERVICES_CODE:
+	case EFI_BOOT_SERVICES_DATA:
+	case EFI_ACPI_RECLAIM_MEMORY:
+	case EFI_RUNTIME_SERVICES_CODE:
+	case EFI_RUNTIME_SERVICES_DATA:
 		return true;
 	case EFI_RESERVED_MEMORY_TYPE:
 	case EFI_UNUSABLE_MEMORY:
 	case EFI_UNACCEPTED_MEMORY_TYPE:
-	case EFI_RUNTIME_SERVICES_DATA:
 	case EFI_MMAP_IO:
 	case EFI_MMAP_IO_PORT:
 	case EFI_PERSISTENT_MEMORY_TYPE:
@@ -310,6 +313,8 @@ int dram_init_banksize_from_memmap(struct efi_mem_desc *desc, int size,
 	struct efi_mem_desc *end;
 	int bank = 0;
 	int num_banks;
+	ulong start, max_addr = 0;
+	bool first = true;
 
 	end = (struct efi_mem_desc *)((ulong)desc + size);
 	for (num_banks = 0;
@@ -319,18 +324,24 @@ int dram_init_banksize_from_memmap(struct efi_mem_desc *desc, int size,
 		 * We only use conventional memory and ignore
 		 * anything less than 1MB.
 		 */
-		log_debug("EFI bank #%d: start %llx, size %llx type %u\n",
-			  bank, desc->physical_start,
-			  desc->num_pages << EFI_PAGE_SHIFT, desc->type);
-		bank++;
-		if (!efi_mem_type_is_usable(desc->type) ||
-		    (desc->num_pages << EFI_PAGE_SHIFT) < 1 << 20)
+		log_info("EFI bank #%d: start %llx, size %llx type %u\n",
+			 bank, desc->physical_start,
+			 desc->num_pages << EFI_PAGE_SHIFT, desc->type);
+		if (!efi_mem_type_is_usable(desc->type)) {
+			printf("not usable\n");
 			continue;
-		gd->bd->bi_dram[num_banks].start = desc->physical_start;
-		gd->bd->bi_dram[num_banks].size = desc->num_pages <<
-			EFI_PAGE_SHIFT;
-		num_banks++;
+		}
+		if (first) {
+			start = desc->physical_start;
+			first = false;
+		}
+		max_addr = max((u64)max_addr, desc->physical_start +
+				 (desc->num_pages << EFI_PAGE_SHIFT));
 	}
+
+	gd->bd->bi_dram[num_banks].start = start;
+	gd->bd->bi_dram[num_banks].size = max_addr - start;
+	num_banks++;
 
 	return num_banks;
 }
