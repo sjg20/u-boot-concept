@@ -266,7 +266,7 @@ class BuildQemu:
         qemu_cmd.extend(self.kvm_params)
         qemu_cmd.extend(['-m', self.helper.mem])
 
-        if not self.args.sct_run and not self.qboot:
+        if not self.args.sct_run and not self.args.use_qboot:
             qemu_cmd.extend(['-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',
                              '-device', 'virtio-net-pci,netdev=net0'])
 
