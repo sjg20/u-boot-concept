@@ -112,7 +112,10 @@ class BuildQemu:
 
         bios_override = None
         if args.use_tianocore:
-            bios_override = Path(self.tiano, 'OVMF-pure-efi.x64.fd')
+            if args.arch == 'arm':
+                bios_override = Path(self.tiano, 'OVMF-pure-efi.aarch64.fd.64m')
+            else:
+                bios_override = Path(self.tiano, 'OVMF-pure-efi.x64.fd')
             if not bios_override.exists():
                 tout.fatal(
                     'Error: Tianocore BIOS specified (-E) but not found at '
