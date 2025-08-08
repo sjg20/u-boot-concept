@@ -311,7 +311,7 @@ def add_common_args(parser):
                         help='Run QEMU with serial only (no display)')
     parser.add_argument(
         '-S', '--scsi', action='store_true',
-        help='Attach root disk using virtio-sci instead of virtio-blk')
+        help='Attach root disk using virtio-scsi instead of virtio-blk')
     parser.add_argument(
         '-t', '--root',
         help='Pass the given root device to linux via root=xxx')
