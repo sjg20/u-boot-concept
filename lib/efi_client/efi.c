@@ -172,6 +172,21 @@ void efi_free(struct efi_priv *priv, void *ptr)
 	boot->free_pool(ptr);
 }
 
+void *efi_alloc(size_t size)
+{
+	struct efi_priv *priv = efi_get_priv();
+	efi_status_t ret;
+
+	return efi_malloc(priv, size, &ret);
+}
+
+void efi_free_pool(void *ptr)
+{
+	struct efi_priv *priv = efi_get_priv();
+
+	efi_free(priv, ptr);
+}
+
 int efi_store_memory_map(struct efi_priv *priv)
 {
 	struct efi_boot_services *boot = priv->sys_table->boottime;
