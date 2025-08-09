@@ -334,11 +334,10 @@ static int found_booti_os(enum image_comp_t comp)
 /**
  * bootm_find_os(): Find the OS to boot
  *
- * @cmd_name: Command name that started this boot, e.g. "bootm"
- * @addr_fit: Address and/or FIT specifier (first arg of bootm command)
+ * @bmi: Bootm info (uses cmd_name, addr_img)
  * Return: 0 on success, -ve on error
  */
-static int bootm_find_os(const char *cmd_name, const char *addr_fit)
+static int bootm_find_os(struct bootm_info *bmi)
 {
 	const void *os_hdr;
 #ifdef CONFIG_ANDROID_BOOT_IMAGE
@@ -349,7 +348,7 @@ static int bootm_find_os(const char *cmd_name, const char *addr_fit)
 	int ret;
 
 	/* get kernel image header, start address and length */
-	ret = boot_get_kernel(addr_fit, &images, &images.os.image_start,
+	ret = boot_get_kernel(bmi->addr_img, &images, &images.os.image_start,
 			      &images.os.image_len, &os_hdr);
 	if (ret) {
 		/* no OS present, but that is OK */
@@ -358,7 +357,8 @@ static int bootm_find_os(const char *cmd_name, const char *addr_fit)
 			return 0;
 		}
 		if (ret == -EPROTOTYPE)
-			printf("Wrong Image Type for %s command\n", cmd_name);
+			printf("Wrong Image Type for %s command\n",
+			       bmi->cmd_name);
 
 		printf("ERROR %dE: can't get kernel image!\n", ret);
 		return 1;
@@ -1076,7 +1076,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		ret = bootm_pre_load(bmi->addr_img);
 
 	if (!ret && (states & BOOTM_STATE_FINDOS))
-		ret = bootm_find_os(bmi->cmd_name, bmi->addr_img);
+		ret = bootm_find_os(bmi);
 
 	if (!ret && (states & BOOTM_STATE_FINDOTHER)) {
 		ulong img_addr;
