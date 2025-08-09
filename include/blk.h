@@ -7,6 +7,7 @@
 #ifndef BLK_H
 #define BLK_H
 
+#include <linux/types.h>
 #include <bouncebuf.h>
 #include <dm/uclass-id.h>
 #include <efi.h>

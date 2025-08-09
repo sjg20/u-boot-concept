@@ -65,6 +65,11 @@ struct efi_boot_services *efi_get_boot(void)
 	return global_priv->boot;
 }
 
+efi_handle_t efi_get_parent_image(void)
+{
+	return global_priv->parent_image;
+}
+
 unsigned long efi_get_ram_base(void)
 {
 	return global_priv->ram_base;
@@ -170,6 +175,21 @@ void efi_free(struct efi_priv *priv, void *ptr)
 	struct efi_boot_services *boot = priv->boot;
 
 	boot->free_pool(ptr);
+}
+
+void *efi_alloc(size_t size)
+{
+	struct efi_priv *priv = efi_get_priv();
+	efi_status_t ret;
+
+	return efi_malloc(priv, size, &ret);
+}
+
+void efi_free_pool(void *ptr)
+{
+	struct efi_priv *priv = efi_get_priv();
+
+	efi_free(priv, ptr);
 }
 
 int efi_store_memory_map(struct efi_priv *priv)

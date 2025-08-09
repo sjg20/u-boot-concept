@@ -41,8 +41,6 @@ def parse_args():
         description='Build and/or run U-Boot with QEMU',
         formatter_class=argparse.RawTextHelpFormatter)
     build_helper.add_common_args(parser)
-    parser.add_argument('-D', '--share-dir', metavar='DIR',
-                        help='Directory to share into the guest via virtiofs')
     parser.add_argument('-e', '--sct-run', action='store_true',
                         help='Run UEFI Self-Certification Test (SCT)')
     parser.add_argument('-E', '--use-tianocore', action='store_true',
@@ -77,17 +75,15 @@ class BuildQemu:
         self.mnt = Path(self.helper.get_setting('sct_mnt', '/mnt/sct'))
 
         self.qemu_extra = []
-        self.mem = '512M'  # Default QEMU memory
+        self.helper.mem = '512M'  # Default QEMU memory
 
         if args.disk:
-            self.mem = '4G'
+            self.helper.mem = '4G'
             self.qemu_extra.extend(['-smp', '4'])
 
         if args.sct_run:
-            self.mem = '4G'
+            self.helper.mem = '4G'
             self.qemu_extra.extend(['-smp', '4'])
-            # SCT usually runs headlessly
-            self.qemu_extra.extend(['-display', 'none'])
             # For potential interaction within SCT
             self.qemu_extra.extend(['-device', 'qemu-xhci'])
             self.qemu_extra.extend(['-device', 'usb-kbd'])
@@ -105,7 +101,7 @@ class BuildQemu:
             args.serial_only = True  # SCT implies serial output
 
         if args.os:
-            self.mem = '4G'
+            self.helper.mem = '4G'
             self.qemu_extra.extend(['-smp', '4'])
 
         self.kvm_params = []
@@ -114,7 +110,10 @@ class BuildQemu:
 
         bios_override = None
         if args.use_tianocore:
-            bios_override = Path(self.tiano, 'OVMF-pure-efi.x64.fd')
+            if args.arch == 'arm':
+                bios_override = Path(self.tiano, 'OVMF-pure-efi.aarch64.fd.64m')
+            else:
+                bios_override = Path(self.tiano, 'OVMF-pure-efi.x64.fd')
             if not bios_override.exists():
                 tout.fatal(
                     'Error: Tianocore BIOS specified (-E) but not found at '
@@ -136,7 +135,7 @@ class BuildQemu:
             else:
                 self.board = 'qemu_arm'
                 default_bios = 'u-boot.bin'
-            self.qemu = 'qemu-system-arm'
+            self.helper.qemu = 'qemu-system-arm'
             self.qemu_extra.extend(['-machine', 'virt'])
             if not args.kvm:
                 self.qemu_extra.extend(['-accel', 'tcg'])
@@ -145,16 +144,16 @@ class BuildQemu:
                     self.board = 'qemu_arm64_spl'
                 else:
                     self.board = 'qemu_arm64'
-                self.qemu = 'qemu-system-aarch64'
+                self.helper.qemu = 'qemu-system-aarch64'
                 self.qemu_extra.extend(['-cpu', 'cortex-a57'])
         elif args.arch == 'x86':
             self.board = 'qemu-x86'
             default_bios = 'u-boot.rom'
-            self.qemu = 'qemu-system-i386'
+            self.helper.qemu = 'qemu-system-i386'
             self.qemu_extra.extend(['-machine', 'q35'])
             if self.helper.bitness == 64:
                 self.board = 'qemu-x86_64'
-                self.qemu = 'qemu-system-x86_64'
+                self.helper.qemu = 'qemu-system-x86_64'
         else:
             raise ValueError(f"Invalid arch '{args.arch}'")
 
@@ -259,23 +258,24 @@ class BuildQemu:
         if not self.bios.exists():
             tout.fatal(f"Error: BIOS file '{self.bios}' not found")
 
-        qemu_cmd = [str(self.qemu)]
+        qemu_cmd = [str(self.helper.qemu)]
         if self.bios:
             qemu_cmd.extend(['-bios', str(self.bios)])
         qemu_cmd.extend(self.kvm_params)
-        qemu_cmd.extend(['-m', self.mem])
+        qemu_cmd.extend(['-m', self.helper.mem])
 
-        if not self.args.sct_run and not self.qboot:
+        if not self.args.sct_run and not self.args.use_qboot:
             qemu_cmd.extend(['-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',
                              '-device', 'virtio-net-pci,netdev=net0'])
 
-        # Display and Serial
-        # If -e (sct_run) is used, "-display none" is in qemu_extra
-        # If -s (serial_only) is used, we want no display
-        has_display_option = any(
-            item.startswith('-display') for item in self.qemu_extra)
-        if self.args.serial_only and not has_display_option:
+        # SCT usually runs headlessly
+        if self.args.serial_only or self.args.sct_seq:
             qemu_cmd.extend(['-display', 'none'])
+        elif self.args.arch == 'arm':
+            qemu_cmd.extend(['-device', 'virtio-gpu-pci'])
+            qemu_cmd.extend(['-device', 'qemu-xhci', '-device', 'usb-kbd',
+                             '-device', 'usb-tablet'])
+            qemu_cmd.extend(['-display', 'default,show-cursor=on'])
         if not any(item.startswith('-serial') for item in self.qemu_extra):
             qemu_cmd.extend(['-serial', 'mon:stdio'])
 
@@ -284,85 +284,9 @@ class BuildQemu:
         # Add other parameters gathered from options
         qemu_cmd.extend(self.qemu_extra)
 
-        sock = Path('/tmp/virtiofs.sock')
-        proc = None
-        if self.args.share_dir:
-            virtfs_dir = Path(self.args.share_dir)
-            if not virtfs_dir.is_dir():
-                tout.fatal(f'Error: VirtFS share directory {virtfs_dir} '
-                           f'is not a valid directory')
+        self.helper.setup_share(qemu_cmd)
 
-            virtiofsd = Path('/usr/libexec/virtiofsd')
-            if not virtiofsd.exists():
-                tout.fatal(f'Error: virtiofsd not found at {virtiofsd}')
-
-            # Clean up potential old socket file
-            if sock.exists():
-                try:
-                    sock.unlink()
-                    tout.info(f'Removed old socket file {sock}')
-                except OSError as e:
-                    tout.warning(
-                        f'Warning: Could not remove old socket file {sock}: '
-                        f'{e}')
-
-            qemu_cmd.extend([
-                '-chardev', f'socket,id=char0,path={sock}',
-                '-device',
-                'vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare',
-                '-object',
-                f'memory-backend-file,id=mem,size={self.mem},mem-path=/dev/shm'
-                    ',share=on',
-                '-numa', 'node,memdev=mem'])
-
-            virtiofsd_cmd = [
-                str(virtiofsd),
-                '--socket-path', str(sock),
-                '--shared-dir', str(virtfs_dir),
-                '--cache', 'auto']
-            try:
-                # Use Popen to run virtiofsd in the background
-                proc = subprocess.Popen(virtiofsd_cmd, stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-                # Give virtiofsd a moment to start and create the socket
-                time.sleep(0.5)
-                if not sock.exists() and proc.poll() is not None:
-                    stdout, stderr = proc.communicate()
-                    tout.error('Error starting virtiofsd. Exit code: '
-                               f'{proc.returncode}')
-                    if stdout:
-                        tout.error(f"virtiofsd stdout:\n{stdout.decode()}")
-                    if stderr:
-                        tout.error(f"virtiofsd stderr:\n{stderr.decode()}")
-                    tout.fatal('Failed')
-
-            except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-                tout.fatal(f'Failed to start virtiofsd: {exc}')
-
-        tout.info(f'QEMU:\n{shlex.join(qemu_cmd)}\n')
-        try:
-            subprocess.run(qemu_cmd, check=True)
-        except FileNotFoundError:
-            tout.fatal(f"Error: QEMU executable '{self.qemu}' not found")
-        except subprocess.CalledProcessError as e:
-            tout.fatal(f'QEMU execution failed with exit code {e.returncode}')
-        finally:
-            # Clean up virtiofsd process and socket if it was started
-            if proc:
-                tout.info('Terminating virtiofsd')
-                proc.terminate()
-                try:
-                    proc.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    tout.warning(
-                        'virtiofsd did not terminate gracefully; killing')
-                    proc.kill()
-                if sock.exists():
-                    try:
-                        sock.unlink()
-                    except OSError as e_os:
-                        tout.warning('Warning: Could not remove virtiofs '
-                                     f'socket {sock}: {e_os}')
+        self.helper.run(qemu_cmd)
 
     def start(self):
         """Build and run QEMU"""
@@ -373,8 +297,7 @@ class BuildQemu:
         if self.args.sct_run and self.seq_fname:
             self.update_sct_sequence()
 
-        if self.args.run:
-            self.run_qemu()
+        self.run_qemu()
 
 
 def main():

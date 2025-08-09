@@ -9,7 +9,9 @@
 
 #include <blk.h>
 
-#define IDE_BUS(dev)	(dev / (CONFIG_SYS_IDE_MAXDEVICE / CONFIG_SYS_IDE_MAXBUS))
+#define IDE_BUS(dev)	((dev) / \
+	(IF_ENABLED_INT(CONFIG_IDE, CONFIG_SYS_IDE_MAXDEVICE) / \
+	 IF_ENABLED_INT(CONFIG_IDE, CONFIG_SYS_IDE_MAXBUS)))
 
 /**
  * ide_set_reset() - Assert or de-assert reset for the IDE device

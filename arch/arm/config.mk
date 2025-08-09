@@ -14,9 +14,7 @@ CFLAGS_NON_EFI := -fno-pic $(FIXED_REG) -ffunction-sections -fdata-sections \
 CFLAGS_EFI := -fpic -fshort-wchar
 
 ifneq ($(LTO_ENABLE)$(CONFIG_USE_PRIVATE_LIBGCC),yy)
-ifndef CONFIG_EFI_APP
 LDFLAGS_FINAL += --gc-sections
-endif
 endif
 
 ifneq ($(LTO_ENABLE),y)
