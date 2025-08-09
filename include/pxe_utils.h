@@ -97,13 +97,15 @@ struct pxe_context;
  *
  * @ctx: PXE context
  * @file_path: Full path to filename to read
- * @file_addr: String containing the to which to read the file
+ * @addrp: On entry, address to load file or 0 to reserve an address with lmb;
+ * on exit, address to which the file was loaded
+ * @align: Reservation alignment, if using lmb
  * @type: File type
  * @fileszeip: Returns file size
  */
 typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
-				char *file_addr, enum bootflow_img_t type,
-				ulong *filesizep);
+				ulong *addrp, ulong align,
+				enum bootflow_img_t type, ulong *filesizep);
 
 /**
  * struct pxe_context - context information for PXE parsing
@@ -123,12 +125,13 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
  *
  * The following are only used when probing for a label
  * @label: Label to process
- * @kernel_addr: String containing kernel address (cannot be NULL)
- * @initrd_addr_str: String containing initaddr address (NULL if none)
- * @initrd_filesize: String containing initrd size (only used if
- *	@initrd_addr_str)
- * @initrd_str: initrd string to process (only used if @initrd_addr_str)
- * @conf_fdt: string containing the FDT address
+ * @kern_addr_str: String containing kernel address (cannot be NULL)
+ * @kern_addr: Kernel address (cannot be 0)
+ * @initrd_addr: initaddr address (0 if none)
+ * @initrd_size: initrd size (only used if @initrd_addr)
+ * @initrd_str: initrd string to process (only used if @initrd_addr)
+ * @conf_fdt_str: FDT-address string
+ * @conf_fdt: FDT address
  * @restart: true to use BOOTM_STATE_RESTART instead of BOOTM_STATE_START (only
  *	supported with FIT / bootm)
  */
@@ -157,11 +160,13 @@ struct pxe_context {
 
 	/* information on the selected label to boot */
 	struct pxe_label *label;
-	char *kernel_addr;
-	char *initrd_addr_str;
-	char *initrd_filesize;
+	char *kern_addr_str;
+	ulong kern_addr;
+	ulong initrd_addr;
+	ulong initrd_size;
 	char *initrd_str;
-	char *conf_fdt;
+	char *conf_fdt_str;
+	ulong conf_fdt;
 	bool restart;
 };
 

@@ -26,13 +26,16 @@ const char *pxe_default_paths[] = {
 };
 
 static int do_get_tftp(struct pxe_context *ctx, const char *file_path,
-		       char *file_addr, enum bootflow_img_t type, ulong *sizep)
+		       ulong *addrp, ulong align, enum bootflow_img_t type,
+		       ulong *sizep)
 {
 	int ret;
 
 	if (IS_ENABLED(CONFIG_NET_LWIP))
 		return -ENOTSUPP;
-	ret = netboot_run(TFTPGET, hextoul(file_addr, NULL), file_path, 0,
+	if (!*addrp)
+		return -ENOTSUPP;
+	ret = netboot_run(TFTPGET, *addrp, file_path, 0,
 			  ctx->use_ipv6);
 	if (ret)
 		return log_msg_ret("tfp", ret);

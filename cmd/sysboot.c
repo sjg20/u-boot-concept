@@ -23,19 +23,20 @@ struct sysboot_info {
 };
 
 static int sysboot_read_file(struct pxe_context *ctx, const char *file_path,
-			     char *file_addr, enum bootflow_img_t type,
-			     ulong *sizep)
+			     ulong *addrp, ulong align,
+			     enum bootflow_img_t type, ulong *sizep)
 {
 	struct sysboot_info *info = ctx->userdata;
 	loff_t len_read;
-	ulong addr;
 	int ret;
 
-	addr = simple_strtoul(file_addr, NULL, 16);
+	if (!*addrp)
+		return -ENOTSUPP;
+
 	ret = fs_set_blk_dev(info->ifname, info->dev_part_str, info->fstype);
 	if (ret)
 		return ret;
-	ret = fs_legacy_read(file_path, addr, 0, 0, &len_read);
+	ret = fs_legacy_read(file_path, *addrp, 0, 0, &len_read);
 	if (ret)
 		return ret;
 	*sizep = len_read;

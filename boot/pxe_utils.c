@@ -94,17 +94,18 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len)
  *
  * @ctx: PXE context
  * @file_path: File path to read (relative to the PXE file)
- * @file_addr: Address to load file to
+ * @addrp: On entry, address to load file or 0 to reserve an address with lmb;
+ * on exit, address to which the file was loaded
+ * @align: Reservation alignment, if using lmb
  * @filesizep: If not NULL, returns the file size in bytes
  * Returns 1 for success, or < 0 on error
  */
 static int get_relfile(struct pxe_context *ctx, const char *file_path,
-		       unsigned long file_addr, enum bootflow_img_t type,
+		       ulong *addrp, ulong align, enum bootflow_img_t type,
 		       ulong *filesizep)
 {
 	size_t path_len;
 	char relfile[MAX_TFTP_PATH_LEN + 1];
-	char addr_buf[18];
 	ulong size;
 	int ret;
 
@@ -125,9 +126,7 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
 
 	printf("Retrieving file: %s\n", relfile);
 
-	sprintf(addr_buf, "%lx", file_addr);
-
-	ret = ctx->getfile(ctx, relfile, addr_buf, type, &size);
+	ret = ctx->getfile(ctx, relfile, addrp, align, type, &size);
 	if (ret < 0)
 		return log_msg_ret("get", ret);
 	if (filesizep)
@@ -143,7 +142,7 @@ int get_pxe_file(struct pxe_context *ctx, const char *file_path,
 	int err;
 	char *buf;
 
-	err = get_relfile(ctx, file_path, file_addr, BFI_EXTLINUX_CFG,
+	err = get_relfile(ctx, file_path, &file_addr, 0, BFI_EXTLINUX_CFG,
 			  &size);
 	if (err < 0)
 		return err;
@@ -192,28 +191,38 @@ int get_pxelinux_path(struct pxe_context *ctx, const char *file,
  * @ctx: PXE context
  * @file_path: File path to read (relative to the PXE file)
  * @envaddr_name: Name of environment variable which contains the address to
- *	load to
+ *	load to. If this doesn't exist, an address is reserved using LMB
+ * @align: Reservation alignment, if using lmb
  * @type: File type
+ * @addrp: Returns the address to which the file was loaded, on success
  * @filesizep: Returns the file size in bytes
  * Returns 1 on success, -ENOENT if @envaddr_name does not exist as an
  *	environment variable, -EINVAL if its format is not valid hex, or other
  *	value < 0 on other error
  */
 static int get_relfile_envaddr(struct pxe_context *ctx, const char *file_path,
-			       const char *envaddr_name,
-			       enum bootflow_img_t type, ulong *filesizep)
+			       const char *envaddr_name, ulong align,
+			       enum bootflow_img_t type, ulong *addrp,
+			       ulong *filesizep)
 {
-	unsigned long file_addr;
+	ulong addr = 0;
 	char *envaddr;
+	int ret;
 
-	envaddr = from_env(envaddr_name);
-	if (!envaddr)
-		return -ENOENT;
-
-	if (strict_strtoul(envaddr, 16, &file_addr) < 0)
+	/*
+	 * set the address if we have it, otherwise get_relfile() will reserve
+	 * a space
+	 */
+	envaddr = env_get(envaddr_name);
+	if (envaddr && strict_strtoul(envaddr, 16, &addr) < 0)
 		return -EINVAL;
 
-	return get_relfile(ctx, file_path, file_addr, type, filesizep);
+	ret = get_relfile(ctx, file_path, &addr, align, type, filesizep);
+	if (ret != 1)
+		return ret;
+	*addrp = addr;
+
+	return 1;
 }
 
 /**
@@ -331,6 +340,7 @@ static void label_boot_fdtoverlay(struct pxe_context *ctx,
 	do {
 		struct fdt_header *blob;
 		char *overlayfile;
+		ulong addr;
 		char *end;
 		int len;
 
@@ -353,8 +363,9 @@ static void label_boot_fdtoverlay(struct pxe_context *ctx,
 
 		/* Load overlay file */
 		err = get_relfile_envaddr(ctx, overlayfile, "fdtoverlay_addr_r",
+					  SZ_4K,
 					  (enum bootflow_img_t)IH_TYPE_FLATDT,
-					  NULL);
+					  &addr, NULL);
 		if (err < 0) {
 			printf("Failed loading overlay %s\n", overlayfile);
 			goto skip_overlay;
@@ -485,9 +496,13 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
 		}
 
 		if (fdtfile) {
-			int err = get_relfile_envaddr(ctx, fdtfile,
-				"fdt_addr_r",
-				 (enum bootflow_img_t)IH_TYPE_FLATDT, NULL);
+			ulong addr;
+			int err;
+
+			err = get_relfile_envaddr(ctx, fdtfile, "fdt_addr_r",
+					SZ_4K,
+					(enum bootflow_img_t)IH_TYPE_FLATDT,
+					&addr, NULL);
 
 			free(fdtfilefree);
 			if (err < 0) {
@@ -525,42 +540,41 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
  *
  * @ctx: PXE context
  * @label: Label to process
- * @kernel_addr: String containing kernel address (cannot be NULL)
- * @initrd_addr_str: String containing initrd address (NULL if none)
- * @initrd_filesize: String containing initrd size (only used if
- *	@initrd_addr_str)
- * @initrd_str: initrd string to process (only used if @initrd_addr_str)
- * @conf_fdt: string containing the FDT address
+ * @kern_addr_str: String containing kernel address and possible FIT
+ * configuration (cannot be NULL)
+ * @kern_addr: Kernel address (cannot be 0)
+ * @initrd_addr: String containing initrd address (0 if none)
+ * @initrd_size: initrd size (only used if @initrd_addr)
+ * @initrd_str: initrd string to process (only used if @initrd_addr)
+ * @conf_fdt_str: string containing the FDT address
+ * @conf_fdt: FDT address (0 if none)
  * Return: does not return on success, or returns 0 if the boot command
  * returned, or -ve error value on error
  */
 static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
-			  char *kernel_addr, char *initrd_addr_str,
-			  char *initrd_filesize, char *initrd_str,
-			  const char *conf_fdt)
+			  char *kern_addr_str, ulong kern_addr,
+			  ulong initrd_addr, ulong initrd_size,
+			  char *initrd_str, const char *conf_fdt_str,
+			  ulong conf_fdt)
 {
 	struct bootm_info bmi;
-	ulong kernel_addr_r;
 	int ret = 0;
 	void *buf;
 	enum image_fmt_t  fmt;
 
 	bootm_init(&bmi);
 
-	bmi.conf_fdt = conf_fdt;
-	bmi.addr_img = kernel_addr;
-	bootm_x86_set(&bmi, bzimage_addr, hextoul(kernel_addr, NULL));
+	bmi.addr_img = kern_addr_str;
+	bmi.conf_fdt = conf_fdt_str;
+	bootm_x86_set(&bmi, bzimage_addr, hextoul(kern_addr_str, NULL));
 
-	if (initrd_addr_str) {
+	if (initrd_addr) {
 		bmi.conf_ramdisk = initrd_str;
-		bootm_x86_set(&bmi, initrd_addr,
-			      hextoul(initrd_addr_str, NULL));
-		bootm_x86_set(&bmi, initrd_size,
-			      hextoul(initrd_filesize, NULL));
+		bootm_x86_set(&bmi, initrd_addr, initrd_addr);
+		bootm_x86_set(&bmi, initrd_size, initrd_size);
 	}
 
-	kernel_addr_r = genimg_get_kernel_addr(kernel_addr);
-	buf = map_sysmem(kernel_addr_r, 0);
+	buf = map_sysmem(kern_addr, 0);
 
 	/*
 	 * Try bootm for legacy and FIT format image, assume booti if
@@ -639,14 +653,16 @@ static int generate_localboot(struct pxe_label *label)
  */
 static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 {
-	char *kernel_addr = NULL;
-	char *initrd_addr_str = NULL;
-	char initrd_filesize[10];
-	char initrd_str[28];
+	char *kern_addr_str;
+	ulong kern_addr = 0;
+	ulong initrd_addr = 0;
+	ulong initrd_size = 0;
+	char initrd_str[28] = "";
 	char mac_str[29] = "";
 	char ip_str[68] = "";
-	char *fit_addr = NULL;
-	const char *conf_fdt;
+	char fit_addr[200];
+	const char *conf_fdt_str;
+	ulong conf_fdt = 0;
 	int ret;
 
 	label_print(label);
@@ -673,49 +689,40 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		return 1;
 	}
 
-	if (get_relfile_envaddr(ctx, label->kernel, "kernel_addr_r",
-				(enum bootflow_img_t)IH_TYPE_KERNEL, NULL)
-				< 0) {
+	if (get_relfile_envaddr(ctx, label->kernel, "kernel_addr_r", SZ_2M,
+				(enum bootflow_img_t)IH_TYPE_KERNEL,
+				&kern_addr, NULL) < 0) {
 		printf("Skipping %s for failure retrieving kernel\n",
 		       label->name);
 		return 1;
 	}
 
-	kernel_addr = env_get("kernel_addr_r");
 	/* for FIT, append the configuration identifier */
-	if (label->config) {
-		int len = strlen(kernel_addr) + strlen(label->config) + 1;
-
-		fit_addr = malloc(len);
-		if (!fit_addr) {
-			printf("malloc fail (FIT address)\n");
-			return 1;
-		}
-		snprintf(fit_addr, len, "%s%s", kernel_addr, label->config);
-		kernel_addr = fit_addr;
-	}
+	snprintf(fit_addr, sizeof(fit_addr), "%lx%s", kern_addr,
+		 label->config ? label->config : "");
+	kern_addr_str = fit_addr;
 
 	/* For FIT, the label can be identical to kernel one */
 	if (label->initrd && !strcmp(label->kernel_label, label->initrd)) {
-		initrd_addr_str =  kernel_addr;
+		initrd_addr = kern_addr;
 	} else if (label->initrd) {
 		ulong size;
 		int ret;
 
 		ret = get_relfile_envaddr(ctx, label->initrd, "ramdisk_addr_r",
+					  SZ_2M,
 					  (enum bootflow_img_t)IH_TYPE_RAMDISK,
-					  &size);
+					  &initrd_addr, &size);
 		if (ret < 0) {
 			printf("Skipping %s for failure retrieving initrd\n",
 			       label->name);
-			goto cleanup;
+			return 1;
 		}
-		strcpy(initrd_filesize, simple_xtoa(size));
-		initrd_addr_str = env_get("ramdisk_addr_r");
-		size = snprintf(initrd_str, sizeof(initrd_str), "%s:%lx",
-				initrd_addr_str, size);
+		initrd_size = size;
+		size = snprintf(initrd_str, sizeof(initrd_str), "%lx:%lx",
+				initrd_addr, size);
 		if (size >= sizeof(initrd_str))
-			goto cleanup;
+			return 1;
 	}
 
 	if (label->ipappend & 0x1) {
@@ -745,7 +752,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 			       strlen(label->append ?: ""),
 			       strlen(ip_str), strlen(mac_str),
 			       sizeof(bootargs));
-			goto cleanup;
+			return 1;
 		}
 
 		if (label->append)
@@ -760,65 +767,64 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		printf("append: %s\n", finalbootargs);
 	}
 
-	conf_fdt = env_get("fdt_addr_r");
-	ret = label_process_fdt(ctx, label, kernel_addr, &conf_fdt);
+	conf_fdt_str = env_get("fdt_addr_r");
+	ret = label_process_fdt(ctx, label, kern_addr_str, &conf_fdt_str);
 	if (ret)
 		return ret;
 
-	if (!conf_fdt) {
+	if (!conf_fdt_str) {
 		if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
 		    strcmp("-", label->fdt))
-			conf_fdt = env_get("fdt_addr");
+			conf_fdt_str = env_get("fdt_addr");
 	}
 
-	if (!conf_fdt) {
-		ulong kernel_addr_r;
+	if (!conf_fdt_str) {
 		void *buf;
 
-		kernel_addr_r = genimg_get_kernel_addr(kernel_addr);
-		buf = map_sysmem(kernel_addr_r, 0);
+		buf = map_sysmem(kern_addr, 0);
 		if (genimg_get_format(buf) != IMAGE_FORMAT_FIT) {
 			if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
 			    strcmp("-", label->fdt))
-				conf_fdt = env_get("fdtcontroladdr");
+				conf_fdt_str = env_get("fdtcontroladdr");
 		}
 		unmap_sysmem(buf);
 	}
-	if (ctx->bflow && conf_fdt)
-		ctx->bflow->fdt_addr = hextoul(conf_fdt, NULL);
+	if (conf_fdt_str)
+		conf_fdt = hextoul(conf_fdt_str, NULL);
+
+	if (ctx->bflow && conf_fdt_str)
+		ctx->bflow->fdt_addr = conf_fdt;
 
 	if (IS_ENABLED(CONFIG_BOOTSTD_FULL) && ctx->no_boot) {
 		ctx->label = label;
-		ctx->kernel_addr = strdup(kernel_addr);
-		if (initrd_addr_str) {
-			ctx->initrd_addr_str = strdup(initrd_addr_str);
-			ctx->initrd_filesize = strdup(initrd_filesize);
+		ctx->kern_addr_str = strdup(kern_addr_str);
+		ctx->kern_addr = kern_addr;
+		if (initrd_addr) {
+			ctx->initrd_addr = initrd_addr;
+			ctx->initrd_size = initrd_size;
 			ctx->initrd_str = strdup(initrd_str);
 		}
-		ctx->conf_fdt = strdup(conf_fdt);
+		ctx->conf_fdt_str = strdup(conf_fdt_str);
+		ctx->conf_fdt = conf_fdt;
 		log_debug("Saving label '%s':\n", label->name);
-		log_debug("- kernel_addr '%s' conf_fdt '%s'\n",
-			  ctx->kernel_addr, ctx->conf_fdt);
-		if (initrd_addr_str) {
-			log_debug("- initrd addr '%s' filesize '%s' str '%s'\n",
-				  ctx->initrd_addr_str, ctx->initrd_filesize,
+		log_debug("- kern_addr_str '%s' conf_fdt_str '%s' conf_fdt %lx\n",
+			  ctx->kern_addr_str, ctx->conf_fdt_str, conf_fdt);
+		if (initrd_addr) {
+			log_debug("- initrd addr %lx filesize %lx str '%s'\n",
+				  ctx->initrd_addr, ctx->initrd_size,
 				  ctx->initrd_str);
 		}
-		if (!ctx->kernel_addr || (conf_fdt && !ctx->conf_fdt) ||
-		    (initrd_addr_str && (!ctx->initrd_addr_str ||
-		     !ctx->initrd_filesize || !ctx->initrd_str))) {
+		if (!ctx->kern_addr_str || (conf_fdt_str && !ctx->conf_fdt_str) ||
+		    (initrd_addr && !ctx->initrd_str)) {
 			printf("malloc fail (saving label)\n");
 			return 1;
 		}
 		return 0;
 	}
 
-	label_run_boot(ctx, label, kernel_addr, initrd_addr_str,
-		       initrd_filesize, initrd_str, conf_fdt);
+	label_run_boot(ctx, label, kern_addr_str, kern_addr, initrd_addr,
+		       initrd_size, initrd_str, conf_fdt_str, conf_fdt);
 	/* ignore the error value since we are going to fail anyway */
-
-cleanup:
-	free(fit_addr);
 
 	return 1;	/* returning is always failure */
 }
@@ -975,7 +981,7 @@ void handle_pxe_menu(struct pxe_context *ctx, struct pxe_menu *cfg)
 	if (IS_ENABLED(CONFIG_CMD_BMP)) {
 		/* display BMP if available */
 		if (cfg->bmp) {
-			if (get_relfile(ctx, cfg->bmp, image_load_addr,
+			if (get_relfile(ctx, cfg->bmp, &image_load_addr, 0,
 					BFI_LOGO, NULL)) {
 #if defined(CONFIG_VIDEO)
 				struct udevice *dev;
@@ -1111,9 +1117,9 @@ int pxe_do_boot(struct pxe_context *ctx)
 	if (!ctx->label)
 		return log_msg_ret("pxb", -ENOENT);
 
-	ret = label_run_boot(ctx, ctx->label, ctx->kernel_addr,
-			     ctx->initrd_addr_str, ctx->initrd_filesize,
-			     ctx->initrd_str, ctx->conf_fdt);
+	ret = label_run_boot(ctx, ctx->label, ctx->kern_addr_str,
+			     ctx->kern_addr, ctx->initrd_addr, ctx->initrd_size,
+			     ctx->initrd_str, ctx->conf_fdt_str, ctx->conf_fdt);
 	if (ret)
 		return log_msg_ret("lrb", ret);
 

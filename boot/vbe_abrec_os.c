@@ -43,19 +43,16 @@ static enum vbe_pick_t find_pick(const char *name)
 }
 
 static int vbe_abrec_getfile(struct pxe_context *ctx, const char *file_path,
-			     char *file_addr, enum bootflow_img_t type,
-			     ulong *sizep)
+			     ulong *addrp, ulong align,
+			     enum bootflow_img_t type, ulong *sizep)
 {
 	struct extlinux_info *info = ctx->userdata;
-	ulong addr;
 	int ret;
-
-	addr = simple_strtoul(file_addr, NULL, 16);
 
 	/* Allow up to 1GB */
 	*sizep = 1 << 30;
-	ret = bootmeth_read_file(info->dev, info->bflow, file_path, addr,
-				 type, sizep);
+	ret = bootmeth_read_file(info->dev, info->bflow, file_path, addrp,
+				 align, type, sizep);
 	if (ret)
 		return log_msg_ret("read", ret);
 
@@ -214,13 +211,12 @@ static int vbe_abrec_boot(struct udevice *dev, struct bootflow *bflow)
 	img = bootflow_img_find(bflow, BFI_VBE_OEM_FIT);
 	if (img) {
 		struct bootm_info bmi;
-		char addr_str[30];
+		char addr_str[BOOTM_STRLEN];
 		int states;
 
 		printf("Loading OEM devicetree from FIT\n");
 		bootm_init(&bmi);
-		snprintf(addr_str, sizeof(addr_str), "%lx", img->addr);
-		bmi.addr_img = addr_str;
+		bootm_set_addr_img(&bmi, img->addr, addr_str);
 		bmi.cmd_name = "vbe_os";
 		states = BOOTM_STATE_START | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |

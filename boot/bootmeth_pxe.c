@@ -23,19 +23,16 @@
 #include <pxe_utils.h>
 
 static int extlinux_pxe_getfile(struct pxe_context *ctx, const char *file_path,
-				char *file_addr, enum bootflow_img_t type,
-				ulong *sizep)
+				ulong *addrp, ulong align,
+				enum bootflow_img_t type, ulong *sizep)
 {
 	struct extlinux_info *info = ctx->userdata;
-	ulong addr;
 	int ret;
-
-	addr = simple_strtoul(file_addr, NULL, 16);
 
 	/* Allow up to 1GB */
 	*sizep = 1 << 30;
-	ret = bootmeth_read_file(info->dev, info->bflow, file_path, addr,
-				 type, sizep);
+	ret = bootmeth_read_file(info->dev, info->bflow, file_path, addrp,
+				 align, type, sizep);
 	if (ret)
 		return log_msg_ret("read", ret);
 
@@ -113,15 +110,19 @@ static int extlinux_pxe_read_bootflow(struct udevice *dev,
 }
 
 static int extlinux_pxe_read_file(struct udevice *dev, struct bootflow *bflow,
-				  const char *file_path, ulong addr,
-				  enum bootflow_img_t type, ulong *sizep)
+				  const char *file_path, ulong *addrp,
+				  ulong align, enum bootflow_img_t type,
+				  ulong *sizep)
 {
 	ulong size;
 	int ret;
 
 	if (IS_ENABLED(CONFIG_NET_LWIP))
 		return -ENOTSUPP;
-	ret = netboot_run(TFTPGET, addr, file_path, 0, false);
+	if (!*addrp)
+		return log_msg_ret("tfta", -ENOTSUPP);
+
+	ret = netboot_run(TFTPGET, *addrp, file_path, 0, false);
 	if (ret)
 		return log_msg_ret("tftp", ret);
 	ret = pxe_get_file_size(&size);
@@ -131,7 +132,7 @@ static int extlinux_pxe_read_file(struct udevice *dev, struct bootflow *bflow,
 		return log_msg_ret("spc", -ENOSPC);
 	*sizep = size;
 
-	if (!bootflow_img_add(bflow, file_path, type, addr, size))
+	if (!bootflow_img_add(bflow, file_path, type, *addrp, size))
 		return log_msg_ret("pxi", -ENOMEM);
 
 	return 0;
