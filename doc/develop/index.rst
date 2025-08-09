@@ -27,9 +27,10 @@ Implementation
 --------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
 
    directories
+   acpi
    bloblist
    bootstd/index
    ci_testing
