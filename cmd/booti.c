@@ -110,6 +110,7 @@ int do_booti(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	argc--; argv++;
 
 	bootm_init(&bmi);
+	bootm_read_env(&bmi);
 	if (argc)
 		bmi.addr_img = argv[0];
 	if (argc > 1)
