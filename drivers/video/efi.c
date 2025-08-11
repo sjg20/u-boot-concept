@@ -172,8 +172,8 @@ static int save_vesa_mode(struct vesa_mode_info *vesa,
 	else
 		ret = get_mode_from_entry(vesa, &priv->fb, &info);
 	if (ret) {
-		printf("EFI graphics output protocol not found (err=%dE)\n",
-		       ret);
+		log_debug("EFI graphics output protocol not found (err=%dE)\n",
+			  ret);
 		return ret;
 	}
 
@@ -257,7 +257,9 @@ static int efi_video_probe(struct udevice *dev)
 	return 0;
 
 err:
-	printf("No video mode configured in EFI!\n");
+	if (ret != -ENOTSUPP)
+		printf("No video mode configured in EFI!\n");
+
 	return ret;
 }
 
