@@ -4,6 +4,8 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_CATEGORY	LOGC_BOOT
+
 #ifndef USE_HOSTCC
 #include <bootm.h>
 #include <bootstage.h>
@@ -103,6 +105,7 @@ static struct legacy_img_hdr *image_get_kernel(ulong img_addr, int verify)
  * boot_get_kernel() - find kernel image
  *
  * @addr_fit: first argument to bootm: address, fit configuration, etc.
+ * @os_size_in: size of the entire OS file (for FIT it is the size of the FIT)
  * @os_data: pointer to a ulong variable, will hold os data start address
  * @os_len: pointer to a ulong variable, will hold os data length
  *     address and length, otherwise NULL
@@ -115,7 +118,8 @@ static struct legacy_img_hdr *image_get_kernel(ulong img_addr, int verify)
  * Return: 0 on success, -ve on error. -EPROTOTYPE means that the image is in
  * a wrong or unsupported format
  */
-static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
+static int boot_get_kernel(const char *addr_fit, ulong os_size_in,
+			   struct bootm_headers *images,
 			   ulong *os_data, ulong *os_len, const void **kernp)
 {
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
@@ -132,6 +136,8 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	const void *boot_img;
 	const void *vendor_boot_img;
 #endif
+
+	log_debug("addr_fit '%s'\n", addr_fit);
 	img_addr = genimg_get_kernel_addr_fit(addr_fit, &fit_uname_config,
 					      &fit_uname_kernel);
 
@@ -188,6 +194,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 #endif
 #if CONFIG_IS_ENABLED(FIT)
 	case IMAGE_FORMAT_FIT:
+		log_debug("fit: fit_image_load()\n");
 		os_noffset = fit_image_load(images, img_addr,
 				&fit_uname_kernel, &fit_uname_config,
 				IH_ARCH_DEFAULT, IH_TYPE_KERNEL,
@@ -213,6 +220,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	case IMAGE_FORMAT_ANDROID: {
 		int ret;
 
+		log_debug("android: get_kernel()\n");
 		boot_img = buf;
 		vendor_boot_img = NULL;
 		if (IS_ENABLED(CONFIG_CMD_ABOOTIMG)) {
@@ -232,7 +240,9 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	}
 #endif
 	case IMAGE_FORMAT_BOOTI:
+		log_debug("booti\n");
 		*os_data = img_addr;
+		*os_len = os_size_in;
 		break;
 	default:
 		bootstage_error(BOOTSTAGE_ID_CHECK_IMAGETYPE);
@@ -303,8 +313,59 @@ static int bootm_pre_load(const char *addr_str)
 	return ret;
 }
 
-static int found_booti_os(enum image_comp_t comp)
+/**
+ * resolve_os_comp_buf() - Figure out where to decompress OS to
+ *
+ * Assume that the kernel compression is at most a factor of 4 since
+ * zstd almost achieves that.
+ * Use an alignment of 2MB since this might help arm64
+ *
+ * @bmi: Bootm info
+ * Return: 0 if OK, -ENOTSUPP if the required env variables are not set, -EXDEV
+ * if the memory region is already reserved, -EINVAL if OS size is zero
+ * (bmi->os_size), -E2BIG if OS might decompress to >1G, -ENOSPC if lmb
+ * allocation failed
+ */
+static int resolve_os_comp_buf(struct bootm_info *bmi)
 {
+	if (bmi->kern_comp_addr) {
+		if (lmb_reserve(bmi->kern_comp_addr, bmi->kern_comp_size) < 0)
+			return -EXDEV;
+	} else {
+		phys_addr_t addr;
+
+		if (!bmi->kern_comp_size) {
+			if (!bmi->os_size) {
+				printf("Kernel size is zero\n");
+				return -EINVAL;
+			}
+
+			if (bmi->os_size > SZ_1G / 4) {
+				printf("Kernel size might exceed 1G limit\n");
+				return -E2BIG;
+			}
+
+			bmi->kern_comp_size = bmi->os_size * 4;
+		}
+
+		addr = lmb_alloc(bmi->kern_comp_size, SZ_2M);
+		if (!addr) {
+			printf("Cannot reserve space for kernel decompression (size %lx)\n",
+			       bmi->kern_comp_size);
+			printf("- provide kernel_comp_addr_r and kernel_comp_size?\n");
+			return -ENOSPC;
+		}
+
+		bmi->kern_comp_addr = addr;
+	}
+
+	return 0;
+}
+
+static int found_booti_os(struct bootm_info *bmi, enum image_comp_t comp)
+{
+	int ret;
+
 	images.os.load = images.os.image_start;
 	images.os.type = IH_TYPE_KERNEL;
 	images.os.os = IH_OS_LINUX;
@@ -317,16 +378,15 @@ static int found_booti_os(enum image_comp_t comp)
 	log_debug("load %lx start %lx len %lx ep %lx os %x comp %x\n",
 		  images.os.load, images.os.image_start, images.os.image_len,
 		  images.ep, images.os.os, images.os.comp);
-	if (comp != IH_COMP_NONE) {
-		images.os.load = env_get_hex("kernel_comp_addr_r", 0);
-		images.os.image_len = env_get_ulong("kernel_comp_size", 16, 0);
-		if (!images.os.load || !images.os.image_len) {
-			puts("kernel_comp_addr_r or kernel_comp_size is not provided!\n");
-			return -ENOTSUPP;
-		}
-		if (lmb_reserve(images.os.load, images.os.image_len) < 0)
-			return -EXDEV;
-	}
+	if (!comp)
+		return 0;
+
+	ret = resolve_os_comp_buf(bmi);
+	if (ret)
+		return log_msg_ret("fbo", ret);
+
+	images.os.load = bmi->kern_comp_addr;
+	images.os.image_len = bmi->kern_comp_size;
 
 	return 0;
 }
@@ -348,8 +408,9 @@ static int bootm_find_os(struct bootm_info *bmi)
 	int ret;
 
 	/* get kernel image header, start address and length */
-	ret = boot_get_kernel(bmi->addr_img, &images, &images.os.image_start,
-			      &images.os.image_len, &os_hdr);
+	ret = boot_get_kernel(bmi->addr_img, bmi->os_size, &images,
+			      &images.os.image_start, &images.os.image_len,
+			      &os_hdr);
 	if (ret) {
 		/* no OS present, but that is OK */
 		if (ret == -ENOPKG) {
@@ -368,6 +429,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 	switch (genimg_get_format(os_hdr)) {
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 	case IMAGE_FORMAT_LEGACY:
+		log_debug("legacy");
 		images.os.type = image_get_type(os_hdr);
 		images.os.comp = image_get_comp(os_hdr);
 		images.os.os = image_get_os(os_hdr);
@@ -379,6 +441,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 #endif
 #if CONFIG_IS_ENABLED(FIT)
 	case IMAGE_FORMAT_FIT:
+		log_debug("fit");
 		if (fit_image_get_type(images.fit_hdr_os,
 				       images.fit_noffset_os,
 				       &images.os.type)) {
@@ -421,6 +484,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 #endif
 #ifdef CONFIG_ANDROID_BOOT_IMAGE
 	case IMAGE_FORMAT_ANDROID:
+		log_debug("android");
 		boot_img = os_hdr;
 		vendor_boot_img = NULL;
 		if (IS_ENABLED(CONFIG_CMD_ABOOTIMG)) {
@@ -441,8 +505,9 @@ static int bootm_find_os(struct bootm_info *bmi)
 		break;
 #endif
 	case IMAGE_FORMAT_BOOTI:
+		log_debug("booti");
 		if (IS_ENABLED(CONFIG_CMD_BOOTI)) {
-			if (found_booti_os(IH_COMP_NONE))
+			if (found_booti_os(bmi, IH_COMP_NONE))
 				return 1;
 			ep_found = true;
 			break;
@@ -454,8 +519,10 @@ static int bootm_find_os(struct bootm_info *bmi)
 			int comp;
 
 			comp = image_decomp_type(os_hdr, 2);
+			log_debug("booti decomp: %s\n",
+				  genimg_get_comp_name(comp));
 			if (comp != IH_COMP_NONE) {
-				if (found_booti_os(comp))
+				if (found_booti_os(bmi, comp))
 					return 1;
 				ep_found = true;
 			}
@@ -554,9 +621,11 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 	}
 
 	/* find ramdisk */
+	log_debug("ramdisk\n");
 	ret = boot_get_ramdisk(select, &images, IH_INITRD_ARCH,
 			       &images.rd_start, &images.rd_end);
 	if (ret && ret != -ENOPKG) {
+		log_debug("ramdisk err %d\n", ret);
 		puts("Ramdisk image is corrupt or invalid\n");
 		return 1;
 	}
@@ -566,6 +635,7 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 		return 1;
 
 	if (CONFIG_IS_ENABLED(OF_LIBFDT)) {
+		log_debug("fdt\n");
 		buf = map_sysmem(img_addr, 0);
 
 		/* find flattened device tree */
@@ -587,6 +657,7 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 
 #if CONFIG_IS_ENABLED(FIT)
 	if (IS_ENABLED(CONFIG_FPGA)) {
+		log_debug("fpga");
 		/* find bitstreams */
 		ret = boot_get_fpga(&images);
 		if (ret) {
@@ -702,23 +773,22 @@ static int bootm_load_os(struct bootm_info *bmi, int boot_progress)
 	ulong decomp_len;
 	int err;
 
+	log_debug("load_os type '%s' comp '%s'\n",
+		  genimg_get_os_short_name(os.type),
+		  genimg_get_comp_short_name(os.comp));
 	/*
 	 * For a "noload" compressed kernel we need to allocate a buffer large
 	 * enough to decompress in to and use that as the load address now.
-	 * Assume that the kernel compression is at most a factor of 4 since
-	 * zstd almost achieves that.
-	 * Use an alignment of 2MB since this might help arm64
 	 */
-	if (os.type == IH_TYPE_KERNEL_NOLOAD && os.comp != IH_COMP_NONE) {
-		ulong req_size = ALIGN(image_len * 4, SZ_1M);
+	if (os.type == IH_TYPE_KERNEL_NOLOAD && os.comp) {
+		int ret;
 
-		load = lmb_alloc(req_size, SZ_2M);
-		if (!load)
-			return 1;
+		ret = resolve_os_comp_buf(bmi);
+		if (ret)
+			return log_msg_ret("fbo", ret);
+
 		os.load = load;
 		images->ep = load;
-		debug("Allocated %lx bytes at %lx for kernel (size %lx) decompression\n",
-		      req_size, load, image_len);
 	}
 	log_debug("load_os load %lx image_start %lx image_len %lx\n", load,
 		  image_start, image_len);
@@ -1066,37 +1136,50 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	 * Work through the states and see how far we get. We stop on
 	 * any error.
 	 */
-	if (states & BOOTM_STATE_START)
+	if (states & BOOTM_STATE_START) {
+		log_debug("start\n");
 		ret = bootm_start();
+	}
 
-	if (states & BOOTM_STATE_RESTART)
+	if (states & BOOTM_STATE_RESTART) {
+		log_debug("restart\n");
 		ret = bootm_restart();
+	}
 
-	if (!ret && (states & BOOTM_STATE_PRE_LOAD))
+	if (!ret && (states & BOOTM_STATE_PRE_LOAD)) {
+		log_debug("pre_load\n");
 		ret = bootm_pre_load(bmi->addr_img);
+	}
 
-	if (!ret && (states & BOOTM_STATE_FINDOS))
+	if (!ret && (states & BOOTM_STATE_FINDOS)) {
+		log_debug("findos\n");
 		ret = bootm_find_os(bmi);
+	}
 
 	if (!ret && (states & BOOTM_STATE_FINDOTHER)) {
 		ulong img_addr;
 
 		img_addr = bmi->addr_img ? hextoul(bmi->addr_img, NULL)
 			: image_load_addr;
+		log_debug("findother\n");
 		ret = bootm_find_other(img_addr, bmi->conf_ramdisk,
 				       bmi->conf_fdt);
 	}
 
 	if (IS_ENABLED(CONFIG_MEASURED_BOOT) && !ret &&
-	    (states & BOOTM_STATE_MEASURE))
+	    (states & BOOTM_STATE_MEASURE)) {
+		log_debug("measure\n");
 		bootm_measure(images);
+	}
 
 	/* Load the OS */
 	if (!ret && (states & BOOTM_STATE_LOADOS) && !images->no_os) {
+		log_debug("loados\n");
 		if (IS_ENABLED(CONFIG_EVENT)) {
 			struct event_os_load data;
 
 			data.addr = images->os.load;
+			log_debug("notify EVT_BOOT_OS_ADDR\n");
 			ret = event_notify(EVT_BOOT_OS_ADDR, &data,
 					   sizeof(data));
 			if (ret)
@@ -1114,6 +1197,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	if (!ret && (states & BOOTM_STATE_RAMDISK)) {
 		ulong rd_len = images->rd_end - images->rd_start;
 
+		log_debug("ramdisk\n");
 		ret = boot_ramdisk_high(images->rd_start, rd_len,
 					&images->initrd_start,
 					&images->initrd_end);
@@ -1125,6 +1209,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 #endif
 #if CONFIG_IS_ENABLED(OF_LIBFDT) && CONFIG_IS_ENABLED(LMB)
 	if (!ret && (states & BOOTM_STATE_FDT)) {
+		log_debug("fdt\n");
 		boot_fdt_add_mem_rsv_regions(images->ft_addr);
 		ret = boot_relocate_fdt(&images->ft_addr, &images->ft_len);
 	}
@@ -1148,12 +1233,18 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 
 	/* Call various other states that are not generally used */
-	if (!ret && (states & BOOTM_STATE_OS_CMDLINE))
+	if (!ret && (states & BOOTM_STATE_OS_CMDLINE)) {
+		log_debug("cmdline\n");
 		ret = boot_fn(BOOTM_STATE_OS_CMDLINE, bmi);
-	if (!ret && (states & BOOTM_STATE_OS_BD_T))
+	}
+	if (!ret && (states & BOOTM_STATE_OS_BD_T)) {
+		log_debug("bd_t\n");
 		ret = boot_fn(BOOTM_STATE_OS_BD_T, bmi);
+	}
 	if (!ret && (states & BOOTM_STATE_OS_PREP)) {
 		int flags = 0;
+
+		log_debug("prep\n");
 		/* For Linux OS do all substitutions at console processing */
 		if (images->os.os == IH_OS_LINUX)
 			flags = BOOTM_CL_ALL;
@@ -1171,6 +1262,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	if (!ret && (states & BOOTM_STATE_OS_FAKE_GO)) {
 		char *cmd_list = env_get("fakegocmd");
 
+		log_debug("fake_go\n");
 		ret = boot_selected_os(BOOTM_STATE_OS_FAKE_GO, bmi, boot_fn);
 		if (!ret && cmd_list)
 			ret = run_command_list(cmd_list, -1, 0);
@@ -1184,8 +1276,10 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 
 	/* Now run the OS! We hope this doesn't return */
-	if (!ret && (states & BOOTM_STATE_OS_GO))
+	if (!ret && (states & BOOTM_STATE_OS_GO)) {
+		log_debug("go\n");
 		ret = boot_selected_os(BOOTM_STATE_OS_GO, bmi, boot_fn);
+	}
 
 	/* Deal with any fallout */
 err:
@@ -1210,9 +1304,10 @@ int boot_run(struct bootm_info *bmi, const char *cmd, int extra_states)
 		states |= BOOTM_STATE_RAMDISK;
 	states |= extra_states;
 
-	log_debug("cmd '%s' states %x addr_img '%s' conf_ramdisk '%s' conf_fdt '%s' images %p\n",
+	log_debug("cmd '%s' states %x addr_img '%s' conf_ramdisk '%s' "
+		  "conf_fdt '%s' os_size %lx images %p\n",
 		  cmd, states, bmi->addr_img, bmi->conf_ramdisk, bmi->conf_fdt,
-		  bmi->images);
+		  bmi->os_size, bmi->images);
 
 	return bootm_run_states(bmi, states);
 }
@@ -1271,6 +1366,12 @@ int booti_run(struct bootm_info *bmi)
 			BOOTM_STATE_LOADOS);
 }
 
+void bootm_read_env(struct bootm_info *bmi)
+{
+	bmi->kern_comp_addr = env_get_hex("kernel_comp_addr_r", 0);
+	bmi->kern_comp_size = env_get_ulong("kernel_comp_size", 16, 0);
+}
+
 int bootm_boot_start(ulong addr, const char *cmdline)
 {
 	char addr_str[BOOTM_STRLEN];
@@ -1296,6 +1397,7 @@ int bootm_boot_start(ulong addr, const char *cmdline)
 		return ret;
 	}
 	bootm_init(&bmi);
+	bootm_read_env(&bmi);
 	bootm_set_addr_img(&bmi, addr, addr_str);
 	bmi.cmd_name = "bootm";
 	ret = bootm_run_states(&bmi, states);
