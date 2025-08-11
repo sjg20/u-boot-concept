@@ -65,7 +65,15 @@ SECTIONS
 		_bss_end = .;
 		_edata = .;
 		_end = .;
+
+		/* This needs to come before *(.text*) */
+                __efi_runtime_start = .;
+		*(.text.efi_runtime*)
+		*(.rodata.efi_runtime*)
+		*(.data.efi_runtime*)
+                __efi_runtime_stop = .;
 	}
+
 	_data_size = _edata - _data;
 
 	. = ALIGN(4096);
@@ -80,6 +88,14 @@ SECTIONS
 		*(.rela.ctors*)
 		*(.rela.dtors*)
 		*(.rela__u_boot_list*)
+	}
+
+	. = ALIGN(8);
+	.efi_runtime_rel : {
+                __efi_runtime_rel_start = .;
+		*(.rel*.efi_runtime)
+		*(.rel*.efi_runtime.*)
+                __efi_runtime_rel_stop = .;
 	}
 
 	. = ALIGN(4096);
