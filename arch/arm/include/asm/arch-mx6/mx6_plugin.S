@@ -108,7 +108,7 @@ mmu_disable_notreq:
 
 /* To return to ROM from plugin, we need to fill in these argument.
  * Here is what need to do:
- * Need to construct the paramters for this function before return to ROM:
+ * Need to construct the parameters for this function before return to ROM:
  * plugin_download(void **start, size_t *bytes, UINT32 *ivt_offset)
  */
 	pop {r0-r4, lr}

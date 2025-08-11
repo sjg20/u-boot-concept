@@ -1110,7 +1110,7 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb);
  * Set up the FDT to use for booting a kernel
  *
  * This performs ramdisk setup, sets up the FDT if required, and adds
- * paramters to the FDT if libfdt is available.
+ * parameters to the FDT if libfdt is available.
  *
  * @param images	Images information
  * Return: 0 if ok, <0 on failure

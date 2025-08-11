@@ -890,7 +890,7 @@ unsigned int populate_memctl_options(const common_timing_params_t *common_dimm,
 	/* Memory Organization Parameters */
 	popts->registered_dimm_en = common_dimm->all_dimms_registered;
 
-	/* Operational Mode Paramters */
+	/* Operational Mode Parameters */
 
 	/* Pick ECC modes */
 	popts->ecc_mode = 0;		  /* 0 = disabled, 1 = enabled */
