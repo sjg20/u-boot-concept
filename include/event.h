@@ -180,6 +180,14 @@ enum event_t {
 	EVT_BOOT_OS_ADDR,
 
 	/**
+	 * @EVT_BOOTM_FINAL:
+	 * Triggered after any required device-removals are complete, bootstage
+	 * report is shown, etc. and before any machine-specific poking, such as
+	 * disabling interrupts, changing exception level
+	 */
+	EVT_BOOTM_FINAL,
+
+	/**
 	 * @EVT_COUNT:
 	 * This constants holds the maximum event number + 1 and is used when
 	 * looping over all event classes.
