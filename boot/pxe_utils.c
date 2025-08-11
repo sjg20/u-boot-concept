@@ -543,6 +543,7 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
  * @kern_addr_str: String containing kernel address and possible FIT
  * configuration (cannot be NULL)
  * @kern_addr: Kernel address (cannot be 0)
+ * @kern_size: Kernel size in bytes
  * @initrd_addr: String containing initrd address (0 if none)
  * @initrd_size: initrd size (only used if @initrd_addr)
  * @initrd_str: initrd string to process (only used if @initrd_addr)
@@ -552,7 +553,7 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
  * returned, or -ve error value on error
  */
 static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
-			  char *kern_addr_str, ulong kern_addr,
+			  char *kern_addr_str, ulong kern_addr, ulong kern_size,
 			  ulong initrd_addr, ulong initrd_size,
 			  char *initrd_str, const char *conf_fdt_str,
 			  ulong conf_fdt)
@@ -562,11 +563,17 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	void *buf;
 	enum image_fmt_t  fmt;
 
+	log_debug("label '%s' kern_addr_str '%s' kern_addr %lx initrd_addr %lx "
+		  "initrd_size %lx initrd_str '%s' conf_fdt_str '%s' "
+		  "conf_fdt %lx\n", label->name, kern_addr_str, kern_addr,
+		  initrd_addr, initrd_size, initrd_str, conf_fdt_str, conf_fdt);
+
 	bootm_init(&bmi);
 
 	bmi.addr_img = kern_addr_str;
 	bmi.conf_fdt = conf_fdt_str;
 	bootm_x86_set(&bmi, bzimage_addr, hextoul(kern_addr_str, NULL));
+	bmi.os_size = kern_size;
 
 	if (initrd_addr) {
 		bmi.conf_ramdisk = initrd_str;
@@ -663,6 +670,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	char fit_addr[200];
 	const char *conf_fdt_str;
 	ulong conf_fdt = 0;
+	ulong kern_size;
 	int ret;
 
 	label_print(label);
@@ -691,7 +699,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 
 	if (get_relfile_envaddr(ctx, label->kernel, "kernel_addr_r", SZ_2M,
 				(enum bootflow_img_t)IH_TYPE_KERNEL,
-				&kern_addr, NULL) < 0) {
+				&kern_addr, &kern_size) < 0) {
 		printf("Skipping %s for failure retrieving kernel\n",
 		       label->name);
 		return 1;
@@ -799,6 +807,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		ctx->label = label;
 		ctx->kern_addr_str = strdup(kern_addr_str);
 		ctx->kern_addr = kern_addr;
+		ctx->kern_size = kern_size;
 		if (initrd_addr) {
 			ctx->initrd_addr = initrd_addr;
 			ctx->initrd_size = initrd_size;
@@ -822,8 +831,9 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		return 0;
 	}
 
-	label_run_boot(ctx, label, kern_addr_str, kern_addr, initrd_addr,
-		       initrd_size, initrd_str, conf_fdt_str, conf_fdt);
+	label_run_boot(ctx, label, kern_addr_str, kern_addr, kern_size,
+		       initrd_addr, initrd_size, initrd_str, conf_fdt_str,
+		       conf_fdt);
 	/* ignore the error value since we are going to fail anyway */
 
 	return 1;	/* returning is always failure */
@@ -1118,8 +1128,9 @@ int pxe_do_boot(struct pxe_context *ctx)
 		return log_msg_ret("pxb", -ENOENT);
 
 	ret = label_run_boot(ctx, ctx->label, ctx->kern_addr_str,
-			     ctx->kern_addr, ctx->initrd_addr, ctx->initrd_size,
-			     ctx->initrd_str, ctx->conf_fdt_str, ctx->conf_fdt);
+			     ctx->kern_addr, ctx->kern_size, ctx->initrd_addr,
+			     ctx->initrd_size, ctx->initrd_str,
+			     ctx->conf_fdt_str, ctx->conf_fdt);
 	if (ret)
 		return log_msg_ret("lrb", ret);
 
