@@ -15,13 +15,13 @@ obj-y	+= crt0_64.o
 else
 obj-y	+= vectors.o crt0.o
 endif  #  CPU type
+endif  # CONFIG_EFI_APP
 
 ifdef CONFIG_ARM64
 obj-y   += setjmp_aarch64.o
 else
 obj-y   += setjmp.o
 endif  # ARM64
-endif  # CONFIG_EFI_APP
 
 ifndef CONFIG_XPL_BUILD
 ifndef CONFIG_EFI_APP
