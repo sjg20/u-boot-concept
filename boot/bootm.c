@@ -310,7 +310,7 @@ static int bootm_pre_load(const char *addr_str)
 	return ret;
 }
 
-static int found_booti_os(enum image_comp_t comp)
+static int found_booti_os(struct bootm_info *bmi, enum image_comp_t comp)
 {
 	images.os.load = images.os.image_start;
 	images.os.type = IH_TYPE_KERNEL;
@@ -325,8 +325,8 @@ static int found_booti_os(enum image_comp_t comp)
 		  images.os.load, images.os.image_start, images.os.image_len,
 		  images.ep, images.os.os, images.os.comp);
 	if (comp != IH_COMP_NONE) {
-		images.os.load = env_get_hex("kernel_comp_addr_r", 0);
-		images.os.image_len = env_get_ulong("kernel_comp_size", 16, 0);
+		images.os.load = bmi->kern_comp_addr;
+		images.os.image_len = bmi->kern_comp_size;
 		if (!images.os.load || !images.os.image_len) {
 			puts("kernel_comp_addr_r or kernel_comp_size is not provided!\n");
 			return -ENOTSUPP;
@@ -453,7 +453,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 	case IMAGE_FORMAT_BOOTI:
 		log_debug("booti");
 		if (IS_ENABLED(CONFIG_CMD_BOOTI)) {
-			if (found_booti_os(IH_COMP_NONE))
+			if (found_booti_os(bmi, IH_COMP_NONE))
 				return 1;
 			ep_found = true;
 			break;
@@ -468,7 +468,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 			log_debug("booti decomp: %s\n",
 				  genimg_get_comp_name(comp));
 			if (comp != IH_COMP_NONE) {
-				if (found_booti_os(comp))
+				if (found_booti_os(bmi, comp))
 					return 1;
 				ep_found = true;
 			}
@@ -1315,6 +1315,12 @@ int booti_run(struct bootm_info *bmi)
 			BOOTM_STATE_LOADOS);
 }
 
+void bootm_read_env(struct bootm_info *bmi)
+{
+	bmi->kern_comp_addr = env_get_hex("kernel_comp_addr_r", 0);
+	bmi->kern_comp_size = env_get_ulong("kernel_comp_size", 16, 0);
+}
+
 int bootm_boot_start(ulong addr, const char *cmdline)
 {
 	char addr_str[BOOTM_STRLEN];
@@ -1340,6 +1346,7 @@ int bootm_boot_start(ulong addr, const char *cmdline)
 		return ret;
 	}
 	bootm_init(&bmi);
+	bootm_read_env(&bmi);
 	bootm_set_addr_img(&bmi, addr, addr_str);
 	bmi.cmd_name = "bootm";
 	ret = bootm_run_states(&bmi, states);
