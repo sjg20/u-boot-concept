@@ -105,6 +105,7 @@ static struct legacy_img_hdr *image_get_kernel(ulong img_addr, int verify)
  * boot_get_kernel() - find kernel image
  *
  * @addr_fit: first argument to bootm: address, fit configuration, etc.
+ * @os_size_in: size of the entire OS file (for FIT it is the size of the FIT)
  * @os_data: pointer to a ulong variable, will hold os data start address
  * @os_len: pointer to a ulong variable, will hold os data length
  *     address and length, otherwise NULL
@@ -117,7 +118,8 @@ static struct legacy_img_hdr *image_get_kernel(ulong img_addr, int verify)
  * Return: 0 on success, -ve on error. -EPROTOTYPE means that the image is in
  * a wrong or unsupported format
  */
-static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
+static int boot_get_kernel(const char *addr_fit, ulong os_size_in,
+			   struct bootm_headers *images,
 			   ulong *os_data, ulong *os_len, const void **kernp)
 {
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
@@ -240,6 +242,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	case IMAGE_FORMAT_BOOTI:
 		log_debug("booti\n");
 		*os_data = img_addr;
+		*os_len = os_size_in;
 		break;
 	default:
 		bootstage_error(BOOTSTAGE_ID_CHECK_IMAGETYPE);
@@ -315,10 +318,15 @@ static int bootm_pre_load(const char *addr_str)
  *
  * @bmi: Bootm info
  * Return: 0 if OK, -ENOTSUPP if the required env variables are not set, -EXDEV
- *	if the memory region is already reserved
+ * if the memory region is already reserved, -EINVAL if OS size is zero
+ * (bmi->os_size)
  */
 static int resolve_os_comp_buf(struct bootm_info *bmi)
 {
+	if (!bmi->os_size) {
+		printf("Kernel size is zero\n");
+		return -EINVAL;
+	}
 	images.os.load = bmi->kern_comp_addr;
 	images.os.image_len = bmi->kern_comp_size;
 	if (!images.os.load || !images.os.image_len) {
@@ -378,8 +386,9 @@ static int bootm_find_os(struct bootm_info *bmi)
 	int ret;
 
 	/* get kernel image header, start address and length */
-	ret = boot_get_kernel(bmi->addr_img, &images, &images.os.image_start,
-			      &images.os.image_len, &os_hdr);
+	ret = boot_get_kernel(bmi->addr_img, bmi->os_size, &images,
+			      &images.os.image_start, &images.os.image_len,
+			      &os_hdr);
 	if (ret) {
 		/* no OS present, but that is OK */
 		if (ret == -ENOPKG) {
