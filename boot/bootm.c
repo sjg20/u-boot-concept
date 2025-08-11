@@ -316,25 +316,48 @@ static int bootm_pre_load(const char *addr_str)
 /**
  * resolve_os_comp_buf() - Figure out where to decompress OS to
  *
+ * Assume that the kernel compression is at most a factor of 4 since
+ * zstd almost achieves that.
+ * Use an alignment of 2MB since this might help arm64
+ *
  * @bmi: Bootm info
  * Return: 0 if OK, -ENOTSUPP if the required env variables are not set, -EXDEV
  * if the memory region is already reserved, -EINVAL if OS size is zero
- * (bmi->os_size)
+ * (bmi->os_size), -E2BIG if OS might decompress to >1G, -ENOSPC if lmb
+ * allocation failed
  */
 static int resolve_os_comp_buf(struct bootm_info *bmi)
 {
-	if (!bmi->os_size) {
-		printf("Kernel size is zero\n");
-		return -EINVAL;
+	if (bmi->kern_comp_addr) {
+		if (lmb_reserve(bmi->kern_comp_addr, bmi->kern_comp_size) < 0)
+			return -EXDEV;
+	} else {
+		phys_addr_t addr;
+
+		if (!bmi->kern_comp_size) {
+			if (!bmi->os_size) {
+				printf("Kernel size is zero\n");
+				return -EINVAL;
+			}
+
+			if (bmi->os_size > SZ_1G / 4) {
+				printf("Kernel size might exceed 1G limit\n");
+				return -E2BIG;
+			}
+
+			bmi->kern_comp_size = bmi->os_size * 4;
+		}
+
+		addr = lmb_alloc(bmi->kern_comp_size, SZ_2M);
+		if (!addr) {
+			printf("Cannot reserve space for kernel decompression (size %lx)\n",
+			       bmi->kern_comp_size);
+			printf("- provide kernel_comp_addr_r and kernel_comp_size?\n");
+			return -ENOSPC;
+		}
+
+		bmi->kern_comp_addr = addr;
 	}
-	images.os.load = bmi->kern_comp_addr;
-	images.os.image_len = bmi->kern_comp_size;
-	if (!images.os.load || !images.os.image_len) {
-		puts("kernel_comp_addr_r or kernel_comp_size is not provided!\n");
-		return -ENOTSUPP;
-	}
-	if (lmb_reserve(images.os.load, images.os.image_len) < 0)
-		return -EXDEV;
 
 	return 0;
 }
@@ -757,20 +780,16 @@ static int bootm_load_os(struct bootm_info *bmi, int boot_progress)
 	/*
 	 * For a "noload" compressed kernel we need to allocate a buffer large
 	 * enough to decompress in to and use that as the load address now.
-	 * Assume that the kernel compression is at most a factor of 4 since
-	 * zstd almost achieves that.
-	 * Use an alignment of 2MB since this might help arm64
 	 */
-	if (os.type == IH_TYPE_KERNEL_NOLOAD && os.comp != IH_COMP_NONE) {
-		ulong req_size = ALIGN(image_len * 4, SZ_1M);
+	if (os.type == IH_TYPE_KERNEL_NOLOAD && os.comp) {
+		int ret;
 
-		load = lmb_alloc(req_size, SZ_2M);
-		if (!load)
-			return 1;
+		ret = resolve_os_comp_buf(bmi);
+		if (ret)
+			return log_msg_ret("fbo", ret);
+
 		os.load = load;
 		images->ep = load;
-		debug("Allocated %lx bytes at %lx for kernel (size %lx) decompression\n",
-		      req_size, load, image_len);
 	}
 	log_debug("load_os load %lx image_start %lx image_len %lx\n", load,
 		  image_start, image_len);
