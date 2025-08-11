@@ -8,6 +8,8 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_CATEGORY	LOGC_BOOT
+
 #include <config.h>
 #include <bootstage.h>
 #include <cpu_func.h>
@@ -309,6 +311,8 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 	ulong rd_addr = 0;
 	char *buf;
 
+	log_debug("select '%s' arch %s\n", select,
+		  genimg_get_arch_short_name(arch));
 	if (CONFIG_IS_ENABLED(FIT)) {
 		fit_uname_config = images->fit_uname_cfg;
 		fit_uname_ramdisk = NULL;
@@ -338,6 +342,8 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 				      fit_uname_ramdisk, rd_addr);
 				done_select = true;
 			}
+
+			log_debug("FIT select done %d\n", done_select);
 		}
 	}
 	if (!done_select) {
@@ -386,6 +392,7 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 		break;
 	case IMAGE_FORMAT_FIT:
 		if (CONFIG_IS_ENABLED(FIT)) {
+			log_debug("ramdisk fit load");
 			rd_noffset = fit_image_load(images, rd_addr,
 						    &fit_uname_ramdisk,
 						    &fit_uname_config,
@@ -411,6 +418,7 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 				void *vendor_boot_img = map_sysmem(get_avendor_bootimg_addr(), 0);
 				void *ramdisk_img;
 
+				log_debug("android abootimg");
 				if (init_boot_img == -1)
 					ramdisk_img = map_sysmem(boot_img, 0);
 				else
@@ -423,6 +431,7 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 			} else {
 				void *ptr = map_sysmem(images->os.start, 0);
 
+				log_debug("android other");
 				ret = android_image_get_ramdisk(ptr, NULL, rd_datap, rd_lenp);
 				unmap_sysmem(ptr);
 			}
@@ -451,6 +460,7 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 				*rd_datap = rd_addr;
 				done = true;
 			}
+			log_debug("ramdisk raw done %d\n", done);
 		}
 
 		if (!done) {
@@ -468,14 +478,17 @@ int boot_get_ramdisk(char const *select, struct bootm_headers *images,
 	ulong rd_data, rd_len;
 	int ret;
 
+	log_debug("ramdisk select '%s' arch %s\n", select,
+		  genimg_get_arch_short_name(arch));
 	/*
 	 * Look for a '-' which indicates to ignore the
 	 * ramdisk argument
 	 */
 	if (select && strcmp(select, "-") ==  0) {
-		debug("## Skipping init Ramdisk\n");
+		log_debug("## Skipping init Ramdisk\n");
 		return -ENOPKG;
 	} else if (select || genimg_has_config(images)) {
+		log_debug("select_ramdisk\n");
 		ret = select_ramdisk(images, select, arch, &rd_data, &rd_len);
 		if (ret)
 			goto err;
@@ -497,6 +510,7 @@ int boot_get_ramdisk(char const *select, struct bootm_headers *images,
 		}
 	} else {
 		/* no initrd image */
+		log_debug("no ramdisk\n");
 		ret = -ENOPKG;
 		goto err;
 	}
