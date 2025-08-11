@@ -1276,9 +1276,10 @@ int boot_run(struct bootm_info *bmi, const char *cmd, int extra_states)
 		states |= BOOTM_STATE_RAMDISK;
 	states |= extra_states;
 
-	log_debug("cmd '%s' states %x addr_img '%s' conf_ramdisk '%s' conf_fdt '%s' images %p\n",
+	log_debug("cmd '%s' states %x addr_img '%s' conf_ramdisk '%s' "
+		  "conf_fdt '%s' os_size %lx images %p\n",
 		  cmd, states, bmi->addr_img, bmi->conf_ramdisk, bmi->conf_fdt,
-		  bmi->images);
+		  bmi->os_size, bmi->images);
 
 	return bootm_run_states(bmi, states);
 }

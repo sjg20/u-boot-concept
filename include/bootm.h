@@ -62,6 +62,7 @@ enum bootm_final_t {
  * is reserved using lmb and this value is updated
  * @kern_comp_size: Maximum size of the decompressed kernel. If 0, the size is
  * calculated based on 4x the size of the kernel, up to a limit of 1G
+ * @os_size: Size of the loaded OS image in bytes, 0 if not loaded/not known
  *
  * For zboot:
  * @bzimage_addr: Address of the bzImage to boot, or 0 if the image has already
@@ -88,6 +89,7 @@ struct bootm_info {
 	int argc;
 	char *const *argv;
 	bool ignore_bootm_len;
+	ulong os_size;
 	ulong kern_comp_addr;
 	ulong kern_comp_size;
 
