@@ -4,6 +4,8 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_CATEGORY	LOGC_BOOT
+
 #ifndef USE_HOSTCC
 #include <bootm.h>
 #include <bootstage.h>
@@ -132,6 +134,8 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	const void *boot_img;
 	const void *vendor_boot_img;
 #endif
+
+	log_debug("addr_fit '%s'\n", addr_fit);
 	img_addr = genimg_get_kernel_addr_fit(addr_fit, &fit_uname_config,
 					      &fit_uname_kernel);
 
@@ -188,6 +192,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 #endif
 #if CONFIG_IS_ENABLED(FIT)
 	case IMAGE_FORMAT_FIT:
+		log_debug("fit: fit_image_load()\n");
 		os_noffset = fit_image_load(images, img_addr,
 				&fit_uname_kernel, &fit_uname_config,
 				IH_ARCH_DEFAULT, IH_TYPE_KERNEL,
@@ -213,6 +218,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	case IMAGE_FORMAT_ANDROID: {
 		int ret;
 
+		log_debug("android: get_kernel()\n");
 		boot_img = buf;
 		vendor_boot_img = NULL;
 		if (IS_ENABLED(CONFIG_CMD_ABOOTIMG)) {
@@ -232,6 +238,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	}
 #endif
 	case IMAGE_FORMAT_BOOTI:
+		log_debug("booti\n");
 		*os_data = img_addr;
 		break;
 	default:
@@ -368,6 +375,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 	switch (genimg_get_format(os_hdr)) {
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 	case IMAGE_FORMAT_LEGACY:
+		log_debug("legacy");
 		images.os.type = image_get_type(os_hdr);
 		images.os.comp = image_get_comp(os_hdr);
 		images.os.os = image_get_os(os_hdr);
@@ -379,6 +387,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 #endif
 #if CONFIG_IS_ENABLED(FIT)
 	case IMAGE_FORMAT_FIT:
+		log_debug("fit");
 		if (fit_image_get_type(images.fit_hdr_os,
 				       images.fit_noffset_os,
 				       &images.os.type)) {
@@ -421,6 +430,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 #endif
 #ifdef CONFIG_ANDROID_BOOT_IMAGE
 	case IMAGE_FORMAT_ANDROID:
+		log_debug("android");
 		boot_img = os_hdr;
 		vendor_boot_img = NULL;
 		if (IS_ENABLED(CONFIG_CMD_ABOOTIMG)) {
@@ -441,6 +451,7 @@ static int bootm_find_os(struct bootm_info *bmi)
 		break;
 #endif
 	case IMAGE_FORMAT_BOOTI:
+		log_debug("booti");
 		if (IS_ENABLED(CONFIG_CMD_BOOTI)) {
 			if (found_booti_os(IH_COMP_NONE))
 				return 1;
@@ -454,6 +465,8 @@ static int bootm_find_os(struct bootm_info *bmi)
 			int comp;
 
 			comp = image_decomp_type(os_hdr, 2);
+			log_debug("booti decomp: %s\n",
+				  genimg_get_comp_name(comp));
 			if (comp != IH_COMP_NONE) {
 				if (found_booti_os(comp))
 					return 1;
@@ -554,9 +567,11 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 	}
 
 	/* find ramdisk */
+	log_debug("ramdisk\n");
 	ret = boot_get_ramdisk(select, &images, IH_INITRD_ARCH,
 			       &images.rd_start, &images.rd_end);
 	if (ret && ret != -ENOPKG) {
+		log_debug("ramdisk err %d\n", ret);
 		puts("Ramdisk image is corrupt or invalid\n");
 		return 1;
 	}
@@ -566,6 +581,7 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 		return 1;
 
 	if (CONFIG_IS_ENABLED(OF_LIBFDT)) {
+		log_debug("fdt\n");
 		buf = map_sysmem(img_addr, 0);
 
 		/* find flattened device tree */
@@ -587,6 +603,7 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 
 #if CONFIG_IS_ENABLED(FIT)
 	if (IS_ENABLED(CONFIG_FPGA)) {
+		log_debug("fpga");
 		/* find bitstreams */
 		ret = boot_get_fpga(&images);
 		if (ret) {
@@ -702,6 +719,9 @@ static int bootm_load_os(struct bootm_info *bmi, int boot_progress)
 	ulong decomp_len;
 	int err;
 
+	log_debug("load_os type '%s' comp '%s'\n",
+		  genimg_get_os_short_name(os.type),
+		  genimg_get_comp_short_name(os.comp));
 	/*
 	 * For a "noload" compressed kernel we need to allocate a buffer large
 	 * enough to decompress in to and use that as the load address now.
@@ -1066,37 +1086,50 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	 * Work through the states and see how far we get. We stop on
 	 * any error.
 	 */
-	if (states & BOOTM_STATE_START)
+	if (states & BOOTM_STATE_START) {
+		log_debug("start\n");
 		ret = bootm_start();
+	}
 
-	if (states & BOOTM_STATE_RESTART)
+	if (states & BOOTM_STATE_RESTART) {
+		log_debug("restart\n");
 		ret = bootm_restart();
+	}
 
-	if (!ret && (states & BOOTM_STATE_PRE_LOAD))
+	if (!ret && (states & BOOTM_STATE_PRE_LOAD)) {
+		log_debug("pre_load\n");
 		ret = bootm_pre_load(bmi->addr_img);
+	}
 
-	if (!ret && (states & BOOTM_STATE_FINDOS))
+	if (!ret && (states & BOOTM_STATE_FINDOS)) {
+		log_debug("findos\n");
 		ret = bootm_find_os(bmi);
+	}
 
 	if (!ret && (states & BOOTM_STATE_FINDOTHER)) {
 		ulong img_addr;
 
 		img_addr = bmi->addr_img ? hextoul(bmi->addr_img, NULL)
 			: image_load_addr;
+		log_debug("findother\n");
 		ret = bootm_find_other(img_addr, bmi->conf_ramdisk,
 				       bmi->conf_fdt);
 	}
 
 	if (IS_ENABLED(CONFIG_MEASURED_BOOT) && !ret &&
-	    (states & BOOTM_STATE_MEASURE))
+	    (states & BOOTM_STATE_MEASURE)) {
+		log_debug("measure\n");
 		bootm_measure(images);
+	}
 
 	/* Load the OS */
 	if (!ret && (states & BOOTM_STATE_LOADOS) && !images->no_os) {
+		log_debug("loados\n");
 		if (IS_ENABLED(CONFIG_EVENT)) {
 			struct event_os_load data;
 
 			data.addr = images->os.load;
+			log_debug("notify EVT_BOOT_OS_ADDR\n");
 			ret = event_notify(EVT_BOOT_OS_ADDR, &data,
 					   sizeof(data));
 			if (ret)
@@ -1114,6 +1147,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	if (!ret && (states & BOOTM_STATE_RAMDISK)) {
 		ulong rd_len = images->rd_end - images->rd_start;
 
+		log_debug("ramdisk\n");
 		ret = boot_ramdisk_high(images->rd_start, rd_len,
 					&images->initrd_start,
 					&images->initrd_end);
@@ -1125,6 +1159,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 #endif
 #if CONFIG_IS_ENABLED(OF_LIBFDT) && CONFIG_IS_ENABLED(LMB)
 	if (!ret && (states & BOOTM_STATE_FDT)) {
+		log_debug("fdt\n");
 		boot_fdt_add_mem_rsv_regions(images->ft_addr);
 		ret = boot_relocate_fdt(&images->ft_addr, &images->ft_len);
 	}
@@ -1148,12 +1183,18 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 
 	/* Call various other states that are not generally used */
-	if (!ret && (states & BOOTM_STATE_OS_CMDLINE))
+	if (!ret && (states & BOOTM_STATE_OS_CMDLINE)) {
+		log_debug("cmdline\n");
 		ret = boot_fn(BOOTM_STATE_OS_CMDLINE, bmi);
-	if (!ret && (states & BOOTM_STATE_OS_BD_T))
+	}
+	if (!ret && (states & BOOTM_STATE_OS_BD_T)) {
+		log_debug("bd_t\n");
 		ret = boot_fn(BOOTM_STATE_OS_BD_T, bmi);
+	}
 	if (!ret && (states & BOOTM_STATE_OS_PREP)) {
 		int flags = 0;
+
+		log_debug("prep\n");
 		/* For Linux OS do all substitutions at console processing */
 		if (images->os.os == IH_OS_LINUX)
 			flags = BOOTM_CL_ALL;
@@ -1171,6 +1212,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	if (!ret && (states & BOOTM_STATE_OS_FAKE_GO)) {
 		char *cmd_list = env_get("fakegocmd");
 
+		log_debug("fake_go\n");
 		ret = boot_selected_os(BOOTM_STATE_OS_FAKE_GO, bmi, boot_fn);
 		if (!ret && cmd_list)
 			ret = run_command_list(cmd_list, -1, 0);
@@ -1184,8 +1226,10 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 
 	/* Now run the OS! We hope this doesn't return */
-	if (!ret && (states & BOOTM_STATE_OS_GO))
+	if (!ret && (states & BOOTM_STATE_OS_GO)) {
+		log_debug("go\n");
 		ret = boot_selected_os(BOOTM_STATE_OS_GO, bmi, boot_fn);
+	}
 
 	/* Deal with any fallout */
 err:
