@@ -8,6 +8,8 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_CATEGORY	LOGC_BOOT
+
 #include <command.h>
 #include <fdt_support.h>
 #include <fdtdec.h>
@@ -567,6 +569,7 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 	ulong *initrd_end = &images->initrd_end;
 	int ret, fdt_ret, of_size;
 
+	log_debug("fixup fdt at %p lmb %d\n", blob, lmb);
 	if (IS_ENABLED(CONFIG_OF_ENV_SETUP)) {
 		const char *fdt_fixup;
 
