@@ -310,8 +310,31 @@ static int bootm_pre_load(const char *addr_str)
 	return ret;
 }
 
+/**
+ * resolve_os_comp_buf() - Figure out where to decompress OS to
+ *
+ * @bmi: Bootm info
+ * Return: 0 if OK, -ENOTSUPP if the required env variables are not set, -EXDEV
+ *	if the memory region is already reserved
+ */
+static int resolve_os_comp_buf(struct bootm_info *bmi)
+{
+	images.os.load = bmi->kern_comp_addr;
+	images.os.image_len = bmi->kern_comp_size;
+	if (!images.os.load || !images.os.image_len) {
+		puts("kernel_comp_addr_r or kernel_comp_size is not provided!\n");
+		return -ENOTSUPP;
+	}
+	if (lmb_reserve(images.os.load, images.os.image_len) < 0)
+		return -EXDEV;
+
+	return 0;
+}
+
 static int found_booti_os(struct bootm_info *bmi, enum image_comp_t comp)
 {
+	int ret;
+
 	images.os.load = images.os.image_start;
 	images.os.type = IH_TYPE_KERNEL;
 	images.os.os = IH_OS_LINUX;
@@ -324,16 +347,15 @@ static int found_booti_os(struct bootm_info *bmi, enum image_comp_t comp)
 	log_debug("load %lx start %lx len %lx ep %lx os %x comp %x\n",
 		  images.os.load, images.os.image_start, images.os.image_len,
 		  images.ep, images.os.os, images.os.comp);
-	if (comp != IH_COMP_NONE) {
-		images.os.load = bmi->kern_comp_addr;
-		images.os.image_len = bmi->kern_comp_size;
-		if (!images.os.load || !images.os.image_len) {
-			puts("kernel_comp_addr_r or kernel_comp_size is not provided!\n");
-			return -ENOTSUPP;
-		}
-		if (lmb_reserve(images.os.load, images.os.image_len) < 0)
-			return -EXDEV;
-	}
+	if (!comp)
+		return 0;
+
+	ret = resolve_os_comp_buf(bmi);
+	if (ret)
+		return log_msg_ret("fbo", ret);
+
+	images.os.load = bmi->kern_comp_addr;
+	images.os.image_len = bmi->kern_comp_size;
 
 	return 0;
 }
