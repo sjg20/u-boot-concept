@@ -734,6 +734,29 @@ static inline bool efi_use_host_arch(void)
 int efi_get_pxe_arch(void);
 
 /**
+ * efi_mem_is_boot_services() - checks if the memory type relates to boot-time
+ *
+ * Return: true if loader code/data or boot-services code/data
+ */
+static inline bool efi_mem_is_boot_services(int type)
+{
+	return type == EFI_LOADER_CODE || type == EFI_LOADER_DATA ||
+		type == EFI_BOOT_SERVICES_CODE ||
+		type == EFI_BOOT_SERVICES_DATA;
+}
+
+/**
+ * efi_dump_mem_table() - Dump out the EFI memory map
+ *
+ * @desc: List of descriptors to dump
+ * @size: Size of desc array in bytes
+ * @desc_size: Size of each description in @desc
+ * @skip_bs: true to skip boot-services allocations
+ */
+void efi_dump_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
+			bool skip_bs);
+
+/**
  * calculate_paths() - Calculate the device and image patch from strings
  *
  * @dev:		device, e.g. "MMC"
