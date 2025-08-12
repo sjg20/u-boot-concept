@@ -6,10 +6,14 @@
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <errno.h>
+#include <mapmem.h>
 #include <smbios.h>
 #include <string.h>
 #include <tables_csum.h>
+#include <asm/global_data.h>
 #include <linux/kernel.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 const char *smbios_get_string(void *table, int index)
 {
@@ -276,4 +280,45 @@ void smbios_prepare_measurement(const struct smbios3_entry *entry,
 				   smbios_filter_tables[i].params,
 				   smbios_filter_tables[i].count);
 	}
+}
+
+int smbios_locate(ulong addr, struct smbios_info *info)
+{
+	static const char smbios3_sig[] = "_SM3_";
+	static const char smbios_sig[] = "_SM_";
+	void *entry;
+	uint size;
+
+	if (!addr)
+		return -ENOENT;
+
+	entry = map_sysmem(addr, 0);
+	if (!memcmp(entry, smbios3_sig, sizeof(smbios3_sig) - 1)) {
+		struct smbios3_entry *entry3 = entry;
+
+		info->table = (void *)(uintptr_t)entry3->struct_table_address;
+		info->version = entry3->major_ver << 16 |
+			entry3->minor_ver << 8 | entry3->doc_rev;
+		size = entry3->length;
+		info->max_size = entry3->table_maximum_size;
+	} else if (!memcmp(entry, smbios_sig, sizeof(smbios_sig) - 1)) {
+		struct smbios_entry *entry2 = entry;
+
+		info->version = entry2->major_ver << 16 |
+				entry2->minor_ver << 8;
+		info->table = (void *)(uintptr_t)entry2->struct_table_address;
+		size = entry2->length;
+		info->max_size = entry2->struct_table_length;
+	} else {
+		return -EINVAL;
+	}
+	if (table_compute_checksum(entry, size))
+		return -EIO;
+
+	info->count = 0;
+	for (struct smbios_header *pos = info->table; pos;
+	     pos = smbios_next_table(pos))
+		info->count++;
+
+	return 0;
 }
