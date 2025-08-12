@@ -384,4 +384,21 @@ int smbios_update_version_full(void *smbios_tab, const char *version);
 void smbios_prepare_measurement(const struct smbios3_entry *entry,
 				struct smbios_header *header);
 
+/**
+ * smbios_get_string() - get SMBIOS string from table
+ *
+ * @table:	SMBIOS table
+ * @index:	index of the string
+ * Return:	address of string, may point to empty string
+ */
+const char *smbios_get_string(void *table, int index);
+
+/**
+ * smbios_next_table() - Find the next table
+ *
+ * @table: Table to start from
+ * Return: Pointer to the next table, or NULL if @table is the last
+ */
+struct smbios_header *smbios_next_table(struct smbios_header *table);
+
 #endif /* _SMBIOS_H_ */

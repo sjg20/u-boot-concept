@@ -11,6 +11,34 @@
 #include <tables_csum.h>
 #include <linux/kernel.h>
 
+const char *smbios_get_string(void *table, int index)
+{
+	const char *str = (char *)table +
+			  ((struct smbios_header *)table)->length;
+	static const char fallback[] = "";
+
+	if (!index)
+		return fallback;
+
+	if (!*str)
+		++str;
+	for (--index; *str && index; --index)
+		str += strlen(str) + 1;
+
+	return str;
+}
+
+struct smbios_header *smbios_next_table(struct smbios_header *table)
+{
+	const char *str;
+
+	if (table->type == SMBIOS_END_OF_TABLE)
+		return NULL;
+
+	str = smbios_get_string(table, -1);
+	return (struct smbios_header *)(++str);
+}
+
 const struct smbios_entry *smbios_entry(u64 address, u32 size)
 {
 	const struct smbios_entry *entry = (struct smbios_entry *)(uintptr_t)address;

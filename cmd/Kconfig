@@ -267,6 +267,7 @@ config CMD_SBI
 config CMD_SMBIOS
 	bool "smbios"
 	depends on SMBIOS
+	select SMBIOS_PARSER
 	help
 	  Display the SMBIOS information.
 
