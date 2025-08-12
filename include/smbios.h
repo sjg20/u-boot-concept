@@ -15,6 +15,23 @@
 #define SMBIOS_MAJOR_VER	3
 #define SMBIOS_MINOR_VER	7
 
+/**
+ * struct smbios_info - Information about SMBIOS tables
+ *
+ * @table: Pointer to the first table
+ * @count: Number of tables
+ * @max_size: Maximum size of the tables pointed to by struct_table_address
+ * @version: table version in the form 0xMMmmrr, where MM is the major version
+ * number (2 or 3), mm is the minor version number and rr is * the revision
+ * (always 0 for major-version 2)
+ */
+struct smbios_info {
+	struct smbios_header *table;
+	int count;
+	int max_size;
+	int version;
+};
+
 enum {
 	SMBIOS_STR_MAX	= 64,	/* Maximum length allowed for a string */
 };
@@ -400,5 +417,15 @@ const char *smbios_get_string(void *table, int index);
  * Return: Pointer to the next table, or NULL if @table is the last
  */
 struct smbios_header *smbios_next_table(struct smbios_header *table);
+
+/**
+ * smbios_locate() - Locate the SMBIOS tables
+ *
+ * @addr: Address of SMBIOS table, typically gd_smbios_start()
+ * @info: Returns the SMBIOS info, on success
+ * Return: 0 if OK, -EINVAL if the address is 0, -NOENT if the header signature
+ * is not recognised, -EIO if the checksum is wrong
+ */
+int smbios_locate(ulong addr, struct smbios_info *info);
 
 #endif /* _SMBIOS_H_ */

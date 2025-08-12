@@ -377,56 +377,30 @@ static void smbios_print_type127(struct smbios_type127 *table)
 static int do_smbios(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[])
 {
-	ulong addr;
-	void *entry;
-	u32 size;
-	char version[12];
-	struct smbios_header *table;
-	static const char smbios_sig[] = "_SM_";
-	static const char smbios3_sig[] = "_SM3_";
-	size_t count = 0;
-	u32 table_maximum_size;
+	struct smbios_info info;
+	int ret;
 
-	addr = gd_smbios_start();
-	if (!addr) {
+	ret = smbios_locate(gd_smbios_start(), &info);
+	if (ret == -ENOENT) {
 		log_warning("SMBIOS not available\n");
 		return CMD_RET_FAILURE;
 	}
-	entry = map_sysmem(addr, 0);
-	if (!memcmp(entry, smbios3_sig, sizeof(smbios3_sig) - 1)) {
-		struct smbios3_entry *entry3 = entry;
-
-		table = (void *)(uintptr_t)entry3->struct_table_address;
-		snprintf(version, sizeof(version), "%d.%d.%d",
-			 entry3->major_ver, entry3->minor_ver, entry3->doc_rev);
-		table = (void *)(uintptr_t)entry3->struct_table_address;
-		size = entry3->length;
-		table_maximum_size = entry3->table_maximum_size;
-	} else if (!memcmp(entry, smbios_sig, sizeof(smbios_sig) - 1)) {
-		struct smbios_entry *entry2 = entry;
-
-		snprintf(version, sizeof(version), "%d.%d",
-			 entry2->major_ver, entry2->minor_ver);
-		table = (void *)(uintptr_t)entry2->struct_table_address;
-		size = entry2->length;
-		table_maximum_size = entry2->struct_table_length;
-	} else {
+	if (ret == -EINVAL) {
 		log_err("Unknown SMBIOS anchor format\n");
 		return CMD_RET_FAILURE;
 	}
-	if (table_compute_checksum(entry, size)) {
+	if (ret == -EIO) {
 		log_err("Invalid anchor checksum\n");
 		return CMD_RET_FAILURE;
 	}
-	printf("SMBIOS %s present.\n", version);
+	printf("SMBIOS %d.%d.%d present.\n", info.version >> 16,
+	       (info.version >> 8) & 0xff, info.version & 0xff);
 
-	for (struct smbios_header *pos = table; pos;
-	     pos = smbios_next_table(pos))
-		++count;
-	printf("%zd structures occupying %d bytes\n", count, table_maximum_size);
-	printf("Table at 0x%llx\n", (unsigned long long)map_to_sysmem(table));
+	printf("%d structures occupying %d bytes\n", info.count, info.max_size);
+	printf("Table at 0x%llx\n",
+	       (unsigned long long)map_to_sysmem(info.table));
 
-	for (struct smbios_header *pos = table; pos;
+	for (struct smbios_header *pos = info.table; pos;
 	     pos = smbios_next_table(pos)) {
 		printf("\nHandle 0x%04x, DMI type %d, %d bytes at 0x%llx\n",
 		       pos->handle, pos->type, pos->length,
