@@ -325,13 +325,14 @@ ulong write_smbios_table(ulong addr);
 const struct smbios_entry *smbios_entry(u64 address, u32 size);
 
 /**
- * smbios_header() - Search for SMBIOS header type
+ * smbios_get_header() - Search for an SMBIOS header type
  *
- * @entry:     pointer to a struct smbios_entry
+ * @entry:     pointer to the first entry
  * @type:      SMBIOS type
  * @return:    NULL or a valid pointer to a struct smbios_header
  */
-const struct smbios_header *smbios_header(const struct smbios_entry *entry, int type);
+const struct smbios_header *
+smbios_get_header(const struct smbios_entry *entry, int type);
 
 /**
  * smbios_string() - Return string from SMBIOS

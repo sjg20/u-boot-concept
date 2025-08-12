@@ -46,7 +46,8 @@ static struct smbios_header *get_next_header(const struct smbios_header *curr)
 	return (struct smbios_header *)find_next_header(pos);
 }
 
-const struct smbios_header *smbios_header(const struct smbios_entry *entry, int type)
+const struct smbios_header *smbios_get_header(const struct smbios_entry *entry,
+					      int type)
 {
 	const unsigned int num_header = entry->struct_count;
 	const struct smbios_header *header = (struct smbios_header *)((uintptr_t)entry->struct_table_address);
@@ -98,7 +99,7 @@ int smbios_update_version_full(void *smbios_tab, const char *version)
 	char *ptr;
 
 	log_info("Updating SMBIOS table at %p\n", smbios_tab);
-	hdr = smbios_header(smbios_tab, SMBIOS_BIOS_INFORMATION);
+	hdr = smbios_get_header(smbios_tab, SMBIOS_BIOS_INFORMATION);
 	if (!hdr)
 		return log_msg_ret("tab", -ENOENT);
 	bios = (struct smbios_type0 *)hdr;
