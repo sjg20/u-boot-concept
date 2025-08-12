@@ -177,6 +177,7 @@ void efi_free(struct efi_priv *priv, void *ptr)
 	boot->free_pool(ptr);
 }
 
+#ifndef CONFIG_EFI_LOADER
 void *efi_alloc(size_t size)
 {
 	struct efi_priv *priv = efi_get_priv();
@@ -191,3 +192,5 @@ void efi_free_pool(void *ptr)
 
 	efi_free(priv, ptr);
 }
+
+#endif /* EFI_LOADER */
