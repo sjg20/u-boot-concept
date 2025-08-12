@@ -2,9 +2,14 @@
 #
 # (C) Copyright 2015 Google, Inc
 
-obj-$(CONFIG_EFI_APP) += efi_app.o efi.o efi_app_init.o efi_vars.o efi_dtb.o
-obj-$(CONFIG_EFI_APP) += sdram.o app_run.o
+obj-$(CONFIG_EFI_APP) += efi_app.o efi.o efi_app_init.o efi_dtb.o
+obj-$(CONFIG_EFI_APP) += sdram.o
 obj-$(CONFIG_EFI_STUB) += efi_info.o
+
+ifndef CONFIG_EFI_LOADER
+obj-$(CONFIG_EFI_APP) += app_run.o
+obj-$(CONFIG_EFI_APP) +=  efi_vars.o
+endif
 
 ifeq ($(CONFIG_ARM64),y)
 stub_obj := stub_arm64.o
