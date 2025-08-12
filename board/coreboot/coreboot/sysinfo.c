@@ -62,8 +62,8 @@ static int cb_detect(struct udevice *dev)
 	if (!smbios)
 		return 0;
 
-	priv->bios = smbios_header(smbios, SMBIOS_BIOS_INFORMATION);
-	priv->system = smbios_header(smbios, SMBIOS_SYSTEM_INFORMATION);
+	priv->bios = smbios_get_header(smbios, SMBIOS_BIOS_INFORMATION);
+	priv->system = smbios_get_header(smbios, SMBIOS_SYSTEM_INFORMATION);
 	priv->t0 = (struct smbios_type0 *)priv->bios;
 	priv->t1 = (struct smbios_type1 *)priv->system;
 
