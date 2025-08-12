@@ -58,6 +58,11 @@ static struct attr_info {
 	{ EFI_MEMORY_RUNTIME, "needs runtime mapping" }
 };
 
+const char *efi_mem_type_name(enum efi_memory_type type)
+{
+	return type < ARRAY_SIZE(type_name) ? type_name[type] : "<invalid>";
+}
+
 void efi_dump_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
 			bool skip_bs)
 {
@@ -76,7 +81,6 @@ void efi_dump_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
 	addr = 0;
 	for (upto = 0; desc < end;
 	     upto++, desc = efi_get_next_mem_desc(desc, desc_size)) {
-		const char *name;
 		u64 size;
 
 		if (skip_bs && efi_mem_is_boot_services(desc->type))
@@ -87,11 +91,9 @@ void efi_dump_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
 		}
 		size = desc->num_pages << EFI_PAGE_SHIFT;
 
-		name = desc->type < ARRAY_SIZE(type_name) ?
-				type_name[desc->type] : "<invalid>";
 		printf("%2d  %x:%-12s  %010llx  %010llx  %010llx  ", upto,
-		       desc->type, name, desc->physical_start,
-		       desc->virtual_start, size);
+		       desc->type, efi_mem_type_name(desc->type),
+		       desc->physical_start, desc->virtual_start, size);
 		if (desc->attribute & EFI_MEMORY_RUNTIME)
 			putc('r');
 		printf("%llx", desc->attribute & ~EFI_MEMORY_RUNTIME);
