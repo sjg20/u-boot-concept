@@ -43,7 +43,11 @@ obj-$(CONFIG_EFI_LOG) += efi_log.o
 obj-y += efi_memory.o
 obj-y += efi_root_node.o
 obj-y += efi_runtime.o
+
+ifndef CONFIG_EFI_APP
 obj-y += efi_setup.o
+endif
+
 obj-y += efi_string.o
 obj-$(CONFIG_EFI_UNICODE_COLLATION_PROTOCOL2) += efi_unicode_collation.o
 obj-y += efi_var_common.o

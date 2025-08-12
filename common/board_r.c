@@ -658,7 +658,7 @@ static void initcall_run_r(void)
 	/* initialize higher level parts of CPU like time base and timers */
 	INITCALL(cpu_init_r);
 #endif
-#if CONFIG_IS_ENABLED(EFI_LOADER)
+#if CONFIG_IS_ENABLED(EFI_LOADER) && !CONFIG_IS_ENABLED(EFI_APP)
 	INITCALL(efi_init_early);
 #endif
 #if CONFIG_IS_ENABLED(CMD_NAND)
