@@ -6,6 +6,7 @@
  */
 
 #include <command.h>
+#include <errno.h>
 #include <hexdump.h>
 #include <mapmem.h>
 #include <smbios.h>
@@ -119,42 +120,7 @@ static const struct str_lookup_table associativity_strings[] = {
 
 };
 
-/**
- * smbios_get_string() - get SMBIOS string from table
- *
- * @table:	SMBIOS table
- * @index:	index of the string
- * Return:	address of string, may point to empty string
- */
-static const char *smbios_get_string(void *table, int index)
-{
-	const char *str = (char *)table +
-			  ((struct smbios_header *)table)->length;
-	static const char fallback[] = "";
-
-	if (!index)
-		return fallback;
-
-	if (!*str)
-		++str;
-	for (--index; *str && index; --index)
-		str += strlen(str) + 1;
-
-	return str;
-}
-
-static struct smbios_header *next_table(struct smbios_header *table)
-{
-	const char *str;
-
-	if (table->type == SMBIOS_END_OF_TABLE)
-		return NULL;
-
-	str = smbios_get_string(table, -1);
-	return (struct smbios_header *)(++str);
-}
-
-static void smbios_print_generic(struct smbios_header *table)
+static void smbios_print_generic(const struct smbios_header *table)
 {
 	char *str = (char *)table + table->length;
 
@@ -454,12 +420,14 @@ static int do_smbios(struct cmd_tbl *cmdtp, int flag, int argc,
 	}
 	printf("SMBIOS %s present.\n", version);
 
-	for (struct smbios_header *pos = table; pos; pos = next_table(pos))
+	for (struct smbios_header *pos = table; pos;
+	     pos = smbios_next_table(pos))
 		++count;
 	printf("%zd structures occupying %d bytes\n", count, table_maximum_size);
 	printf("Table at 0x%llx\n", (unsigned long long)map_to_sysmem(table));
 
-	for (struct smbios_header *pos = table; pos; pos = next_table(pos)) {
+	for (struct smbios_header *pos = table; pos;
+	     pos = smbios_next_table(pos)) {
 		printf("\nHandle 0x%04x, DMI type %d, %d bytes at 0x%llx\n",
 		       pos->handle, pos->type, pos->length,
 		       (unsigned long long)map_to_sysmem(pos));
