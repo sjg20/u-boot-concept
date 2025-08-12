@@ -3,6 +3,7 @@
 # Written by Simon Glass <simon.glass@canonical.com>
 
 import pytest
+import utils
 
 # Enable early console so that the test can see if something goes wrong
 CONSOLE = 'earlycon=uart8250,io,0x3f8 console=uart8250,io,0x3f8'
@@ -10,7 +11,7 @@ CONSOLE = 'earlycon=uart8250,io,0x3f8 console=uart8250,io,0x3f8'
 @pytest.mark.boardspec('qemu-x86_64')
 @pytest.mark.role('qemu-x86_64')
 def test_distro(ubman):
-    """Test that of-platdata can be generated and used in sandbox"""
+    """Test booting into Ubuntu 24.04"""
     with ubman.log.section('boot'):
         ubman.run_command('boot', wait_for_prompt=False)
 
@@ -72,5 +73,24 @@ def test_distro_script(ubman):
 
     # Shortly later, we should see this banner
     ubman.expect(['Colibri-iMX8X_Reference-Multimedia-Image'])
+
+    ubman.restart_uboot()
+
+@pytest.mark.boardspec('efi-arm_app64')
+@pytest.mark.role('efi-aarch64')
+def test_distro_arm_app(ubman):
+    """Test that the ARM EFI app can boot into Ubuntu 25.04"""
+    # with ubman.log.section('build'):
+    # utils.run_and_log(ubman, ['scripts/build-efi', '-a', 'arm'])
+    with ubman.log.section('boot'):
+        ubman.run_command('boot', wait_for_prompt=False)
+
+        ubman.expect(["Booting bootflow 'efi_media.bootdev.part_2' with extlinux"])
+        ubman.expect(['Exiting EFI'])
+        ubman.expect(['Booting Linux on physical CPU'])
+
+    with ubman.log.section('initrd'):
+        ubman.expect(['Starting systemd-udevd'])
+        ubman.expect(['Welcome to Ubuntu 25.04!'])
 
     ubman.restart_uboot()
