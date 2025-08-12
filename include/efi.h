@@ -746,6 +746,13 @@ static inline bool efi_mem_is_boot_services(int type)
 }
 
 /**
+ * efi_mem_type_name() - Get the name of a memory type
+ *
+ * Return: Name, or "<invalid>" if the type is not known
+ */
+const char *efi_mem_type_name(enum efi_memory_type type);
+
+/**
  * efi_dump_mem_table() - Dump out the EFI memory map
  *
  * @desc: List of descriptors to dump
