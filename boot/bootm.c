@@ -1179,11 +1179,13 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 			struct event_os_load data;
 
 			data.addr = images->os.load;
+			data.size = images->os.image_len;
 			log_debug("notify EVT_BOOT_OS_ADDR\n");
 			ret = event_notify(EVT_BOOT_OS_ADDR, &data,
 					   sizeof(data));
 			if (ret)
 				goto err;
+			images->os.load = data.addr;
 		}
 		ret = bootm_load_os(bmi, 0);
 		if (ret && ret != BOOTM_ERR_OVERLAP)

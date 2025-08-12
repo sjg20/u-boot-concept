@@ -244,7 +244,6 @@ static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 int board_fixup_os(void *ctx, struct event *evt)
 {
 	int pages;
-	ulong load_addr;
 	u64 addr;
 	efi_status_t status;
 	struct efi_priv *priv = efi_get_priv();
@@ -264,8 +263,8 @@ int board_fixup_os(void *ctx, struct event *evt)
 	/* That failed, so try allocating anywhere there's enough room */
 	status = boot->allocate_pages(EFI_ALLOCATE_ANY_PAGES, EFI_LOADER_DATA, pages, &addr);
 	if (status) {
-		printf("Failed to alloc %lx bytes at %lx: %lx\n", os_load->size,
-		       load_addr, status);
+		printf("Failed to alloc %lx bytes: %lx\n", os_load->size,
+		       status);
 		return -EFAULT;
 	}
 
