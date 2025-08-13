@@ -452,6 +452,7 @@ config SYS_ARCH_TIMER
 	  interface to a timer source on an SoC.
 	  It is mandatory for ARMv8 implementation and widely available
 	  on ARMv7 systems.
+	  This timer driver is incompatible with the DM timer framework.
 
 config ARM_SMCCC
 	bool "Support for ARM SMC Calling Convention (SMCCC)"

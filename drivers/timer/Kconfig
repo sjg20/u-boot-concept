@@ -2,6 +2,7 @@ menu "Timer Support"
 
 config TIMER
 	bool "Enable driver model for timer drivers"
+	depends on !SYS_ARCH_TIMER
 	depends on DM
 	help
 	  Enable driver model for timer access. It uses the same API as
