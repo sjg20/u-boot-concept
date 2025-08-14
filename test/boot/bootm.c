@@ -207,11 +207,11 @@ static int bootm_test_silent_var(struct unit_test_state *uts)
 {
 	ut_assertok(env_set("var", NULL));
 	env_set("bootargs", NULL);
-	ut_assertok(bootm_process_cmdline_env(BOOTM_CL_SUBST));
+	ut_assertok(bootm_process_cmdline_env(NULL, NULL, BOOTM_CL_SUBST));
 	ut_assertnull(env_get("bootargs"));
 
 	ut_assertok(env_set("bootargs", "some${var}thing"));
-	ut_assertok(bootm_process_cmdline_env(BOOTM_CL_SUBST));
+	ut_assertok(bootm_process_cmdline_env(NULL, NULL, BOOTM_CL_SUBST));
 	ut_asserteq_str("something", env_get("bootargs"));
 
 	return 0;
@@ -223,12 +223,12 @@ static int bootm_test_subst_var(struct unit_test_state *uts)
 {
 	ut_assertok(env_set("silent_linux", "yes"));
 	ut_assertok(env_set("bootargs", NULL));
-	ut_assertok(bootm_process_cmdline_env(BOOTM_CL_SILENT));
+	ut_assertok(bootm_process_cmdline_env(NULL, NULL, BOOTM_CL_SILENT));
 	ut_asserteq_str("console=ttynull", env_get("bootargs"));
 
 	ut_assertok(env_set("var", "abc"));
 	ut_assertok(env_set("bootargs", "some${var}thing"));
-	ut_assertok(bootm_process_cmdline_env(BOOTM_CL_SILENT));
+	ut_assertok(bootm_process_cmdline_env(NULL, NULL, BOOTM_CL_SILENT));
 	ut_asserteq_str("some${var}thing console=ttynull", env_get("bootargs"));
 
 	env_set("silent_linux", NULL);
@@ -242,12 +242,12 @@ static int bootm_test_subst_both(struct unit_test_state *uts)
 {
 	ut_assertok(env_set("silent_linux", "yes"));
 	env_set("bootargs", NULL);
-	ut_assertok(bootm_process_cmdline_env(BOOTM_CL_ALL));
+	ut_assertok(bootm_process_cmdline_env(NULL, NULL, BOOTM_CL_ALL));
 	ut_asserteq_str("console=ttynull", env_get("bootargs"));
 
 	ut_assertok(env_set("bootargs", "some${var}thing " CONSOLE_STR));
 	ut_assertok(env_set("var", "1234567890"));
-	ut_assertok(bootm_process_cmdline_env(BOOTM_CL_ALL));
+	ut_assertok(bootm_process_cmdline_env(NULL, NULL, BOOTM_CL_ALL));
 	ut_asserteq_str("some1234567890thing console=ttynull", env_get("bootargs"));
 
 	env_set("silent_linux", NULL);
@@ -255,3 +255,23 @@ static int bootm_test_subst_both(struct unit_test_state *uts)
 	return 0;
 }
 BOOTM_TEST(bootm_test_subst_both, 0);
+
+/* Test appending to an existing value */
+static int bootm_test_subst_append(struct unit_test_state *uts)
+{
+	ut_assertnull(env_get("bootargs"));
+	ut_assertok(bootm_process_cmdline_env("base", "append", 0));
+	ut_assertnonnull(env_get("bootargs"));
+	ut_asserteq_str("base append", env_get("bootargs"));
+
+	ut_assertok(bootm_process_cmdline_env("base2", NULL, 0));
+	ut_assertnonnull(env_get("bootargs"));
+	ut_asserteq_str("base2", env_get("bootargs"));
+
+	ut_assertok(bootm_process_cmdline_env(NULL, "append2", 0));
+	ut_assertnonnull(env_get("bootargs"));
+	ut_asserteq_str("base2 append2", env_get("bootargs"));
+
+	return 0;
+}
+BOOTM_TEST(bootm_test_subst_append, 0);
