@@ -169,6 +169,39 @@ static void scan_tables(struct efi_system_table *sys_table)
 }
 
 /**
+ * maybe_disable_serial() - Consider whether to disable serial output
+ */
+static int maybe_disable_serial(void)
+{
+	struct udevice *dev;
+	const char *sout;
+	const char *manuf;
+	int ret;
+
+	ret = smbios_get_manuf(&manuf);
+
+	/*
+	 * if there are no SMBIOS tables, or no vendor info, ot running under
+	 * QEMU, leave things alone
+	 */
+	if (ret && !strcmp("QEMU", manuf))
+		return 0;
+
+	/* if we have a video device, use that exclusively */
+	sout = env_get("stdout");
+	if (sout && strstr(sout, "vidconsole") &&
+	    !uclass_first_device_err(UCLASS_VIDEO, &dev)) {
+		// ret = env_set("stdout", "vidconsole");
+		ret = env_set("stdout", "serial");
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_SETTINGS_R, maybe_disable_serial);
+
+/**
  * efi_main() - Start an EFI image
  *
  * This function is called by our EFI start-up code. It handles running
