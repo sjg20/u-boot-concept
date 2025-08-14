@@ -7,7 +7,6 @@
 #define LOG_CATEGORY	LOGC_BOOT
 
 #ifndef USE_HOSTCC
-#include <bootflow.h>
 #include <bootm.h>
 #include <bootstage.h>
 #include <cli.h>
@@ -1246,17 +1245,13 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		ret = boot_fn(BOOTM_STATE_OS_BD_T, bmi);
 	}
 	if (!ret && (states & BOOTM_STATE_OS_PREP)) {
-		const char *base = NULL;
 		int flags = 0;
 
 		log_debug("prep\n");
 		/* For Linux OS do all substitutions at console processing */
 		if (images->os.os == IH_OS_LINUX)
 			flags = BOOTM_CL_ALL;
-		log_debug("prep cmdline\n");
-		if (bmi->bflow)
-			base = bmi->bflow->cmdline;
-		ret = bootm_process_cmdline_env(base, bmi->append, flags);
+		ret = bootm_process_cmdline_env(flags);
 		if (ret) {
 			printf("Cmdline setup failed (err=%d)\n", ret);
 			ret = CMD_RET_FAILURE;
