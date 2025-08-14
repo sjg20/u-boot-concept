@@ -254,6 +254,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	printf("starting\n");
 
 	board_init_f(GD_FLG_SKIP_RELOC);
+	gd = gd->new_gd;
 	board_init_r(NULL, 0);
 	free_memory(priv);
 
@@ -339,7 +340,7 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 	if (ret)
 		return log_msg_ret("erm", ret);
 
-	efi_dump_mem_table(map, size, desc_size, false);
+	// efi_dump_mem_table(map, size, desc_size, false);
 	ram_start = -1ULL;
 	ram_end = -1ULL;
 	end = (void *)map + size;
