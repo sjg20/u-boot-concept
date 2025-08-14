@@ -160,6 +160,7 @@ static void free_memory(struct efi_priv *priv)
 static void scan_tables(struct efi_system_table *sys_table)
 {
 	efi_guid_t acpi = EFI_ACPI_TABLE_GUID;
+	efi_guid_t smbios = SMBIOS3_TABLE_GUID;
 	uint i;
 
 	for (i = 0; i < sys_table->nr_tables; i++) {
@@ -167,6 +168,8 @@ static void scan_tables(struct efi_system_table *sys_table)
 
 		if (!memcmp(&tab->guid, &acpi, sizeof(efi_guid_t)))
 			gd_set_acpi_start(map_to_sysmem(tab->table));
+		else if (!memcmp(&tab->guid, &smbios, sizeof(efi_guid_t)))
+			gd->arch.smbios_start = map_to_sysmem(tab->table);
 	}
 }
 
