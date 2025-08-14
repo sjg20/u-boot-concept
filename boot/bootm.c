@@ -1014,8 +1014,7 @@ int bootm_process_cmdline(char *buf, int maxlen, int flags)
 	return 0;
 }
 
-int bootm_process_cmdline_env(const char *base_cmdline, const char *append,
-			      int flags)
+int bootm_process_cmdline_env(int flags)
 {
 	const int maxlen = MAX_CMDLINE_SIZE;
 	bool do_silent;
@@ -1023,18 +1022,13 @@ int bootm_process_cmdline_env(const char *base_cmdline, const char *append,
 	char *buf;
 	int ret;
 
-	log_debug("cmdline_env base '%s' append '%s' flags %x\n", base_cmdline,
-		  append, flags);
 	/* First check if any action is needed */
 	do_silent = IS_ENABLED(CONFIG_SILENT_CONSOLE) &&
 	    !IS_ENABLED(CONFIG_SILENT_U_BOOT_ONLY) && (flags & BOOTM_CL_SILENT);
-	if (!do_silent && !IS_ENABLED(CONFIG_BOOTARGS_SUBST) && !base_cmdline &&
-	    !append)
+	if (!do_silent && !IS_ENABLED(CONFIG_BOOTARGS_SUBST))
 		return 0;
 
-	env = base_cmdline;
-	if (!env)
-		env = env_get("bootargs");
+	env = env_get("bootargs");
 	if (env && strlen(env) >= maxlen)
 		return -E2BIG;
 	buf = malloc(maxlen);
@@ -1044,16 +1038,8 @@ int bootm_process_cmdline_env(const char *base_cmdline, const char *append,
 		strcpy(buf, env);
 	else
 		*buf = '\0';
-	if (append) {
-		if (*buf)
-			strlcat(buf, " ", MAX_CMDLINE_SIZE);
-		strlcat(buf, append, MAX_CMDLINE_SIZE);
-	}
-
-	log_debug("cmdline before: %s\n", buf);
 	ret = bootm_process_cmdline(buf, maxlen, flags);
 	if (!ret) {
-		log_debug("cmdline after: %s\n", buf);
 		ret = env_set("bootargs", buf);
 
 		/*
@@ -1265,7 +1251,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		/* For Linux OS do all substitutions at console processing */
 		if (images->os.os == IH_OS_LINUX)
 			flags = BOOTM_CL_ALL;
-		ret = bootm_process_cmdline_env(NULL, NULL, flags);
+		ret = bootm_process_cmdline_env(flags);
 		if (ret) {
 			printf("Cmdline setup failed (err=%d)\n", ret);
 			ret = CMD_RET_FAILURE;

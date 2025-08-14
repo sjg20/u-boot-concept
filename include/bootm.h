@@ -411,13 +411,10 @@ int bootm_process_cmdline(char *buf, int maxlen, int flags);
  *  - making Linux boot silently if requested ('silent_linux' envvar)
  *  - performing substitutions in the command line ('bootargs_subst' envvar)
  *
- * @base_cmdline: Base command-line string, NULL to use "bootargs" env var
- * @append: Extra things to append to the cmdline, NULL for none
  * @flags: Flags to control what happens (see bootm_cmdline_t)
  * Return: 0 if OK, -ENOMEM if out of memory
  */
-int bootm_process_cmdline_env(const char *base_cmdline, const char *append,
-			      int flags);
+int bootm_process_cmdline_env(int flags);
 
 /**
  * zboot_run() - Run through the various steps to boot a zimage
