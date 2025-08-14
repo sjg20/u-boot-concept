@@ -128,6 +128,7 @@ static int setup_block(void)
 	struct efi_device_path_to_text_protocol *text;
 	struct efi_device_path *path;
 	struct efi_block_io *blkio;
+	int num_disks, num_parts;
 	efi_uintn_t num_handles;
 	efi_handle_t *handle;
 	int ret, i;
@@ -150,7 +151,7 @@ static int setup_block(void)
 	if (ret)
 		return log_msg_ret("text", -ENOTSUPP);
 
-	for (i = 0; i < num_handles; i++) {
+	for (num_disks = 0, num_parts = 0, i = 0; i < num_handles; i++) {
 		struct udevice *dev;
 		const u16 *name;
 		bool is_part;
@@ -174,6 +175,7 @@ static int setup_block(void)
 		is_part = devpath_is_partition(path);
 
 		if (!is_part) {
+			num_disks++;
 			len = util->get_device_path_size(path);
 			ret = efi_bind_block(handle[i], blkio, path, len, &dev);
 			if (ret) {
@@ -183,15 +185,17 @@ static int setup_block(void)
 			}
 		} else {
 			dev = NULL;
+			num_parts++;
 		}
 
 		/*
 		 * Show the device name if we created one. Otherwise indicate
 		 * that it is a partition.
 		 */
-		printf("%2d: %-12s %ls\n", i, dev ? dev->name : "<partition>",
-		       name);
+		log_debug("%2d: %-12s %ls\n", i,
+			  dev ? dev->name : "<partition>", name);
 	}
+	log_info("EFI:   disks %d, partitions %d\n", num_disks, num_parts);
 	boot->free_pool(handle);
 
 	return 0;
