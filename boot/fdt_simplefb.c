@@ -6,6 +6,9 @@
  * Stephen Warren <swarren@wwwdotorg.org>
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	LOGC_BOOT
+
 #include <dm.h>
 #include <fdt_support.h>
 #include <asm/global_data.h>
@@ -48,6 +51,8 @@ static int fdt_simplefb_configure_node(void *blob, int off)
 		ysize = uc_priv->ysize;
 		bpix = uc_priv->bpix;
 		fb_base = plat->base;
+		log_debug("simplefb: fb %lx x %d y %d bpix %x\n", fb_base,
+			  xsize, ysize, bpix);
 	}
 
 	switch (bpix) {
