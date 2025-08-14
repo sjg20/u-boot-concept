@@ -129,7 +129,8 @@ config CMD_ACPI
 	  want to make hardware changes without the OS needing to be adjusted.
 
 config CMD_ADDR_FIND
-        bool "addr_find"
+	bool "addr_find"
+	default y if EFI_APP
 	help
 	  This command searches for an unused region of address space
 	  sufficiently large to hold a file. If successful, it sets the
