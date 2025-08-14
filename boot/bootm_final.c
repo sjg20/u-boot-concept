@@ -17,6 +17,7 @@ __weak void board_quiesce_devices(void)
 
 void bootm_final(enum bootm_final_t flags)
 {
+	struct event_bootm_final final;
 	int ret;
 
 	printf("\nStarting kernel ...%s\n\n", flags & BOOTM_FINAL_FAKE ?
@@ -43,7 +44,8 @@ void bootm_final(enum bootm_final_t flags)
 	 */
 	dm_remove_devices_active();
 
-	ret = event_notify_null(EVT_BOOTM_FINAL);
+	final.flags = flags;
+	ret = event_notify(EVT_BOOTM_FINAL, &final, sizeof(final));
 	if (ret) {
 		printf("Event handler failed to finalise (err %dE\n",
 		       ret);

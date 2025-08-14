@@ -10,6 +10,7 @@
 #ifndef __event_h
 #define __event_h
 
+#include <bootm.h>
 #include <dm/ofnode_decl.h>
 #include <linux/types.h>
 
@@ -260,6 +261,15 @@ union event_data {
 	struct event_ft_fixup_f {
 		oftree tree;
 	} ft_fixup_f;
+
+	/**
+	 * struct event_bootm_final - State information
+	 *
+	 * @flags: Flags passed to bootm_final()
+	 */
+	struct event_bootm_final {
+		enum bootm_final_t flags;
+	} bootm_final;
 };
 
 /**
