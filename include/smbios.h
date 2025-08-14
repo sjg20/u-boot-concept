@@ -457,4 +457,12 @@ struct smbios_header *smbios_next_table(const struct smbios_info *info,
  */
 int smbios_locate(ulong addr, struct smbios_info *info);
 
+/**
+ * smbios_get_manuf() - Obtain the manufacturer of the device
+ *
+ * @namep: Returns a pointer to the manufacturer name, on success, e.g. "QEMU"
+ * Return: 0 if OK, -ve on error
+ */
+int smbios_get_manuf(const char **namep);
+
 #endif /* _SMBIOS_H_ */

@@ -315,3 +315,28 @@ int smbios_locate(ulong addr, struct smbios_info *info)
 
 	return 0;
 }
+
+int smbios_get_manuf(const char **namep)
+{
+	int max_size, count, version, ret;
+	struct smbios_header *table;
+	struct smbios_header *hdr;
+	struct smbios_type1 *sys;
+	const char *ptr;
+
+	ret = smbios_locate(&table, &max_size, &count, &version);
+	if (ret)
+		return ret;
+
+	hdr = smbios_get_header(table, count, SMBIOS_SYSTEM_INFORMATION);
+	if (!hdr)
+		return log_msg_ret("tab", -ENOENT);
+	sys = (struct smbios_type1 *)hdr;
+	ptr = smbios_string(hdr, sys->manufacturer);
+	if (!ptr)
+		return log_msg_ret("str", -ENOMEDIUM);
+
+	*namep = ptr;
+
+	return 0;
+}
