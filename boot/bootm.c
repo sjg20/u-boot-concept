@@ -4,6 +4,7 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_BOOT
 
 #ifndef USE_HOSTCC
@@ -1285,6 +1286,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 
 	/* Deal with any fallout */
+	printf("fallout\n");
 err:
 	if (ret == BOOTM_ERR_UNIMPLEMENTED) {
 		bootstage_error(BOOTSTAGE_ID_DECOMP_UNIMPL);
