@@ -574,6 +574,9 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	bmi.conf_fdt = conf_fdt_str;
 	bootm_x86_set(&bmi, bzimage_addr, hextoul(kern_addr_str, NULL));
 	bmi.os_size = kern_size;
+	if (*ctx->finalbootargs)
+		bmi.append = ctx->finalbootargs;
+	bmi.bflow = ctx->bflow;
 
 	if (initrd_addr) {
 		bmi.conf_ramdisk = initrd_str;
@@ -770,7 +773,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 
 		cli_simple_process_macros(bootargs, ctx->finalbootargs,
 					  sizeof(ctx->finalbootargs));
-		env_set("bootargs", finalbootargs);
+		env_set("bootargs", ctx->finalbootargs);
 		printf("append: %s\n", ctx->finalbootargs);
 	}
 

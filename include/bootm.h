@@ -51,6 +51,7 @@ enum bootm_final_t {
  * @conf_fdt: Address (or with FIT, the name) of the FDT image, as passed to
  *	boot_get_fdt() for processing, or NULL for none
  * @boot_progress: true to show boot progress
+ * @append: Extra arguments to add to the cmdline (NULL if none)
  * @images: images information
  * @cmd_name: command which invoked this operation, e.g. "bootm"
  * @argc: Number of arguments to the command (excluding the actual command).
@@ -63,6 +64,7 @@ enum bootm_final_t {
  * @kern_comp_size: Maximum size of the decompressed kernel. If 0, the size is
  * calculated based on 4x the size of the kernel, up to a limit of 1G
  * @os_size: Size of the loaded OS image in bytes, 0 if not loaded/not known
+ * @bflow: Bootflow being booted (NULL if none)
  *
  * For zboot:
  * @bzimage_addr: Address of the bzImage to boot, or 0 if the image has already
@@ -84,6 +86,8 @@ struct bootm_info {
 	const char *conf_ramdisk;
 	const char *conf_fdt;
 	bool boot_progress;
+	const char *append;
+
 	struct bootm_headers *images;
 	const char *cmd_name;
 	int argc;
@@ -92,6 +96,7 @@ struct bootm_info {
 	ulong os_size;
 	ulong kern_comp_addr;
 	ulong kern_comp_size;
+	const struct bootflow *bflow;
 
 	/* zboot items */
 #ifdef CONFIG_X86
