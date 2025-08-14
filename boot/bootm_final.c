@@ -51,7 +51,7 @@ void bootm_final(enum bootm_final_t flags)
 		       ret);
 		return;
 	}
-	printf("after event\n");
+//	printf("after event\n");
 
 	bootm_disable_interrupts();
 
