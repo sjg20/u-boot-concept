@@ -866,3 +866,9 @@ play:
   variables:
     ROLE: play
   <<: *lab_dfn
+
+efi-aarch64:
+  variables:
+    ROLE: efi-aarch64
+    TEST_PY_TEST_SPEC: "and not sleep"
+  <<: *lab_dfn

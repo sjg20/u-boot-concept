@@ -667,17 +667,6 @@ void efi_puts(struct efi_priv *priv, const char *str);
 void efi_putc(struct efi_priv *priv, const char ch);
 
 /**
- * efi_store_memory_map() - Collect the memory-map info from EFI
- *
- * Collect the memory info and store it for later use, e.g. in calling
- * exit_boot_services()
- *
- * @priv:	Pointer to private EFI structure
- * Returns: 0 if OK, non-zero on error
- */
-int efi_store_memory_map(struct efi_priv *priv);
-
-/**
  * efi_stub_exit_boot_services() - Handle the exit-boot-service procedure
  *
  * Tell EFI we don't want their boot services anymore
@@ -685,6 +674,17 @@ int efi_store_memory_map(struct efi_priv *priv);
  * Return: 0 if OK, non-zero on error
  */
 int efi_stub_exit_boot_services(void);
+
+/**
+ * efi_app_exit_boot_services() - Handle the exit-boot-service procedure
+ *
+ * Tell EFI we don't want their boot services anymore
+ *
+ * This is only available in the app
+ *
+ * Return: 0 if OK, non-zero on error
+ */
+int efi_app_exit_boot_services(struct efi_priv *priv, uint key);
 
 /**
  * efi_get_mmap() - Get the memory map from EFI
@@ -743,6 +743,36 @@ static inline bool efi_use_host_arch(void)
  * Return: Architecture value
  */
 int efi_get_pxe_arch(void);
+
+/**
+ * efi_mem_is_boot_services() - checks if the memory type relates to boot-time
+ *
+ * Return: true if loader code/data or boot-services code/data
+ */
+static inline bool efi_mem_is_boot_services(int type)
+{
+	return type == EFI_LOADER_CODE || type == EFI_LOADER_DATA ||
+		type == EFI_BOOT_SERVICES_CODE ||
+		type == EFI_BOOT_SERVICES_DATA;
+}
+
+/**
+ * efi_mem_type_name() - Get the name of a memory type
+ *
+ * Return: Name, or "<invalid>" if the type is not known
+ */
+const char *efi_mem_type_name(enum efi_memory_type type);
+
+/**
+ * efi_dump_mem_table() - Dump out the EFI memory map
+ *
+ * @desc: List of descriptors to dump
+ * @size: Size of desc array in bytes
+ * @desc_size: Size of each description in @desc
+ * @skip_bs: true to skip boot-services allocations
+ */
+void efi_dump_mem_table(struct efi_mem_desc *desc, int size, int desc_size,
+			bool skip_bs);
 
 /**
  * calculate_paths() - Calculate the device and image patch from strings

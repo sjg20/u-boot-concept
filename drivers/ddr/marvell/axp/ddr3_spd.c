@@ -976,7 +976,7 @@ int ddr3_dunit_setup(u32 ecc_ena, u32 hclk_time, u32 *ddr_width)
 #endif
 
 	/*
-	 * In case of mixed dimm and on-board devices setup paramters will
+	 * In case of mixed dimm and on-board devices setup parameters will
 	 * be taken statically
 	 */
 	/*{0x00001494}  -   DDR SDRAM ODT Control (Low) Register */

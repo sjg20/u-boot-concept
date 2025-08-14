@@ -287,6 +287,7 @@ def add_common_args(parser):
                         help='Select architecture (arm, x86) Default: arm')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build; assume a build exists")
+    parser.add_argument('--build-dir', help='Directory to use for the build')
     parser.add_argument('-C', '--enable-console', action='store_true',
                         help="Enable linux console (x86 only)")
     parser.add_argument('-d', '--disk', nargs='*',

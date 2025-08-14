@@ -60,8 +60,10 @@ class BuildEfi:
     def __init__(self, args):
         self.helper = build_helper.Helper(args)
         self.helper.read_settings()
-        self.img = self.helper.get_setting('efi_image_file', 'efi.img')
-        self.build_dir = self.helper.get_setting("build_dir", '/tmp')
+        self.img_fname = self.helper.get_setting('efi_image_file', 'efi.img')
+        self.img = None
+        self.build_topdir = self.helper.get_setting("build_dir", '/tmp')
+        self.build_dir = None
         self.args = args
         self.imagedir = Path(self.helper.get_setting('image_dir', '~/dev'))
 
@@ -146,13 +148,12 @@ class BuildEfi:
         print(f'Packaging {build}')
         fname = f'u-boot-{build_type}.efi'
         tools.write_file(f'{dst}/startup.nsh', f'fs0:{fname}', binary=False)
-        shutil.copy(f'{self.build_dir}/{build}/{fname}', dst)
+        shutil.copy(f'{self.build_dir}/{fname}', dst)
 
     def do_build(self, build):
         """Build U-Boot for the selected board"""
-        res = command.run_one('buildman', '-w', '-o',
-                              f'{self.build_dir}/{build}', '--board', build,
-                              '-I', raise_on_error=False)
+        res = command.run_one('buildman', '-w', '-o', self.build_dir,
+                              '--board', build, '-I', raise_on_error=False)
         if res.return_code and res.return_code != 101:  # Allow warnings
             raise ValueError(
                 f'buildman exited with {res.return_code}: {res.combined}')
@@ -164,6 +165,12 @@ class BuildEfi:
         build_type = 'payload' if args.payload else 'app'
         build = f'efi-{arch}_{build_type}{self.helper.bitness}'
 
+        if args.build_dir:
+            self.build_dir = args.build_dir
+            self.img = f'{self.build_dir}/{self.img_fname}'
+        else:
+            self.build_dir = f'{self.build_topdir}/{build}'
+            self.img = self.img_fname
         if not args.no_build:
             self.do_build(build)
 

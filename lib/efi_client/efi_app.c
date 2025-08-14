@@ -244,7 +244,6 @@ static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 int board_fixup_os(void *ctx, struct event *evt)
 {
 	int pages;
-	ulong load_addr;
 	u64 addr;
 	efi_status_t status;
 	struct efi_priv *priv = efi_get_priv();
@@ -264,8 +263,8 @@ int board_fixup_os(void *ctx, struct event *evt)
 	/* That failed, so try allocating anywhere there's enough room */
 	status = boot->allocate_pages(EFI_ALLOCATE_ANY_PAGES, EFI_LOADER_DATA, pages, &addr);
 	if (status) {
-		printf("Failed to alloc %lx bytes at %lx: %lx\n", os_load->size,
-		       load_addr, status);
+		printf("Failed to alloc %lx bytes: %lx\n", os_load->size,
+		       status);
 		return -EFAULT;
 	}
 
@@ -275,6 +274,65 @@ int board_fixup_os(void *ctx, struct event *evt)
 	return 0;
 }
 EVENT_SPY_FULL(EVT_BOOT_OS_ADDR, board_fixup_os);
+
+int efi_app_exit_boot_services(struct efi_priv *priv, uint key)
+{
+	const struct efi_boot_services *boot = priv->boot;
+	int ret;
+
+	ret = boot->exit_boot_services(priv->parent_image, key);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int ft_system_setup(void *fdt, struct bd_info *bd)
+{
+	struct efi_mem_desc *map, *desc, *end;
+	u64 ram_start, ram_end;
+	int desc_size;
+	int ret, upto;
+	uint version;
+	int size;
+	uint key;
+
+	ret = efi_get_mmap(&map, &size, &key, &desc_size, &version);
+	if (ret)
+		return log_msg_ret("erm", ret);
+
+	efi_dump_mem_table(map, size, desc_size, false);
+	ram_start = -1ULL;
+	ram_end = -1ULL;
+	end = (void *)map + size;
+	for (upto = 0, desc = map; desc < end;
+	     desc = efi_get_next_mem_desc(desc, desc_size), upto++) {
+		u64 base = desc->physical_start, limit;
+
+		if (!efi_mem_is_boot_services(desc->type) &&
+		    desc->type != EFI_CONVENTIONAL_MEMORY)
+			continue;
+
+		if (ram_start == -1ULL)
+			ram_start = base;
+		limit = base + (desc->num_pages << EFI_PAGE_SHIFT);
+		log_debug("%d: %s: %llx limit %llx\n", upto,
+			  efi_mem_type_name(desc->type), base, limit);
+		if (ram_end == -1ULL || limit > ram_end)
+			ram_end = limit;
+	}
+
+	log_info("RAM extends from %llx to %llx\n", ram_start, ram_end);
+	ret = fdt_fixup_memory(fdt, ram_start, ram_end - ram_start);
+	if (ret) {
+		printf("failed fixup memory\n");
+		return ret;
+	}
+
+	free(map);
+
+	return 0;
+}
 
 static const struct udevice_id efi_sysreset_ids[] = {
 	{ .compatible = "efi,reset" },
