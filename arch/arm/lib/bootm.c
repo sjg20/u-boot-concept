@@ -11,6 +11,9 @@
  * Copyright (C) 2001  Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	LOGC_BOOT
+
 #include <bootm.h>
 #include <bootstage.h>
 #include <command.h>
@@ -149,7 +152,7 @@ static void setup_end_tag(struct bd_info *bd)
 
 __weak void setup_board_tags(struct tag **in_params) {}
 
-#ifdef CONFIG_ARM64
+#ifdef CONFIG_ARM64x
 static void do_nonsec_virt_switch(void)
 {
 	if (ll_boot_init()) {
@@ -254,28 +257,50 @@ static void switch_to_el1(void)
 #endif
 #endif
 
+static int get_current_el(void)
+{
+    ulong el;
+
+    /*
+     * The CurrentEL register holds the current Exception Level in bits 3:2.
+     * We use the 'mrs' instruction to move the value from this system
+     * register into a general-purpose register (el).
+     */
+    asm volatile("mrs %0, CurrentEL" : "=r" (el));
+
+    /* The value is in bits 3:2, so we shift it right by 2 */
+    return el >> 2;
+}
+
 /* Subcommand: GO */
 static void boot_jump_linux(struct bootm_headers *images, int flag)
 {
 #ifdef CONFIG_ARM64
-	void (*kernel_entry)(void *fdt_addr, void *res0, void *res1,
-			void *res2);
-	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
+	typedef void (*kernel_func)(void *fdt_addr, void *res0, void *res1,
+				    void *res2);
+	int fake = flag & BOOTM_STATE_OS_FAKE_GO;
+	kernel_func kernel_entry = (kernel_func)images->ep;
 
-	kernel_entry = (void (*)(void *fdt_addr, void *res0, void *res1,
-				void *res2))images->ep;
-
+	log_info("fake %d EL %d\n", fake, get_current_el());
 	debug("## Transferring control to Linux (at address %lx)...\n",
-		(ulong) kernel_entry);
+	      (ulong)images->ep);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
+	printf("x0 %p fake %d\n", images->ft_addr, fake);
 	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
+
+	if (fake) {
+		printf("returning as fake\n");
+		return;
+	}
+
+	kernel_entry(images->ft_addr, 0, 0, 0);
 
 	if (!fake) {
 #ifdef CONFIG_ARMV8_PSCI
 		armv8_setup_psci();
 #endif
-		do_nonsec_virt_switch();
+		// do_nonsec_virt_switch();
 
 		update_os_arch_secondary_cores(images->os.arch);
 
@@ -349,20 +374,24 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 {
 	struct bootm_headers *images = bmi->images;
 
+	log_debug("boot linux flag %x\n", flag);
 	/* No need for those on ARM */
 	if (flag & BOOTM_STATE_OS_BD_T || flag & BOOTM_STATE_OS_CMDLINE)
 		return -1;
 
 	if (flag & BOOTM_STATE_OS_PREP) {
+		log_debug("linux prep\n");
 		boot_prep_linux(images);
 		return 0;
 	}
 
 	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
+		log_debug("go/fake\n");
 		boot_jump_linux(images, flag);
 		return 0;
 	}
 
+	log_debug("cont\n");
 	boot_prep_linux(images);
 	boot_jump_linux(images, flag);
 	return 0;
