@@ -52,7 +52,7 @@ void bootm_final(enum bootm_final_t flags)
 		return;
 	}
 //	printf("after event\n");
-#if 0
+#if 1
 	if (!(flags & BOOTM_FINAL_FAKE)) {
 		bootm_disable_interrupts();
 
