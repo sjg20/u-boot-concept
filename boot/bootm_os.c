@@ -570,8 +570,8 @@ __weak void board_preboot_os(void)
 
 int boot_selected_os(int state, struct bootm_info *bmi, boot_os_fn *boot_fn)
 {
-	arch_preboot_os();
-	board_preboot_os();
+	// arch_preboot_os();
+	// board_preboot_os();
 
 	boot_fn(state, bmi);
 
