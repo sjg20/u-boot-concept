@@ -752,7 +752,6 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 
 	if ((label->ipappend & 0x3) || label->append) {
 		char bootargs[CONFIG_SYS_CBSIZE] = "";
-		char finalbootargs[CONFIG_SYS_CBSIZE];
 
 		if (strlen(label->append ?: "") +
 		    strlen(ip_str) + strlen(mac_str) + 1 > sizeof(bootargs)) {
@@ -769,10 +768,10 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		strcat(bootargs, ip_str);
 		strcat(bootargs, mac_str);
 
-		cli_simple_process_macros(bootargs, finalbootargs,
-					  sizeof(finalbootargs));
+		cli_simple_process_macros(bootargs, ctx->finalbootargs,
+					  sizeof(ctx->finalbootargs));
 		env_set("bootargs", finalbootargs);
-		printf("append: %s\n", finalbootargs);
+		printf("append: %s\n", ctx->finalbootargs);
 	}
 
 	conf_fdt_str = env_get("fdt_addr_r");
