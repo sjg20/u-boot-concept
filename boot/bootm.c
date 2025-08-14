@@ -773,7 +773,8 @@ static int bootm_load_os(struct bootm_info *bmi, int boot_progress)
 	ulong decomp_len;
 	int err;
 
-	log_debug("load_os type '%s' comp '%s'\n",
+	log_debug("load_os type '%s' os '%s' comp '%s'\n",
+		  genimg_get_type_short_name(os.type),
 		  genimg_get_os_short_name(os.type),
 		  genimg_get_comp_short_name(os.comp));
 	/*
