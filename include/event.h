@@ -10,6 +10,7 @@
 #ifndef __event_h
 #define __event_h
 
+#include <bootm.h>
 #include <dm/ofnode_decl.h>
 #include <linux/types.h>
 #include <event_decl.h>

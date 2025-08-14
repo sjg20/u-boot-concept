@@ -477,6 +477,7 @@ static inline struct efi_mem_desc *efi_get_next_mem_desc(
  * @ram_base: Base address of RAM (size CONFIG_EFI_RAM_SIZE)
  * @image_data_type: Type of the loaded image (e.g. EFI_LOADER_CODE)
  * @efi_dp_to_text: Pointer to the EFI_DEVICE_PATH protocol, or NULL if none
+ * @is_qemu: true if running under QEMU
  *
  * @info: Header of the info list, holding info collected by the stub and passed
  *	to U-Boot
@@ -503,6 +504,7 @@ struct efi_priv {
 	unsigned long ram_base;
 	unsigned int image_data_type;
 	struct efi_device_path_to_text_protocol *efi_dp_to_text;
+	bool is_qemu;
 
 	/* stub: */
 	struct efi_info_hdr *info;

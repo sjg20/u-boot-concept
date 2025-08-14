@@ -6,6 +6,7 @@
  * Stephen Warren <swarren@wwwdotorg.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <dm.h>

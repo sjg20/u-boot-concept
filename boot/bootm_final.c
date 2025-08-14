@@ -53,8 +53,13 @@ void bootm_final(enum bootm_final_t flags)
 	}
 	if (!(flags & BOOTM_FINAL_FAKE)) {
 		bootm_disable_interrupts();
+//	printf("after event\n");
+#if 1
+	if (!(flags & BOOTM_FINAL_FAKE)) {
+		bootm_disable_interrupts();
 
 		if (!(flags & BOOTM_FINAL_NO_CLEANUP))
 			cleanup_before_linux();
 	}
+#endif
 }

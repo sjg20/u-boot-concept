@@ -8,6 +8,7 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <command.h>
@@ -15,6 +16,7 @@
 #include <fdtdec.h>
 #include <env.h>
 #include <errno.h>
+#include <fdt_simplefb.h>
 #include <image.h>
 #include <lmb.h>
 #include <log.h>
@@ -76,9 +78,9 @@ static void boot_fdt_reserve_region(u64 addr, u64 size, enum lmb_flags flags)
 
 	ret = lmb_reserve_flags(addr, size, flags);
 	if (!ret) {
-		debug("   reserving fdt memory region: addr=%llx size=%llx flags=%x\n",
-		      (unsigned long long)addr,
-		      (unsigned long long)size, flags);
+		// debug("   reserving fdt memory region: addr=%llx size=%llx flags=%x\n",
+		      // (unsigned long long)addr,
+		      // (unsigned long long)size, flags);
 	} else {
 		puts("ERROR: reserving fdt memory region failed ");
 		printf("(addr=%llx size=%llx flags=%x)\n",
@@ -589,7 +591,10 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 		printf("ERROR: root node setup failed\n");
 		goto err;
 	}
-	if (fdt_chosen(blob) < 0) {
+
+	log_debug("chosen\n");
+	ret = fdt_chosen(blob);
+	if (ret < 0) {
 		printf("ERROR: /chosen node create failed\n");
 		goto err;
 	}
@@ -680,6 +685,14 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 	if (IS_ENABLED(CONFIG_OF_BOARD_SETUP))
 		ft_board_setup_ex(blob, gd->bd);
 #endif
+
+	ret = fdt_simplefb_add_node(blob);
+	if (ret) {
+		printf("failed to set up simplefb\n");
+		goto err;
+	}
+	printf("added simplefb\n");
+	run_command("fdt print /framebuffer", 0);
 
 	return 0;
 err:

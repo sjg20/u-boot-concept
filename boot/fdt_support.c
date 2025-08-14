@@ -6,6 +6,9 @@
  * Copyright 2010-2011 Freescale Semiconductor, Inc.
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	LOGC_BOOT
+
 #include <dm.h>
 #include <abuf.h>
 #include <env.h>
@@ -367,6 +370,9 @@ int fdt_chosen(void *fdt)
 
 	str = board_fdt_chosen_bootargs(fdt_get_property(fdt, nodeoffset,
 							 "bootargs", NULL));
+	log_debug("bootargs: '%s'\n", str);
+	mdelay(2000);
+	// return -EFAULT;
 
 	if (str) {
 		err = fdt_setprop(fdt, nodeoffset, "bootargs", str,
@@ -374,9 +380,12 @@ int fdt_chosen(void *fdt)
 		if (err < 0) {
 			printf("WARNING: could not set bootargs %s.\n",
 			       fdt_strerror(err));
+			mdelay(2000);
 			return err;
 		}
 	}
+	printf("here\n");
+	mdelay(2000);
 
 	/* add u-boot version */
 	err = fdt_setprop(fdt, nodeoffset, "u-boot,version", PLAIN_VERSION,
@@ -1280,7 +1289,7 @@ static u64 of_bus_default_map(fdt32_t *addr, const fdt32_t *range,
 	s  = fdt_read_number(range + na + pna, ns);
 	da = fdt_read_number(addr, na);
 
-	debug("OF: default map, cp=%llx, s=%llx, da=%llx\n", cp, s, da);
+	// debug("OF: default map, cp=%llx, s=%llx, da=%llx\n", cp, s, da);
 
 	if (da < cp || da >= (cp + s))
 		return OF_BAD_ADDR;
@@ -1335,7 +1344,7 @@ static u64 of_bus_isa_map(fdt32_t *addr, const fdt32_t *range,
 	s  = fdt_read_number(range + na + pna, ns);
 	da = fdt_read_number(addr + 1, na - 1);
 
-	debug("OF: ISA map, cp=%llx, s=%llx, da=%llx\n", cp, s, da);
+	// debug("OF: ISA map, cp=%llx, s=%llx, da=%llx\n", cp, s, da);
 
 	if (da < cp || da >= (cp + s))
 		return OF_BAD_ADDR;
@@ -1419,7 +1428,7 @@ static int of_translate_one(const void *blob, int parent, struct of_bus *bus,
 	if (ranges == NULL || rlen == 0) {
 		offset = fdt_read_number(addr, na);
 		memset(addr, 0, pna * 4);
-		debug("OF: no ranges, 1:1 translation\n");
+		// debug("OF: no ranges, 1:1 translation\n");
 		goto finish;
 	}
 
@@ -1440,8 +1449,8 @@ static int of_translate_one(const void *blob, int parent, struct of_bus *bus,
 	memcpy(addr, ranges + na, 4 * pna);
 
  finish:
-	of_dump_addr("OF: parent translation for:", addr, pna);
-	debug("OF: with offset: %llu\n", offset);
+	// of_dump_addr("OF: parent translation for:", addr, pna);
+	// debug("OF: with offset: %llu\n", offset);
 
 	/* Translate it into parent bus space */
 	return pbus->translate(addr, offset, pna);
@@ -1466,8 +1475,8 @@ static u64 __of_translate_address(const void *blob, int node_offset,
 	int na, ns, pna, pns;
 	u64 result = OF_BAD_ADDR;
 
-	debug("OF: ** translation for device %s **\n",
-		fdt_get_name(blob, node_offset, NULL));
+	// debug("OF: ** translation for device %s **\n",
+		// fdt_get_name(blob, node_offset, NULL));
 
 	/* Get parent & match bus type */
 	parent = fdt_parent_offset(blob, node_offset);
@@ -1484,9 +1493,9 @@ static u64 __of_translate_address(const void *blob, int node_offset,
 	}
 	memcpy(addr, in_addr, na * 4);
 
-	debug("OF: bus is %s (na=%d, ns=%d) on %s\n",
-	    bus->name, na, ns, fdt_get_name(blob, parent, NULL));
-	of_dump_addr("OF: translating address:", addr, na);
+	// debug("OF: bus is %s (na=%d, ns=%d) on %s\n",
+	    // bus->name, na, ns, fdt_get_name(blob, parent, NULL));
+	// of_dump_addr("OF: translating address:", addr, na);
 
 	/* Translate */
 	for (;;) {
@@ -1496,7 +1505,7 @@ static u64 __of_translate_address(const void *blob, int node_offset,
 
 		/* If root, we have finished */
 		if (parent < 0) {
-			debug("OF: reached root node\n");
+			// debug("OF: reached root node\n");
 			result = fdt_read_number(addr, na);
 			break;
 		}
@@ -1510,8 +1519,8 @@ static u64 __of_translate_address(const void *blob, int node_offset,
 			break;
 		}
 
-		debug("OF: parent bus is %s (na=%d, ns=%d) on %s\n",
-		    pbus->name, pna, pns, fdt_get_name(blob, parent, NULL));
+		// debug("OF: parent bus is %s (na=%d, ns=%d) on %s\n",
+		    // pbus->name, pna, pns, fdt_get_name(blob, parent, NULL));
 
 		/* Apply bus translation */
 		if (of_translate_one(blob, node_offset, bus, pbus,
@@ -1523,7 +1532,7 @@ static u64 __of_translate_address(const void *blob, int node_offset,
 		ns = pns;
 		bus = pbus;
 
-		of_dump_addr("OF: one level translation:", addr, na);
+		// of_dump_addr("OF: one level translation:", addr, na);
 	}
  bail:
 

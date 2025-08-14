@@ -4,6 +4,7 @@
  * Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <bootflow.h>
@@ -22,6 +23,7 @@
 #include <linux/string.h>
 #include <linux/ctype.h>
 #include <errno.h>
+#include <linux/delay.h>
 #include <linux/list.h>
 
 #include <rng.h>
@@ -773,7 +775,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 
 		cli_simple_process_macros(bootargs, ctx->finalbootargs,
 					  sizeof(ctx->finalbootargs));
-		env_set("bootargs", ctx->finalbootargs);
+		// env_set("bootargs", finalbootargs);
 		printf("append: %s\n", ctx->finalbootargs);
 	}
 
@@ -781,11 +783,16 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	ret = label_process_fdt(ctx, label, kern_addr_str, &conf_fdt_str);
 	if (ret)
 		return ret;
+	log_debug("conf_fdt_str '%s'\n", conf_fdt_str);
 
 	if (!conf_fdt_str) {
+		log_debug("no conf_dst: atags %d label->fdt '%s'\n",
+			  IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS), label->fdt);
 		if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
-		    strcmp("-", label->fdt))
+		    strcmp("-", label->fdt)) {
 			conf_fdt_str = env_get("fdt_addr");
+			log_debug("fdt now '%s\n", conf_fdt_str);
+		}
 	}
 
 	if (!conf_fdt_str) {
@@ -1030,6 +1037,11 @@ void handle_pxe_menu(struct pxe_context *ctx, struct pxe_menu *cfg)
 	 */
 
 	if (err == 1) {
+		struct pxe_label *label = choice;
+
+		printf("choice '%s' append '%s'\n", label->name, label->append);
+		mdelay(2000);
+
 		err = label_boot(ctx, choice);
 		log_debug("label_boot() returns %d\n", err);
 		if (!err)
