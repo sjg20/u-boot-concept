@@ -93,11 +93,6 @@ static efi_status_t setup_memory(struct efi_priv *priv)
 	efi_status_t ret;
 	int pages;
 
-	/*
-	 * Use global_data_ptr instead of gd since it is an assignment. There
-	 * are very few assignments to global_data in U-Boot and this makes
-	 * it easier to find them.
-	 */
 	ptr = efi_malloc(priv, sizeof(*ptr), &ret);
 	if (!ptr)
 		return ret;
@@ -112,12 +107,17 @@ static efi_status_t setup_memory(struct efi_priv *priv)
 	pages = CONFIG_EFI_RAM_SIZE >> 12;
 
 	/*
-	 * Don't allocate any memory above 4GB. U-Boot is a 32-bit application
-	 * so we want it to load below 4GB.
+	 * Try not to allocate any memory above 4GB, just for ease of looking at
+	 * addresses.
 	 */
 	addr = 1ULL << 32;
 	ret = boot->allocate_pages(EFI_ALLOCATE_MAX_ADDRESS,
 				   priv->image_data_type, pages, &addr);
+	if (ret) {
+		log_info("(any address) ");
+		ret = boot->allocate_pages(EFI_ALLOCATE_ANY_PAGES,
+					   priv->image_data_type, pages, &addr);
+	}
 	if (ret) {
 		log_info("(using pool %lx) ", ret);
 		priv->ram_base = (ulong)efi_malloc(priv, CONFIG_EFI_RAM_SIZE,
@@ -129,6 +129,7 @@ static efi_status_t setup_memory(struct efi_priv *priv)
 		log_info("(using allocated RAM address %lx) ", (ulong)addr);
 		priv->ram_base = addr;
 	}
+	gd->ram_base = addr;
 	gd->ram_size = pages << 12;
 
 	return 0;

@@ -78,7 +78,7 @@ enum bootm_final_t {
  * @base_ptr: Pointer to the boot parameters, typically at address
  *	DEFAULT_SETUP_BASE
  *	This is set up when loading the zimage
- * @cmdline: Environment variable containing the 'override' command line, or
+ * @x86_cmdline: Environment variable containing the 'override' command line, or
  *	NULL to use the one in the setup block
  */
 struct bootm_info {
@@ -106,7 +106,7 @@ struct bootm_info {
 	ulong initrd_size;
 	ulong load_address;
 	struct boot_params *base_ptr;
-	const char *cmdline;
+	const char *x86_cmdline;
 #endif
 };
 
