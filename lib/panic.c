@@ -26,6 +26,10 @@ static void panic_finish(void)
 #else
 	flush();  /* flush the panic message before reset */
 
+	printf("press a key...");
+	getchar();
+	printf("\n");
+
 	do_reset(NULL, 0, 0, NULL);
 #endif
 	while (1)
