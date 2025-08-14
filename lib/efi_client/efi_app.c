@@ -18,6 +18,7 @@
 #include <image.h>
 #include <init.h>
 #include <malloc.h>
+#include <smbios.h>
 #include <sysreset.h>
 #include <u-boot/uuid.h>
 #include <asm/global_data.h>
