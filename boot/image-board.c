@@ -931,6 +931,7 @@ int image_setup_linux(struct bootm_headers *images)
 	}
 
 	if (CONFIG_IS_ENABLED(OF_LIBFDT) && of_size) {
+		log_debug("setting up fdt\n");
 		ret = image_setup_libfdt(images, *of_flat_tree, true);
 		if (ret)
 			return ret;
