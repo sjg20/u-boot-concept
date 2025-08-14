@@ -574,8 +574,7 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	bmi.conf_fdt = conf_fdt_str;
 	bootm_x86_set(&bmi, bzimage_addr, hextoul(kern_addr_str, NULL));
 	bmi.os_size = kern_size;
-	if (*ctx->finalbootargs)
-		bmi.append = ctx->finalbootargs;
+	bmi.append = ctx->finalbootargs;
 	bmi.bflow = ctx->bflow;
 
 	if (initrd_addr) {
