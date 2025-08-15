@@ -7,6 +7,7 @@
 #ifndef _BOOTM_H
 #define _BOOTM_H
 
+#include <event_decl.h>
 #include <image.h>
 
 struct boot_params;
@@ -15,18 +16,6 @@ struct cmd_tbl;
 #define BOOTM_ERR_RESET		(-1)
 #define BOOTM_ERR_OVERLAP		(-2)
 #define BOOTM_ERR_UNIMPLEMENTED	(-3)
-
-/**
- * enum bootm_final_t - flags to control bootm_final()
- *
- * @BOOTM_FINAL_FAKE: true to do everything except actually boot; it then
- *	returns to the caller
- * @BOOTM_FINAL_NO_CLEANUP: true to skip calling cleanup_before_linux()
- */
-enum bootm_final_t {
-	BOOTM_FINAL_FAKE	= BIT(0),
-	BOOTM_FINAL_NO_CLEANUP	= BIT(1),
-};
 
 /**
  * struct bootm_info() - information used when processing images to boot
