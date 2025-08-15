@@ -14,7 +14,7 @@ config EFI
 config EFI_BINARY_EXEC
 	bool "Execute UEFI binary"
 	default y
-	depends on EFI_LOADER
+	depends on EFI_LOADER || EFI_APP
 	help
 	  Select this option if you want to execute the UEFI binary after
 	  loading it with U-Boot load commands or other methods.
