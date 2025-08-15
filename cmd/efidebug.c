@@ -1234,9 +1234,6 @@ static int do_efi_boot_dump(struct cmd_tbl *cmdtp, int flag,
 	efi_guid_t guid;
 	efi_status_t ret;
 
-	if (app_not_supported("boot dump"))
-		return CMD_RET_FAILURE;
-
 	if (argc > 1)
 		return CMD_RET_USAGE;
 
@@ -1614,9 +1611,6 @@ static int do_efi_query_info(struct cmd_tbl *cmdtp, int flag,
 	u64 remain_variable_storage_size;
 	u64 max_variable_size;
 	int i;
-
-	if (app_not_supported("query"))
-		return CMD_RET_FAILURE;
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-bs"))
