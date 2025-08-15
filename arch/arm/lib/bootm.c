@@ -11,6 +11,8 @@
  * Copyright (C) 2001  Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
  */
 
+#define LOG_CATEGORY	LOGC_BOOT
+
 #include <bootm.h>
 #include <bootstage.h>
 #include <command.h>
@@ -349,20 +351,24 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 {
 	struct bootm_headers *images = bmi->images;
 
+	log_debug("boot linux flag %x\n", flag);
 	/* No need for those on ARM */
 	if (flag & BOOTM_STATE_OS_BD_T || flag & BOOTM_STATE_OS_CMDLINE)
 		return -1;
 
 	if (flag & BOOTM_STATE_OS_PREP) {
+		log_debug("linux prep\n");
 		boot_prep_linux(images);
 		return 0;
 	}
 
 	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
+		log_debug("go/fake\n");
 		boot_jump_linux(images, flag);
 		return 0;
 	}
 
+	log_debug("cont\n");
 	boot_prep_linux(images);
 	boot_jump_linux(images, flag);
 	return 0;
