@@ -28,6 +28,16 @@
 
 #define BS systab.boottime
 
+static bool app_not_supported(const char *cmd)
+{
+	if (!IS_ENABLED(CONFIG_EFI_APP))
+		return false;
+
+	printf("Command '%s' is not yet supported in the app\n", cmd);
+
+	return true;
+}
+
 #ifdef CONFIG_EFI_HAVE_CAPSULE_SUPPORT
 /**
  * do_efi_capsule_update() - process a capsule update
@@ -405,6 +415,9 @@ static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
 	u16 *driver_name, *image_path_text;
 	efi_status_t ret;
 
+	if (app_not_supported("show_drivers"))
+		return CMD_RET_FAILURE;
+
 	ret = EFI_CALL(efi_locate_handle_buffer(
 				BY_PROTOCOL, &efi_guid_driver_binding_protocol,
 				NULL, &num, &handles));
@@ -457,6 +470,9 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 	efi_guid_t **guid;
 	efi_uintn_t num, count, i, j;
 	efi_status_t ret;
+
+	if (app_not_supported("show_handles"))
+		return CMD_RET_FAILURE;
 
 	ret = EFI_CALL(efi_locate_handle_buffer(ALL_HANDLES, NULL, NULL,
 						&num, &handles));
@@ -646,6 +662,9 @@ static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 	int i;
 	efi_status_t ret;
 
+	if (app_not_supported("memmap"))
+		return CMD_RET_FAILURE;
+
 	ret = efi_get_memory_map_alloc(&map_size, &memmap);
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
@@ -698,6 +717,9 @@ static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 static int do_efi_show_tables(struct cmd_tbl *cmdtp, int flag,
 			      int argc, char *const argv[])
 {
+	if (app_not_supported("show tables"))
+		return CMD_RET_FAILURE;
+
 	efi_show_tables(&systab);
 
 	return CMD_RET_SUCCESS;
@@ -893,6 +915,9 @@ static int do_efi_boot_add(struct cmd_tbl *cmdtp, int flag,
 	efi_status_t ret;
 	int r = CMD_RET_SUCCESS;
 
+	if (app_not_supported("boot add"))
+		return CMD_RET_FAILURE;
+
 	guid = efi_global_variable_guid;
 
 	/* attributes */
@@ -1073,6 +1098,9 @@ static int do_efi_boot_rm(struct cmd_tbl *cmdtp, int flag,
 	u16 var_name16[9];
 	efi_status_t ret;
 
+	if (app_not_supported("boot rm"))
+		return CMD_RET_FAILURE;
+
 	if (argc == 1)
 		return CMD_RET_USAGE;
 
@@ -1199,6 +1227,9 @@ static int do_efi_boot_dump(struct cmd_tbl *cmdtp, int flag,
 	efi_guid_t guid;
 	efi_status_t ret;
 
+	if (app_not_supported("boot dump"))
+		return CMD_RET_FAILURE;
+
 	if (argc > 1)
 		return CMD_RET_USAGE;
 
@@ -1254,6 +1285,9 @@ static int show_efi_boot_order(void)
 	void *data;
 	struct efi_load_option lo;
 	efi_status_t ret;
+
+	if (app_not_supported("show_boot_order"))
+		return CMD_RET_FAILURE;
 
 	size = 0;
 	ret = efi_get_variable_int(u"BootOrder", &efi_global_variable_guid,
@@ -1573,6 +1607,9 @@ static int do_efi_query_info(struct cmd_tbl *cmdtp, int flag,
 	u64 remain_variable_storage_size;
 	u64 max_variable_size;
 	int i;
+
+	if (app_not_supported("query"))
+		return CMD_RET_FAILURE;
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-bs"))
