@@ -4026,3 +4026,8 @@ efi_status_t efi_initialize_system_table(void)
 
 	return ret;
 }
+
+struct efi_system_table *efi_get_sys_table(void)
+{
+	return &systab;
+}
