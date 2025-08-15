@@ -196,3 +196,18 @@ void efi_free_pool(void *ptr)
 
 	efi_free(priv, ptr);
 }
+
+/* helper for debug prints.. efi_free_pool() the result. */
+uint16_t *efi_dp_str(struct efi_device_path *dp)
+{
+	struct efi_priv *priv = efi_get_priv();
+	u16 *val;
+
+	if (!priv->efi_dp_to_text)
+		return NULL;
+
+	val = priv->efi_dp_to_text->convert_device_path_to_text(dp, true,
+								true);
+
+	return val;
+}
