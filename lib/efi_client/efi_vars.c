@@ -18,8 +18,7 @@ efi_status_t efi_get_variable_int(const u16 *variable_name, const efi_guid_t *ve
 				  u32 *attributes, efi_uintn_t *data_size,
 				  void *data, u64 *timep)
 {
-	struct efi_priv *priv = efi_get_priv();
-	struct efi_runtime_services *run = priv->run;
+	struct efi_runtime_services *run = efi_get_run();
 
 	return run->get_variable((u16 *)variable_name, vendor, attributes, data_size, data);
 }
@@ -28,8 +27,7 @@ efi_status_t efi_set_variable_int(const u16 *variable_name, const efi_guid_t *ve
 				  u32 attributes, efi_uintn_t data_size, const void *data,
 				  bool ro_check)
 {
-	struct efi_priv *priv = efi_get_priv();
-	struct efi_runtime_services *run = priv->run;
+	struct efi_runtime_services *run = efi_get_run();
 
 	return run->set_variable((u16 *)variable_name, vendor, attributes, data_size, data);
 }
@@ -37,8 +35,7 @@ efi_status_t efi_set_variable_int(const u16 *variable_name, const efi_guid_t *ve
 efi_status_t efi_get_next_variable_name_int(efi_uintn_t *variable_name_size,
 					    u16 *variable_name, efi_guid_t *vendor)
 {
-	struct efi_priv *priv = efi_get_priv();
-	struct efi_runtime_services *run = priv->run;
+	struct efi_runtime_services *run = efi_get_run();
 
 	return run->get_next_variable_name(variable_name_size, variable_name, vendor);
 }

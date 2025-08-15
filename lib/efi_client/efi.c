@@ -65,6 +65,11 @@ struct efi_boot_services *efi_get_boot(void)
 	return global_priv->boot;
 }
 
+struct efi_runtime_services *efi_get_run(void)
+{
+	return global_priv->run;
+}
+
 efi_handle_t efi_get_parent_image(void)
 {
 	return global_priv->parent_image;
