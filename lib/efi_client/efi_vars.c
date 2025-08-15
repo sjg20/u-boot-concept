@@ -39,3 +39,17 @@ efi_status_t efi_get_next_variable_name_int(efi_uintn_t *variable_name_size,
 
 	return run->get_next_variable_name(variable_name_size, variable_name, vendor);
 }
+
+efi_status_t efi_query_variable_info_int(u32 attributes,
+					 u64 *maximum_variable_storage_size,
+					 u64 *remaining_variable_storage_size,
+					 u64 *maximum_variable_size)
+{
+	struct efi_runtime_services *run = efi_get_run();
+
+	return run->query_variable_info(attributes,
+					maximum_variable_storage_size,
+					remaining_variable_storage_size,
+					maximum_variable_size);
+}
+
