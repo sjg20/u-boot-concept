@@ -221,6 +221,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	printf("starting\n");
 
 	board_init_f(GD_FLG_SKIP_RELOC);
+	gd = gd->new_gd;
 	board_init_r(NULL, 0);
 	free_memory(priv);
 
