@@ -17,6 +17,7 @@
 #include <efi_api.h>
 #include <efi_stub.h>
 #include <errno.h>
+#include <fdt_simplefb.h>
 #include <image.h>
 #include <init.h>
 #include <malloc.h>
@@ -336,6 +337,12 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 	ret = fdt_fixup_memory(fdt, ram_start, ram_end - ram_start);
 	if (ret) {
 		printf("failed fixup memory\n");
+		return ret;
+	}
+
+	ret = fdt_simplefb_add_node(fdt);
+	if (ret) {
+		printf("failed to set up simplefb\n");
 		return ret;
 	}
 
