@@ -61,4 +61,11 @@ void arch_print_bdinfo(void)
 	printf("Early malloc usage: %x / %x\n", gd->malloc_ptr,
 	       CONFIG_VAL(SYS_MALLOC_F_LEN));
 #endif
+#ifdef CONFIG_ARM64
+	ulong el;
+
+	/* the CurrentEL register holds the current Exception Level in bits 3:2 */
+	asm volatile("mrs %0, CurrentEL" : "=r" (el));
+	lprint_num_l("CurrentEL", el);
+#endif
 }
