@@ -55,15 +55,15 @@ static int cb_get_str(struct udevice *dev, int id, size_t size, char *val)
 static int cb_detect(struct udevice *dev)
 {
 	struct cb_sysinfo_priv *priv = dev_get_priv(dev);
-	const struct smbios_entry *smbios;
+	struct smbios_info info;
+	int ret;
 
-	smbios = smbios_entry(lib_sysinfo.smbios_start,
-			      lib_sysinfo.smbios_size);
-	if (!smbios)
+	ret = smbios_locate(lib_sysinfo.smbios_start, &info);
+	if (ret)
 		return 0;
 
-	priv->bios = smbios_get_header(smbios, SMBIOS_BIOS_INFORMATION);
-	priv->system = smbios_get_header(smbios, SMBIOS_SYSTEM_INFORMATION);
+	priv->bios = smbios_get_header(&info, SMBIOS_BIOS_INFORMATION);
+	priv->system = smbios_get_header(&info, SMBIOS_SYSTEM_INFORMATION);
 	priv->t0 = (struct smbios_type0 *)priv->bios;
 	priv->t1 = (struct smbios_type1 *)priv->system;
 

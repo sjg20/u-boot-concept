@@ -348,8 +348,8 @@ const struct smbios_entry *smbios_entry(u64 address, u32 size);
  * @type:      SMBIOS type
  * @return:    NULL or a valid pointer to a struct smbios_header
  */
-const struct smbios_header *
-smbios_get_header(const struct smbios_entry *entry, int type);
+const struct smbios_header *smbios_get_header(const struct smbios_info *info,
+					      int type);
 
 /**
  * smbios_string() - Return string from SMBIOS
@@ -397,9 +397,11 @@ int smbios_update_version_full(void *smbios_tab, const char *version);
  *
  * @entry: pointer to a struct smbios3_entry
  * @header: pointer to a struct smbios_header
+ * @table_maximum_size: number of bytes used by the tables at @header
  */
 void smbios_prepare_measurement(const struct smbios3_entry *entry,
-				struct smbios_header *header);
+				struct smbios_header *smbios_copy,
+				int table_maximum_size);
 
 /**
  * smbios_get_string() - get SMBIOS string from table
