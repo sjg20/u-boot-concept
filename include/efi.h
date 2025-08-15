@@ -152,6 +152,9 @@ typedef struct efi_object *efi_handle_t;
 		(c) & 0xff, ((c) >> 8) & 0xff, \
 		(d0), (d1), (d2), (d3), (d4), (d5), (d6), (d7) } }
 
+extern const efi_guid_t efi_global_variable_guid;
+extern const efi_guid_t efi_guid_fdt;
+
 /* Generic EFI table header */
 struct efi_table_hdr {
 	u64 signature;
