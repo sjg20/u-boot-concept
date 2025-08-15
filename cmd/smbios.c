@@ -401,7 +401,7 @@ static int do_smbios(struct cmd_tbl *cmdtp, int flag, int argc,
 	       (unsigned long long)map_to_sysmem(info.table));
 
 	for (struct smbios_header *pos = info.table; pos;
-	     pos = smbios_next_table(pos)) {
+	     pos = smbios_next_table(&info, pos)) {
 		printf("\nHandle 0x%04x, DMI type %d, %d bytes at 0x%llx\n",
 		       pos->handle, pos->type, pos->length,
 		       (unsigned long long)map_to_sysmem(pos));

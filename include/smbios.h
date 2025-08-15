@@ -413,10 +413,12 @@ const char *smbios_get_string(void *table, int index);
 /**
  * smbios_next_table() - Find the next table
  *
+ * @info: SMBIOS info
  * @table: Table to start from
  * Return: Pointer to the next table, or NULL if @table is the last
  */
-struct smbios_header *smbios_next_table(struct smbios_header *table);
+struct smbios_header *smbios_next_table(const struct smbios_info *info,
+					struct smbios_header *table);
 
 /**
  * smbios_locate() - Locate the SMBIOS tables

@@ -32,10 +32,13 @@ const char *smbios_get_string(void *table, int index)
 	return str;
 }
 
-struct smbios_header *smbios_next_table(struct smbios_header *table)
+struct smbios_header *smbios_next_table(const struct smbios_info *info,
+					struct smbios_header *table)
 {
 	const char *str;
 
+	if ((ulong)table - (ulong)info->table >= info->max_size)
+		return NULL;
 	if (table->type == SMBIOS_END_OF_TABLE)
 		return NULL;
 
@@ -317,7 +320,7 @@ int smbios_locate(ulong addr, struct smbios_info *info)
 
 	info->count = 0;
 	for (struct smbios_header *pos = info->table; pos;
-	     pos = smbios_next_table(pos))
+	     pos = smbios_next_table(info, pos))
 		info->count++;
 
 	return 0;
