@@ -156,7 +156,7 @@ static void do_nonsec_virt_switch(void)
 {
 	if (ll_boot_init()) {
 		smp_kick_all_cpus();
-		dcache_disable();	/* flush cache before swtiching to EL2 */
+		dcache_disable();	/* flush cache before switching to EL2 */
 	}
 }
 #endif
