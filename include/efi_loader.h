@@ -172,10 +172,6 @@ static inline void efi_net_set_addr(struct efi_ipv4_address *ip,
 /* Maximum number of configuration tables */
 #define EFI_MAX_CONFIGURATION_TABLES 16
 
-/* GUID used by the root node */
-#define U_BOOT_GUID \
-	EFI_GUID(0xe61d73b9, 0xa384, 0x4acc, \
-		 0xae, 0xab, 0x82, 0xe8, 0x28, 0xf3, 0x62, 0x8b)
 /* GUID used as root for blkmap devices */
 #define U_BOOT_BLKMAP_DEV_GUID \
 	EFI_GUID(0x4cad859d, 0xd644, 0x42ff,	\

@@ -65,7 +65,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 	file_path = efi_dp_concat(dp_dev, dp_img, 0);
 	msg_path = dp_img;
 
-	log_info("Booting %pD\n", msg_path);
+	log_info("Loading image...");
 
 	ret = boot->load_image(false, efi_get_parent_image(), file_path,
 			       source_buffer, source_size, &handle);
@@ -73,6 +73,8 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 		log_err("Loading image failed\n");
 		goto out;
 	}
+
+	log_info("booting %pD\n", msg_path);
 
 	ret = do_bootefi_exec(handle, NULL);
 

@@ -176,6 +176,66 @@ static void scan_tables(struct efi_system_table *sys_table)
 	}
 }
 
+struct efi_root_dp {
+	struct efi_device_path_vendor vendor;
+	struct efi_device_path end;
+} __packed;
+
+static int setup_root_node(void)
+{
+	const efi_guid_t efi_u_boot_guid = U_BOOT_GUID;
+	const efi_guid_t efi_guid_device_path = EFI_DEVICE_PATH_PROTOCOL_GUID;
+	struct efi_priv *priv = efi_get_priv();
+	struct efi_boot_services *boot = priv->boot;
+	struct efi_root_dp *dp;
+	// efi_handle_t efi_root;
+	efi_status_t eret;
+
+	/* Create device path protocol */
+	dp = efi_malloc(priv, sizeof(*dp), &eret);
+	if (eret)
+		return log_msg_ret("srn", -ENOMEM);
+
+	/* Fill vendor node */
+	dp->vendor.dp.type = DEVICE_PATH_TYPE_HARDWARE_DEVICE;
+	dp->vendor.dp.sub_type = DEVICE_PATH_SUB_TYPE_VENDOR;
+	dp->vendor.dp.length = sizeof(struct efi_device_path_vendor);
+	dp->vendor.guid = efi_u_boot_guid;
+
+	/* Fill end node */
+	dp->end.type = DEVICE_PATH_TYPE_END;
+	dp->end.sub_type = DEVICE_PATH_SUB_TYPE_END;
+	dp->end.length = sizeof(struct efi_device_path);
+
+	/* Create root node and install protocols */
+	eret = boot->install_multiple_protocol_interfaces(&priv->parent_image,
+		 /* Device path protocol */
+		 &efi_guid_device_path, dp,
+		 NULL);
+	if (eret) {
+		log_err("Failed to install root-node: %lx\n", eret);
+		return log_msg_ret("srp", -EINVAL);
+	}
+
+	    // Status = uefi_call_wrapper(BS->HandleProtocol, 3, Handle, &DevicePathProtocol, (VOID*)&DevicePath);
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, setup_root_node);
+
+static void doit(void)
+{
+	struct efi_runtime_services *run = efi_get_run();
+	efi_status_t eret;
+	efi_uintn_t size;
+
+	printf("run %p\n", run);
+	eret = run->get_variable(L"BootOrder", &efi_global_variable_guid, NULL,
+				 &size, NULL);
+
+	printf("eret %lx\n", eret);
+}
+
 static void find_protocols(struct efi_priv *priv)
 {
 	efi_guid_t guid = EFI_DEVICE_PATH_TO_TEXT_PROTOCOL_GUID;
@@ -229,6 +289,8 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	 * if (ret)
 	 *	return ret;
 	 */
+
+	doit();
 
 	printf("starting\n");
 
