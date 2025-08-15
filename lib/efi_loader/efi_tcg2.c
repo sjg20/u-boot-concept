@@ -1127,7 +1127,8 @@ tcg2_measure_smbios(struct udevice *dev,
 	       (void *)((uintptr_t)entry->struct_table_address),
 	       entry->table_maximum_size);
 
-	smbios_prepare_measurement(entry, smbios_copy);
+	smbios_prepare_measurement(entry, smbios_copy,
+				   entry->table_maximum_size);
 
 	ret = measure_event(dev, 1, EV_EFI_HANDOFF_TABLES2, event_size,
 			    (u8 *)event);
