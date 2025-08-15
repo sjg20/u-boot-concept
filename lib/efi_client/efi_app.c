@@ -176,6 +176,14 @@ static void scan_tables(struct efi_system_table *sys_table)
 	}
 }
 
+static void find_protocols(struct efi_priv *priv)
+{
+	efi_guid_t guid = EFI_DEVICE_PATH_TO_TEXT_PROTOCOL_GUID;
+	struct efi_boot_services *boot = priv->boot;
+
+	boot->locate_protocol(&guid, NULL, (void **)&priv->efi_dp_to_text);
+}
+
 /**
  * efi_main() - Start an EFI image
  *
@@ -211,6 +219,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	}
 
 	scan_tables(priv->sys_table);
+	find_protocols(priv);
 
 	/*
 	 * We could store the EFI memory map here, but it changes all the time,
