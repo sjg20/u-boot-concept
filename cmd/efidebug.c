@@ -727,10 +727,7 @@ static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 static int do_efi_show_tables(struct cmd_tbl *cmdtp, int flag,
 			      int argc, char *const argv[])
 {
-	if (app_not_supported("show tables"))
-		return CMD_RET_FAILURE;
-
-	efi_show_tables(&systab);
+	efi_show_tables(efi_get_sys_table());
 
 	return CMD_RET_SUCCESS;
 }
