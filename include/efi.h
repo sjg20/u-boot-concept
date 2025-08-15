@@ -605,6 +605,13 @@ struct efi_system_table *efi_get_sys_table(void);
 struct efi_boot_services *efi_get_boot(void);
 
 /**
+ * efi_get_run() - Get access to the EFI runtime-services table
+ *
+ * Returns: pointer to EFI runtime-services table
+ */
+struct efi_runtime_services *efi_get_run(void);
+
+/**
  * efi_get_parent_image() - Get the handle of the parent image
  *
  * Return: parent-image handle
