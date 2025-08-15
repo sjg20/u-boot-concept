@@ -62,36 +62,17 @@ const struct smbios_entry *smbios_entry(u64 address, u32 size)
 	return entry;
 }
 
-static u8 *find_next_header(u8 *pos)
-{
-	/* search for _double_ NULL bytes */
-	while (!((*pos == 0) && (*(pos + 1) == 0)))
-		pos++;
-
-	/* step behind the double NULL bytes */
-	pos += 2;
-
-	return pos;
-}
-
-static struct smbios_header *get_next_header(const struct smbios_header *curr)
-{
-	u8 *pos = ((u8 *)curr) + curr->length;
-
-	return (struct smbios_header *)find_next_header(pos);
-}
-
-const struct smbios_header *smbios_get_header(const struct smbios_entry *entry,
+const struct smbios_header *smbios_get_header(const struct smbios_info *info,
 					      int type)
 {
-	const unsigned int num_header = entry->struct_count;
-	const struct smbios_header *header = (struct smbios_header *)((uintptr_t)entry->struct_table_address);
+	struct smbios_header *header;
 
-	for (unsigned int i = 0; i < num_header; i++) {
+	for (header = info->table; header;
+	     header = smbios_next_table(info, header)) {
 		if (header->type == type)
 			return header;
 
-		header = get_next_header(header);
+		header = smbios_next_table(info, header);
 	}
 
 	return NULL;
@@ -126,15 +107,21 @@ char *smbios_string(const struct smbios_header *header, int index)
 	return string_from_smbios_table(header, index);
 }
 
-int smbios_update_version_full(void *smbios_tab, const char *version)
+int smbios_update_version_full(void *smbios_tab, const char *new_version)
 {
 	const struct smbios_header *hdr;
+	struct smbios_info info;
 	struct smbios_type0 *bios;
 	uint old_len, len;
 	char *ptr;
+	int ret;
+
+	ret = smbios_locate(map_to_sysmem(smbios_tab), &info);
+	if (ret)
+		return log_msg_ret("tab", -ENOENT);
 
 	log_info("Updating SMBIOS table at %p\n", smbios_tab);
-	hdr = smbios_get_header(smbios_tab, SMBIOS_BIOS_INFORMATION);
+	hdr = smbios_get_header(&info, SMBIOS_BIOS_INFORMATION);
 	if (!hdr)
 		return log_msg_ret("tab", -ENOENT);
 	bios = (struct smbios_type0 *)hdr;
@@ -149,12 +136,12 @@ int smbios_update_version_full(void *smbios_tab, const char *version)
 	 * are not disturbed. See smbios_add_string()
 	 */
 	old_len = strnlen(ptr, SMBIOS_STR_MAX);
-	len = strnlen(version, SMBIOS_STR_MAX);
+	len = strnlen(new_version, SMBIOS_STR_MAX);
 	if (len > old_len)
 		return log_ret(-ENOSPC);
 
 	log_debug("Replacing SMBIOS type 0 version string '%s'\n", ptr);
-	memcpy(ptr, version, len);
+	memcpy(ptr, new_version, len);
 #ifdef LOG_DEBUG
 	print_buffer((ulong)ptr, ptr, 1, old_len + 1, 0);
 #endif
@@ -260,23 +247,26 @@ static void clear_smbios_table(struct smbios_header *header,
 }
 
 void smbios_prepare_measurement(const struct smbios3_entry *entry,
-				struct smbios_header *smbios_copy)
+				struct smbios_header *smbios_copy,
+				int table_maximum_size)
 {
-	u32 i, j;
-	void *table_end;
-	struct smbios_header *header;
+	struct smbios_info info;
+	u32 i;
 
-	table_end = (void *)((u8 *)smbios_copy + entry->table_maximum_size);
+	info.table = smbios_copy;
+	info.count = 0;		/* unknown */
+	info.max_size = table_maximum_size;
+	info.version = 3 << 16;
 
 	for (i = 0; i < ARRAY_SIZE(smbios_filter_tables); i++) {
-		header = smbios_copy;
-		for (j = 0; (void *)header < table_end; j++) {
+		struct smbios_header *header;
+
+		for (header = info.table; header;
+		     header = smbios_next_table(&info, header)) {
 			if (header->type == smbios_filter_tables[i].type)
 				break;
-
-			header = get_next_header(header);
 		}
-		if ((void *)header >= table_end)
+		if (!header)
 			continue;
 
 		clear_smbios_table(header,
