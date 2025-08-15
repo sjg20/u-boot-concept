@@ -8,6 +8,8 @@
  * This file implements U-Boot running as an EFI application.
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <cpu_func.h>
 #include <debug_uart.h>
 #include <dm.h>
@@ -307,7 +309,9 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 	if (ret)
 		return log_msg_ret("erm", ret);
 
-	efi_dump_mem_table(map, size, desc_size, false);
+	if (_DEBUG)
+		efi_dump_mem_table(map, size, desc_size, false);
+
 	ram_start = -1ULL;
 	ram_end = -1ULL;
 	end = (void *)map + size;
