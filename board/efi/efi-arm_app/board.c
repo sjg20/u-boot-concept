@@ -30,6 +30,10 @@ int board_exit_boot_services(void *ctx, struct event *evt)
 	uint key;
 	int ret;
 
+	if (evt->data.bootm_final.flags & BOOTM_FINAL_FAKE) {
+		printf("Not exiting EFI (fake go)\n");
+		return 0;
+	}
 	printf("Exiting EFI\n");
 	ret = efi_get_mmap(&desc, &size, &key, &desc_size, &version);
 	if (ret) {
