@@ -6,5 +6,6 @@
 obj-y += basename.o
 obj-y += device_path.o
 obj-y += helper.o
+obj-y += load_options.o
 obj-y += memory.o
 obj-y += run.o
