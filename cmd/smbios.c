@@ -117,7 +117,43 @@ static const struct str_lookup_table associativity_strings[] = {
 	{ SMBIOS_CACHE_ASSOC_48WAY,	"48-way Set-Associative" },
 	{ SMBIOS_CACHE_ASSOC_64WAY,	"64-way Set-Associative" },
 	{ SMBIOS_CACHE_ASSOC_20WAY,	"20-way Set-Associative" },
+};
 
+static const struct str_lookup_table mem_array_location_strings[] = {
+	{ 0x01, "Other" },
+	{ 0x02, "Unknown" },
+	{ 0x03, "System board or motherboard" },
+	{ 0x04, "ISA add-on card" },
+	{ 0x05, "EISA add-on card" },
+	{ 0x06, "PCI add-on card" },
+	{ 0x07, "MCA add-on card" },
+	{ 0x08, "PCMCIA add-on card" },
+	{ 0x09, "Proprietary add-on card" },
+	{ 0x0A, "NuBus" },
+	{ 0xA0, "PC-98/C20 add-on card" },
+	{ 0xA1, "PC-98/C24 add-on card" },
+	{ 0xA2, "PC-98/E add-on card" },
+	{ 0xA3, "PC-98/Local bus add-on card" },
+};
+
+static const struct str_lookup_table mem_array_use_strings[] = {
+	{ 0x01, "Other" },
+	{ 0x02, "Unknown" },
+	{ 0x03, "System memory" },
+	{ 0x04, "Video memory" },
+	{ 0x05, "Flash memory" },
+	{ 0x06, "Non-volatile RAM" },
+	{ 0x07, "Cache memory" },
+};
+
+static const struct str_lookup_table mem_err_corr_strings[] = {
+	{ 0x01, "Other" },
+	{ 0x02, "Unknown" },
+	{ 0x03, "None" },
+	{ 0x04, "Parity" },
+	{ 0x05, "Single-bit ECC" },
+	{ 0x06, "Multi-bit ECC" },
+	{ 0x07, "CRC" },
 };
 
 static void smbios_print_generic(const struct smbios_header *table)
@@ -369,6 +405,62 @@ static void smbios_print_type7(struct smbios_type7 *table)
 	printf("\tInstalled Cache Size 2: 0x%08x\n", table->inst_size2.data);
 }
 
+static void smbios_print_type16(struct smbios_type16 *table)
+{
+	u64 capacity;
+
+	printf("Physical Memory Array\n");
+	smbios_print_lookup_str(mem_array_location_strings, table->location,
+				ARRAY_SIZE(mem_array_location_strings),
+				"Location");
+	smbios_print_lookup_str(mem_array_use_strings, table->use,
+				ARRAY_SIZE(mem_array_use_strings), "Use");
+	smbios_print_lookup_str(mem_err_corr_strings, table->error_correction,
+				ARRAY_SIZE(mem_err_corr_strings),
+				"Error Correction");
+
+	capacity = table->maximum_capacity;
+	if (capacity == 0x7fffffff &&
+	    table->hdr.length >= offsetof(struct smbios_type16,
+					  extended_maximum_capacity)) {
+		capacity = table->extended_maximum_capacity;
+		printf("\tMaximum Capacity: %llu GB\n", capacity >> 30);
+	} else if (capacity > 0) {
+		printf("\tMaximum Capacity: %llu MB\n", capacity >> 10);
+	} else {
+		printf("\tMaximum Capacity: No limit\n");
+	}
+
+	printf("\tError Information Handle: 0x%04x\n",
+	       table->error_information_handle);
+	printf("\tNumber Of Devices: %u\n", table->number_of_memory_devices);
+}
+
+static void smbios_print_type19(struct smbios_type19 *table)
+{
+	u64 start_addr, end_addr;
+
+	printf("Memory Array Mapped Address\n");
+
+	/* Check if extended address fields are present (SMBIOS v2.7+) */
+	if (table->hdr.length >= 0x1f) {
+		start_addr = table->extended_starting_address;
+		end_addr = table->extended_ending_address;
+	} else {
+		start_addr = table->starting_address;
+		end_addr = table->ending_address;
+	}
+
+	/* The ending address is the address of the last 1KB block */
+	if (end_addr != 0xffffffff && end_addr != 0xffffffffffffffff)
+		end_addr = (end_addr + 1) * 1024 - 1;
+
+	printf("\tStarting Address: 0x%016llx\n", start_addr);
+	printf("\tEnding Address:   0x%016llx\n", end_addr);
+	printf("\tMemory Array Handle: 0x%04x\n", table->memory_array_handle);
+	printf("\tPartition Width: %u\n", table->partition_width);
+}
+
 static void smbios_print_type127(struct smbios_type127 *table)
 {
 	printf("End Of Table\n");
@@ -423,6 +515,12 @@ static int do_smbios(struct cmd_tbl *cmdtp, int flag, int argc,
 			break;
 		case SMBIOS_CACHE_INFORMATION:
 			smbios_print_type7((struct smbios_type7 *)pos);
+			break;
+		case SMBIOS_PHYS_MEMORY_ARRAY:
+			smbios_print_type16((struct smbios_type16 *)pos);
+			break;
+		case SMBIOS_MEMORY_ARRAY_MAPPED_ADDRESS:
+			smbios_print_type19((struct smbios_type19 *)pos);
 			break;
 		case SMBIOS_END_OF_TABLE:
 			smbios_print_type127((struct smbios_type127 *)pos);
