@@ -1171,6 +1171,7 @@ config SMBIOS
 	depends on X86 || EFI_LOADER
 	default y
 	select LAST_STAGE_INIT
+	imply CMD_SMBIOS if X86
 	help
 	  Indicates that this platform can support System Management BIOS
 	  (SMBIOS) tables. These provide various pieces of information about
