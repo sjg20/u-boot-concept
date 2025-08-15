@@ -149,7 +149,8 @@ static void free_memory(struct efi_priv *priv)
 	if (priv->use_pool_for_malloc)
 		efi_free(priv, (void *)priv->ram_base);
 	else
-		boot->free_pages(priv->ram_base, gd->ram_size >> 12);
+		boot->free_pages(priv->ram_base,
+				 gd->ram_size >> EFI_PAGE_SHIFT);
 
 	efi_free(priv, (void *)gd->malloc_base);
 	efi_free(priv, (void *)gd);
