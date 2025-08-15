@@ -11,6 +11,7 @@
 #include <init.h>
 #include <asm/global_data.h>
 #include <asm/mach-types.h>
+#include <asm/system.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -60,5 +61,8 @@ void arch_print_bdinfo(void)
 #if CONFIG_IS_ENABLED(SYS_MALLOC_F)
 	printf("Early malloc usage: %x / %x\n", gd->malloc_ptr,
 	       CONFIG_VAL(SYS_MALLOC_F_LEN));
+#endif
+#ifdef CONFIG_ARM64
+	lprint_num_l("CurrentEL", current_el());
 #endif
 }
