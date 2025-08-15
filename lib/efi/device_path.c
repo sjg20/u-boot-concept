@@ -32,6 +32,8 @@ const efi_guid_t efi_simple_file_system_protocol_guid =
 		EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 const efi_guid_t efi_file_info_guid = EFI_FILE_INFO_GUID;
 const efi_guid_t efi_u_boot_guid = U_BOOT_GUID;
+/* GUID of the device tree table */
+const efi_guid_t efi_guid_fdt = EFI_FDT_GUID;
 
 /* template EFI_DP_END node: */
 const struct efi_device_path EFI_DP_END = {
