@@ -78,11 +78,10 @@ def test_distro_script(ubman):
 
 @pytest.mark.boardspec('efi-arm_app64')
 @pytest.mark.role('efi-aarch64')
-def test_distro_arm_app(ubman):
-    """Test that the ARM EFI app can boot into Ubuntu 25.04"""
-    # with ubman.log.section('build'):
-    # utils.run_and_log(ubman, ['scripts/build-efi', '-a', 'arm'])
+def test_distro_arm_app_extlinux(ubman):
+    """Test that the ARM EFI app can boot into Ubuntu 25.04 via extlinux"""
     with ubman.log.section('boot'):
+        ubman.run_command('bootmeth order extlinux')
         ubman.run_command('boot', wait_for_prompt=False)
 
         ubman.expect(["Booting bootflow 'efi_media.bootdev.part_2' with extlinux"])
@@ -92,5 +91,55 @@ def test_distro_arm_app(ubman):
     with ubman.log.section('initrd'):
         ubman.expect(['Starting systemd-udevd'])
         ubman.expect(['Welcome to Ubuntu 25.04!'])
+
+    ubman.restart_uboot()
+
+@pytest.mark.boardspec('efi-arm_app64')
+@pytest.mark.role('efi-aarch64')
+def test_distro_arm_app_efi(ubman):
+    """Test that the ARM EFI app can boot into Ubuntu 25.04 via EFI"""
+    with ubman.log.section('boot'):
+        ubman.run_command('bootmeth order efi')
+        ubman.run_command('boot', wait_for_prompt=False)
+
+        ubman.expect(["Booting bootflow 'efi_media.bootdev.part_1' with efi"])
+
+        # Press Escape to force GRUB to appear, even if the silent menu was
+        # enabled by a previous boot
+        ubman.send('\x1b')
+
+    # Wait until we see the editor appear
+    with ubman.log.section('grub'):
+        ubman.expect(['ESC to return previous'])
+        # ubman.expect(['The highlighted entry will be executed automatically in 29s'])
+
+        # Press 'e' to edit the command line
+        ubman.log.info("Pressing 'e'")
+        ubman.send('e')
+        for _ in range(10):
+            ubman.ctrl('N')
+        expected = '\tlinux\t/boot/vmlinuz-6.14.0-27-generic '
+        expected += 'root=UUID=e5665fb4-e1de-4335-86da-357ad5422319 ro  '
+        for _ in expected:
+            ubman.ctrl('F')
+
+        to_erase = 'quiet splash'
+        for _ in to_erase:
+            ubman.ctrl('D')
+        ubman.ctrl('X')
+        ubman.expect(['Booting a command list'])
+
+    with ubman.log.section('exit boot-services'):
+        ubman.expect(['EFI stub: Exiting boot services...'])
+
+        ubman.log.info("boot")
+        ubman.expect(['Booting Linux on physical CPU'])
+
+    with ubman.log.section('initrd'):
+        ubman.expect(['Freeing initrd memory:'])
+        ubman.expect(['Run /init as init process'])
+
+    with ubman.temporary_timeout(200 * 1000):
+        ubman.expect(['Ubuntu 25.04 qarm ttyAMA0'])
 
     ubman.restart_uboot()
