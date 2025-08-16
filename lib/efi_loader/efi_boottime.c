@@ -4026,3 +4026,8 @@ struct efi_system_table *efi_get_sys_table(void)
 {
 	return &systab;
 }
+
+struct efi_boot_services *efi_get_boot(void)
+{
+	return systab.boottime;
+}
