@@ -488,7 +488,7 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 					  &handler);
 		if (ret == EFI_SUCCESS)
 			printf("  %pD\n", handler->protocol_interface);
-		ret = systab.boottime->protocols_per_handle(handles[i], &guid,
+		ret = efi_get_boot()->protocols_per_handle(handles[i], &guid,
 							    &count);
 		/* Print other protocols */
 		for (j = 0; j < count; j++) {
