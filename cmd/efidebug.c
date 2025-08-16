@@ -480,18 +480,24 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 		return CMD_RET_SUCCESS;
 
 	for (i = 0; i < num; i++) {
+		/*
+		 * this cannot be dereferenced in the APP since the format is
+		 * defined by the underlying EFI implementation, which is likely
+		 * not U-Boot
+		 */
+		efi_handle_t handle = handles[i];
 		struct efi_handler *handler;
 
-		printf("\n%p", handles[i]);
-		if (handles[i]->dev)
-			printf(" (%s)", handles[i]->dev->name);
+		printf("\n%p", handle);
+		if (handle->dev)
+			printf(" (%s)", handle->dev->name);
 		printf("\n");
 		/* Print device path */
-		ret = efi_search_protocol(handles[i], &efi_guid_device_path,
+		ret = efi_search_protocol(handle, &efi_guid_device_path,
 					  &handler);
 		if (ret == EFI_SUCCESS)
 			printf("  %pD\n", handler->protocol_interface);
-		ret = efi_get_boot()->protocols_per_handle(handles[i], &guid,
+		ret = efi_get_boot()->protocols_per_handle(handle, &guid,
 							    &count);
 		/* Print other protocols */
 		for (j = 0; j < count; j++) {
