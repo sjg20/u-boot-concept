@@ -41,7 +41,7 @@ efi_status_t calculate_paths(const char *dev, const char *devnr,
 			return ret;
 	}
 #endif
-
+	log_debug("dev '%s' devnr '%s' path '%s'\n", dev, devnr, path);
 	ret = efi_dp_from_name(dev, devnr, path, &device, &image);
 	if (ret != EFI_SUCCESS)
 		return ret;
@@ -74,6 +74,9 @@ static const char *calc_dev_name(struct bootflow *bflow)
 	const struct udevice *media_dev;
 
 	media_dev = dev_get_parent(bflow->dev);
+	log_debug("bflow->dev='%s', media_dev='%s', uclass_id=%d\n",
+		  bflow->dev->name, media_dev->name,
+		  device_get_uclass_id(media_dev));
 
 	if (!bflow->blk) {
 		if (device_get_uclass_id(media_dev) == UCLASS_ETH)
@@ -87,6 +90,9 @@ static const char *calc_dev_name(struct bootflow *bflow)
 
 	if (device_get_uclass_id(media_dev) == UCLASS_MASS_STORAGE)
 		return "usb";
+
+	if (device_get_uclass_id(media_dev) == UCLASS_EFI_MEDIA)
+		return "efi";
 
 	return blk_get_uclass_name(device_get_uclass_id(media_dev));
 }
