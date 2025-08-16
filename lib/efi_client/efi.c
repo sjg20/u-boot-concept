@@ -190,11 +190,13 @@ void *efi_alloc(size_t size)
 	return efi_malloc(priv, size, &ret);
 }
 
-void efi_free_pool(void *ptr)
+efi_status_t efi_free_pool(void *ptr)
 {
 	struct efi_priv *priv = efi_get_priv();
 
 	efi_free(priv, ptr);
+
+	return 0;
 }
 
 /* helper for debug prints.. efi_free_pool() the result. */
