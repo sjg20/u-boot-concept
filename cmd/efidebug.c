@@ -471,11 +471,7 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 	efi_uintn_t num, count, i, j;
 	efi_status_t ret;
 
-	if (app_not_supported("show_handles"))
-		return CMD_RET_FAILURE;
-
-	ret = EFI_CALL(efi_locate_handle_buffer(ALL_HANDLES, NULL, NULL,
-						&num, &handles));
+	ret = efi_locate_handle_buffer(ALL_HANDLES, NULL, NULL, &num, &handles);
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
 
@@ -494,8 +490,7 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 					  &handler);
 		if (ret == EFI_SUCCESS)
 			printf("  %pD\n", handler->protocol_interface);
-		ret = EFI_CALL(BS->protocols_per_handle(handles[i], &guid,
-							&count));
+		ret = BS->protocols_per_handle(handles[i], &guid, &count);
 		/* Print other protocols */
 		for (j = 0; j < count; j++) {
 			if (guidcmp(guid[j], &efi_guid_device_path))
