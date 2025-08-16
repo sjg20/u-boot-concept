@@ -26,8 +26,6 @@
 #include <linux/ctype.h>
 #include <linux/err.h>
 
-#define BS systab.boottime
-
 static bool app_not_supported(const char *cmd)
 {
 	if (!IS_ENABLED(CONFIG_EFI_APP))
@@ -493,7 +491,8 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 					  &handler);
 		if (ret == EFI_SUCCESS)
 			printf("  %pD\n", handler->protocol_interface);
-		ret = BS->protocols_per_handle(handles[i], &guid, &count);
+		ret = systab.boottime->protocols_per_handle(handles[i], &guid,
+							    &count);
 		/* Print other protocols */
 		for (j = 0; j < count; j++) {
 			if (guidcmp(guid[j], &efi_guid_device_path))
