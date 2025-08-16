@@ -488,8 +488,27 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 		void *iface;
 
 		printf("\n%p", handle);
-		if (!IS_ENABLED(CONFIG_EFI_APP) && handle->dev)
+		ret = boot->handle_protocol(handle,
+					    &efi_guid_driver_binding_protocol,
+					    &iface);
+		if (!ret)
+			printf(" <driver>");
+		if (IS_ENABLED(CONFIG_EFI_APP)) {
+			struct efi_component_name2_protocol *comp;
+			u16 *name;
+
+			ret = boot->handle_protocol(handle,
+						    &efi_guid_component_name2,
+						    (void **)&comp);
+			if (!ret) {
+				printf(" [langs: %s]", comp->supported_langs);
+				ret = comp->get_driver_name(comp, "en", &name);
+				if (!ret)
+					printf(" (%ls)", name);
+			}
+		} else if (handle->dev) {
 			printf(" (%s)", handle->dev->name);
+		}
 		printf("\n");
 		/* Print device path */
 		ret = boot->handle_protocol(handle, &efi_guid_device_path,
@@ -501,7 +520,9 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 		ret = boot->protocols_per_handle(handle, &guid, &count);
 		/* Print other protocols */
 		for (j = 0; j < count; j++) {
-			if (guidcmp(guid[j], &efi_guid_device_path))
+			if (guidcmp(guid[j], &efi_guid_device_path) &&
+			    guidcmp(guid[j], &efi_guid_component_name2) &&
+			    guidcmp(guid[j], &efi_guid_driver_binding_protocol))
 				printf("  %pUs\n", guid[j]);
 		}
 		efi_free_pool(guid);
