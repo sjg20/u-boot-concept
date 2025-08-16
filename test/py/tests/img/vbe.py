@@ -7,12 +7,10 @@
 
 import gzip
 import os
-import shutil
 import tempfile
 
 import utils
 from fs_helper import DiskHelper, FsHelper
-from dtoc import fdt_util
 from u_boot_pylib import tools
 
 
@@ -153,9 +151,8 @@ def setup_vbe_image(ubman):
 };
 '''.replace(b'boot_slot', boot_slot.encode('utf-8')))
 
-            dtb = fdt_util.EnsureCompiled(fname, ubman.config.result_dir)
-            print('dtb', dtb)
-            shutil.copy(dtb, f'{boot.srcdir}/vbe-state')
+            utils.run_and_log(ubman, ['dtc', fname, '-O', 'dtb', '-o',
+                                      f'{boot.srcdir}/vbe-stat'])
 
             boot.mk_fs()
             img.add_fs(boot, DiskHelper.EXT4)
