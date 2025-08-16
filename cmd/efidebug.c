@@ -449,6 +449,56 @@ static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
 }
 
 /**
+ * show_controllers_by_driver() - show controllers managed by a driver
+ *
+ * @drv: handle of the driver to inspect
+ */
+void show_controllers_by_driver(efi_handle_t drv)
+{
+	struct efi_boot_services *boot = efi_get_boot();
+	efi_handle_t *handles;
+	efi_uintn_t num_handles;
+	efi_status_t ret;
+	int i;
+
+	// printf("Checking for controllers managed by driver handle %p:\n",
+	       // handle);
+
+	// Get all handles that have a Device Path (a good sign they are controllers)
+	ret = boot->locate_handle_buffer(BY_PROTOCOL, &efi_guid_device_path,
+					 NULL, &num_handles, &handles);
+	if (ret)
+		return;
+
+	for (i = 0; i < num_handles; i++) {
+		efi_handle_t ctlr = handles[i];
+		void *iface;
+
+		// Use OpenProtocol with the BY_DRIVER attribute. This checks if
+		// our driver is one of the agents managing this controller.
+		ret = boot->open_protocol(
+			ctlr,
+			&efi_guid_device_path, // The protocol doesn't matter much here
+			&iface,
+			drv,      // The driver we are checking for
+			ctlr,  // The controller we are checking on
+			EFI_OPEN_PROTOCOL_BY_DRIVER);
+
+		if (!ret) {
+			printf("  -> Manages Controller: %p (%pD)\n",
+			       ctlr, iface);
+
+			// We must close the protocol we just opened for the check.
+			boot->close_protocol(ctlr,
+					   &efi_guid_device_path,
+					   drv,
+					   ctlr);
+		}
+	}
+	efi_free_pool(handles);
+}
+
+/**
  * do_efi_show_handles() - show UEFI handles
  *
  * @cmdtp:	Command table
@@ -488,6 +538,11 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 		void *iface;
 
 		printf("\n%p", handle);
+		ret = boot->handle_protocol(handle,
+					    &efi_guid_driver_binding_protocol,
+					    &iface);
+		if (!ret)
+			printf(" <driver>");
 		if (IS_ENABLED(CONFIG_EFI_APP)) {
 			struct efi_component_name2_protocol *comp;
 			u16 *name;
@@ -500,6 +555,39 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 				ret = comp->get_driver_name(comp, "en", &name);
 				if (!ret)
 					 printf(" (%ls)", name);
+
+#if 0
+		// Use OpenProtocol with the BY_DRIVER attribute. This checks if
+		// our driver is one of the agents managing this controller.
+		// Any protocol will do, but let's use efi_guid_device_path
+		status = efi_open_protocol(
+			handle,
+			&efi_guid_device_path, // The protocol doesn't matter much here
+			&iface,
+			driver_handle,      // The driver we are checking for
+			controller_handle,  // The controller we are checking on
+			EFI_OPEN_PROTOCOL_BY_DRIVER);
+
+		if (!EFI_ERROR(status)) {
+			const efi_char16_t *path_str;
+
+			path_str = efi_device_path_to_str(interface);
+			printf("  -> Manages Controller: %p (%ls)\n",
+			       controller_handle,
+			       path_str ? path_str : L"No Path");
+
+			// We must close the protocol we just opened for the check.
+			efi_close_protocol(controller_handle,
+					   &gEfiDevicePathProtocolGuid,
+					   driver_handle,
+					   controller_handle);
+		}
+#endif
+				show_controllers_by_driver(handle);
+				ret = comp->get_controller_name
+					 (comp, handle, NULL, "en", &name);
+				if (!ret)
+					 printf(" {%ls}", name);
 			}
 		} else if (handle->dev) {
 			printf(" (%s)", handle->dev->name);
@@ -515,7 +603,8 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 		ret = boot->protocols_per_handle(handle, &guid, &count);
 		/* Print other protocols */
 		for (j = 0; j < count; j++) {
-			if (guidcmp(guid[j], &efi_guid_device_path))
+			if (guidcmp(guid[j], &efi_guid_device_path) &&
+			    guidcmp(guid[j], &efi_guid_component_name2))
 				printf("  %pUs\n", guid[j]);
 		}
 		efi_free_pool(guid);

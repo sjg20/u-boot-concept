@@ -155,6 +155,8 @@ typedef struct efi_object *efi_handle_t;
 extern const efi_guid_t efi_global_variable_guid;
 extern const efi_guid_t efi_guid_fdt;
 extern const efi_guid_t efi_guid_component_name2;
+/* GUID of the EFI_DRIVER_BINDING_PROTOCOL */
+extern const efi_guid_t efi_guid_driver_binding_protocol;
 
 /* Generic EFI table header */
 struct efi_table_hdr {

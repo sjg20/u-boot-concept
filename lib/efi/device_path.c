@@ -35,6 +35,9 @@ const efi_guid_t efi_u_boot_guid = U_BOOT_GUID;
 /* GUID of the device tree table */
 const efi_guid_t efi_guid_fdt = EFI_FDT_GUID;
 const efi_guid_t efi_guid_component_name2 = EFI_COMPONENT_NAME2_PROTOCOL_GUID;
+/* GUID of the EFI_DRIVER_BINDING_PROTOCOL */
+const efi_guid_t efi_guid_driver_binding_protocol =
+			EFI_DRIVER_BINDING_PROTOCOL_GUID;
 
 /* template EFI_DP_END node: */
 const struct efi_device_path EFI_DP_END = {
