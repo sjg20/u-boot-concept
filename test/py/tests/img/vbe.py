@@ -9,6 +9,10 @@ import gzip
 import os
 import tempfile
 
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 import utils
 from fs_helper import DiskHelper, FsHelper
 from u_boot_pylib import tools

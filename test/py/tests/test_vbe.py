@@ -122,7 +122,7 @@ def test_vbe_os_request(ubman):
     assert 'failures: 0' in output[-1]
 
 @pytest.mark.boardspec('sandbox')
-def test_vbe_extlinux_fit_no_oem(ubman):
+def test_vbe_extlinux_fit_no_oem(ubman, bootstd_images):
     """Test reading a FIT from an extlinux.conf file"""
     fname = os.path.join(ubman.config.persistent_data_dir, 'vbe0.img')
     ubman.run_command(f'host bind 0 {fname}')
@@ -132,7 +132,7 @@ def test_vbe_extlinux_fit_no_oem(ubman):
     assert '0' == result
 
 @pytest.mark.boardspec('sandbox')
-def test_vbe_extlinux_fit_oem(ubman):
+def test_vbe_extlinux_fit_oem(ubman, bootstd_images):
     """Test reading an OEM FIT, then an OS FIT from an extlinux.conf file"""
     fname = os.path.join(ubman.config.persistent_data_dir, 'vbe1.img')
     ubman.run_command(f'host bind 0 {fname}')
