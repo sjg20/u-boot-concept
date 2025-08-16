@@ -328,7 +328,7 @@ bool efi_dp_is_multi_instance(const struct efi_device_path *dp)
 
 __maybe_unused static unsigned int dp_size(struct udevice *dev)
 {
-	uint parent_size, size;
+	uint parent_size, size = 0;
 
 	if (!dev || !dev->driver)
 		return sizeof(struct efi_device_path_udevice);
@@ -374,6 +374,7 @@ __maybe_unused static unsigned int dp_size(struct udevice *dev)
 			size = sizeof(struct efi_device_path_udevice);
 			break;
 		}
+		break;
 	case UCLASS_MMC:
 		if (IS_ENABLED(CONFIG_MMC))
 			size = sizeof(struct efi_device_path_sd_mmc_path);
