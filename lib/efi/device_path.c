@@ -741,12 +741,14 @@ static void path_to_uefi(void *uefi, const char *src)
 {
 	u16 *pos = uefi;
 
-	/*
-	 * efi_set_bootdev() calls this routine indirectly before the UEFI
-	 * subsystem is initialized. So we cannot assume unaligned access to be
-	 * enabled.
-	 */
-	allow_unaligned();
+	if (!IS_ENABLED(CONFIG_EFI_APP)) {
+		/*
+		 * efi_set_bootdev() calls this routine indirectly before the
+		 * UEFI subsystem is initialized. So we cannot assume unaligned
+		 * access to be enabled.
+		 */
+		allow_unaligned();
+	}
 
 	while (*src) {
 		s32 code = utf8_get(&src);
