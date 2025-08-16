@@ -922,9 +922,6 @@ static int do_efi_boot_add(struct cmd_tbl *cmdtp, int flag,
 	efi_status_t ret;
 	int r = CMD_RET_SUCCESS;
 
-	if (app_not_supported("boot add"))
-		return CMD_RET_FAILURE;
-
 	guid = efi_global_variable_guid;
 
 	/* attributes */
@@ -1104,9 +1101,6 @@ static int do_efi_boot_rm(struct cmd_tbl *cmdtp, int flag,
 	char *endp;
 	u16 var_name16[9];
 	efi_status_t ret;
-
-	if (app_not_supported("boot rm"))
-		return CMD_RET_FAILURE;
 
 	if (argc == 1)
 		return CMD_RET_USAGE;
@@ -1289,9 +1283,6 @@ static int show_efi_boot_order(void)
 	void *data;
 	struct efi_load_option lo;
 	efi_status_t ret;
-
-	if (app_not_supported("show_boot_order"))
-		return CMD_RET_FAILURE;
 
 	size = 0;
 	ret = efi_get_variable_int(u"BootOrder", &efi_global_variable_guid,
