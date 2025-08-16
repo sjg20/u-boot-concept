@@ -508,7 +508,7 @@ void show_controllers_by_driver(efi_handle_t drv)
  * show_controllers_by_driver - Prints controllers for a driver.
  *
  * This version uses the correct OpenProtocolInformation() service for an
- * accurate result.
+ * accurate result and avoids memory leaks by using structured loop control.
  *
  * @driver_handle: The handle of the driver to inspect.
  */
@@ -520,16 +520,6 @@ void show_controllers_by_driver(efi_handle_t driver_handle)
 	efi_status_t ret;
 	int i;
 
-	/*
-	if (!is_handle_a_driver(driver_handle)) {
-		printf("Error: Provided handle is not a driver.\n");
-		return;
-	}
-	*/
-
-	// printf("Checking for controllers managed by driver handle %p:\n",
-	       // driver_handle);
-
 	/* Get all handles that could be controllers */
 	ret = boot->locate_handle_buffer(ALL_HANDLES, NULL, NULL,
 					 &num_handles, &handle_buffer);
@@ -540,13 +530,14 @@ void show_controllers_by_driver(efi_handle_t driver_handle)
 		efi_handle_t controller_handle = handle_buffer[i];
 		efi_guid_t **proto_guid_array;
 		efi_uintn_t array_count;
+		bool found_match = false; // Flag to exit the outer loops
 		int j;
 
 		/* Get all protocols on the current controller handle */
 		printf("i %d: ", i);
 		ret = boot->protocols_per_handle(controller_handle,
-						  &proto_guid_array,
-						  &array_count);
+						 &proto_guid_array,
+						 &array_count);
 		if (ret)
 			continue;
 
@@ -561,7 +552,6 @@ void show_controllers_by_driver(efi_handle_t driver_handle)
 					controller_handle,
 					proto_guid_array[j],
 					&info_buffer, &info_count);
-
 			if (ret)
 				continue;
 
@@ -572,21 +562,28 @@ void show_controllers_by_driver(efi_handle_t driver_handle)
 				if (info_buffer[k].agent_handle == driver_handle &&
 				    (info_buffer[k].attributes &
 				     EFI_OPEN_PROTOCOL_BY_DRIVER)) {
-					// const efi_char16_t *path_str;
-					// path_str = efi_device_path_to_str_handle(controller_handle);
 					printf("  -> Manages Controller: %p (%pD)\n",
 					       controller_handle, controller_handle);
-					/* Go to the next controller once we have a match */
-					goto next_controller;
+
+					/* Set the flag and break out of this inner loop */
+					found_match = true;
+					break;
 				}
 			}
+			/* This free is now ALWAYS called, preventing the leak */
 			efi_free_pool(info_buffer);
+
+			/* If we found a match, we can stop checking protocols for this controller */
+			if (found_match) {
+				break;
+			}
 		}
-next_controller:
+		/* This free is also always called */
 		efi_free_pool(proto_guid_array);
 	}
 	efi_free_pool(handle_buffer);
 }
+
 #if 0
 /* Helper function to get device path from a handle */
 const efi_char16_t *efi_device_path_to_str_handle(efi_handle_t handle)
