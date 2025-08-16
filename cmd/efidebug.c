@@ -464,12 +464,14 @@ static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
 static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 			       int argc, char *const argv[])
 {
+	struct efi_boot_services *boot = efi_get_boot();
 	efi_handle_t *handles;
 	efi_guid_t **guid;
 	efi_uintn_t num, count, i, j;
 	efi_status_t ret;
 
-	ret = efi_locate_handle_buffer(ALL_HANDLES, NULL, NULL, &num, &handles);
+	ret = boot->locate_handle_buffer(ALL_HANDLES, NULL, NULL, &num,
+					 &handles);
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
 
@@ -477,19 +479,40 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 		return CMD_RET_SUCCESS;
 
 	for (i = 0; i < num; i++) {
-		struct efi_handler *handler;
+		/*
+		 * this cannot be dereferenced in the APP since the format is
+		 * defined by the underlying EFI implementation, which is likely
+		 * not U-Boot
+		 */
+		efi_handle_t handle = handles[i];
+		void *iface;
 
-		printf("\n%p", handles[i]);
-		if (handles[i]->dev)
-			printf(" (%s)", handles[i]->dev->name);
+		printf("\n%p", handle);
+		if (IS_ENABLED(CONFIG_EFI_APP)) {
+			struct efi_component_name2_protocol *comp;
+			u16 *name;
+
+			ret = boot->handle_protocol(handle,
+						    &efi_guid_component_name2,
+						    (void **)&comp);
+			if (!ret) {
+				printf(" [langs: %s]", comp->supported_langs);
+				ret = comp->get_driver_name(comp, "en", &name);
+				if (!ret)
+					 printf(" (%ls)", name);
+			}
+		} else if (handle->dev) {
+			printf(" (%s)", handle->dev->name);
+		}
 		printf("\n");
 		/* Print device path */
-		ret = efi_search_protocol(handles[i], &efi_guid_device_path,
-					  &handler);
-		if (ret == EFI_SUCCESS)
-			printf("  %pD\n", handler->protocol_interface);
-		ret = efi_get_boot()->protocols_per_handle(handles[i], &guid,
-							    &count);
+		ret = boot->handle_protocol(handle, &efi_guid_device_path,
+					    &iface);
+		if (!ret)
+			printf("  %pD\n", iface);
+		else
+			printf("  (no device-path)\n");
+		ret = boot->protocols_per_handle(handle, &guid, &count);
 		/* Print other protocols */
 		for (j = 0; j < count; j++) {
 			if (guidcmp(guid[j], &efi_guid_device_path))
