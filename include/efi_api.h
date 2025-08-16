@@ -483,6 +483,10 @@ struct efi_runtime_services {
 	EFI_GUID(0xd719b2cb, 0x3d3a, 0x4596, \
 		 0xa3, 0xbc, 0xda, 0xd0, 0x0e, 0x67, 0x65, 0x6f)
 
+#define EFI_COMPONENT_NAME2_PROTOCOL_GUID \
+	EFI_GUID(0x6a7a5cff, 0xe8d9, 0x4f70, \
+		 0xba, 0xda, 0x75, 0xab, 0x30, 0x25, 0xce, 0x14)
+
 /**
  * struct efi_configuration_table - EFI Configuration Table
  *
@@ -2424,6 +2428,17 @@ struct efi_disk {
 	efi_status_t (EFIAPI *write_disk)(struct efi_disk *this, u32 media_id,
 					  u64 offset, efi_uintn_t buffer_size,
 					  void *buffer);
+};
+
+struct efi_component_name2_protocol {
+	efi_status_t (EFIAPI *get_driver_name)
+		(struct efi_component_name2_protocol *this,
+		 char *language, u16 **driver_name);
+	efi_status_t (EFIAPI *get_controller_name)
+		(struct efi_component_name2_protocol *this,
+		 efi_handle_t controller_handle, efi_handle_t child_handle,
+		 char *language, u16 **controller_name);
+    char *supported_langs;
 };
 
 #endif
