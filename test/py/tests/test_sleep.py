@@ -19,6 +19,7 @@ env__sleep_margin = 0.25
 
 """
 
+@pytest.mark.slow
 def test_sleep(ubman):
     """Test the sleep command, and validate that it sleeps for approximately
     the correct amount of time."""
@@ -43,6 +44,7 @@ def test_sleep(ubman):
         assert elapsed < (sleep_time + sleep_margin)
 
 @pytest.mark.buildconfigspec("cmd_time")
+@pytest.mark.slow
 def test_time(ubman):
     """Test the time command, and validate that it gives approximately the
     correct amount of command execution time."""
