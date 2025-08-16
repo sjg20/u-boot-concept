@@ -279,6 +279,7 @@ static const struct {
 	{ "Debug Image Info", EFI_DEBUG_IMAGE_INFO_TABLE },
 	{ "Memory Attribute", EFI_ACPI_MCFG_TABLE_GUID },
 	{ "Random-number-generator Algorithms", EFI_RNG_ALGORITHM_GUID },
+	{ "Component-name2 Protocol", EFI_COMPONENT_NAME2_PROTOCOL_GUID },
 #endif
 #endif /* !USE_HOSTCC */
 };
