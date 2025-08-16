@@ -663,6 +663,14 @@ void *efi_malloc(struct efi_priv *priv, int size, efi_status_t *retp);
 void efi_free(struct efi_priv *priv, void *ptr);
 
 /**
+ * efi_free_pool() - free memory from pool
+ *
+ * @buffer:	start of memory to be freed
+ * Return:	status code
+ */
+efi_status_t efi_free_pool(void *buffer);
+
+/**
  * efi_puts() - Write out a string to the EFI console
  *
  * @priv:	Pointer to private EFI structure
