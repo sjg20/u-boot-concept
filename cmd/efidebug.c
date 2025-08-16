@@ -447,7 +447,7 @@ static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
 
 	return CMD_RET_SUCCESS;
 }
-
+#if 0
 /**
  * show_controllers_by_driver() - show controllers managed by a driver
  *
@@ -497,6 +497,107 @@ void show_controllers_by_driver(efi_handle_t drv)
 	}
 	efi_free_pool(handles);
 }
+
+#include <common.h>
+#include <efi_api.h>
+#include <efi_bind.h>
+#include <efi_device_path.h>
+#endif
+
+/**
+ * show_controllers_by_driver - Prints controllers for a driver.
+ *
+ * This version uses the correct OpenProtocolInformation() service for an
+ * accurate result.
+ *
+ * @driver_handle: The handle of the driver to inspect.
+ */
+void show_controllers_by_driver(efi_handle_t driver_handle)
+{
+	struct efi_boot_services *boot = efi_get_boot();
+	efi_handle_t *handle_buffer;
+	efi_uintn_t num_handles;
+	efi_status_t ret;
+	int i;
+
+	/*
+	if (!is_handle_a_driver(driver_handle)) {
+		printf("Error: Provided handle is not a driver.\n");
+		return;
+	}
+	*/
+
+	// printf("Checking for controllers managed by driver handle %p:\n",
+	       // driver_handle);
+
+	/* Get all handles that could be controllers */
+	ret = boot->locate_handle_buffer(ALL_HANDLES, NULL, NULL,
+					 &num_handles, &handle_buffer);
+	if (ret)
+		return;
+
+	for (i = 0; i < num_handles; i++) {
+		efi_handle_t controller_handle = handle_buffer[i];
+		efi_guid_t **proto_guid_array;
+		efi_uintn_t array_count;
+		int j;
+
+		/* Get all protocols on the current controller handle */
+		printf("i %d: ", i);
+		ret = boot->protocols_per_handle(controller_handle,
+						  &proto_guid_array,
+						  &array_count);
+		if (ret)
+			continue;
+
+		for (j = 0; j < array_count; j++) {
+			struct efi_open_protocol_info_entry *info_buffer;
+			efi_uintn_t info_count;
+			int k;
+
+			/* For each protocol, get the list of agents that opened it */
+			printf(" j%d", j);
+			ret = boot->open_protocol_information(
+					controller_handle,
+					proto_guid_array[j],
+					&info_buffer, &info_count);
+
+			if (ret)
+				continue;
+
+			printf("count %zd: ", info_count);
+			for (k = 0; k < info_count; k++) {
+				printf(" k%d", k);
+				/* Check if our driver is in the list with BY_DRIVER set */
+				if (info_buffer[k].agent_handle == driver_handle &&
+				    (info_buffer[k].attributes &
+				     EFI_OPEN_PROTOCOL_BY_DRIVER)) {
+					// const efi_char16_t *path_str;
+					// path_str = efi_device_path_to_str_handle(controller_handle);
+					printf("  -> Manages Controller: %p (%pD)\n",
+					       controller_handle, controller_handle);
+					/* Go to the next controller once we have a match */
+					goto next_controller;
+				}
+			}
+			efi_free_pool(info_buffer);
+		}
+next_controller:
+		efi_free_pool(proto_guid_array);
+	}
+	efi_free_pool(handle_buffer);
+}
+#if 0
+/* Helper function to get device path from a handle */
+const efi_char16_t *efi_device_path_to_str_handle(efi_handle_t handle)
+{
+    efi_device_path_protocol_t *dev_path;
+    if (!EFI_ERROR(efi_handle_protocol(handle, &gEfiDevicePathProtocolGuid, (void **)&dev_path))) {
+        return efi_device_path_to_str(dev_path);
+    }
+    return NULL;
+}
+#endif
 
 /**
  * do_efi_show_handles() - show UEFI handles
