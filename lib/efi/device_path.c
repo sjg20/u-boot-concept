@@ -529,6 +529,7 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 
 			return &dp[1];
 		}
+		break;
 	}
 	case UCLASS_MMC:
 	if (IS_ENABLED(CONFIG_MMC)) {
