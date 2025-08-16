@@ -489,7 +489,7 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 		struct efi_handler *handler;
 
 		printf("\n%p", handle);
-		if (handle->dev)
+		if (!IS_ENABLED(CONFIG_EFI_APP) && handle->dev)
 			printf(" (%s)", handle->dev->name);
 		printf("\n");
 		/* Print device path */
