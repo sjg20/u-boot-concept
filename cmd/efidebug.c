@@ -464,15 +464,14 @@ static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
 static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 			       int argc, char *const argv[])
 {
+	struct efi_boot_services *boot = efi_get_boot();
 	efi_handle_t *handles;
 	efi_guid_t **guid;
 	efi_uintn_t num, count, i, j;
 	efi_status_t ret;
 
-	if (app_not_supported("show_handles"))
-		return CMD_RET_FAILURE;
-
-	ret = efi_locate_handle_buffer(ALL_HANDLES, NULL, NULL, &num, &handles);
+	ret = boot->locate_handle_buffer(ALL_HANDLES, NULL, NULL, &num,
+					 &handles);
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
 
@@ -486,19 +485,20 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 		 * not U-Boot
 		 */
 		efi_handle_t handle = handles[i];
-		struct efi_handler *handler;
+		void *iface;
 
 		printf("\n%p", handle);
 		if (!IS_ENABLED(CONFIG_EFI_APP) && handle->dev)
 			printf(" (%s)", handle->dev->name);
 		printf("\n");
 		/* Print device path */
-		ret = efi_search_protocol(handle, &efi_guid_device_path,
-					  &handler);
-		if (ret == EFI_SUCCESS)
-			printf("  %pD\n", handler->protocol_interface);
-		ret = efi_get_boot()->protocols_per_handle(handle, &guid,
-							    &count);
+		ret = boot->handle_protocol(handle, &efi_guid_device_path,
+					    &iface);
+		if (!ret)
+			printf("  %pD\n", iface);
+		else
+			printf("  (no device-path)\n");
+		ret = boot->protocols_per_handle(handle, &guid, &count);
 		/* Print other protocols */
 		for (j = 0; j < count; j++) {
 			if (guidcmp(guid[j], &efi_guid_device_path))
