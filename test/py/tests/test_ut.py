@@ -665,22 +665,22 @@ LABEL local
 
 @pytest.mark.buildconfigspec('cmd_bootflow')
 @pytest.mark.buildconfigspec('sandbox')
-def test_ut_dm_init_bootstd(ubman):
-    """Initialise data for bootflow tests"""
+def test_ut_dm_init_bootstd(u_boot_config, u_boot_log):
+    """Initialise data for bootflow tests
 
-    setup_fedora_image(ubman.config, ubman.log, 1, 'mmc')
-    setup_bootmenu_image(ubman.config, ubman.log)
-    setup_cedit_file(ubman.config, ubman.log)
-    setup_cros_image(ubman.config, ubman.log)
-    setup_android_image(ubman.config, ubman.log)
-    setup_efi_image(ubman.config)
-    setup_ubuntu_image(ubman.config, ubman.log, 3, 'flash')
-    setup_localboot_image(ubman.config, ubman.log)
-    setup_vbe_image(ubman.config, ubman.log)
-
-    # Restart so that the new mmc1.img is picked up
-    ubman.restart_uboot()
-
+    Args:
+        u_boot_config (ArbitraryAttributeContainer): Configuration
+        u_boot_log (multiplexed_log.Logfile): Log to write to
+    """
+    setup_fedora_image(u_boot_config, u_boot_log, 1, 'mmc')
+    setup_bootmenu_image(u_boot_config, u_boot_log)
+    setup_cedit_file(u_boot_config, u_boot_log)
+    setup_cros_image(u_boot_config, u_boot_log)
+    setup_android_image(u_boot_config, u_boot_log)
+    setup_efi_image(u_boot_config)
+    setup_ubuntu_image(u_boot_config, u_boot_log, 3, 'flash')
+    setup_localboot_image(u_boot_config, u_boot_log)
+    setup_vbe_image(u_boot_config, u_boot_log)
 
 def test_ut(ubman, ut_subtest):
     """Execute a "ut" subtest.
