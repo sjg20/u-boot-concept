@@ -26,6 +26,7 @@ from img.chromeos import setup_cros_image
 from img.android import setup_android_image
 from img.efi import setup_efi_image
 from img.cedit import setup_cedit_file
+from img.localboot import setup_localboot_image
 
 
 @pytest.mark.buildconfigspec('ut_dm')
@@ -62,27 +63,6 @@ def test_ut_dm_init(ubman):
     data = b'\x00' * (12 * 1024 * 1024)
     with open(fn, 'wb') as fh:
         fh.write(data)
-
-
-def setup_localboot_image(config, log):
-    """Create a 20MB disk image with a single FAT partition
-
-    Args:
-        config (ArbitraryAttributeContainer): Configuration
-        log (multiplexed_log.Logfile): Log to write to
-    """
-    mmc_dev = 9
-
-    script = '''DEFAULT local
-
-LABEL local
-  SAY Doing local boot...
-  LOCALBOOT 0
-'''
-    vmlinux = 'vmlinuz'
-    initrd = 'initrd.img'
-    setup_extlinux_image(config, log, mmc_dev, 'mmc', vmlinux, initrd, None,
-                         script)
 
 
 @pytest.mark.buildconfigspec('cmd_bootflow')
