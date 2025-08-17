@@ -609,16 +609,20 @@ def test_ut_dm_init(ubman):
         fh.write(data)
 
 
-def setup_efi_image(ubman):
-    """Create a 20MB disk image with an EFI app on it"""
+def setup_efi_image(config):
+    """Create a 20MB disk image with an EFI app on it
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+    """
     devnum = 1
-    fsh = FsHelper(ubman.config, 'vfat', 18, 'flash')
+    fsh = FsHelper(config, 'vfat', 18, 'flash')
     fsh.setup()
     efi_dir = os.path.join(fsh.srcdir, 'EFI')
     mkdir_cond(efi_dir)
     bootdir = os.path.join(efi_dir, 'BOOT')
     mkdir_cond(bootdir)
-    efi_src = os.path.join(ubman.config.build_dir,
+    efi_src = os.path.join(config.build_dir,
                         'lib/efi_loader/testapp.efi')
     efi_dst = os.path.join(bootdir, 'BOOTSBOX.EFI')
     with open(efi_src, 'rb') as inf:
@@ -627,7 +631,7 @@ def setup_efi_image(ubman):
 
     fsh.mk_fs()
 
-    img = DiskHelper(ubman.config, devnum, 'flash', True)
+    img = DiskHelper(config, devnum, 'flash', True)
     img.add_fs(fsh, DiskHelper.VFAT)
     img.create()
     fsh.cleanup()
@@ -659,7 +663,7 @@ def test_ut_dm_init_bootstd(ubman):
     setup_cedit_file(ubman)
     setup_cros_image(ubman.config, ubman.log)
     setup_android_image(ubman.config, ubman.log)
-    setup_efi_image(ubman)
+    setup_efi_image(ubman.config)
     setup_ubuntu_image(ubman.config, ubman.log, 3, 'flash')
     setup_localboot_image(ubman)
     setup_vbe_image(ubman)
