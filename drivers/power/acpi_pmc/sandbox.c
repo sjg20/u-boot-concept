@@ -70,7 +70,7 @@ static int sandbox_pmc_probe(struct udevice *dev)
 	base = dm_pci_read_bar32(dev, 0);
 	if (base == FDT_ADDR_T_NONE)
 		return log_msg_ret("No base address", -EINVAL);
-	upriv->pmc_bar0 = map_sysmem(base, 0x2000);
+	upriv->pmc_bar0 = map_sysmem(base, 0x80);
 	upriv->gpe_cfg = (u32 *)(upriv->pmc_bar0 + GPIO_GPE_CFG);
 
 	return pmc_ofdata_to_uc_plat(dev);

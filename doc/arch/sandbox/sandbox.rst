@@ -785,6 +785,7 @@ Addr       Config                     Usage
   200000   CONFIG_TRACE_EARLY_ADDR    Early trace buffer (if enabled). Also used
   400000   CONFIG_TEXT_BASE           Load buffer for U-Boot (sandbox_spl only)
 10000000                              PCI address space (see test.dts)
+20000000                              PCI EA space (see PCI_CAP_EA_BASE_LO0)
 
 ff000000                              Memory-mapping tags start here
 ========   ========================   ===============================
