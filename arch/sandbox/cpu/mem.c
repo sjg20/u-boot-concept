@@ -138,8 +138,17 @@ void *map_physmem(phys_addr_t paddr, unsigned long len, unsigned long flags)
 	map_dev = NULL;
 	if (enable_pci_map && !pci_map_physmem(paddr, &len, &map_dev, &ptr)) {
 		if (plen != len) {
-			printf("%s: Warning: partial map at %x, wanted %lx, got %lx\n",
+			/*
+			 * This may actually be harmless, but since this feature
+			 * is only used in tests, it is better to fix the text
+			 * to request the correct size. Aborting here enables
+			 * use of gdb to figure out what went wrong. It may mask
+			 * a very hard-to-debug problem, if sandbox's RAM is
+			 * inadvertently mapped in.
+			 */
+			printf("%s: Fatal: partial map at %x, wanted %lx, got %lx\n",
 			       __func__, (uint)paddr, plen, len);
+			os_abort();
 		}
 		map_len = len;
 		log_debug("pci map %lx -> %p\n", (ulong)paddr, ptr);
