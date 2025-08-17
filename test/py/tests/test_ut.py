@@ -676,7 +676,7 @@ def test_ut_dm_init_bootstd(ubman):
     setup_efi_image(ubman.config)
     setup_ubuntu_image(ubman.config, ubman.log, 3, 'flash')
     setup_localboot_image(ubman.config, ubman.log)
-    setup_vbe_image(ubman)
+    setup_vbe_image(ubman.config, ubman.log)
 
     # Restart so that the new mmc1.img is picked up
     ubman.restart_uboot()

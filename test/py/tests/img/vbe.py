@@ -14,11 +14,11 @@ from fs_helper import DiskHelper, FsHelper
 from u_boot_pylib import tools
 
 
-def dtb_for_compatible(ubman, kernpath, version, model):
+def dtb_for_compatible(log, kernpath, version, model):
     """Create a fake devicetree binary for a given model name
 
     Args:
-        ubman (ConsoleBase): U-Boot fixture
+        log (multiplexed_log.Logfile): Log to write to
         kernpath (str): Path to place the created DTB
         version (str): Version string to use with the dtb
         model (str): Model name
@@ -28,15 +28,17 @@ def dtb_for_compatible(ubman, kernpath, version, model):
     """
     dtb_file = os.path.join(kernpath, f'dtb-{version}-{model}')
     data = f'/dts-v1/; / {{ compatible = "{model}"; version = "{version}"; }};'
-    utils.run_and_log(ubman, f'dtc -o {dtb_file}', stdin=data.encode('utf-8'))
+    utils.run_and_log_no_ubman(log, f'dtc -o {dtb_file}',
+                               stdin=data.encode('utf-8'))
     return dtb_file
 
 
-def create_extlinux(ubman, kernpath, dirpath, slot, version, has_oem):
+def create_extlinux(config, log, kernpath, dirpath, slot, version, has_oem):
     """Create a fake extlinux image
 
     Args:
-        ubman (ConsoleBase): U-Boot fixture
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
         kernpath (str): Directory path for the kernel
         dirpath (str): Directory path to write to (created by this function)
         slot (str): Slot name (A, B or recovery)
@@ -78,32 +80,37 @@ label l0
     with tempfile.TemporaryDirectory(suffix='vbe') as tmp:
         kern = os.path.join(tmp, 'kern')
         tools.write_file(kern, gzip.compress(f'vmlinux-{slot}'.encode('utf-8')))
-        mkimage = ubman.config.build_dir + '/tools/mkimage'
+        mkimage = config.build_dir + '/tools/mkimage'
 
         initrd = os.path.join(tmp, f'initrd.img-{version}')
         tools.write_file(initrd, f'initrd {version}', binary=False)
 
-        snow = dtb_for_compatible(ubman, tmp, version, 'snow')
-        kevin = dtb_for_compatible(ubman, tmp, version, 'kevin')
+        snow = dtb_for_compatible(log, tmp, version, 'snow')
+        kevin = dtb_for_compatible(log, tmp, version, 'kevin')
 
         fit = os.path.join(kernpath, f'ubuntu-{version}.fit')
         cmd = f'{mkimage} -f auto -T kernel -A sandbox -O linux '
         dts = f'-b {snow} -b {kevin}' if add_dts else ''
-        utils.run_and_log(ubman, cmd + f'-d {kern} -i {initrd} {dts} {fit}')
+        utils.run_and_log_no_ubman(log,
+                                   cmd + f'-d {kern} -i {initrd} {dts} {fit}')
 
         # Create a FIT containing OEM devicetrees
         if has_oem:
-            oem_snow = dtb_for_compatible(ubman, tmp, 'oem', 'snow')
-            oem_kevin = dtb_for_compatible(ubman, tmp, 'oem', 'kevin')
+            oem_snow = dtb_for_compatible(log, tmp, 'oem', 'snow')
+            oem_kevin = dtb_for_compatible(log, tmp, 'oem', 'kevin')
 
             fit = os.path.join(dirpath, 'oem.fit')
-            utils.run_and_log(
-                ubman,
+            utils.run_and_log_no_ubman(
+                log,
                 f'{mkimage} -f auto  -A sandbox -O linux -T flat_dt --load-only'
                 f' -b {oem_snow} -b {oem_kevin} {fit}')
 
-def setup_vbe_image(ubman):
+def setup_vbe_image(config, log):
     """Create three partitions (fat, boot and root) for a VBE boot flow
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
 
     The intent is to load either one or two FITs.
 
@@ -113,10 +120,10 @@ def setup_vbe_image(ubman):
       - vbe1 has an OEM FIT containing the devicetrees; OS FIT does not
     """
     for seq in range(2):
-        with (DiskHelper(ubman.config, seq, 'vbe') as img,
-            FsHelper(ubman.config, 'fat', 1, 'efi') as vfat,
-            FsHelper(ubman.config, 'ext4', 1, f'boot{seq}') as boot,
-            FsHelper(ubman.config, 'ext4', 17, 'root') as root):
+        with (DiskHelper(config, seq, 'vbe') as img,
+            FsHelper(config, 'fat', 1, 'efi') as vfat,
+            FsHelper(config, 'ext4', 1, f'boot{seq}') as boot,
+            FsHelper(config, 'ext4', 17, 'root') as root):
             with open(os.path.join(vfat.srcdir, 'u-boot.efi'), 'wb') as outf:
                 outf.write(b'fake binary\n')
             vfat.mk_fs()
@@ -126,14 +133,14 @@ def setup_vbe_image(ubman):
 
             dir_a = os.path.join(boot.srcdir, 'a')
             vera = '6.14.0-24-generic'
-            create_extlinux(ubman, boot.srcdir, dir_a, 'A', vera, has_oem)
+            create_extlinux(config, log, boot.srcdir, dir_a, 'A', vera, has_oem)
 
             dir_b = os.path.join(boot.srcdir, 'b')
             verb = '6.8.0-1028-intel'
-            create_extlinux(ubman, boot.srcdir, dir_b, 'B', verb, has_oem)
+            create_extlinux(config, log, boot.srcdir, dir_b, 'B', verb, has_oem)
 
             boot_slot = 'b' if seq else 'a'
-            fname = os.path.join(ubman.config.result_dir, 'vbe-state.dts')
+            fname = os.path.join(config.result_dir, 'vbe-state.dts')
             tools.write_file(fname, b'''// VBE state file
 
 /dts-v1/;
@@ -151,8 +158,9 @@ def setup_vbe_image(ubman):
 };
 '''.replace(b'boot_slot', boot_slot.encode('utf-8')))
 
-            utils.run_and_log(ubman, ['dtc', fname, '-O', 'dtb', '-o',
-                                      f'{boot.srcdir}/vbe-stat'])
+            utils.run_and_log_no_ubman(
+                log, ['dtc', fname, '-O', 'dtb', '-o',
+                      f'{boot.srcdir}/vbe-state'])
 
             boot.mk_fs()
             img.add_fs(boot, DiskHelper.EXT4)
