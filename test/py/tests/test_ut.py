@@ -243,11 +243,12 @@ label Fedora-Workstation-armhfp-31-1.9 (5.3.7-301.fc31.armv7hl)
     setup_extlinux_image(config, log, devnum, basename, vmlinux,
                          initrd, dtbdir, script)
 
-def setup_ubuntu_image(ubman, devnum, basename):
+def setup_ubuntu_image(config, log, devnum, basename):
     """Create a 20MB Ubuntu disk image with a single FAT partition
 
     Args:
-        ubman (ConsoleBase): Console to use
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
         devnum (int): Device number to use, e.g. 1
         basename (str): Base name to use in the filename, e.g. 'mmc'
     """
@@ -279,8 +280,8 @@ label l0r
 	linux /boot/%s
 	initrd /boot/%s
 ''' % (vmlinux, initrd, vmlinux, initrd)
-    setup_extlinux_image(ubman.config, ubman.log, devnum, basename, vmlinux,
-                         initrd, dtbdir, script)
+    setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
+                         script)
 
 def setup_cros_image(ubman):
     """Create a 20MB disk image with ChromiumOS partitions"""
@@ -646,7 +647,7 @@ def test_ut_dm_init_bootstd(ubman):
     setup_cros_image(ubman)
     setup_android_image(ubman)
     setup_efi_image(ubman)
-    setup_ubuntu_image(ubman, 3, 'flash')
+    setup_ubuntu_image(ubman.config, ubman.log, 3, 'flash')
     setup_localboot_image(ubman)
     setup_vbe_image(ubman)
 
