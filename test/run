@@ -50,31 +50,33 @@ if [ -z "$tools_only" ]; then
 	echo "${prompt}"
 	run_test "sandbox" ./test/py/test.py --bd sandbox --build ${para} \
 		-k "${mark_expr}"
-fi
 
-# Run tests which require sandbox_spl
-echo "${prompt}"
-run_test "sandbox_spl" ./test/py/test.py --bd sandbox_spl --build ${para} \
+	# Run tests which require sandbox_spl
+	echo "${prompt}"
+	run_test "sandbox_spl" ./test/py/test.py --bd sandbox_spl \
+		--build ${para} \
 		-k 'test_ofplatdata or test_handoff or test_spl'
 
-# Run the same tests with sandbox_noinst (i.e. without OF_PLATDATA_INST)
-echo "${prompt}"
-run_test "sandbox_noinst" ./test/py/test.py --bd sandbox_noinst --build ${para} \
+	# Run the same tests with sandbox_noinst (i.e. without OF_PLATDATA_INST)
+	echo "${prompt}"
+	run_test "sandbox_noinst" ./test/py/test.py --bd sandbox_noinst \
+		--build ${para} \
 		-k 'test_ofplatdata or test_handoff or test_spl'
 
-# Run tests which require sandbox_vpl
-echo "${prompt}"
-run_test "sandbox_vpl" ./test/py/test.py --bd sandbox_vpl --build ${para} \
+	# Run tests which require sandbox_vpl
+	echo "${prompt}"
+	run_test "sandbox_vpl" ./test/py/test.py --bd sandbox_vpl \
+		--build ${para} \
 		-k 'vpl or test_spl'
 
-if [ -z "$tools_only" ]; then
 	# Run tests for the flat-device-tree version of sandbox. This is a special
 	# build which does not enable CONFIG_OF_LIVE for the live device tree, so we can
 	# check that functionality is the same. The standard sandbox build (above) uses
 	# CONFIG_OF_LIVE.
 	echo "${prompt}"
 	run_test "sandbox_flattree" ./test/py/test.py --bd sandbox_flattree \
-		${para} --build -k "${ut_mark_expr}"
+		--build ${para} \
+		-k "${ut_mark_expr}"
 else
 	# Make sure sandbox_spl is built, as we need it from now on
 	./test/py/test.py --bd sandbox_spl --build -k none
