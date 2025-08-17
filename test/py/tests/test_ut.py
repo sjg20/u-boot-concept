@@ -427,8 +427,13 @@ def setup_cros_image(config, log):
 
     return fname
 
-def setup_android_image(ubman):
-    """Create a 20MB disk image with Android partitions"""
+def setup_android_image(config, log):
+    """Create a 20MB disk image with Android partitions
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
+    """
     Partition = collections.namedtuple('part', 'start,size,name')
     parts = {}
     disk_data = None
@@ -448,9 +453,9 @@ def setup_android_image(ubman):
         disk_data = disk_data[:start] + data + disk_data[start + len(data):]
 
     mmc_dev = 7
-    fname = os.path.join(ubman.config.source_dir, f'mmc{mmc_dev}.img')
-    utils.run_and_log(ubman, f'qemu-img create {fname} 20M')
-    utils.run_and_log(ubman, f'cgpt create {fname}')
+    fname = os.path.join(config.source_dir, f'mmc{mmc_dev}.img')
+    utils.run_and_log_no_ubman(log, f'qemu-img create {fname} 20M')
+    utils.run_and_log_no_ubman(log, f'cgpt create {fname}')
 
     ptr = 40
 
@@ -472,13 +477,13 @@ def setup_android_image(ubman):
             size = int(size_str[:-1]) * sect_1mb
         else:
             size = int(size_str)
-        utils.run_and_log(
-            ubman,
+        utils.run_and_log_no_ubman(
+            log,
             f"cgpt add -i {part['num']} -b {ptr} -s {size} -l {part['label']} -t basicdata {fname}")
         ptr += size
 
-    utils.run_and_log(ubman, f'cgpt boot -p {fname}')
-    out = utils.run_and_log(ubman, f'cgpt show -q {fname}')
+    utils.run_and_log_no_ubman(log, f'cgpt boot -p {fname}')
+    out = utils.run_and_log_no_ubman(log, f'cgpt show -q {fname}')
 
     # Create a dict (indexed by partition number) containing the above info
     for line in out.splitlines():
@@ -488,13 +493,15 @@ def setup_android_image(ubman):
     with open(fname, 'rb') as inf:
         disk_data = inf.read()
 
-    test_abootimg.AbootimgTestDiskImage(ubman, 'bootv4.img', test_abootimg.boot_img_hex)
-    boot_img = os.path.join(ubman.config.result_dir, 'bootv4.img')
+    test_abootimg.AbootimgTestDiskImage(config, log, 'bootv4.img',
+                                        test_abootimg.boot_img_hex)
+    boot_img = os.path.join(config.result_dir, 'bootv4.img')
     with open(boot_img, 'rb') as inf:
         set_part_data(2, inf.read())
 
-    test_abootimg.AbootimgTestDiskImage(ubman, 'vendor_boot.img', test_abootimg.vboot_img_hex)
-    vendor_boot_img = os.path.join(ubman.config.result_dir, 'vendor_boot.img')
+    test_abootimg.AbootimgTestDiskImage(config, log, 'vendor_boot.img',
+                                        test_abootimg.vboot_img_hex)
+    vendor_boot_img = os.path.join(config.result_dir, 'vendor_boot.img')
     with open(vendor_boot_img, 'rb') as inf:
         set_part_data(4, inf.read())
 
@@ -504,9 +511,9 @@ def setup_android_image(ubman):
     print(f'wrote to {fname}')
 
     mmc_dev = 8
-    fname = os.path.join(ubman.config.source_dir, f'mmc{mmc_dev}.img')
-    utils.run_and_log(ubman, f'qemu-img create {fname} 20M')
-    utils.run_and_log(ubman, f'cgpt create {fname}')
+    fname = os.path.join(config.source_dir, f'mmc{mmc_dev}.img')
+    utils.run_and_log_no_ubman(log, f'qemu-img create {fname} 20M')
+    utils.run_and_log_no_ubman(log, f'cgpt create {fname}')
 
     ptr = 40
 
@@ -526,13 +533,13 @@ def setup_android_image(ubman):
             size = int(size_str[:-1]) * sect_1mb
         else:
             size = int(size_str)
-        utils.run_and_log(
-            ubman,
+        utils.run_and_log_no_ubman(
+            log,
             f"cgpt add -i {part['num']} -b {ptr} -s {size} -l {part['label']} -t basicdata {fname}")
         ptr += size
 
-    utils.run_and_log(ubman, f'cgpt boot -p {fname}')
-    out = utils.run_and_log(ubman, f'cgpt show -q {fname}')
+    utils.run_and_log_no_ubman(log, f'cgpt boot -p {fname}')
+    out = utils.run_and_log_no_ubman(log, f'cgpt show -q {fname}')
 
     # Create a dict (indexed by partition number) containing the above info
     for line in out.splitlines():
@@ -542,8 +549,9 @@ def setup_android_image(ubman):
     with open(fname, 'rb') as inf:
         disk_data = inf.read()
 
-    test_abootimg.AbootimgTestDiskImage(ubman, 'boot.img', test_abootimg.img_hex)
-    boot_img = os.path.join(ubman.config.result_dir, 'boot.img')
+    test_abootimg.AbootimgTestDiskImage(config, log, 'boot.img',
+                                        test_abootimg.img_hex)
+    boot_img = os.path.join(config.result_dir, 'boot.img')
     with open(boot_img, 'rb') as inf:
         set_part_data(2, inf.read())
 
@@ -650,7 +658,7 @@ def test_ut_dm_init_bootstd(ubman):
     setup_bootmenu_image(ubman.config, ubman.log)
     setup_cedit_file(ubman)
     setup_cros_image(ubman.config, ubman.log)
-    setup_android_image(ubman)
+    setup_android_image(ubman.config, ubman.log)
     setup_efi_image(ubman)
     setup_ubuntu_image(ubman.config, ubman.log, 3, 'flash')
     setup_localboot_image(ubman)
