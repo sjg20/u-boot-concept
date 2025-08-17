@@ -562,16 +562,21 @@ def setup_android_image(config, log):
 
     return fname
 
-def setup_cedit_file(ubman):
-    """Set up a .dtb file for use with testing expo and configuration editor"""
-    infname = os.path.join(ubman.config.source_dir,
+def setup_cedit_file(config, log):
+    """Set up a .dtb file for use with testing expo and configuration editor
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
+    """
+    infname = os.path.join(config.source_dir,
                            'test/boot/files/expo_layout.dts')
-    inhname = os.path.join(ubman.config.source_dir,
+    inhname = os.path.join(config.source_dir,
                            'test/boot/files/expo_ids.h')
-    expo_tool = os.path.join(ubman.config.source_dir, 'tools/expo.py')
+    expo_tool = os.path.join(config.source_dir, 'tools/expo.py')
     outfname = 'cedit.dtb'
-    utils.run_and_log(
-        ubman, f'{expo_tool} -e {inhname} -l {infname} -o {outfname}')
+    utils.run_and_log_no_ubman(
+        log, f'{expo_tool} -e {inhname} -l {infname} -o {outfname}')
 
 @pytest.mark.buildconfigspec('ut_dm')
 def test_ut_dm_init(ubman):
@@ -660,7 +665,7 @@ def test_ut_dm_init_bootstd(ubman):
 
     setup_fedora_image(ubman.config, ubman.log, 1, 'mmc')
     setup_bootmenu_image(ubman.config, ubman.log)
-    setup_cedit_file(ubman)
+    setup_cedit_file(ubman.config, ubman.log)
     setup_cros_image(ubman.config, ubman.log)
     setup_android_image(ubman.config, ubman.log)
     setup_efi_image(ubman.config)
