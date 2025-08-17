@@ -137,12 +137,12 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
                             'test/py/tests/bootstd/armbian.bmp.xz')
     bmp_file = os.path.join(bootdir, 'boot.bmp')
     utils.run_and_log_no_ubman(
-        config,
+        log,
         ['sh', '-c', f'xz -dc {infname} >{bmp_file}'])
 
     mkimage = config.build_dir + '/tools/mkimage'
     utils.run_and_log_no_ubman(
-        config, f'{mkimage} -C none -A arm -T script -d {cmd_fname} {scr_fname}')
+        log, f'{mkimage} -C none -A arm -T script -d {cmd_fname} {scr_fname}')
 
     kernel = 'vmlinuz-5.15.63-rockchip64'
     target = os.path.join(bootdir, kernel)
@@ -152,7 +152,7 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
     symlink = os.path.join(bootdir, 'Image')
     if os.path.exists(symlink):
         os.remove(symlink)
-    utils.run_and_log_no_ubman(config, f'echo here {kernel} {symlink}')
+    utils.run_and_log_no_ubman(log, f'echo here {kernel} {symlink}')
     os.symlink(kernel, symlink)
     fsh.mk_fs()
     img = DiskHelper(config, mmc_dev, 'mmc', True)
@@ -161,12 +161,13 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
     fsh.cleanup()
 
 
-def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
                          script):
     """Create a 20MB disk image with a single FAT partition
 
     Args:
-        ubman (ConsoleBase): Console to use
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
         devnum (int): Device number to use, e.g. 1
         basename (str): Base name to use in the filename, e.g. 'mmc'
         vmlinux (str): Kernel filename
@@ -174,7 +175,7 @@ def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
         dtbdir (str or None): Devicetree filename
         script (str): Script to place in the extlinux.conf file
     """
-    fsh = FsHelper(ubman.config, 'vfat', 18, prefix=basename)
+    fsh = FsHelper(config, 'vfat', 18, prefix=basename)
     fsh.setup()
 
     ext = os.path.join(fsh.srcdir, 'extlinux')
@@ -184,12 +185,12 @@ def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
     with open(conf, 'w', encoding='ascii') as fd:
         print(script, file=fd)
 
-    inf = os.path.join(ubman.config.persistent_data_dir, 'inf')
+    inf = os.path.join(config.persistent_data_dir, 'inf')
     with open(inf, 'wb') as fd:
         fd.write(gzip.compress(b'vmlinux'))
-    mkimage = ubman.config.build_dir + '/tools/mkimage'
-    utils.run_and_log(
-        ubman, f'{mkimage} -f auto -d {inf} {os.path.join(fsh.srcdir, vmlinux)}')
+    mkimage = config.build_dir + '/tools/mkimage'
+    utils.run_and_log_no_ubman(
+        log, f'{mkimage} -f auto -d {inf} {os.path.join(fsh.srcdir, vmlinux)}')
 
     with open(os.path.join(fsh.srcdir, initrd), 'w', encoding='ascii') as fd:
         print('initrd', file=fd)
@@ -198,15 +199,15 @@ def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
         mkdir_cond(os.path.join(fsh.srcdir, dtbdir))
 
         dtb_file = os.path.join(fsh.srcdir, f'{dtbdir}/sandbox.dtb')
-        utils.run_and_log(
-            ubman, f'dtc -o {dtb_file}', stdin=b'/dts-v1/; / {};')
+        utils.run_and_log_no_ubman(
+            log, f'dtc -o {dtb_file}', stdin=b'/dts-v1/; / {};')
 
     fsh.mk_fs()
 
-    img = DiskHelper(ubman.config, devnum, basename, True)
+    img = DiskHelper(config, devnum, basename, True)
     img.add_fs(fsh, DiskHelper.VFAT, bootable=True)
 
-    ext4 = FsHelper(ubman.config, 'ext4', 1, prefix=basename)
+    ext4 = FsHelper(config, 'ext4', 1, prefix=basename)
     ext4.setup()
     ext4.mk_fs()
 
@@ -238,8 +239,8 @@ label Fedora-Workstation-armhfp-31-1.9 (5.3.7-301.fc31.armv7hl)
         append ro root=UUID=9732b35b-4cd5-458b-9b91-80f7047e0b8a rhgb quiet LANG=en_US.UTF-8 cma=192MB cma=256MB
         fdtdir /%s/
         initrd /%s''' % (vmlinux, dtbdir, initrd)
-    setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
-                         script)
+    setup_extlinux_image(ubman.config, ubman.log, devnum, basename, vmlinux,
+                         initrd, dtbdir, script)
 
 def setup_ubuntu_image(ubman, devnum, basename):
     """Create a 20MB Ubuntu disk image with a single FAT partition
@@ -277,8 +278,8 @@ label l0r
 	linux /boot/%s
 	initrd /boot/%s
 ''' % (vmlinux, initrd, vmlinux, initrd)
-    setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
-                         script)
+    setup_extlinux_image(ubman.config, ubman.log, devnum, basename, vmlinux,
+                         initrd, dtbdir, script)
 
 def setup_cros_image(ubman):
     """Create a 20MB disk image with ChromiumOS partitions"""
@@ -617,7 +618,7 @@ def setup_efi_image(ubman):
     fsh.cleanup()
 
 
-def setup_localboot_image(cons):
+def setup_localboot_image(ubman):
     """Create a 20MB disk image with a single FAT partition"""
     mmc_dev = 9
 
@@ -629,7 +630,8 @@ LABEL local
 '''
     vmlinux = 'vmlinuz'
     initrd = 'initrd.img'
-    setup_extlinux_image(cons, mmc_dev, 'mmc', vmlinux, initrd, None, script)
+    setup_extlinux_image(ubman.config, ubman.log, mmc_dev, 'mmc', vmlinux,
+                         initrd, None, script)
 
 
 @pytest.mark.buildconfigspec('cmd_bootflow')
