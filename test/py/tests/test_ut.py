@@ -25,23 +25,8 @@ from img.armbian import setup_bootmenu_image
 from img.chromeos import setup_cros_image
 from img.android import setup_android_image
 from img.efi import setup_efi_image
+from img.cedit import setup_cedit_file
 
-
-def setup_cedit_file(config, log):
-    """Set up a .dtb file for use with testing expo and configuration editor
-
-    Args:
-        config (ArbitraryAttributeContainer): Configuration
-        log (multiplexed_log.Logfile): Log to write to
-    """
-    infname = os.path.join(config.source_dir,
-                           'test/boot/files/expo_layout.dts')
-    inhname = os.path.join(config.source_dir,
-                           'test/boot/files/expo_ids.h')
-    expo_tool = os.path.join(config.source_dir, 'tools/expo.py')
-    outfname = 'cedit.dtb'
-    utils.run_and_log_no_ubman(
-        log, f'{expo_tool} -e {inhname} -l {infname} -o {outfname}')
 
 @pytest.mark.buildconfigspec('ut_dm')
 def test_ut_dm_init(ubman):
