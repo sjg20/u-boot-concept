@@ -1718,6 +1718,11 @@ M:	Liviu Dudau <liviu.dudau@foss.arm.com>
 S:	Maintained
 F:	drivers/video/tda19988.c
 
+TEST FRAMEWORK (PYTHON)
+M:	Simon Glass <sjg@chromium.org>
+F:	test/py
+F:	test/py/img
+
 TI LP5562 LED DRIVER
 M:	Rasmus Villemoes <rasmus.villemoes@prevas.dk>
 S:	Supported
