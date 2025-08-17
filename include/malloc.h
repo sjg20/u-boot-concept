@@ -882,6 +882,7 @@ void malloc_disable_testing(void);
 #if CONFIG_IS_ENABLED(SYS_MALLOC_SIMPLE)
 #define malloc malloc_simple
 #define realloc realloc_simple
+#define calloc calloc_simple
 #define memalign memalign_simple
 #if IS_ENABLED(CONFIG_VALGRIND)
 #define free free_simple
