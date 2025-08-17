@@ -139,7 +139,7 @@ void *map_physmem(phys_addr_t paddr, unsigned long len, unsigned long flags)
 	if (enable_pci_map && !pci_map_physmem(paddr, &len, &map_dev, &ptr)) {
 		if (plen != len) {
 			printf("%s: Warning: partial map at %x, wanted %lx, got %lx\n",
-			       __func__, (uint)paddr, len, plen);
+			       __func__, (uint)paddr, plen, len);
 		}
 		map_len = len;
 		log_debug("pci map %lx -> %p\n", (ulong)paddr, ptr);
