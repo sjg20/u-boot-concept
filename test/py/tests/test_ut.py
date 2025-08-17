@@ -642,8 +642,13 @@ def setup_efi_image(config):
     fsh.cleanup()
 
 
-def setup_localboot_image(ubman):
-    """Create a 20MB disk image with a single FAT partition"""
+def setup_localboot_image(config, log):
+    """Create a 20MB disk image with a single FAT partition
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
+    """
     mmc_dev = 9
 
     script = '''DEFAULT local
@@ -654,8 +659,8 @@ LABEL local
 '''
     vmlinux = 'vmlinuz'
     initrd = 'initrd.img'
-    setup_extlinux_image(ubman.config, ubman.log, mmc_dev, 'mmc', vmlinux,
-                         initrd, None, script)
+    setup_extlinux_image(config, log, mmc_dev, 'mmc', vmlinux, initrd, None,
+                         script)
 
 
 @pytest.mark.buildconfigspec('cmd_bootflow')
@@ -670,7 +675,7 @@ def test_ut_dm_init_bootstd(ubman):
     setup_android_image(ubman.config, ubman.log)
     setup_efi_image(ubman.config)
     setup_ubuntu_image(ubman.config, ubman.log, 3, 'flash')
-    setup_localboot_image(ubman)
+    setup_localboot_image(ubman.config, ubman.log)
     setup_vbe_image(ubman)
 
     # Restart so that the new mmc1.img is picked up
