@@ -39,10 +39,14 @@ def copy_partition(ubman, fsfile, outname):
     utils.run_and_log(ubman,
                       f'dd if={fsfile} of={outname} bs=1M seek=1 conv=notrunc')
 
-def setup_bootmenu_image(ubman):
+def setup_bootmenu_image(config, log):
     """Create a 20MB disk image with a single ext4 partition
 
     This is modelled on Armbian 22.08 Jammy
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
     """
     mmc_dev = 4
 
@@ -120,7 +124,7 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
 # Recompile with:
 # mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
 '''
-    fsh = FsHelper(ubman.config, 'ext4', 18, 'mmc')
+    fsh = FsHelper(config, 'ext4', 18, 'mmc')
     fsh.setup()
     bootdir = os.path.join(fsh.srcdir, 'boot')
     mkdir_cond(bootdir)
@@ -129,16 +133,16 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
     with open(cmd_fname, 'w', encoding='ascii') as outf:
         print(script, file=outf)
 
-    infname = os.path.join(ubman.config.source_dir,
+    infname = os.path.join(config.source_dir,
                             'test/py/tests/bootstd/armbian.bmp.xz')
     bmp_file = os.path.join(bootdir, 'boot.bmp')
-    utils.run_and_log(
-        ubman,
+    utils.run_and_log_no_ubman(
+        config,
         ['sh', '-c', f'xz -dc {infname} >{bmp_file}'])
 
-    mkimage = ubman.config.build_dir + '/tools/mkimage'
-    utils.run_and_log(
-        ubman, f'{mkimage} -C none -A arm -T script -d {cmd_fname} {scr_fname}')
+    mkimage = config.build_dir + '/tools/mkimage'
+    utils.run_and_log_no_ubman(
+        config, f'{mkimage} -C none -A arm -T script -d {cmd_fname} {scr_fname}')
 
     kernel = 'vmlinuz-5.15.63-rockchip64'
     target = os.path.join(bootdir, kernel)
@@ -148,11 +152,10 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
     symlink = os.path.join(bootdir, 'Image')
     if os.path.exists(symlink):
         os.remove(symlink)
-    utils.run_and_log(
-        ubman, f'echo here {kernel} {symlink}')
+    utils.run_and_log_no_ubman(config, f'echo here {kernel} {symlink}')
     os.symlink(kernel, symlink)
     fsh.mk_fs()
-    img = DiskHelper(ubman.config, mmc_dev, 'mmc', True)
+    img = DiskHelper(config, mmc_dev, 'mmc', True)
     img.add_fs(fsh, DiskHelper.EXT4)
     img.create()
     fsh.cleanup()
@@ -635,7 +638,7 @@ def test_ut_dm_init_bootstd(ubman):
     """Initialise data for bootflow tests"""
 
     setup_fedora_image(ubman, 1, 'mmc')
-    setup_bootmenu_image(ubman)
+    setup_bootmenu_image(ubman.config, ubman.log)
     setup_cedit_file(ubman)
     setup_cros_image(ubman)
     setup_android_image(ubman)
