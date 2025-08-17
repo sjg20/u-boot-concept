@@ -283,17 +283,23 @@ label l0r
     setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
                          script)
 
-def setup_cros_image(ubman):
-    """Create a 20MB disk image with ChromiumOS partitions"""
+def setup_cros_image(config, log):
+    """Create a 20MB disk image with ChromiumOS partitions
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
+    """
     Partition = collections.namedtuple('part', 'start,size,name')
     parts = {}
     disk_data = None
 
-    def pack_kernel(ubman, arch, kern, dummy):
+    def pack_kernel(config, log, arch, kern, dummy):
         """Pack a kernel containing some fake data
 
         Args:
-            ubman (ConsoleBase): Console to use
+            config (ArbitraryAttributeContainer): Configuration
+            log (multiplexed_log.Logfile): Log to write to
             arch (str): Architecture to use ('x86' or 'arm')
             kern (str): Filename containing kernel
             dummy (str): Dummy filename to use for config and bootloader
@@ -301,10 +307,9 @@ def setup_cros_image(ubman):
         Return:
             bytes: Packed-kernel data
         """
-        kern_part = os.path.join(ubman.config.result_dir,
-                                 f'kern-part-{arch}.bin')
-        utils.run_and_log(
-            ubman,
+        kern_part = os.path.join(config.result_dir, f'kern-part-{arch}.bin')
+        utils.run_and_log_no_ubman(
+            log,
             f'futility vbutil_kernel --pack {kern_part} '
             '--keyblock doc/chromium/files/devkeys/kernel.keyblock '
             '--signprivate doc/chromium/files/devkeys/kernel_data_key.vbprivk '
@@ -330,9 +335,9 @@ def setup_cros_image(ubman):
         disk_data = disk_data[:start] + data + disk_data[start + len(data):]
 
     mmc_dev = 5
-    fname = os.path.join(ubman.config.source_dir, f'mmc{mmc_dev}.img')
-    utils.run_and_log(ubman, f'qemu-img create {fname} 20M')
-    utils.run_and_log(ubman, f'cgpt create {fname}')
+    fname = os.path.join(config.source_dir, f'mmc{mmc_dev}.img')
+    utils.run_and_log_no_ubman(log, f'qemu-img create {fname} 20M')
+    utils.run_and_log_no_ubman(log, f'cgpt create {fname}')
 
     uuid_state = 'ebd0a0a2-b9e5-4433-87c0-68b6b72699c7'
     uuid_kern = 'fe3a2a5d-4f32-41a7-b725-accc3285a309'
@@ -371,13 +376,13 @@ def setup_cros_image(ubman):
             size = int(size_str[:-1]) * sect_1mb
         else:
             size = int(size_str)
-        utils.run_and_log(
-            ubman,
+        utils.run_and_log_no_ubman(
+            log,
             f"cgpt add -i {part['num']} -b {ptr} -s {size} -t {part['type']} {fname}")
         ptr += size
 
-    utils.run_and_log(ubman, f'cgpt boot -p {fname}')
-    out = utils.run_and_log(ubman, f'cgpt show -q {fname}')
+    utils.run_and_log_no_ubman(log, f'cgpt boot -p {fname}')
+    out = utils.run_and_log_no_ubman(log, f'cgpt show -q {fname}')
 
     # We expect something like this:
     #   8239        2048       1  Basic data
@@ -399,14 +404,14 @@ def setup_cros_image(ubman):
         parts[int(num)] = Partition(int(start), int(size), name)
 
     # Set up the kernel command-line
-    dummy = os.path.join(ubman.config.result_dir, 'dummy.txt')
+    dummy = os.path.join(config.result_dir, 'dummy.txt')
     with open(dummy, 'wb') as outf:
         outf.write(b'BOOT_IMAGE=/vmlinuz-5.15.0-121-generic root=/dev/nvme0n1p1 ro quiet splash vt.handoff=7')
 
     # For now we just use dummy kernels. This limits testing to just detecting
     # a signed kernel. We could add support for the x86 data structures so that
     # testing could cover getting the cmdline, setup.bin and other pieces.
-    kern = os.path.join(ubman.config.result_dir, 'kern.bin')
+    kern = os.path.join(config.result_dir, 'kern.bin')
     with open(kern, 'wb') as outf:
         outf.write(b'kernel\n')
 
@@ -414,8 +419,8 @@ def setup_cros_image(ubman):
         disk_data = inf.read()
 
     # put x86 kernel in partition 2 and arm one in partition 4
-    set_part_data(2, pack_kernel(ubman, 'x86', kern, dummy))
-    set_part_data(4, pack_kernel(ubman, 'arm', kern, dummy))
+    set_part_data(2, pack_kernel(config, log, 'x86', kern, dummy))
+    set_part_data(4, pack_kernel(config, log, 'arm', kern, dummy))
 
     with open(fname, 'wb') as outf:
         outf.write(disk_data)
@@ -644,7 +649,7 @@ def test_ut_dm_init_bootstd(ubman):
     setup_fedora_image(ubman.config, ubman.log, 1, 'mmc')
     setup_bootmenu_image(ubman.config, ubman.log)
     setup_cedit_file(ubman)
-    setup_cros_image(ubman)
+    setup_cros_image(ubman.config, ubman.log)
     setup_android_image(ubman)
     setup_efi_image(ubman)
     setup_ubuntu_image(ubman.config, ubman.log, 3, 'flash')
