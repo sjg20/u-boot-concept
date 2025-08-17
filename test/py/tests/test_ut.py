@@ -24,6 +24,7 @@ from img.ubuntu import setup_ubuntu_image
 from img.armbian import setup_bootmenu_image
 from img.chromeos import setup_cros_image
 from img.android import setup_android_image
+from img.efi import setup_efi_image
 
 
 def setup_cedit_file(config, log):
@@ -76,34 +77,6 @@ def test_ut_dm_init(ubman):
     data = b'\x00' * (12 * 1024 * 1024)
     with open(fn, 'wb') as fh:
         fh.write(data)
-
-
-def setup_efi_image(config):
-    """Create a 20MB disk image with an EFI app on it
-
-    Args:
-        config (ArbitraryAttributeContainer): Configuration
-    """
-    devnum = 1
-    fsh = FsHelper(config, 'vfat', 18, 'flash')
-    fsh.setup()
-    efi_dir = os.path.join(fsh.srcdir, 'EFI')
-    mkdir_cond(efi_dir)
-    bootdir = os.path.join(efi_dir, 'BOOT')
-    mkdir_cond(bootdir)
-    efi_src = os.path.join(config.build_dir,
-                        'lib/efi_loader/testapp.efi')
-    efi_dst = os.path.join(bootdir, 'BOOTSBOX.EFI')
-    with open(efi_src, 'rb') as inf:
-        with open(efi_dst, 'wb') as outf:
-            outf.write(inf.read())
-
-    fsh.mk_fs()
-
-    img = DiskHelper(config, devnum, 'flash', True)
-    img.add_fs(fsh, DiskHelper.VFAT)
-    img.create()
-    fsh.cleanup()
 
 
 def setup_localboot_image(config, log):
