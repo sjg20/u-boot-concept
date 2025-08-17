@@ -102,43 +102,43 @@ dtb1_addr = loadaddr + dtb1_offset
 # DTB #2 start address in RAM
 dtb2_addr = vloadaddr + dtb2_offset
 
-class AbootimgTestDiskImage(object):
+class AbootimgTestDiskImage():
     """Disk image used by abootimg tests."""
 
-    def __init__(self, ubman, image_name, hex_img):
+    def __init__(self, config, log, image_name, hex_img):
         """Initialize a new AbootimgDiskImage object.
 
         Args:
-            ubman: A U-Boot console.
+            config (ArbitraryAttributeContainer): Configuration
 
         Returns:
             Nothing.
         """
 
-        gz_hex = ubman.config.persistent_data_dir + '/' + image_name  + '.gz.hex'
-        gz = ubman.config.persistent_data_dir + '/' + image_name + '.gz'
+        gz_hex = config.persistent_data_dir + '/' + image_name  + '.gz.hex'
+        gz = config.persistent_data_dir + '/' + image_name + '.gz'
 
         filename = image_name
-        persistent = ubman.config.persistent_data_dir + '/' + filename
-        self.path = ubman.config.result_dir  + '/' + filename
-        ubman.log.action('persistent is ' + persistent)
-        with utils.persistent_file_helper(ubman.log, persistent):
+        persistent = config.persistent_data_dir + '/' + filename
+        self.path = config.result_dir  + '/' + filename
+        log.action('persistent is ' + persistent)
+        with utils.persistent_file_helper(log, persistent):
             if os.path.exists(persistent):
-                ubman.log.action('Disk image file ' + persistent +
+                log.action('Disk image file ' + persistent +
                     ' already exists')
             else:
-                ubman.log.action('Generating ' + persistent)
+                log.action('Generating ' + persistent)
 
                 f = open(gz_hex, "w")
                 f.write(hex_img)
                 f.close()
                 cmd = ('xxd', '-r', '-p', gz_hex, gz)
-                utils.run_and_log(ubman, cmd)
+                utils.run_and_log_no_ubman(log, cmd)
                 cmd = ('gunzip', '-9', gz)
-                utils.run_and_log(ubman, cmd)
+                utils.run_and_log_no_ubman(log, cmd)
 
         cmd = ('cp', persistent, self.path)
-        utils.run_and_log(ubman, cmd)
+        utils.run_and_log_no_ubman(log, cmd)
 
 gtdi1 = None
 @pytest.fixture(scope='function')
@@ -150,7 +150,8 @@ def abootimg_disk_image(ubman):
 
     global gtdi1
     if not gtdi1:
-        gtdi1 = AbootimgTestDiskImage(ubman, 'boot.img', img_hex)
+        gtdi1 = AbootimgTestDiskImage(ubman.config, ubman.log, 'boot.img',
+                                      img_hex)
     return gtdi1
 
 gtdi2 = None
@@ -163,7 +164,8 @@ def abootimgv4_disk_image_vboot(ubman):
 
     global gtdi2
     if not gtdi2:
-        gtdi2 = AbootimgTestDiskImage(ubman, 'vendor_boot.img', vboot_img_hex)
+        gtdi2 = AbootimgTestDiskImage(ubman.config, ubman.log,
+                                      'vendor_boot.img', vboot_img_hex)
     return gtdi2
 
 gtdi3 = None
@@ -176,7 +178,8 @@ def abootimgv4_disk_image_boot(ubman):
 
     global gtdi3
     if not gtdi3:
-        gtdi3 = AbootimgTestDiskImage(ubman, 'bootv4.img', boot_img_hex)
+        gtdi3 = AbootimgTestDiskImage(ubman.config, ubman.log, 'bootv4.img',
+                                      boot_img_hex)
     return gtdi3
 
 @pytest.mark.boardspec('sandbox')

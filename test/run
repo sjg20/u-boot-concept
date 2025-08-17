@@ -42,6 +42,9 @@ fi
 
 failures=0
 
+# Disable LTO as it messed up event_dump.py (fails to get some line numbers)
+export NO_LTO=1
+
 if [ -z "$tools_only" ]; then
 	# Run all tests that the standard sandbox build can support
 	echo "${prompt}"

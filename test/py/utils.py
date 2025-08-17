@@ -157,30 +157,52 @@ def wait_until_file_open_fails(fn, ignore_errors):
         return
     raise Exception('File can still be opened')
 
-def run_and_log(ubman, cmd, ignore_errors=False, stdin=None, env=None):
+def run_and_log_no_ubman(log, cmd, ignore_errors=False, stdin=None, env=None):
     """Run a command and log its output.
 
+    This is useful when you don't want to use a ubman fixture
+
     Args:
-        ubman: A console connection to U-Boot.
-        cmd: The command to run, as an array of argv[], or a string.
+        log (multiplexed_log.Logfile): log fixture
+        cmd (list of str or str): Command to run, as an array of argv[] or str.
             If a string, note that it is split up so that quoted spaces
             will not be preserved. E.g. "fred and" becomes ['"fred', 'and"']
-        ignore_errors: Indicate whether to ignore errors. If True, the function
-            will simply return if the command cannot be executed or exits with
-            an error code, otherwise an exception will be raised if such
-            problems occur.
-        stdin: Input string to pass to the command as stdin (or None)
-            env: Environment to use, or None to use the current one
+        ignore_errors (bool): Indicate whether to ignore errors. If True, the
+            function will simply return if the command cannot be executed or
+            exits with an error code, otherwise an exception will be raised if
+            such problems occur.
+        stdin (str): Input string to pass to the command as stdin (or None)
+        env (dict): Environment to use, or None to use the current one
 
     Returns:
         The output as a string.
     """
     if isinstance(cmd, str):
         cmd = cmd.split()
-    runner = ubman.log.get_runner(cmd[0], sys.stdout)
+    runner = log.get_runner(cmd[0], sys.stdout)
     output = runner.run(cmd, ignore_errors=ignore_errors, stdin=stdin, env=env)
     runner.close()
     return output
+
+def run_and_log(ubman, cmd, ignore_errors=False, stdin=None, env=None):
+    """Run a command and log its output.
+
+    Args:
+        ubman (ConsoleBase): A console connection to U-Boot.
+        cmd (list of str or str): Command to run, as an array of argv[] or str.
+            If a string, note that it is split up so that quoted spaces
+            will not be preserved. E.g. "fred and" becomes ['"fred', 'and"']
+        ignore_errors (bool): Indicate whether to ignore errors. If True, the
+            function will simply return if the command cannot be executed or
+            exits with an error code, otherwise an exception will be raised if
+            such problems occur.
+        stdin (str): Input string to pass to the command as stdin (or None)
+        env (dict): Environment to use, or None to use the current one
+
+    Returns:
+        The output as a string.
+    """
+    return run_and_log_no_ubman(ubman.log, cmd, ignore_errors, stdin, env)
 
 def run_and_log_expect_exception(ubman, cmd, retcode, msg):
     """Run a command that is expected to fail.

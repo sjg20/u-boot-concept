@@ -39,10 +39,14 @@ def copy_partition(ubman, fsfile, outname):
     utils.run_and_log(ubman,
                       f'dd if={fsfile} of={outname} bs=1M seek=1 conv=notrunc')
 
-def setup_bootmenu_image(ubman):
+def setup_bootmenu_image(config, log):
     """Create a 20MB disk image with a single ext4 partition
 
     This is modelled on Armbian 22.08 Jammy
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
     """
     mmc_dev = 4
 
@@ -120,7 +124,7 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
 # Recompile with:
 # mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
 '''
-    fsh = FsHelper(ubman.config, 'ext4', 18, 'mmc')
+    fsh = FsHelper(config, 'ext4', 18, 'mmc')
     fsh.setup()
     bootdir = os.path.join(fsh.srcdir, 'boot')
     mkdir_cond(bootdir)
@@ -129,16 +133,16 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
     with open(cmd_fname, 'w', encoding='ascii') as outf:
         print(script, file=outf)
 
-    infname = os.path.join(ubman.config.source_dir,
+    infname = os.path.join(config.source_dir,
                             'test/py/tests/bootstd/armbian.bmp.xz')
     bmp_file = os.path.join(bootdir, 'boot.bmp')
-    utils.run_and_log(
-        ubman,
+    utils.run_and_log_no_ubman(
+        log,
         ['sh', '-c', f'xz -dc {infname} >{bmp_file}'])
 
-    mkimage = ubman.config.build_dir + '/tools/mkimage'
-    utils.run_and_log(
-        ubman, f'{mkimage} -C none -A arm -T script -d {cmd_fname} {scr_fname}')
+    mkimage = config.build_dir + '/tools/mkimage'
+    utils.run_and_log_no_ubman(
+        log, f'{mkimage} -C none -A arm -T script -d {cmd_fname} {scr_fname}')
 
     kernel = 'vmlinuz-5.15.63-rockchip64'
     target = os.path.join(bootdir, kernel)
@@ -148,22 +152,22 @@ booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
     symlink = os.path.join(bootdir, 'Image')
     if os.path.exists(symlink):
         os.remove(symlink)
-    utils.run_and_log(
-        ubman, f'echo here {kernel} {symlink}')
+    utils.run_and_log_no_ubman(log, f'echo here {kernel} {symlink}')
     os.symlink(kernel, symlink)
     fsh.mk_fs()
-    img = DiskHelper(ubman.config, mmc_dev, 'mmc', True)
+    img = DiskHelper(config, mmc_dev, 'mmc', True)
     img.add_fs(fsh, DiskHelper.EXT4)
     img.create()
     fsh.cleanup()
 
 
-def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
                          script):
     """Create a 20MB disk image with a single FAT partition
 
     Args:
-        ubman (ConsoleBase): Console to use
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
         devnum (int): Device number to use, e.g. 1
         basename (str): Base name to use in the filename, e.g. 'mmc'
         vmlinux (str): Kernel filename
@@ -171,7 +175,7 @@ def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
         dtbdir (str or None): Devicetree filename
         script (str): Script to place in the extlinux.conf file
     """
-    fsh = FsHelper(ubman.config, 'vfat', 18, prefix=basename)
+    fsh = FsHelper(config, 'vfat', 18, prefix=basename)
     fsh.setup()
 
     ext = os.path.join(fsh.srcdir, 'extlinux')
@@ -181,12 +185,12 @@ def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
     with open(conf, 'w', encoding='ascii') as fd:
         print(script, file=fd)
 
-    inf = os.path.join(ubman.config.persistent_data_dir, 'inf')
+    inf = os.path.join(config.persistent_data_dir, 'inf')
     with open(inf, 'wb') as fd:
         fd.write(gzip.compress(b'vmlinux'))
-    mkimage = ubman.config.build_dir + '/tools/mkimage'
-    utils.run_and_log(
-        ubman, f'{mkimage} -f auto -d {inf} {os.path.join(fsh.srcdir, vmlinux)}')
+    mkimage = config.build_dir + '/tools/mkimage'
+    utils.run_and_log_no_ubman(
+        log, f'{mkimage} -f auto -d {inf} {os.path.join(fsh.srcdir, vmlinux)}')
 
     with open(os.path.join(fsh.srcdir, initrd), 'w', encoding='ascii') as fd:
         print('initrd', file=fd)
@@ -195,15 +199,15 @@ def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
         mkdir_cond(os.path.join(fsh.srcdir, dtbdir))
 
         dtb_file = os.path.join(fsh.srcdir, f'{dtbdir}/sandbox.dtb')
-        utils.run_and_log(
-            ubman, f'dtc -o {dtb_file}', stdin=b'/dts-v1/; / {};')
+        utils.run_and_log_no_ubman(
+            log, f'dtc -o {dtb_file}', stdin=b'/dts-v1/; / {};')
 
     fsh.mk_fs()
 
-    img = DiskHelper(ubman.config, devnum, basename, True)
+    img = DiskHelper(config, devnum, basename, True)
     img.add_fs(fsh, DiskHelper.VFAT, bootable=True)
 
-    ext4 = FsHelper(ubman.config, 'ext4', 1, prefix=basename)
+    ext4 = FsHelper(config, 'ext4', 1, prefix=basename)
     ext4.setup()
     ext4.mk_fs()
 
@@ -211,11 +215,12 @@ def setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
     img.create()
     fsh.cleanup()
 
-def setup_fedora_image(ubman, devnum, basename):
+def setup_fedora_image(config, log, devnum, basename):
     """Create a 20MB Fedora disk image with a single FAT partition
 
     Args:
-        ubman (ConsoleBase): Console to use
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
         devnum (int): Device number to use, e.g. 1
         basename (str): Base name to use in the filename, e.g. 'mmc'
     """
@@ -235,14 +240,15 @@ label Fedora-Workstation-armhfp-31-1.9 (5.3.7-301.fc31.armv7hl)
         append ro root=UUID=9732b35b-4cd5-458b-9b91-80f7047e0b8a rhgb quiet LANG=en_US.UTF-8 cma=192MB cma=256MB
         fdtdir /%s/
         initrd /%s''' % (vmlinux, dtbdir, initrd)
-    setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
-                         script)
+    setup_extlinux_image(config, log, devnum, basename, vmlinux,
+                         initrd, dtbdir, script)
 
-def setup_ubuntu_image(ubman, devnum, basename):
+def setup_ubuntu_image(config, log, devnum, basename):
     """Create a 20MB Ubuntu disk image with a single FAT partition
 
     Args:
-        ubman (ConsoleBase): Console to use
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
         devnum (int): Device number to use, e.g. 1
         basename (str): Base name to use in the filename, e.g. 'mmc'
     """
@@ -274,20 +280,26 @@ label l0r
 	linux /boot/%s
 	initrd /boot/%s
 ''' % (vmlinux, initrd, vmlinux, initrd)
-    setup_extlinux_image(ubman, devnum, basename, vmlinux, initrd, dtbdir,
+    setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
                          script)
 
-def setup_cros_image(ubman):
-    """Create a 20MB disk image with ChromiumOS partitions"""
+def setup_cros_image(config, log):
+    """Create a 20MB disk image with ChromiumOS partitions
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
+    """
     Partition = collections.namedtuple('part', 'start,size,name')
     parts = {}
     disk_data = None
 
-    def pack_kernel(ubman, arch, kern, dummy):
+    def pack_kernel(config, log, arch, kern, dummy):
         """Pack a kernel containing some fake data
 
         Args:
-            ubman (ConsoleBase): Console to use
+            config (ArbitraryAttributeContainer): Configuration
+            log (multiplexed_log.Logfile): Log to write to
             arch (str): Architecture to use ('x86' or 'arm')
             kern (str): Filename containing kernel
             dummy (str): Dummy filename to use for config and bootloader
@@ -295,10 +307,9 @@ def setup_cros_image(ubman):
         Return:
             bytes: Packed-kernel data
         """
-        kern_part = os.path.join(ubman.config.result_dir,
-                                 f'kern-part-{arch}.bin')
-        utils.run_and_log(
-            ubman,
+        kern_part = os.path.join(config.result_dir, f'kern-part-{arch}.bin')
+        utils.run_and_log_no_ubman(
+            log,
             f'futility vbutil_kernel --pack {kern_part} '
             '--keyblock doc/chromium/files/devkeys/kernel.keyblock '
             '--signprivate doc/chromium/files/devkeys/kernel_data_key.vbprivk '
@@ -324,9 +335,9 @@ def setup_cros_image(ubman):
         disk_data = disk_data[:start] + data + disk_data[start + len(data):]
 
     mmc_dev = 5
-    fname = os.path.join(ubman.config.source_dir, f'mmc{mmc_dev}.img')
-    utils.run_and_log(ubman, f'qemu-img create {fname} 20M')
-    utils.run_and_log(ubman, f'cgpt create {fname}')
+    fname = os.path.join(config.source_dir, f'mmc{mmc_dev}.img')
+    utils.run_and_log_no_ubman(log, f'qemu-img create {fname} 20M')
+    utils.run_and_log_no_ubman(log, f'cgpt create {fname}')
 
     uuid_state = 'ebd0a0a2-b9e5-4433-87c0-68b6b72699c7'
     uuid_kern = 'fe3a2a5d-4f32-41a7-b725-accc3285a309'
@@ -365,13 +376,13 @@ def setup_cros_image(ubman):
             size = int(size_str[:-1]) * sect_1mb
         else:
             size = int(size_str)
-        utils.run_and_log(
-            ubman,
+        utils.run_and_log_no_ubman(
+            log,
             f"cgpt add -i {part['num']} -b {ptr} -s {size} -t {part['type']} {fname}")
         ptr += size
 
-    utils.run_and_log(ubman, f'cgpt boot -p {fname}')
-    out = utils.run_and_log(ubman, f'cgpt show -q {fname}')
+    utils.run_and_log_no_ubman(log, f'cgpt boot -p {fname}')
+    out = utils.run_and_log_no_ubman(log, f'cgpt show -q {fname}')
 
     # We expect something like this:
     #   8239        2048       1  Basic data
@@ -393,14 +404,14 @@ def setup_cros_image(ubman):
         parts[int(num)] = Partition(int(start), int(size), name)
 
     # Set up the kernel command-line
-    dummy = os.path.join(ubman.config.result_dir, 'dummy.txt')
+    dummy = os.path.join(config.result_dir, 'dummy.txt')
     with open(dummy, 'wb') as outf:
         outf.write(b'BOOT_IMAGE=/vmlinuz-5.15.0-121-generic root=/dev/nvme0n1p1 ro quiet splash vt.handoff=7')
 
     # For now we just use dummy kernels. This limits testing to just detecting
     # a signed kernel. We could add support for the x86 data structures so that
     # testing could cover getting the cmdline, setup.bin and other pieces.
-    kern = os.path.join(ubman.config.result_dir, 'kern.bin')
+    kern = os.path.join(config.result_dir, 'kern.bin')
     with open(kern, 'wb') as outf:
         outf.write(b'kernel\n')
 
@@ -408,16 +419,21 @@ def setup_cros_image(ubman):
         disk_data = inf.read()
 
     # put x86 kernel in partition 2 and arm one in partition 4
-    set_part_data(2, pack_kernel(ubman, 'x86', kern, dummy))
-    set_part_data(4, pack_kernel(ubman, 'arm', kern, dummy))
+    set_part_data(2, pack_kernel(config, log, 'x86', kern, dummy))
+    set_part_data(4, pack_kernel(config, log, 'arm', kern, dummy))
 
     with open(fname, 'wb') as outf:
         outf.write(disk_data)
 
     return fname
 
-def setup_android_image(ubman):
-    """Create a 20MB disk image with Android partitions"""
+def setup_android_image(config, log):
+    """Create a 20MB disk image with Android partitions
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
+    """
     Partition = collections.namedtuple('part', 'start,size,name')
     parts = {}
     disk_data = None
@@ -437,9 +453,9 @@ def setup_android_image(ubman):
         disk_data = disk_data[:start] + data + disk_data[start + len(data):]
 
     mmc_dev = 7
-    fname = os.path.join(ubman.config.source_dir, f'mmc{mmc_dev}.img')
-    utils.run_and_log(ubman, f'qemu-img create {fname} 20M')
-    utils.run_and_log(ubman, f'cgpt create {fname}')
+    fname = os.path.join(config.source_dir, f'mmc{mmc_dev}.img')
+    utils.run_and_log_no_ubman(log, f'qemu-img create {fname} 20M')
+    utils.run_and_log_no_ubman(log, f'cgpt create {fname}')
 
     ptr = 40
 
@@ -461,13 +477,13 @@ def setup_android_image(ubman):
             size = int(size_str[:-1]) * sect_1mb
         else:
             size = int(size_str)
-        utils.run_and_log(
-            ubman,
+        utils.run_and_log_no_ubman(
+            log,
             f"cgpt add -i {part['num']} -b {ptr} -s {size} -l {part['label']} -t basicdata {fname}")
         ptr += size
 
-    utils.run_and_log(ubman, f'cgpt boot -p {fname}')
-    out = utils.run_and_log(ubman, f'cgpt show -q {fname}')
+    utils.run_and_log_no_ubman(log, f'cgpt boot -p {fname}')
+    out = utils.run_and_log_no_ubman(log, f'cgpt show -q {fname}')
 
     # Create a dict (indexed by partition number) containing the above info
     for line in out.splitlines():
@@ -477,13 +493,15 @@ def setup_android_image(ubman):
     with open(fname, 'rb') as inf:
         disk_data = inf.read()
 
-    test_abootimg.AbootimgTestDiskImage(ubman, 'bootv4.img', test_abootimg.boot_img_hex)
-    boot_img = os.path.join(ubman.config.result_dir, 'bootv4.img')
+    test_abootimg.AbootimgTestDiskImage(config, log, 'bootv4.img',
+                                        test_abootimg.boot_img_hex)
+    boot_img = os.path.join(config.result_dir, 'bootv4.img')
     with open(boot_img, 'rb') as inf:
         set_part_data(2, inf.read())
 
-    test_abootimg.AbootimgTestDiskImage(ubman, 'vendor_boot.img', test_abootimg.vboot_img_hex)
-    vendor_boot_img = os.path.join(ubman.config.result_dir, 'vendor_boot.img')
+    test_abootimg.AbootimgTestDiskImage(config, log, 'vendor_boot.img',
+                                        test_abootimg.vboot_img_hex)
+    vendor_boot_img = os.path.join(config.result_dir, 'vendor_boot.img')
     with open(vendor_boot_img, 'rb') as inf:
         set_part_data(4, inf.read())
 
@@ -493,9 +511,9 @@ def setup_android_image(ubman):
     print(f'wrote to {fname}')
 
     mmc_dev = 8
-    fname = os.path.join(ubman.config.source_dir, f'mmc{mmc_dev}.img')
-    utils.run_and_log(ubman, f'qemu-img create {fname} 20M')
-    utils.run_and_log(ubman, f'cgpt create {fname}')
+    fname = os.path.join(config.source_dir, f'mmc{mmc_dev}.img')
+    utils.run_and_log_no_ubman(log, f'qemu-img create {fname} 20M')
+    utils.run_and_log_no_ubman(log, f'cgpt create {fname}')
 
     ptr = 40
 
@@ -515,13 +533,13 @@ def setup_android_image(ubman):
             size = int(size_str[:-1]) * sect_1mb
         else:
             size = int(size_str)
-        utils.run_and_log(
-            ubman,
+        utils.run_and_log_no_ubman(
+            log,
             f"cgpt add -i {part['num']} -b {ptr} -s {size} -l {part['label']} -t basicdata {fname}")
         ptr += size
 
-    utils.run_and_log(ubman, f'cgpt boot -p {fname}')
-    out = utils.run_and_log(ubman, f'cgpt show -q {fname}')
+    utils.run_and_log_no_ubman(log, f'cgpt boot -p {fname}')
+    out = utils.run_and_log_no_ubman(log, f'cgpt show -q {fname}')
 
     # Create a dict (indexed by partition number) containing the above info
     for line in out.splitlines():
@@ -531,8 +549,9 @@ def setup_android_image(ubman):
     with open(fname, 'rb') as inf:
         disk_data = inf.read()
 
-    test_abootimg.AbootimgTestDiskImage(ubman, 'boot.img', test_abootimg.img_hex)
-    boot_img = os.path.join(ubman.config.result_dir, 'boot.img')
+    test_abootimg.AbootimgTestDiskImage(config, log, 'boot.img',
+                                        test_abootimg.img_hex)
+    boot_img = os.path.join(config.result_dir, 'boot.img')
     with open(boot_img, 'rb') as inf:
         set_part_data(2, inf.read())
 
@@ -543,16 +562,21 @@ def setup_android_image(ubman):
 
     return fname
 
-def setup_cedit_file(ubman):
-    """Set up a .dtb file for use with testing expo and configuration editor"""
-    infname = os.path.join(ubman.config.source_dir,
+def setup_cedit_file(config, log):
+    """Set up a .dtb file for use with testing expo and configuration editor
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
+    """
+    infname = os.path.join(config.source_dir,
                            'test/boot/files/expo_layout.dts')
-    inhname = os.path.join(ubman.config.source_dir,
+    inhname = os.path.join(config.source_dir,
                            'test/boot/files/expo_ids.h')
-    expo_tool = os.path.join(ubman.config.source_dir, 'tools/expo.py')
+    expo_tool = os.path.join(config.source_dir, 'tools/expo.py')
     outfname = 'cedit.dtb'
-    utils.run_and_log(
-        ubman, f'{expo_tool} -e {inhname} -l {infname} -o {outfname}')
+    utils.run_and_log_no_ubman(
+        log, f'{expo_tool} -e {inhname} -l {infname} -o {outfname}')
 
 @pytest.mark.buildconfigspec('ut_dm')
 def test_ut_dm_init(ubman):
@@ -590,16 +614,20 @@ def test_ut_dm_init(ubman):
         fh.write(data)
 
 
-def setup_efi_image(ubman):
-    """Create a 20MB disk image with an EFI app on it"""
+def setup_efi_image(config):
+    """Create a 20MB disk image with an EFI app on it
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+    """
     devnum = 1
-    fsh = FsHelper(ubman.config, 'vfat', 18, 'flash')
+    fsh = FsHelper(config, 'vfat', 18, 'flash')
     fsh.setup()
     efi_dir = os.path.join(fsh.srcdir, 'EFI')
     mkdir_cond(efi_dir)
     bootdir = os.path.join(efi_dir, 'BOOT')
     mkdir_cond(bootdir)
-    efi_src = os.path.join(ubman.config.build_dir,
+    efi_src = os.path.join(config.build_dir,
                         'lib/efi_loader/testapp.efi')
     efi_dst = os.path.join(bootdir, 'BOOTSBOX.EFI')
     with open(efi_src, 'rb') as inf:
@@ -608,14 +636,19 @@ def setup_efi_image(ubman):
 
     fsh.mk_fs()
 
-    img = DiskHelper(ubman.config, devnum, 'flash', True)
+    img = DiskHelper(config, devnum, 'flash', True)
     img.add_fs(fsh, DiskHelper.VFAT)
     img.create()
     fsh.cleanup()
 
 
-def setup_localboot_image(cons):
-    """Create a 20MB disk image with a single FAT partition"""
+def setup_localboot_image(config, log):
+    """Create a 20MB disk image with a single FAT partition
+
+    Args:
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
+    """
     mmc_dev = 9
 
     script = '''DEFAULT local
@@ -626,27 +659,28 @@ LABEL local
 '''
     vmlinux = 'vmlinuz'
     initrd = 'initrd.img'
-    setup_extlinux_image(cons, mmc_dev, 'mmc', vmlinux, initrd, None, script)
+    setup_extlinux_image(config, log, mmc_dev, 'mmc', vmlinux, initrd, None,
+                         script)
 
 
 @pytest.mark.buildconfigspec('cmd_bootflow')
 @pytest.mark.buildconfigspec('sandbox')
-def test_ut_dm_init_bootstd(ubman):
-    """Initialise data for bootflow tests"""
+def test_ut_dm_init_bootstd(u_boot_config, u_boot_log):
+    """Initialise data for bootflow tests
 
-    setup_fedora_image(ubman, 1, 'mmc')
-    setup_bootmenu_image(ubman)
-    setup_cedit_file(ubman)
-    setup_cros_image(ubman)
-    setup_android_image(ubman)
-    setup_efi_image(ubman)
-    setup_ubuntu_image(ubman, 3, 'flash')
-    setup_localboot_image(ubman)
-    setup_vbe_image(ubman)
-
-    # Restart so that the new mmc1.img is picked up
-    ubman.restart_uboot()
-
+    Args:
+        u_boot_config (ArbitraryAttributeContainer): Configuration
+        u_boot_log (multiplexed_log.Logfile): Log to write to
+    """
+    setup_fedora_image(u_boot_config, u_boot_log, 1, 'mmc')
+    setup_bootmenu_image(u_boot_config, u_boot_log)
+    setup_cedit_file(u_boot_config, u_boot_log)
+    setup_cros_image(u_boot_config, u_boot_log)
+    setup_android_image(u_boot_config, u_boot_log)
+    setup_efi_image(u_boot_config)
+    setup_ubuntu_image(u_boot_config, u_boot_log, 3, 'flash')
+    setup_localboot_image(u_boot_config, u_boot_log)
+    setup_vbe_image(u_boot_config, u_boot_log)
 
 def test_ut(ubman, ut_subtest):
     """Execute a "ut" subtest.

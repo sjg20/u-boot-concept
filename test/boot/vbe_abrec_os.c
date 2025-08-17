@@ -115,6 +115,7 @@ static int check_abrec_norun(struct unit_test_state *uts, bool use_oem,
 	root = oftree_root(tree);
 
 	ut_asserteq_str("snow", ofnode_read_string(root, "compatible"));
+	bootflow_free(&bflow);
 
 	return 0;
 }

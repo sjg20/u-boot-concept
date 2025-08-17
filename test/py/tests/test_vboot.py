@@ -65,6 +65,36 @@ def dtc(dts, ubman, dtc_args, datadir, tmpdir, dtb):
     utils.run_and_log(ubman, 'dtc %s %s%s -O dtb '
                       '-o %s%s' % (dtc_args, datadir, dts, tmpdir, dtb))
 
+
+def create_rsa_pair(ubman, name, sha_algo, tmpdir):
+    """Generate a new RSA key paid and certificate
+
+    Args:
+        ubman (ConsoleBase): U-Boot console
+        name (str): Name of the key (e.g. 'dev')
+        sha_algo (str): SHA algorithm to use, e.g. 'sha256'
+        tmpdir (str): Temporary directory to use for openssl
+    """
+    public_exponent = 65537
+
+    if sha_algo == 'sha384':
+        rsa_keygen_bits = 3072
+    else:
+        rsa_keygen_bits = 2048
+
+    utils.run_and_log(
+        ubman,
+        f'openssl genpkey -algorithm RSA -out {tmpdir}{name}.key '
+        f'-pkeyopt rsa_keygen_bits:{rsa_keygen_bits} '
+        f'-pkeyopt rsa_keygen_pubexp:{public_exponent}')
+
+    # Create a certificate containing the public key
+    utils.run_and_log(
+        ubman,
+        f'openssl req -batch -new -x509 -key {tmpdir}{name}.key '
+        f'-out {tmpdir}{name}.crt')
+
+
 def make_fit(its, ubman, mkimage, dtc_args, datadir, fit):
     """Make a new FIT from the .its source file.
 
@@ -264,28 +294,6 @@ def test_vboot_base(ubman, name, sha_algo, padding, sign_options, required,
         with open(fit, 'r+b') as handle:
             handle.seek(offset)
             handle.write(struct.pack(">I", value))
-
-    def create_rsa_pair(name):
-        """Generate a new RSA key paid and certificate
-
-        Args:
-            name: Name of of the key (e.g. 'dev')
-        """
-        public_exponent = 65537
-
-        if sha_algo == "sha384":
-            rsa_keygen_bits = 3072
-        else:
-            rsa_keygen_bits = 2048
-
-        utils.run_and_log(ubman, 'openssl genpkey -algorithm RSA -out %s%s.key '
-                     '-pkeyopt rsa_keygen_bits:%d '
-                     '-pkeyopt rsa_keygen_pubexp:%d' %
-                     (tmpdir, name, rsa_keygen_bits, public_exponent))
-
-        # Create a certificate containing the public key
-        utils.run_and_log(ubman, 'openssl req -batch -new -x509 -key %s%s.key '
-                          '-out %s%s.crt' % (tmpdir, name, tmpdir, name))
 
     def test_with_algo(sha_algo, padding, sign_options):
         """Test verified boot with the given hash algorithm.
@@ -520,8 +528,8 @@ def test_vboot_base(ubman, name, sha_algo, padding, sign_options, required,
     dtb = '%ssandbox-u-boot.dtb' % tmpdir
     sig_node = '/configurations/conf-1/signature'
 
-    create_rsa_pair('dev')
-    create_rsa_pair('prod')
+    create_rsa_pair(ubman, 'dev', sha_algo, tmpdir)
+    create_rsa_pair(ubman, 'prod', sha_algo, tmpdir)
 
     # Create a number kernel image with zeroes
     with open('%stest-kernel.bin' % tmpdir, 'wb') as fd:
@@ -632,12 +640,22 @@ def test_fdt_add_pubkey(ubman, name, sha_algo, padding, sign_options, algo_arg):
     datadir = ubman.config.source_dir + '/test/py/tests/vboot/'
     fit = '%stest.fit' % tmpdir
     mkimage = ubman.config.build_dir + '/tools/mkimage'
-    binman = ubman.config.source_dir + '/tools/binman/binman'
     fit_check_sign = ubman.config.build_dir + '/tools/fit_check_sign'
     fdt_add_pubkey = ubman.config.build_dir + '/tools/fdt_add_pubkey'
     dtc_args = '-I dts -O dtb -i %s' % tmpdir
     dtb = '%ssandbox-u-boot.dtb' % tmpdir
 
-    # keys created in test_vboot test
+    create_rsa_pair(ubman, 'dev', sha_algo, tmpdir)
+    create_rsa_pair(ubman, 'prod', sha_algo, tmpdir)
+
+    # Create a number kernel image with zeroes
+    with open(f'{tmpdir}test-kernel.bin', 'wb') as fd:
+        fd.write(500 * b'\0')
+
+    # Compile our device tree files for kernel and U-Boot. These are
+    # regenerated here since mkimage will modify them (by adding a
+    # public key) below.
+    dtc('sandbox-kernel.dts', ubman, dtc_args, datadir, tmpdir, dtb)
+    dtc('sandbox-u-boot.dts', ubman, dtc_args, datadir, tmpdir, dtb)
 
     test_add_pubkey(sha_algo, padding, sign_options)
