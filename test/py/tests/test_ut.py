@@ -215,11 +215,12 @@ def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
     img.create()
     fsh.cleanup()
 
-def setup_fedora_image(ubman, devnum, basename):
+def setup_fedora_image(config, log, devnum, basename):
     """Create a 20MB Fedora disk image with a single FAT partition
 
     Args:
-        ubman (ConsoleBase): Console to use
+        config (ArbitraryAttributeContainer): Configuration
+        log (multiplexed_log.Logfile): Log to write to
         devnum (int): Device number to use, e.g. 1
         basename (str): Base name to use in the filename, e.g. 'mmc'
     """
@@ -239,7 +240,7 @@ label Fedora-Workstation-armhfp-31-1.9 (5.3.7-301.fc31.armv7hl)
         append ro root=UUID=9732b35b-4cd5-458b-9b91-80f7047e0b8a rhgb quiet LANG=en_US.UTF-8 cma=192MB cma=256MB
         fdtdir /%s/
         initrd /%s''' % (vmlinux, dtbdir, initrd)
-    setup_extlinux_image(ubman.config, ubman.log, devnum, basename, vmlinux,
+    setup_extlinux_image(config, log, devnum, basename, vmlinux,
                          initrd, dtbdir, script)
 
 def setup_ubuntu_image(ubman, devnum, basename):
@@ -639,7 +640,7 @@ LABEL local
 def test_ut_dm_init_bootstd(ubman):
     """Initialise data for bootflow tests"""
 
-    setup_fedora_image(ubman, 1, 'mmc')
+    setup_fedora_image(ubman.config, ubman.log, 1, 'mmc')
     setup_bootmenu_image(ubman.config, ubman.log)
     setup_cedit_file(ubman)
     setup_cros_image(ubman)
