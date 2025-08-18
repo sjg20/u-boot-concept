@@ -90,9 +90,12 @@ fi
 DTC_DIR=$(pwd)/build-sandbox_spl/scripts/dtc
 export PYTHONPATH=${DTC_DIR}/pylibfdt
 export DTC=${DTC_DIR}/dtc
-TOOLS_DIR=build-sandbox_spl/tools
+TOOLS_DIR=$(pwd)/build-sandbox_spl/tools
 
-run_test "binman" ./tools/binman/binman --toolpath ${TOOLS_DIR} test
+# TOOLPATH may be defined to provide mkimage, cbfstool, etc.
+export PATH=$PATH:${TOOLS_DIR}
+
+run_test "binman" ./tools/binman/binman ${TOOLPATH} test
 run_test "patman" ./tools/patman/patman test
 run_test "u_boot_pylib" ./tools/u_boot_pylib/u_boot_pylib
 
@@ -106,8 +109,7 @@ run_test "dtoc" ./tools/dtoc/dtoc -t
 
 # Code-coverage tests cannot run in parallel, so skip them in that case
 if [ -z "${para}" ]; then
-	export PATH=$PATH:${TOOLS_DIR}
-	run_test "binman code coverage" ./tools/binman/binman test -T
+	run_test "binman code coverage" ./tools/binman/binman ${TOOLPATH} test -T
 	run_test "dtoc code coverage" ./tools/dtoc/dtoc -T
 	run_test "fdt code coverage" ./tools/dtoc/test_fdt -T
 fi
