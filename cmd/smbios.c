@@ -6,6 +6,7 @@
  */
 
 #include <command.h>
+#include <errno.h>
 #include <hexdump.h>
 #include <mapmem.h>
 #include <smbios.h>
@@ -116,45 +117,46 @@ static const struct str_lookup_table associativity_strings[] = {
 	{ SMBIOS_CACHE_ASSOC_48WAY,	"48-way Set-Associative" },
 	{ SMBIOS_CACHE_ASSOC_64WAY,	"64-way Set-Associative" },
 	{ SMBIOS_CACHE_ASSOC_20WAY,	"20-way Set-Associative" },
-
 };
 
-/**
- * smbios_get_string() - get SMBIOS string from table
- *
- * @table:	SMBIOS table
- * @index:	index of the string
- * Return:	address of string, may point to empty string
- */
-static const char *smbios_get_string(void *table, int index)
-{
-	const char *str = (char *)table +
-			  ((struct smbios_header *)table)->length;
-	static const char fallback[] = "";
+static const struct str_lookup_table mem_array_location_strings[] = {
+	{ 0x01, "Other" },
+	{ 0x02, "Unknown" },
+	{ 0x03, "System board or motherboard" },
+	{ 0x04, "ISA add-on card" },
+	{ 0x05, "EISA add-on card" },
+	{ 0x06, "PCI add-on card" },
+	{ 0x07, "MCA add-on card" },
+	{ 0x08, "PCMCIA add-on card" },
+	{ 0x09, "Proprietary add-on card" },
+	{ 0x0A, "NuBus" },
+	{ 0xA0, "PC-98/C20 add-on card" },
+	{ 0xA1, "PC-98/C24 add-on card" },
+	{ 0xA2, "PC-98/E add-on card" },
+	{ 0xA3, "PC-98/Local bus add-on card" },
+};
 
-	if (!index)
-		return fallback;
+static const struct str_lookup_table mem_array_use_strings[] = {
+	{ 0x01, "Other" },
+	{ 0x02, "Unknown" },
+	{ 0x03, "System memory" },
+	{ 0x04, "Video memory" },
+	{ 0x05, "Flash memory" },
+	{ 0x06, "Non-volatile RAM" },
+	{ 0x07, "Cache memory" },
+};
 
-	if (!*str)
-		++str;
-	for (--index; *str && index; --index)
-		str += strlen(str) + 1;
+static const struct str_lookup_table mem_err_corr_strings[] = {
+	{ 0x01, "Other" },
+	{ 0x02, "Unknown" },
+	{ 0x03, "None" },
+	{ 0x04, "Parity" },
+	{ 0x05, "Single-bit ECC" },
+	{ 0x06, "Multi-bit ECC" },
+	{ 0x07, "CRC" },
+};
 
-	return str;
-}
-
-static struct smbios_header *next_table(struct smbios_header *table)
-{
-	const char *str;
-
-	if (table->type == SMBIOS_END_OF_TABLE)
-		return NULL;
-
-	str = smbios_get_string(table, -1);
-	return (struct smbios_header *)(++str);
-}
-
-static void smbios_print_generic(struct smbios_header *table)
+static void smbios_print_generic(const struct smbios_header *table)
 {
 	char *str = (char *)table + table->length;
 
@@ -403,6 +405,62 @@ static void smbios_print_type7(struct smbios_type7 *table)
 	printf("\tInstalled Cache Size 2: 0x%08x\n", table->inst_size2.data);
 }
 
+static void smbios_print_type16(struct smbios_type16 *table)
+{
+	u64 capacity;
+
+	printf("Physical Memory Array\n");
+	smbios_print_lookup_str(mem_array_location_strings, table->location,
+				ARRAY_SIZE(mem_array_location_strings),
+				"Location");
+	smbios_print_lookup_str(mem_array_use_strings, table->use,
+				ARRAY_SIZE(mem_array_use_strings), "Use");
+	smbios_print_lookup_str(mem_err_corr_strings, table->error_correction,
+				ARRAY_SIZE(mem_err_corr_strings),
+				"Error Correction");
+
+	capacity = table->maximum_capacity;
+	if (capacity == 0x7fffffff &&
+	    table->hdr.length >= offsetof(struct smbios_type16,
+					  extended_maximum_capacity)) {
+		capacity = table->extended_maximum_capacity;
+		printf("\tMaximum Capacity: %llu GB\n", capacity >> 30);
+	} else if (capacity > 0) {
+		printf("\tMaximum Capacity: %llu MB\n", capacity >> 10);
+	} else {
+		printf("\tMaximum Capacity: No limit\n");
+	}
+
+	printf("\tError Information Handle: 0x%04x\n",
+	       table->error_information_handle);
+	printf("\tNumber Of Devices: %u\n", table->number_of_memory_devices);
+}
+
+static void smbios_print_type19(struct smbios_type19 *table)
+{
+	u64 start_addr, end_addr;
+
+	printf("Memory Array Mapped Address\n");
+
+	/* Check if extended address fields are present (SMBIOS v2.7+) */
+	if (table->hdr.length >= 0x1f) {
+		start_addr = table->extended_starting_address;
+		end_addr = table->extended_ending_address;
+	} else {
+		start_addr = table->starting_address;
+		end_addr = table->ending_address;
+	}
+
+	/* The ending address is the address of the last 1KB block */
+	if (end_addr != 0xffffffff && end_addr != 0xffffffffffffffff)
+		end_addr = (end_addr + 1) * 1024 - 1;
+
+	printf("\tStarting Address: 0x%016llx\n", start_addr);
+	printf("\tEnding Address:   0x%016llx\n", end_addr);
+	printf("\tMemory Array Handle: 0x%04x\n", table->memory_array_handle);
+	printf("\tPartition Width: %u\n", table->partition_width);
+}
+
 static void smbios_print_type127(struct smbios_type127 *table)
 {
 	printf("End Of Table\n");
@@ -411,55 +469,31 @@ static void smbios_print_type127(struct smbios_type127 *table)
 static int do_smbios(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[])
 {
-	ulong addr;
-	void *entry;
-	u32 size;
-	char version[12];
-	struct smbios_header *table;
-	static const char smbios_sig[] = "_SM_";
-	static const char smbios3_sig[] = "_SM3_";
-	size_t count = 0;
-	u32 table_maximum_size;
+	struct smbios_info info;
+	int ret;
 
-	addr = gd_smbios_start();
-	if (!addr) {
+	ret = smbios_locate(gd_smbios_start(), &info);
+	if (ret == -ENOENT) {
 		log_warning("SMBIOS not available\n");
 		return CMD_RET_FAILURE;
 	}
-	entry = map_sysmem(addr, 0);
-	if (!memcmp(entry, smbios3_sig, sizeof(smbios3_sig) - 1)) {
-		struct smbios3_entry *entry3 = entry;
-
-		table = (void *)(uintptr_t)entry3->struct_table_address;
-		snprintf(version, sizeof(version), "%d.%d.%d",
-			 entry3->major_ver, entry3->minor_ver, entry3->doc_rev);
-		table = (void *)(uintptr_t)entry3->struct_table_address;
-		size = entry3->length;
-		table_maximum_size = entry3->table_maximum_size;
-	} else if (!memcmp(entry, smbios_sig, sizeof(smbios_sig) - 1)) {
-		struct smbios_entry *entry2 = entry;
-
-		snprintf(version, sizeof(version), "%d.%d",
-			 entry2->major_ver, entry2->minor_ver);
-		table = (void *)(uintptr_t)entry2->struct_table_address;
-		size = entry2->length;
-		table_maximum_size = entry2->struct_table_length;
-	} else {
+	if (ret == -EINVAL) {
 		log_err("Unknown SMBIOS anchor format\n");
 		return CMD_RET_FAILURE;
 	}
-	if (table_compute_checksum(entry, size)) {
+	if (ret == -EIO) {
 		log_err("Invalid anchor checksum\n");
 		return CMD_RET_FAILURE;
 	}
-	printf("SMBIOS %s present.\n", version);
+	printf("SMBIOS %d.%d.%d present.\n", info.version >> 16,
+	       (info.version >> 8) & 0xff, info.version & 0xff);
 
-	for (struct smbios_header *pos = table; pos; pos = next_table(pos))
-		++count;
-	printf("%zd structures occupying %d bytes\n", count, table_maximum_size);
-	printf("Table at 0x%llx\n", (unsigned long long)map_to_sysmem(table));
+	printf("%d structures occupying %d bytes\n", info.count, info.max_size);
+	printf("Table at 0x%llx\n",
+	       (unsigned long long)map_to_sysmem(info.table));
 
-	for (struct smbios_header *pos = table; pos; pos = next_table(pos)) {
+	for (struct smbios_header *pos = info.table; pos;
+	     pos = smbios_next_table(&info, pos)) {
 		printf("\nHandle 0x%04x, DMI type %d, %d bytes at 0x%llx\n",
 		       pos->handle, pos->type, pos->length,
 		       (unsigned long long)map_to_sysmem(pos));
@@ -481,6 +515,12 @@ static int do_smbios(struct cmd_tbl *cmdtp, int flag, int argc,
 			break;
 		case SMBIOS_CACHE_INFORMATION:
 			smbios_print_type7((struct smbios_type7 *)pos);
+			break;
+		case SMBIOS_PHYS_MEMORY_ARRAY:
+			smbios_print_type16((struct smbios_type16 *)pos);
+			break;
+		case SMBIOS_MEMORY_ARRAY_MAPPED_ADDRESS:
+			smbios_print_type19((struct smbios_type19 *)pos);
 			break;
 		case SMBIOS_END_OF_TABLE:
 			smbios_print_type127((struct smbios_type127 *)pos);

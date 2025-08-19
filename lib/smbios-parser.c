@@ -6,10 +6,45 @@
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <errno.h>
+#include <mapmem.h>
 #include <smbios.h>
 #include <string.h>
 #include <tables_csum.h>
+#include <asm/global_data.h>
 #include <linux/kernel.h>
+
+DECLARE_GLOBAL_DATA_PTR;
+
+const char *smbios_get_string(void *table, int index)
+{
+	const char *str = (char *)table +
+			  ((struct smbios_header *)table)->length;
+	static const char fallback[] = "";
+
+	if (!index)
+		return fallback;
+
+	if (!*str)
+		++str;
+	for (--index; *str && index; --index)
+		str += strlen(str) + 1;
+
+	return str;
+}
+
+struct smbios_header *smbios_next_table(const struct smbios_info *info,
+					struct smbios_header *table)
+{
+	const char *str;
+
+	if ((ulong)table - (ulong)info->table >= info->max_size)
+		return NULL;
+	if (table->type == SMBIOS_END_OF_TABLE)
+		return NULL;
+
+	str = smbios_get_string(table, -1);
+	return (struct smbios_header *)(++str);
+}
 
 const struct smbios_entry *smbios_entry(u64 address, u32 size)
 {
@@ -27,35 +62,17 @@ const struct smbios_entry *smbios_entry(u64 address, u32 size)
 	return entry;
 }
 
-static u8 *find_next_header(u8 *pos)
+const struct smbios_header *smbios_get_header(const struct smbios_info *info,
+					      int type)
 {
-	/* search for _double_ NULL bytes */
-	while (!((*pos == 0) && (*(pos + 1) == 0)))
-		pos++;
+	struct smbios_header *header;
 
-	/* step behind the double NULL bytes */
-	pos += 2;
-
-	return pos;
-}
-
-static struct smbios_header *get_next_header(const struct smbios_header *curr)
-{
-	u8 *pos = ((u8 *)curr) + curr->length;
-
-	return (struct smbios_header *)find_next_header(pos);
-}
-
-const struct smbios_header *smbios_header(const struct smbios_entry *entry, int type)
-{
-	const unsigned int num_header = entry->struct_count;
-	const struct smbios_header *header = (struct smbios_header *)((uintptr_t)entry->struct_table_address);
-
-	for (unsigned int i = 0; i < num_header; i++) {
+	for (header = info->table; header;
+	     header = smbios_next_table(info, header)) {
 		if (header->type == type)
 			return header;
 
-		header = get_next_header(header);
+		header = smbios_next_table(info, header);
 	}
 
 	return NULL;
@@ -90,15 +107,21 @@ char *smbios_string(const struct smbios_header *header, int index)
 	return string_from_smbios_table(header, index);
 }
 
-int smbios_update_version_full(void *smbios_tab, const char *version)
+int smbios_update_version_full(void *smbios_tab, const char *new_version)
 {
 	const struct smbios_header *hdr;
+	struct smbios_info info;
 	struct smbios_type0 *bios;
 	uint old_len, len;
 	char *ptr;
+	int ret;
+
+	ret = smbios_locate(map_to_sysmem(smbios_tab), &info);
+	if (ret)
+		return log_msg_ret("tab", -ENOENT);
 
 	log_info("Updating SMBIOS table at %p\n", smbios_tab);
-	hdr = smbios_header(smbios_tab, SMBIOS_BIOS_INFORMATION);
+	hdr = smbios_get_header(&info, SMBIOS_BIOS_INFORMATION);
 	if (!hdr)
 		return log_msg_ret("tab", -ENOENT);
 	bios = (struct smbios_type0 *)hdr;
@@ -113,12 +136,12 @@ int smbios_update_version_full(void *smbios_tab, const char *version)
 	 * are not disturbed. See smbios_add_string()
 	 */
 	old_len = strnlen(ptr, SMBIOS_STR_MAX);
-	len = strnlen(version, SMBIOS_STR_MAX);
+	len = strnlen(new_version, SMBIOS_STR_MAX);
 	if (len > old_len)
 		return log_ret(-ENOSPC);
 
 	log_debug("Replacing SMBIOS type 0 version string '%s'\n", ptr);
-	memcpy(ptr, version, len);
+	memcpy(ptr, new_version, len);
 #ifdef LOG_DEBUG
 	print_buffer((ulong)ptr, ptr, 1, old_len + 1, 0);
 #endif
@@ -224,27 +247,71 @@ static void clear_smbios_table(struct smbios_header *header,
 }
 
 void smbios_prepare_measurement(const struct smbios3_entry *entry,
-				struct smbios_header *smbios_copy)
+				struct smbios_header *smbios_copy,
+				int table_maximum_size)
 {
-	u32 i, j;
-	void *table_end;
-	struct smbios_header *header;
+	struct smbios_info info;
+	u32 i;
 
-	table_end = (void *)((u8 *)smbios_copy + entry->table_maximum_size);
+	info.table = smbios_copy;
+	info.count = 0;		/* unknown */
+	info.max_size = table_maximum_size;
+	info.version = 3 << 16;
 
 	for (i = 0; i < ARRAY_SIZE(smbios_filter_tables); i++) {
-		header = smbios_copy;
-		for (j = 0; (void *)header < table_end; j++) {
+		struct smbios_header *header;
+
+		for (header = info.table; header;
+		     header = smbios_next_table(&info, header)) {
 			if (header->type == smbios_filter_tables[i].type)
 				break;
-
-			header = get_next_header(header);
 		}
-		if ((void *)header >= table_end)
+		if (!header)
 			continue;
 
 		clear_smbios_table(header,
 				   smbios_filter_tables[i].params,
 				   smbios_filter_tables[i].count);
 	}
+}
+
+int smbios_locate(ulong addr, struct smbios_info *info)
+{
+	static const char smbios3_sig[] = "_SM3_";
+	static const char smbios_sig[] = "_SM_";
+	void *entry;
+	uint size;
+
+	if (!addr)
+		return -EINVAL;
+
+	entry = map_sysmem(addr, 0);
+	if (!memcmp(entry, smbios3_sig, sizeof(smbios3_sig) - 1)) {
+		struct smbios3_entry *entry3 = entry;
+
+		info->table = (void *)(uintptr_t)entry3->struct_table_address;
+		info->version = entry3->major_ver << 16 |
+			entry3->minor_ver << 8 | entry3->doc_rev;
+		size = entry3->length;
+		info->max_size = entry3->table_maximum_size;
+	} else if (!memcmp(entry, smbios_sig, sizeof(smbios_sig) - 1)) {
+		struct smbios_entry *entry2 = entry;
+
+		info->version = entry2->major_ver << 16 |
+				entry2->minor_ver << 8;
+		info->table = (void *)(uintptr_t)entry2->struct_table_address;
+		size = entry2->length;
+		info->max_size = entry2->struct_table_length;
+	} else {
+		return -ENOENT;
+	}
+	if (table_compute_checksum(entry, size))
+		return -EIO;
+
+	info->count = 0;
+	for (struct smbios_header *pos = info->table; pos;
+	     pos = smbios_next_table(info, pos))
+		info->count++;
+
+	return 0;
 }

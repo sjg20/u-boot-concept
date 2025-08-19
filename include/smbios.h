@@ -15,6 +15,23 @@
 #define SMBIOS_MAJOR_VER	3
 #define SMBIOS_MINOR_VER	7
 
+/**
+ * struct smbios_info - Information about SMBIOS tables
+ *
+ * @table: Pointer to the first table
+ * @count: Number of tables
+ * @max_size: Maximum size of the tables pointed to by struct_table_address
+ * @version: table version in the form 0xMMmmrr, where MM is the major version
+ * number (2 or 3), mm is the minor version number and rr is * the revision
+ * (always 0 for major-version 2)
+ */
+struct smbios_info {
+	struct smbios_header *table;
+	int count;
+	int max_size;
+	int version;
+};
+
 enum {
 	SMBIOS_STR_MAX	= 64,	/* Maximum length allowed for a string */
 };
@@ -264,6 +281,31 @@ struct __packed smbios_type7 {
 	char eos[SMBIOS_STRUCT_EOS_BYTES];
 };
 
+struct __packed smbios_type16 {
+	struct smbios_header hdr;
+	u8 location;
+	u8 use;
+	u8 error_correction;
+	u32 maximum_capacity;
+	u16 error_information_handle;
+	u16 number_of_memory_devices;
+	/* The following field is only present in SMBIOS v2.7+ */
+	u64 extended_maximum_capacity;
+	char eos[SMBIOS_STRUCT_EOS_BYTES];
+};
+
+struct __packed smbios_type19 {
+	struct smbios_header hdr;
+	u32 starting_address;
+	u32 ending_address;
+	u16 memory_array_handle;
+	u8 partition_width;
+	/* The following fields are only present in SMBIOS v2.7+ */
+	u64 extended_starting_address;
+	u64 extended_ending_address;
+	char eos[SMBIOS_STRUCT_EOS_BYTES];
+};
+
 struct __packed smbios_type32 {
 	u8 type;
 	u8 length;
@@ -325,13 +367,14 @@ ulong write_smbios_table(ulong addr);
 const struct smbios_entry *smbios_entry(u64 address, u32 size);
 
 /**
- * smbios_header() - Search for SMBIOS header type
+ * smbios_get_header() - Search for an SMBIOS header type
  *
- * @entry:     pointer to a struct smbios_entry
+ * @entry:     pointer to the first entry
  * @type:      SMBIOS type
  * @return:    NULL or a valid pointer to a struct smbios_header
  */
-const struct smbios_header *smbios_header(const struct smbios_entry *entry, int type);
+const struct smbios_header *smbios_get_header(const struct smbios_info *info,
+					      int type);
 
 /**
  * smbios_string() - Return string from SMBIOS
@@ -379,8 +422,39 @@ int smbios_update_version_full(void *smbios_tab, const char *version);
  *
  * @entry: pointer to a struct smbios3_entry
  * @header: pointer to a struct smbios_header
+ * @table_maximum_size: number of bytes used by the tables at @header
  */
 void smbios_prepare_measurement(const struct smbios3_entry *entry,
-				struct smbios_header *header);
+				struct smbios_header *smbios_copy,
+				int table_maximum_size);
+
+/**
+ * smbios_get_string() - get SMBIOS string from table
+ *
+ * @table:	SMBIOS table
+ * @index:	index of the string
+ * Return:	address of string, may point to empty string
+ */
+const char *smbios_get_string(void *table, int index);
+
+/**
+ * smbios_next_table() - Find the next table
+ *
+ * @info: SMBIOS info
+ * @table: Table to start from
+ * Return: Pointer to the next table, or NULL if @table is the last
+ */
+struct smbios_header *smbios_next_table(const struct smbios_info *info,
+					struct smbios_header *table);
+
+/**
+ * smbios_locate() - Locate the SMBIOS tables
+ *
+ * @addr: Address of SMBIOS table, typically gd_smbios_start()
+ * @info: Returns the SMBIOS info, on success
+ * Return: 0 if OK, -EINVAL if the address is 0, -NOENT if the header signature
+ * is not recognised, -EIO if the checksum is wrong
+ */
+int smbios_locate(ulong addr, struct smbios_info *info);
 
 #endif /* _SMBIOS_H_ */
