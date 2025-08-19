@@ -143,6 +143,27 @@ enough) should be straightforward.
 
 Use the 'reset' command to get back to EFI.
 
+EFI Debugging Commands
+~~~~~~~~~~~~~~~~~~~~~~
+When running as an EFI application, U-Boot provides access to the 'efidebug'
+command, which offers a subset of functionality useful for debugging and
+inspecting the UEFI environment. This command allows you to:
+
+* Display memory maps with 'efidebug memmap'
+* Show EFI system tables with 'efidebug show tables'
+* Manage boot options with 'efidebug boot' subcommands:
+
+  - dump - Display current boot options
+  - add - Add new boot options
+  - rm - Remove boot options
+  - order - Display boot order
+
+This command  uses the EFI system table and runtime services to provide this
+functionality, so it can help with understanding and debugging UEFI
+environments.
+
+See the :doc:`/usage/cmd/efidebug` for more information.
+
 EFI Payload
 ~~~~~~~~~~~
 The payload approach is a different kettle of fish. It works by building
