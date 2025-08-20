@@ -152,6 +152,9 @@ typedef struct efi_object *efi_handle_t;
 		(c) & 0xff, ((c) >> 8) & 0xff, \
 		(d0), (d1), (d2), (d3), (d4), (d5), (d6), (d7) } }
 
+extern const efi_guid_t efi_global_variable_guid;
+extern const efi_guid_t efi_guid_fdt;
+
 /* Generic EFI table header */
 struct efi_table_hdr {
 	u64 signature;
@@ -468,6 +471,7 @@ static inline struct efi_mem_desc *efi_get_next_mem_desc(
  *	allocate_pages() and free_pages()
  * @ram_base: Base address of RAM (size CONFIG_EFI_RAM_SIZE)
  * @image_data_type: Type of the loaded image (e.g. EFI_LOADER_CODE)
+ * @efi_dp_to_text: Pointer to the EFI_DEVICE_PATH protocol, or NULL if none
  *
  * @info: Header of the info list, holding info collected by the stub and passed
  *	to U-Boot
@@ -493,6 +497,7 @@ struct efi_priv {
 	bool use_pool_for_malloc;
 	unsigned long ram_base;
 	unsigned int image_data_type;
+	struct efi_device_path_to_text_protocol *efi_dp_to_text;
 
 	/* stub: */
 	struct efi_info_hdr *info;
@@ -605,6 +610,13 @@ struct efi_system_table *efi_get_sys_table(void);
 struct efi_boot_services *efi_get_boot(void);
 
 /**
+ * efi_get_run() - Get access to the EFI runtime-services table
+ *
+ * Returns: pointer to EFI runtime-services table
+ */
+struct efi_runtime_services *efi_get_run(void);
+
+/**
  * efi_get_parent_image() - Get the handle of the parent image
  *
  * Return: parent-image handle
@@ -649,6 +661,14 @@ void *efi_malloc(struct efi_priv *priv, int size, efi_status_t *retp);
  * @ptr:	Pointer to memory to free
  */
 void efi_free(struct efi_priv *priv, void *ptr);
+
+/**
+ * efi_free_pool() - free memory from pool
+ *
+ * @buffer:	start of memory to be freed
+ * Return:	status code
+ */
+efi_status_t efi_free_pool(void *buffer);
 
 /**
  * efi_puts() - Write out a string to the EFI console

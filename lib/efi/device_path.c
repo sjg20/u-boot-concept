@@ -32,6 +32,8 @@ const efi_guid_t efi_simple_file_system_protocol_guid =
 		EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 const efi_guid_t efi_file_info_guid = EFI_FILE_INFO_GUID;
 const efi_guid_t efi_u_boot_guid = U_BOOT_GUID;
+/* GUID of the device tree table */
+const efi_guid_t efi_guid_fdt = EFI_FDT_GUID;
 
 /* template EFI_DP_END node: */
 const struct efi_device_path EFI_DP_END = {
@@ -328,7 +330,7 @@ bool efi_dp_is_multi_instance(const struct efi_device_path *dp)
 
 __maybe_unused static unsigned int dp_size(struct udevice *dev)
 {
-	uint parent_size, size;
+	uint parent_size, size = 0;
 
 	if (!dev || !dev->driver)
 		return sizeof(struct efi_device_path_udevice);
@@ -374,6 +376,7 @@ __maybe_unused static unsigned int dp_size(struct udevice *dev)
 			size = sizeof(struct efi_device_path_udevice);
 			break;
 		}
+		break;
 	case UCLASS_MMC:
 		if (IS_ENABLED(CONFIG_MMC))
 			size = sizeof(struct efi_device_path_sd_mmc_path);
@@ -528,6 +531,7 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 
 			return &dp[1];
 		}
+		break;
 	}
 	case UCLASS_MMC:
 	if (IS_ENABLED(CONFIG_MMC)) {
@@ -739,12 +743,14 @@ static void path_to_uefi(void *uefi, const char *src)
 {
 	u16 *pos = uefi;
 
-	/*
-	 * efi_set_bootdev() calls this routine indirectly before the UEFI
-	 * subsystem is initialized. So we cannot assume unaligned access to be
-	 * enabled.
-	 */
-	allow_unaligned();
+	if (!IS_ENABLED(CONFIG_EFI_APP)) {
+		/*
+		 * efi_set_bootdev() calls this routine indirectly before the
+		 * UEFI subsystem is initialized. So we cannot assume unaligned
+		 * access to be enabled.
+		 */
+		allow_unaligned();
+	}
 
 	while (*src) {
 		s32 code = utf8_get(&src);

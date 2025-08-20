@@ -65,6 +65,11 @@ struct efi_boot_services *efi_get_boot(void)
 	return global_priv->boot;
 }
 
+struct efi_runtime_services *efi_get_run(void)
+{
+	return global_priv->run;
+}
+
 efi_handle_t efi_get_parent_image(void)
 {
 	return global_priv->parent_image;
@@ -185,9 +190,26 @@ void *efi_alloc(size_t size)
 	return efi_malloc(priv, size, &ret);
 }
 
-void efi_free_pool(void *ptr)
+efi_status_t efi_free_pool(void *ptr)
 {
 	struct efi_priv *priv = efi_get_priv();
 
 	efi_free(priv, ptr);
+
+	return 0;
+}
+
+/* helper for debug prints.. efi_free_pool() the result. */
+uint16_t *efi_dp_str(struct efi_device_path *dp)
+{
+	struct efi_priv *priv = efi_get_priv();
+	u16 *val;
+
+	if (!priv->efi_dp_to_text)
+		return NULL;
+
+	val = priv->efi_dp_to_text->convert_device_path_to_text(dp, true,
+								true);
+
+	return val;
 }

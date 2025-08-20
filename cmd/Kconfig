@@ -2228,8 +2228,9 @@ config CMD_CLS
 
 config CMD_EFIDEBUG
 	bool "efidebug - display/configure UEFI environment"
-	depends on EFI_LOADER
-	select EFI_DEVICE_PATH_TO_TEXT
+	depends on EFI_LOADER || EFI_APP
+	default y if EFI_APP
+	select EFI_DEVICE_PATH_TO_TEXT if EFI_LOADER
 	help
 	  Enable the 'efidebug' command which provides a subset of UEFI
 	  shell utility with simplified functionality. It will be useful

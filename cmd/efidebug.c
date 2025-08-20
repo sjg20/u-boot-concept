@@ -28,6 +28,16 @@
 
 #define BS systab.boottime
 
+static bool app_not_supported(const char *cmd)
+{
+	if (!IS_ENABLED(CONFIG_EFI_APP))
+		return false;
+
+	printf("Command '%s' is not yet supported in the app\n", cmd);
+
+	return true;
+}
+
 #ifdef CONFIG_EFI_HAVE_CAPSULE_SUPPORT
 /**
  * do_efi_capsule_update() - process a capsule update
@@ -405,6 +415,9 @@ static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
 	u16 *driver_name, *image_path_text;
 	efi_status_t ret;
 
+	if (app_not_supported("show_drivers"))
+		return CMD_RET_FAILURE;
+
 	ret = EFI_CALL(efi_locate_handle_buffer(
 				BY_PROTOCOL, &efi_guid_driver_binding_protocol,
 				NULL, &num, &handles));
@@ -457,6 +470,9 @@ static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
 	efi_guid_t **guid;
 	efi_uintn_t num, count, i, j;
 	efi_status_t ret;
+
+	if (app_not_supported("show_handles"))
+		return CMD_RET_FAILURE;
 
 	ret = EFI_CALL(efi_locate_handle_buffer(ALL_HANDLES, NULL, NULL,
 						&num, &handles));
@@ -643,12 +659,24 @@ static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 	struct efi_mem_desc *memmap, *map;
 	efi_uintn_t map_size;
 	const char *type;
-	int i;
-	efi_status_t ret;
+	int desc_size, i;
+	efi_status_t eret;
+	int ret;
 
-	ret = efi_get_memory_map_alloc(&map_size, &memmap);
-	if (ret != EFI_SUCCESS)
-		return CMD_RET_FAILURE;
+	if (IS_ENABLED(CONFIG_EFI_APP)) {
+		uint key, version;
+		int size;
+
+		ret = efi_get_mmap(&memmap, &size, &key, &desc_size, &version);
+		if (ret)
+			return CMD_RET_FAILURE;
+		map_size = size;
+	} else {
+		eret = efi_get_memory_map_alloc(&map_size, &memmap);
+		if (eret)
+			return CMD_RET_FAILURE;
+		desc_size = sizeof(*map);
+	}
 
 	printf("Type             Start%.*s End%.*s Attributes\n",
 	       EFI_PHYS_ADDR_WIDTH - 5, spc, EFI_PHYS_ADDR_WIDTH - 3, spc);
@@ -659,7 +687,8 @@ static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 	 * This is a false positive as memmap will always be
 	 * populated by allocate_pool() above.
 	 */
-	for (i = 0, map = memmap; i < map_size / sizeof(*map); map++, i++) {
+	for (i = 0, map = memmap; i < map_size / desc_size;
+	     map = (void *)map + desc_size, i++) {
 		if (map->type < ARRAY_SIZE(efi_mem_type_string))
 			type = efi_mem_type_string[map->type];
 		else
@@ -698,7 +727,7 @@ static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 static int do_efi_show_tables(struct cmd_tbl *cmdtp, int flag,
 			      int argc, char *const argv[])
 {
-	efi_show_tables(&systab);
+	efi_show_tables(efi_get_sys_table());
 
 	return CMD_RET_SUCCESS;
 }

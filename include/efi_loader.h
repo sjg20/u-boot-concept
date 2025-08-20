@@ -317,7 +317,6 @@ extern const efi_guid_t efi_guid_host_dev;
 extern const efi_guid_t efi_block_io_guid;
 /* GUID of the EFI_SIMPLE_NETWORK_PROTOCOL */
 extern const efi_guid_t efi_net_guid;
-extern const efi_guid_t efi_global_variable_guid;
 extern const efi_guid_t efi_guid_console_control;
 extern const efi_guid_t efi_guid_device_path;
 /* GUID of the EFI system partition */
@@ -336,8 +335,6 @@ extern const efi_guid_t efi_guid_event_group_ready_to_boot;
 extern const efi_guid_t efi_guid_event_group_reset_system;
 /* event group return to efibootmgr */
 extern const efi_guid_t efi_guid_event_group_return_to_efibootmgr;
-/* GUID of the device tree table */
-extern const efi_guid_t efi_guid_fdt;
 extern const efi_guid_t efi_guid_loaded_image;
 extern const efi_guid_t efi_guid_loaded_image_device_path;
 extern const efi_guid_t efi_guid_device_path_to_text_protocol;
@@ -893,14 +890,6 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages);
  */
 efi_status_t efi_allocate_pool(enum efi_memory_type pool_type,
 			       efi_uintn_t size, void **buffer);
-
-/**
- * efi_free_pool() - free memory from pool
- *
- * @buffer:	start of memory to be freed
- * Return:	status code
- */
-efi_status_t efi_free_pool(void *buffer);
 
 /* Allocate and retrieve EFI memory map */
 efi_status_t efi_get_memory_map_alloc(efi_uintn_t *map_size,
