@@ -1299,17 +1299,50 @@ enum uclass_id efi_dp_guess_uclass(struct efi_device_path *device_path)
 	while (dp) {
 		if (dp->type == DEVICE_PATH_TYPE_MESSAGING_DEVICE) {
 			switch (dp->sub_type) {
+			case DEVICE_PATH_SUB_TYPE_MSG_ATAPI:
+				return UCLASS_IDE;
+			case DEVICE_PATH_SUB_TYPE_MSG_SCSI:
+			case DEVICE_PATH_SUB_TYPE_MSG_ISCSI:
+				return UCLASS_SCSI;
+			case DEVICE_PATH_SUB_TYPE_MSG_FIREWIRE:
+			case DEVICE_PATH_SUB_TYPE_MSG_1394:
+				/* No specific FireWire uclass */
+				break;
 			case DEVICE_PATH_SUB_TYPE_MSG_USB:
+			case DEVICE_PATH_SUB_TYPE_MSG_USB_CLASS:
+			case DEVICE_PATH_SUB_TYPE_MSG_USB_WWI:
 				return UCLASS_USB;
+			case DEVICE_PATH_SUB_TYPE_MSG_I2O:
+				return UCLASS_BLK; /* I2O intelligent I/O */
+			case DEVICE_PATH_SUB_TYPE_MSG_INFINIBAND:
+				return UCLASS_ETH; /* InfiniBand networking */
+			case DEVICE_PATH_SUB_TYPE_MSG_VENDOR:
+				return UCLASS_MISC; /* Vendor-specific */
+			case DEVICE_PATH_SUB_TYPE_MSG_MAC_ADDR:
+			case DEVICE_PATH_SUB_TYPE_MSG_IPV4:
+			case DEVICE_PATH_SUB_TYPE_MSG_IPV6:
+			case DEVICE_PATH_SUB_TYPE_MSG_VLAN:
+				return UCLASS_ETH;
+			case DEVICE_PATH_SUB_TYPE_MSG_UART:
+				return UCLASS_SERIAL;
 			case DEVICE_PATH_SUB_TYPE_MSG_SATA:
 				return UCLASS_AHCI;
+			case DEVICE_PATH_SUB_TYPE_MSG_FIBRECHAN:
+			case DEVICE_PATH_SUB_TYPE_MSG_FIBRECHAN_EX:
+			case DEVICE_PATH_SUB_TYPE_MSG_SAS:
+			case DEVICE_PATH_SUB_TYPE_MSG_SAS_EX:
+				/* Fibre Channel and SAS use SCSI */
+				return UCLASS_SCSI;
 			case DEVICE_PATH_SUB_TYPE_MSG_NVME:
 				return UCLASS_NVME;
+			case DEVICE_PATH_SUB_TYPE_MSG_URI:
+				return UCLASS_ETH; /* Network URI */
+			case DEVICE_PATH_SUB_TYPE_MSG_UFS:
+				return UCLASS_UFS;
 			case DEVICE_PATH_SUB_TYPE_MSG_SD:
 			case DEVICE_PATH_SUB_TYPE_MSG_MMC:
+			case DEVICE_PATH_SUB_TYPE_MSG_EMMC:
 				return UCLASS_MMC;
-			case DEVICE_PATH_SUB_TYPE_MSG_SCSI:
-				return UCLASS_SCSI;
 			default:
 				break;
 			}
