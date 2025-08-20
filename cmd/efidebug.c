@@ -8,6 +8,8 @@
 #include <charset.h>
 #include <command.h>
 #include <dm/device.h>
+#include <dm/uclass.h>
+#include <efi.h>
 #include <efi_device_path.h>
 #include <efi_dt_fixup.h>
 #include <efi_load_initrd.h>
@@ -1605,6 +1607,43 @@ static int do_efi_test(struct cmd_tbl *cmdtp, int flag,
 }
 
 /**
+ * do_efi_show_media() - show EFI media devices
+ *
+ * @cmdtp:	Command table
+ * @flag:	Command flag
+ * @argc:	Number of arguments
+ * @argv:	Argument array
+ * Return:	CMD_RET_SUCCESS on success, CMD_RET_FAILURE on failure
+ *
+ * Implement efidebug "media" sub-command.
+ * Show all EFI media devices and their device paths.
+ */
+static int do_efi_show_media(struct cmd_tbl *cmdtp, int flag,
+			     int argc, char *const argv[])
+{
+	struct udevice *dev;
+	struct uclass *uc;
+	int ret;
+
+	ret = uclass_get(UCLASS_EFI_MEDIA, &uc);
+	if (ret) {
+		printf("Cannot get EFI media uclass: (err=%dE)\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	printf("Device               Device Path\n");
+	printf("-------------------  -----------\n");
+
+	uclass_foreach_dev(dev, uc) {
+		struct efi_media_plat *plat = dev_get_plat(dev);
+
+		printf("%-20s %pD\n", dev->name, plat->device_path);
+	}
+
+	return CMD_RET_SUCCESS;
+}
+
+/**
  * do_efi_query_info() - QueryVariableInfo EFI service
  *
  * @cmdtp:	Command table
@@ -1670,6 +1709,8 @@ static struct cmd_tbl cmd_efidebug_sub[] = {
 	U_BOOT_CMD_MKENT(images, CONFIG_SYS_MAXARGS, 1, do_efi_show_images,
 			 "", ""),
 	U_BOOT_CMD_MKENT(log, CONFIG_SYS_MAXARGS, 1, do_efi_show_log, "", ""),
+	U_BOOT_CMD_MKENT(media, CONFIG_SYS_MAXARGS, 1, do_efi_show_media,
+			 "", ""),
 	U_BOOT_CMD_MKENT(memmap, CONFIG_SYS_MAXARGS, 1, do_efi_show_memmap,
 			 "", ""),
 	U_BOOT_CMD_MKENT(tables, CONFIG_SYS_MAXARGS, 1, do_efi_show_tables,
@@ -1772,6 +1813,8 @@ U_BOOT_LONGHELP(efidebug,
 	"  - show loaded images\n"
 	"efidebug log\n"
 	"  - show UEFI log\n"
+	"efidebug media\n"
+	"  - show EFI media devices\n"
 	"efidebug memmap\n"
 	"  - show UEFI memory map\n"
 	"efidebug tables\n"
