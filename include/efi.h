@@ -24,6 +24,7 @@
 #endif
 
 struct abuf;
+struct bootflow;
 struct udevice;
 
 /* Type INTN in UEFI specification */

@@ -4,6 +4,7 @@
  * Copyright 2023 Google LLC
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_EFI
 
 #include <blk.h>
@@ -134,6 +135,9 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		log_debug("Booting with external fdt\n");
 		fdt = map_sysmem(bflow->fdt_addr, 0);
 	}
+
+	// printf("stopping\n");
+	// return EFI_UNSUPPORTED;
 
 	ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device,
 				image);

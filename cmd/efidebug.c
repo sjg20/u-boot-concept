@@ -25,6 +25,7 @@
 #include <net.h>
 #include <part.h>
 #include <search.h>
+#include <sort.h>
 #include <linux/ctype.h>
 #include <linux/err.h>
 
@@ -656,6 +657,25 @@ static void print_memory_attributes(u64 attributes)
 #define EFI_PHYS_ADDR_WIDTH (int)(sizeof(efi_physical_addr_t) * 2)
 
 /**
+ * efi_memmap_sort_by_addr() - compare two memory descriptors by address
+ *
+ * @a:	first memory descriptor
+ * @b:	second memory descriptor
+ * Return:	-1 if a < b, 0 if a == b, 1 if a > b
+ */
+static int efi_memmap_sort_by_addr(const void *a, const void *b)
+{
+	const struct efi_mem_desc *desc_a = a;
+	const struct efi_mem_desc *desc_b = b;
+
+	if (desc_a->physical_start < desc_b->physical_start)
+		return -1;
+	else if (desc_a->physical_start > desc_b->physical_start)
+		return 1;
+	return 0;
+}
+
+/**
  * do_efi_show_memmap() - show UEFI memory map
  *
  * @cmdtp:	Command table
@@ -666,6 +686,8 @@ static void print_memory_attributes(u64 attributes)
  *
  * Implement efidebug "memmap" sub-command.
  * Show UEFI memory map.
+ *     efidebug memmap [-s]
+ *     -s: sort entries by address
  */
 static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 			      int argc, char *const argv[])
@@ -676,6 +698,25 @@ static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 	int desc_size, i;
 	efi_status_t eret;
 	int ret;
+	bool sort_by_addr = false;
+	int num_entries;
+
+	/* Parse arguments */
+	argc--; argv++; /* skip command name */
+	while (argc > 0 && argv[0][0] == '-') {
+		if (!strcmp(argv[0], "-s")) {
+			sort_by_addr = true;
+		} else {
+			printf("Unknown option: %s\n", argv[0]);
+			return CMD_RET_USAGE;
+		}
+		argc--; argv++;
+	}
+
+	if (argc > 0) {
+		printf("Too many arguments\n");
+		return CMD_RET_USAGE;
+	}
 
 	if (IS_ENABLED(CONFIG_EFI_APP)) {
 		uint key, version;
@@ -690,6 +731,12 @@ static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
 		if (eret)
 			return CMD_RET_FAILURE;
 		desc_size = sizeof(*map);
+	}
+
+	/* Sort entries by address if requested */
+	if (sort_by_addr) {
+		num_entries = map_size / desc_size;
+		qsort(memmap, num_entries, desc_size, efi_memmap_sort_by_addr);
 	}
 
 	printf("Type             Start%.*s End%.*s Attributes\n",
@@ -1121,9 +1168,12 @@ static int do_efi_boot_rm(struct cmd_tbl *cmdtp, int flag,
 
 	guid = efi_global_variable_guid;
 	for (i = 1; i < argc; i++, argv++) {
-		id = (int)hextoul(argv[1], &endp);
-		if (*endp != '\0' || id > 0xffff)
+		id = (int)hextoul(argv[i], &endp);
+		if (*endp != '\0' || id > 0xffff) {
+			printf("Invalid ID '%s', use '0001' for example\n",
+			       argv[i]);
 			return CMD_RET_FAILURE;
+		}
 
 		efi_create_indexed_name(var_name16, sizeof(var_name16),
 					"Boot", id);
@@ -1594,7 +1644,6 @@ static int do_efi_test(struct cmd_tbl *cmdtp, int flag,
 	return cp->cmd(cmdtp, flag, argc, argv);
 }
 
-
 /**
  * do_efi_show_media() - show EFI media devices
  *
@@ -1807,8 +1856,8 @@ U_BOOT_LONGHELP(efidebug,
 	"  - show UEFI log\n"
 	"efidebug media\n"
 	"  - show EFI media devices\n"
-	"efidebug memmap\n"
-	"  - show UEFI memory map\n"
+	"efidebug memmap [-s]\n"
+	"  - show UEFI memory map (use -s to sort by address)\n"
 	"efidebug tables\n"
 	"  - show UEFI configuration tables\n"
 #ifdef CONFIG_EFI_BOOTMGR

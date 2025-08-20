@@ -31,6 +31,8 @@
 #include <dm/lists.h>
 #include <dm/root.h>
 #include <mapmem.h>
+#include <linux/libfdt.h>
+#include <fdt_support.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -184,6 +186,14 @@ static void find_protocols(struct efi_priv *priv)
 	boot->locate_protocol(&guid, NULL, (void **)&priv->efi_dp_to_text);
 }
 
+static void efi_exit(void)
+{
+	struct efi_priv *priv = efi_get_priv();
+
+	printf("U-Boot EFI exiting\n");
+	priv->boot->exit(priv->parent_image, EFI_SUCCESS, 0, NULL);
+}
+
 /**
  * efi_main() - Start an EFI image
  *
@@ -233,19 +243,14 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	printf("starting\n");
 
 	board_init_f(GD_FLG_SKIP_RELOC);
+	printf("&gd %p gd %p new_gd %p\n", &global_data_ptr, gd, gd->new_gd);
 	gd = gd->new_gd;
+	// efi_exit();
 	board_init_r(NULL, 0);
 	free_memory(priv);
+	efi_exit();
 
 	return EFI_SUCCESS;
-}
-
-static void efi_exit(void)
-{
-	struct efi_priv *priv = efi_get_priv();
-
-	printf("U-Boot EFI exiting\n");
-	priv->boot->exit(priv->parent_image, EFI_SUCCESS, 0, NULL);
 }
 
 static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
@@ -340,6 +345,12 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 		if (ram_end == -1ULL || limit > ram_end)
 			ram_end = limit;
 	}
+
+	ram_start = 0x80000000;
+	ram_end = ram_start + 3 * SZ_4G;
+	// ram_end = ram_start + 1 * SZ_4G;
+	// ram_start = SZ_4G;
+	// ram_end = 4 * SZ_4G;
 
 	log_info("RAM extends from %llx to %llx\n", ram_start, ram_end);
 	ret = fdt_fixup_memory(fdt, ram_start, ram_end - ram_start);

@@ -1289,8 +1289,9 @@ err:
 	if (ret == BOOTM_ERR_UNIMPLEMENTED) {
 		bootstage_error(BOOTSTAGE_ID_DECOMP_UNIMPL);
 	} else if (ret == BOOTM_ERR_RESET) {
-		printf("Resetting the board...\n");
-		reset_cpu();
+		printf("not resetting\n");
+		// printf("Resetting the board...\n");
+		// reset_cpu();
 	}
 
 	return ret;
