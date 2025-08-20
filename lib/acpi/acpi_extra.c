@@ -61,7 +61,16 @@ int acpi_write_bgrt(struct acpi_ctx *ctx)
 	/* Image Type: 0 = Bitmap */
 	bgrt->image_type = 0;
 
-	/* Mark space used for tables */
+	/*
+	 * Mark space used for tables. The EFI spec says "ACPI Tables loaded at
+	 * boot time can be contained in memory of type EfiACPIReclaimMemory
+	 * (recommended) or EfiACPIMemoryNVS. The ACPI spec says "The image
+	 * should be stored in EfiBootServicesData, allowing the system to
+	 * reclaim the memory when the image is no longer needed. Linux checks
+	 * for EfiBootServicesData and ignores the image if it is anything else.
+	 *
+	 * So use EFI_BOOT_SERVICES_DATA here.
+	 */
 	eret = efi_allocate_pool(EFI_BOOT_SERVICES_DATA, size, &buf);
 	if (eret)
 		return -ENOMEM;
