@@ -11,6 +11,8 @@
  * Copyright (C) 2001  Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
  */
 
+#define LOG_CATEGORY	LOGC_BOOT
+
 #include <bootm.h>
 #include <bootstage.h>
 #include <command.h>
@@ -154,7 +156,7 @@ static void do_nonsec_virt_switch(void)
 {
 	if (ll_boot_init()) {
 		smp_kick_all_cpus();
-		dcache_disable();	/* flush cache before swtiching to EL2 */
+		dcache_disable();	/* flush cache before switching to EL2 */
 	}
 }
 #endif
@@ -258,15 +260,10 @@ static void switch_to_el1(void)
 static void boot_jump_linux(struct bootm_headers *images, int flag)
 {
 #ifdef CONFIG_ARM64
-	void (*kernel_entry)(void *fdt_addr, void *res0, void *res1,
-			void *res2);
 	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
 
-	kernel_entry = (void (*)(void *fdt_addr, void *res0, void *res1,
-				void *res2))images->ep;
-
 	debug("## Transferring control to Linux (at address %lx)...\n",
-		(ulong) kernel_entry);
+		(ulong)images->ep);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
 	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
@@ -349,20 +346,24 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 {
 	struct bootm_headers *images = bmi->images;
 
+	log_debug("boot linux flag %x\n", flag);
 	/* No need for those on ARM */
 	if (flag & BOOTM_STATE_OS_BD_T || flag & BOOTM_STATE_OS_CMDLINE)
 		return -1;
 
 	if (flag & BOOTM_STATE_OS_PREP) {
+		log_debug("Preparing to boot Linux\n");
 		boot_prep_linux(images);
 		return 0;
 	}
 
 	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
+		log_debug("Jumping to Linux (or faking it)\n");
 		boot_jump_linux(images, flag);
 		return 0;
 	}
 
+	log_debug("No flags set: continuing to prepare and jump to Linux\n");
 	boot_prep_linux(images);
 	boot_jump_linux(images, flag);
 	return 0;

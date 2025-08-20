@@ -8,6 +8,8 @@
  * This file implements U-Boot running as an EFI application.
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <cpu_func.h>
 #include <debug_uart.h>
 #include <dm.h>
@@ -15,6 +17,7 @@
 #include <efi_api.h>
 #include <efi_stub.h>
 #include <errno.h>
+#include <fdt_simplefb.h>
 #include <image.h>
 #include <init.h>
 #include <malloc.h>
@@ -92,11 +95,6 @@ static efi_status_t setup_memory(struct efi_priv *priv)
 	efi_status_t ret;
 	int pages;
 
-	/*
-	 * Use global_data_ptr instead of gd since it is an assignment. There
-	 * are very few assignments to global_data in U-Boot and this makes
-	 * it easier to find them.
-	 */
 	ptr = efi_malloc(priv, sizeof(*ptr), &ret);
 	if (!ptr)
 		return ret;
@@ -111,12 +109,17 @@ static efi_status_t setup_memory(struct efi_priv *priv)
 	pages = CONFIG_EFI_RAM_SIZE >> 12;
 
 	/*
-	 * Don't allocate any memory above 4GB. U-Boot is a 32-bit application
-	 * so we want it to load below 4GB.
+	 * Try not to allocate any memory above 4GB, just for ease of looking at
+	 * addresses.
 	 */
 	addr = 1ULL << 32;
 	ret = boot->allocate_pages(EFI_ALLOCATE_MAX_ADDRESS,
 				   priv->image_data_type, pages, &addr);
+	if (ret) {
+		log_info("(any address) ");
+		ret = boot->allocate_pages(EFI_ALLOCATE_ANY_PAGES,
+					   priv->image_data_type, pages, &addr);
+	}
 	if (ret) {
 		log_info("(using pool %lx) ", ret);
 		priv->ram_base = (ulong)efi_malloc(priv, CONFIG_EFI_RAM_SIZE,
@@ -128,6 +131,7 @@ static efi_status_t setup_memory(struct efi_priv *priv)
 		log_info("(using allocated RAM address %lx) ", (ulong)addr);
 		priv->ram_base = addr;
 	}
+	gd->ram_base = addr;
 	gd->ram_size = pages << 12;
 
 	return 0;
@@ -148,7 +152,8 @@ static void free_memory(struct efi_priv *priv)
 	if (priv->use_pool_for_malloc)
 		efi_free(priv, (void *)priv->ram_base);
 	else
-		boot->free_pages(priv->ram_base, gd->ram_size >> 12);
+		boot->free_pages(priv->ram_base,
+				 gd->ram_size >> EFI_PAGE_SHIFT);
 
 	efi_free(priv, (void *)gd->malloc_base);
 	efi_free(priv, (void *)gd);
@@ -158,6 +163,7 @@ static void free_memory(struct efi_priv *priv)
 static void scan_tables(struct efi_system_table *sys_table)
 {
 	efi_guid_t acpi = EFI_ACPI_TABLE_GUID;
+	efi_guid_t smbios = SMBIOS3_TABLE_GUID;
 	uint i;
 
 	for (i = 0; i < sys_table->nr_tables; i++) {
@@ -165,6 +171,8 @@ static void scan_tables(struct efi_system_table *sys_table)
 
 		if (!memcmp(&tab->guid, &acpi, sizeof(efi_guid_t)))
 			gd_set_acpi_start(map_to_sysmem(tab->table));
+		else if (!memcmp(&tab->guid, &smbios, sizeof(efi_guid_t)))
+			gd->arch.smbios_start = map_to_sysmem(tab->table);
 	}
 }
 
@@ -216,6 +224,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	printf("starting\n");
 
 	board_init_f(GD_FLG_SKIP_RELOC);
+	gd = gd->new_gd;
 	board_init_r(NULL, 0);
 	free_memory(priv);
 
@@ -226,8 +235,8 @@ static void efi_exit(void)
 {
 	struct efi_priv *priv = efi_get_priv();
 
-	free_memory(priv);
 	printf("U-Boot EFI exiting\n");
+	free_memory(priv);
 	priv->boot->exit(priv->parent_image, EFI_SUCCESS, 0, NULL);
 }
 
@@ -301,7 +310,9 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 	if (ret)
 		return log_msg_ret("erm", ret);
 
-	efi_dump_mem_table(map, size, desc_size, false);
+	if (_DEBUG)
+		efi_dump_mem_table(map, size, desc_size, false);
+
 	ram_start = -1ULL;
 	ram_end = -1ULL;
 	end = (void *)map + size;
@@ -328,6 +339,10 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 		printf("failed fixup memory\n");
 		return ret;
 	}
+
+	ret = fdt_simplefb_add_node(fdt);
+	if (ret)
+		log_warning("failed to set up simplefb\n");
 
 	free(map);
 

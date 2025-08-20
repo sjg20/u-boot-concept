@@ -1168,7 +1168,7 @@ config SPL_OID_REGISTRY
 
 config SMBIOS
 	bool "SMBIOS support"
-	depends on X86 || EFI_LOADER
+	depends on X86 || EFI_LOADER || EFI_APP
 	default y
 	select LAST_STAGE_INIT
 	imply CMD_SMBIOS if X86
@@ -1183,6 +1183,7 @@ config SMBIOS
 
 config SMBIOS_PARSER
 	bool "SMBIOS parser"
+	default y if EFI_APP
 	help
 	  A simple parser for SMBIOS data.
 

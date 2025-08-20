@@ -12,6 +12,7 @@
 
 #include <dm/ofnode_decl.h>
 #include <linux/types.h>
+#include <event_decl.h>
 
 /**
  * enum event_t - Types of events supported by U-Boot
@@ -260,6 +261,15 @@ union event_data {
 	struct event_ft_fixup_f {
 		oftree tree;
 	} ft_fixup_f;
+
+	/**
+	 * struct event_bootm_final - State information
+	 *
+	 * @flags: Flags passed to bootm_final()
+	 */
+	struct event_bootm_final {
+		enum bootm_final_t flags;
+	} bootm_final;
 };
 
 /**
@@ -402,6 +412,7 @@ void event_show_spy_list(void);
  */
 const char *event_type_name(enum event_t type);
 
+#if CONFIG_IS_ENABLED(EVENT)
 /**
  * event_notify() - notify spies about an event
  *
@@ -416,7 +427,6 @@ const char *event_type_name(enum event_t type);
  */
 int event_notify(enum event_t type, void *data, int size);
 
-#if CONFIG_IS_ENABLED(EVENT)
 /**
  * event_notify_null() - notify spies about an event
  *
@@ -428,6 +438,11 @@ int event_notify(enum event_t type, void *data, int size);
 int event_notify_null(enum event_t type);
 #else
 static inline int event_notify_null(enum event_t type)
+{
+	return 0;
+}
+
+static inline int event_notify(enum event_t type, void *data, int size)
 {
 	return 0;
 }
