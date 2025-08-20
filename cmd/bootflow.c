@@ -70,14 +70,19 @@ static void report_bootflow_err(struct bootflow *bflow, int err)
  */
 static void show_bootflow(int index, struct bootflow *bflow, bool errors)
 {
-	// enum uclass_id id;
-	const char *name;
+	const char *name = NULL;
 
 	if (IS_ENABLED(CONFIG_EFI_APP)) {
-		// name = efi_dp_guess_uclass(bflow->dpath, &id);
-		name = "unknown";
-	} else if (bflow->dev)
+		struct efi_device_path *dp;
+		enum uclass_id id;
+		int ret;
+
+		ret = efi_dp_from_bootflow(bflow, &dp, NULL);
+		if (!ret)
+			name = efi_dp_guess_uclass(dp, &id);
+	} else if (bflow->dev) {
 		name = dev_get_uclass_name(dev_get_parent(bflow->dev));
+	}
 	if (!name)
 	       name = "(none)";
 

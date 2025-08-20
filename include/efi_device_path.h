@@ -433,8 +433,10 @@ const char *efi_dp_guess_uclass(struct efi_device_path *device_path,
  *
  * @bflow: Bootflow to check
  * @dpp: Returns the device path
- * @allocedp: true if efi_free_pool() must be called to free the device path
- * Return: 0 if OK, -ve on error
+ * @allocedp: if NULL, no allocation is permitted, otherwise retrusn true if
+ * efi_free_pool() must be called to free the device path
+ * Return: 0 if OK, -EINVAL if @allocedp is NULL and allocation is needed,
+ * -ve on error
  */
 int efi_dp_from_bootflow(const struct bootflow *bflow,
 			 struct efi_device_path **dpp, bool *allocedp);

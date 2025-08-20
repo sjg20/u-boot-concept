@@ -1392,18 +1392,21 @@ int efi_dp_from_bootflow(const struct bootflow *bflow,
 		if (ret)
 			return log_msg_ret("dfa", ret);
 		*dpp = (struct efi_device_path *)dpc;
-		*allocedp = false;
+		if (allocedp)
+			*allocedp = false;
 	} else {
 		struct efi_device_path *dp;
 
+		if (!allocedp)
+			return log_msg_ret("dfb", -EINVAL);
 		ret = bootdev_get_sibling_blk(bdev, &blk);
 		if (ret)
-			return log_msg_ret("dfb", ret);
+			return log_msg_ret("dfc", ret);
 
 		desc = dev_get_uclass_plat(blk);
 		dp = efi_dp_from_part(desc, bflow->part);
 		if (!dp)
-			return log_msg_ret("dfb", -ENOMEM);
+			return log_msg_ret("dfd", -ENOMEM);
 		*allocedp = true;
 		*dpp = dp;
 	}
