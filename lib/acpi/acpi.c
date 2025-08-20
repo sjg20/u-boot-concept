@@ -81,7 +81,7 @@ static int setup_search(struct acpi_rsdt **rsdtp, struct acpi_xsdt **xsdtp)
 		return -ENOENT;
 	if (!acpi_valid_rsdp(rsdp))
 		return -EINVAL;
-	if (rsdp->xsdt_address) {
+	if (rsdp->revision > 1 && rsdp->xsdt_address) {
 		xsdt = nomap_sysmem(rsdp->xsdt_address, 0);
 		len = xsdt->header.length - sizeof(xsdt->header);
 		count = len / sizeof(u64);
