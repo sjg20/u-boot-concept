@@ -245,7 +245,6 @@ static void efi_exit(void)
 	struct efi_priv *priv = efi_get_priv();
 
 	printf("U-Boot EFI exiting\n");
-	free_memory(priv);
 	priv->boot->exit(priv->parent_image, EFI_SUCCESS, 0, NULL);
 }
 
