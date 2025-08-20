@@ -18,10 +18,7 @@
 #define RSDP_SIG		"RSD PTR "	/* RSDP pointer signature */
 #define OEM_ID			"U-BOOT"	/* U-Boot */
 #define OEM_TABLE_ID		"U-BOOTBL"	/* U-Boot Table */
-#define ASLC_ID			"INTL"		/* Intel ASL Compiler */
-
-/* TODO(sjg@chromium.org): Figure out how to get compiler revision */
-#define ASL_REVISION	0
+#define ACPI_CREATOR		"UBOO"		/* U-Boot */
 
 #define ACPI_RSDP_REV_ACPI_1_0	0
 #define ACPI_RSDP_REV_ACPI_2_0	2
