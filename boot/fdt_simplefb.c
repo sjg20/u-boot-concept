@@ -74,14 +74,27 @@ int fdt_simplefb_add_node(void *blob)
 	static const char compat[] = "simple-framebuffer";
 	static const char disabled[] = "disabled";
 	int off, ret;
+	int chosen = fdt_subnode_offset(blob, 0, "chosen");
 
-	off = fdt_add_subnode(blob, 0, "framebuffer");
+	if (chosen < 0)
+		return -1;
+	ret = fdt_setprop_u64(blob, chosen, "#address-cells", 2);
+	if (ret < 0)
+		return -1;
+	ret = fdt_setprop_u64(blob, chosen, "#size-cells", 2);
+	if (ret < 0)
+		return -1;
+	ret = fdt_setprop(blob, chosen, "ranges", NULL, 0);
+	if (ret < 0)
+		return -1;
+
+	off = fdt_add_subnode(blob, chosen, "framebuffer");
 	if (off < 0)
 		return -1;
 
-	ret = fdt_setprop(blob, off, "status", disabled, sizeof(disabled));
-	if (ret < 0)
-		return -1;
+	// ret = fdt_setprop(blob, off, "status", disabled, sizeof(disabled));
+	// if (ret < 0)
+		// return -1;
 
 	ret = fdt_setprop(blob, off, "compatible", compat, sizeof(compat));
 	if (ret < 0)

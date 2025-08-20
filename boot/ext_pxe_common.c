@@ -113,6 +113,7 @@ int extlinux_boot(struct udevice *dev, struct bootflow *bflow,
 		addr = map_to_sysmem(bflow->buf);
 		ret = pxe_process(&plat->ctx, addr, false);
 	}
+
 	if (ret)
 		return log_msg_ret("elb", -EFAULT);
 

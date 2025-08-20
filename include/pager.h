@@ -203,6 +203,10 @@ static inline bool pager_set_test_bypass(struct pager *pag, bool bypass)
 	return true;
 }
 
+static inline void pager_clear_quit(struct pager *pag)
+{
+}
+
 static inline void pager_reset(struct pager *pag)
 {
 }
