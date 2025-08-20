@@ -8,6 +8,7 @@
 #define LOG_CATEGORY LOGC_EFI
 
 #include <blk.h>
+#include <bootflow.h>
 #include <dm.h>
 #include <dm/root.h>
 #include <efi_device_path.h>
@@ -1374,4 +1375,38 @@ const char *efi_dp_guess_uclass(struct efi_device_path *device_path,
 	*guessp = best_guess;
 
 	return best_name;
+}
+
+int efi_dp_from_bootflow(const struct bootflow *bflow,
+			 struct efi_device_path **dpp, bool *allocedp)
+{
+	struct udevice *bdev = bflow->dev;
+	struct blk_desc *desc;
+	struct udevice *blk;
+	int ret;
+
+	if (IS_ENABLED(CONFIG_EFI_APP)) {
+		const struct efi_device_path *dpc;
+
+		ret = efi_dp_from_bootdev(bflow->dev, &dpc);
+		if (ret)
+			return log_msg_ret("dfa", ret);
+		*dpp = (struct efi_device_path *)dpc;
+		*allocedp = false;
+	} else {
+		struct efi_device_path *dp;
+
+		ret = bootdev_get_sibling_blk(bdev, &blk);
+		if (ret)
+			return log_msg_ret("dfb", ret);
+
+		desc = dev_get_uclass_plat(blk);
+		dp = efi_dp_from_part(desc, bflow->part);
+		if (!dp)
+			return log_msg_ret("dfb", -ENOMEM);
+		*allocedp = true;
+		*dpp = dp;
+	}
+
+	return 0;
 }

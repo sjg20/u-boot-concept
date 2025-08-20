@@ -1597,7 +1597,6 @@ static int do_efi_test(struct cmd_tbl *cmdtp, int flag,
 	return cp->cmd(cmdtp, flag, argc, argv);
 }
 
-
 /**
  * do_efi_show_media() - show EFI media devices
  *

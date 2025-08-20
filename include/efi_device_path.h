@@ -426,6 +426,17 @@ struct efi_device_path *efi_dp_from_http(const char *server,
  * Return: name string
  */
 const char *efi_dp_guess_uclass(struct efi_device_path *device_path,
-				enum uclass_id *guessp)
+				enum uclass_id *guessp);
+
+/**
+ * efi_dp_from_bootflow() - Get the device path for a bootflow
+ *
+ * @bflow: Bootflow to check
+ * @dpp: Returns the device path
+ * @allocedp: true if efi_free_pool() must be called to free the device path
+ * Return: 0 if OK, -ve on error
+ */
+int efi_dp_from_bootflow(const struct bootflow *bflow,
+			 struct efi_device_path **dpp, bool *allocedp);
 
 #endif /* EFI_DEVICE_PATH_H */
