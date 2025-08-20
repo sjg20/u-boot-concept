@@ -6,12 +6,16 @@
  * Copyright 2024 Canonical Ltd
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <bootm.h>
 #include <efi.h>
 #include <efi_api.h>
 #include <efi_device_path.h>
 #include <log.h>
 #include <malloc.h>
+#include <linux/delay.h>
 
 /**
  * do_bootefi_exec() - execute EFI binary
@@ -35,12 +39,18 @@ static efi_status_t do_bootefi_exec(efi_handle_t handle, void *load_options)
 		switch_to_non_secure_mode();
 
 	/* TODO(sjg@chromium.org): Set watchdog */
+	log_debug("starting\n");
+	mdelay(1000);
+	// return EFI_OUT_OF_RESOURCES;
 
 	/* Call our payload! */
+	log_debug("start_image\n");
 	ret = boot->start_image(handle, &exit_data_size, &exit_data);
+	log_debug("ret %lx\n", ret);
 	if (ret != EFI_SUCCESS) {
 		log_err("## Application failed, r = %lu\n",
 			ret & ~EFI_ERROR_MASK);
+		mdelay(1000);
 		if (exit_data) {
 			log_err("## %ls\n", exit_data);
 			boot->free_pool(exit_data);
