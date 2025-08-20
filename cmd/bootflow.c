@@ -470,12 +470,13 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		bool alloced;
 
 		ret = efi_dp_from_bootflow(bflow, &dp, &alloced);
+		printf("EFI path   ");
 		if (!ret) {
-			printf("EFI path %pD\n", dp);
+			printf("%pD\n", dp);
 			if (alloced)
 				efi_free_pool(dp);
 		} else {
-			printf("EFI path err=%dE\n", ret);
+			printf("(err %dE)\n", ret);
 		}
 	}
 
