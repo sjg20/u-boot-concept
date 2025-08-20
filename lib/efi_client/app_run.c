@@ -31,7 +31,8 @@ static efi_status_t do_bootefi_exec(efi_handle_t handle, void *load_options)
 	efi_status_t ret;
 
 	/* On ARM switch from EL3 or secure mode to EL2 or non-secure mode */
-	switch_to_non_secure_mode();
+	if (!IS_ENABLED(CONFIG_EFI_APP))
+		switch_to_non_secure_mode();
 
 	/* TODO(sjg@chromium.org): Set watchdog */
 
