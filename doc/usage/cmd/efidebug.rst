@@ -34,11 +34,14 @@ itself has called.
 efidebug media
 ~~~~~~~~~~~~~~
 
-This shows a list of all EFI media devices and their corresponding device paths.
-Each EFI media device represents a block device that was discovered through EFI
-boot services, such as hard drives, USB storage, or other bootable media. The
-device path shows the EFI device path for each device, which can be useful for
-debugging boot issues or understanding the system topology.
+This shows a list of all EFI media devices, their likely U-Boot uclass, and
+their corresponding device paths. Each EFI media device represents a block
+device that was discovered through EFI boot services, such as hard drives, USB
+storage, or other bootable media. The U-Boot Class column shows which U-Boot
+driver subsystem would likely handle the device (e.g., "ahci" for SATA drives,
+"usb" for USB storage). The device path shows the EFI device path for each
+device, which can be useful for debugging boot issues or understanding the
+system topology.
 
 
 Example
@@ -47,10 +50,10 @@ Example
 This shows checking the EFI media devices::
 
    => efidebug media
-  Device                 Device Path
-  ------                 -----------
-    efi_media_1          PciRoot(0x0)/Pci(0x3,0x0)/Sata(0x0,0xFFFF,0x0)
-    efi_media_2          PciRoot(0x0)/Pci(0x5,0x0)
+  Device               U-Boot Class     Device Path
+  -------------------  ---------------  -----------
+    efi_media_1        ahci             PciRoot(0x0)/Pci(0x3,0x0)/Sata(0x0,0xFFFF,0x0)
+    efi_media_2        pci              PciRoot(0x0)/Pci(0x5,0x0)
 
 
 This shows checking the log, then using 'efidebug tables' to fully set up the

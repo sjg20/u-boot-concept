@@ -1290,3 +1290,35 @@ struct efi_device_path *search_gpt_dp_node(struct efi_device_path *device_path)
 
 	return NULL;
 }
+
+enum uclass_id efi_dp_guess_uclass(struct efi_device_path *device_path)
+{
+	struct efi_device_path *dp = device_path;
+	enum uclass_id best_guess = UCLASS_BLK;
+
+	while (dp) {
+		if (dp->type == DEVICE_PATH_TYPE_MESSAGING_DEVICE) {
+			switch (dp->sub_type) {
+			case DEVICE_PATH_SUB_TYPE_MSG_USB:
+				return UCLASS_USB;
+			case DEVICE_PATH_SUB_TYPE_MSG_SATA:
+				return UCLASS_AHCI;
+			case DEVICE_PATH_SUB_TYPE_MSG_NVME:
+				return UCLASS_NVME;
+			case DEVICE_PATH_SUB_TYPE_MSG_SD:
+			case DEVICE_PATH_SUB_TYPE_MSG_MMC:
+				return UCLASS_MMC;
+			case DEVICE_PATH_SUB_TYPE_MSG_SCSI:
+				return UCLASS_SCSI;
+			default:
+				break;
+			}
+		} else if (dp->type == DEVICE_PATH_TYPE_HARDWARE_DEVICE) {
+			/* PCI devices could be many things, keep as fallback */
+			best_guess = UCLASS_PCI;
+		}
+		dp = efi_dp_next(dp);
+	}
+
+	return best_guess;
+}

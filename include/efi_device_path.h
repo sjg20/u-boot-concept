@@ -418,4 +418,12 @@ struct efi_device_path *search_gpt_dp_node(struct efi_device_path *device_path);
 struct efi_device_path *efi_dp_from_http(const char *server,
 					 struct udevice *dev);
 
+/**
+ * efi_dp_guess_uclass() - guess U-Boot uclass from EFI device path
+ *
+ * @device_path:	EFI device path
+ * Return:		U-Boot uclass ID
+ */
+enum uclass_id efi_dp_guess_uclass(struct efi_device_path *device_path);
+
 #endif /* EFI_DEVICE_PATH_H */
