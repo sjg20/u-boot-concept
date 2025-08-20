@@ -38,7 +38,7 @@ class Cseries(cser_helper.CseriesHelper):
         super().__init__(topdir, colour)
 
     def add(self, branch_name, desc=None, mark=False, allow_unmarked=False,
-            end=None, force_version=False, dry_run=False):
+            end=None, use_commit=False, force_version=False, dry_run=False):
         """Add a series (or new version of a series) to the database
 
         Args:
@@ -47,6 +47,10 @@ class Cseries(cser_helper.CseriesHelper):
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
             end (str): Add only commits up to but exclu
+            use_commit (bool)): True to use the first commit's subject as the
+                series description, if none is available in the series or
+                provided in 'desc')
+
             force_version (bool): True if ignore a Series-version tag that
                 doesn't match its branch name
             dry_run (bool): True to do a dry run
@@ -58,9 +62,14 @@ class Cseries(cser_helper.CseriesHelper):
             tout.info(msg)
         if desc is None:
             if not ser.cover:
-                raise ValueError(f"Branch '{name}' has no cover letter - "
-                                 'please provide description')
-            desc = ser['cover'][0]
+                if use_commit and ser.commits:
+                    desc = ser.commits[0].subject
+                    tout.info(f"Using description from first commit: '{desc}'")
+                else:
+                    raise ValueError(f"Branch '{name}' has no cover letter - "
+                                    'please provide description')
+            if not desc:
+                desc = ser['cover'][0]
 
         ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
                                 force_version, dry_run)
@@ -386,13 +395,16 @@ class Cseries(cser_helper.CseriesHelper):
 
         return summary
 
-    def series_list(self):
+    def series_list(self, include_archived=False):
         """List all series
 
         Lines all series along with their description, number of patches
-        accepted and  the available versions
+        accepted and the available versions
+
+        Args:
+            include_archived (bool): True to include archived series also
         """
-        sdict = self.db.series_get_dict()
+        sdict = self.db.series_get_dict(include_archived)
         print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
         border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
         print(border)
@@ -552,7 +564,8 @@ class Cseries(cser_helper.CseriesHelper):
         # environment.
         cros_subprocess.Popen(['xdg-open', url])
 
-    def progress(self, series, show_all_versions, list_patches):
+    def progress(self, series, show_all_versions, list_patches,
+                 include_archived):
         """Show progress information for all versions in a series
 
         Args:
@@ -562,6 +575,7 @@ class Cseries(cser_helper.CseriesHelper):
                 False to show only the final version
             list_patches (bool): True to list all patches for each series,
                 False to just show the series summary on a single line
+            include_archived (bool): True to include archived series also
         """
         with terminal.pager():
             state_totals = defaultdict(int)
@@ -577,7 +591,7 @@ class Cseries(cser_helper.CseriesHelper):
 
             total_patches = 0
             total_series = 0
-            sdict = self.db.series_get_dict()
+            sdict = self.db.series_get_dict(include_archived)
             border = None
             total_need_scan = 0
             if not list_patches:
@@ -589,7 +603,8 @@ class Cseries(cser_helper.CseriesHelper):
             for name in sorted(sdict):
                 ser = sdict[name]
                 num_series, num_patches, need_scan = self._progress_one(
-                    ser, show_all_versions, list_patches, state_totals)
+                    ser, show_all_versions, list_patches, state_totals,
+                    not include_archived)
                 total_need_scan += need_scan
                 if list_patches:
                     print()
@@ -685,7 +700,7 @@ class Cseries(cser_helper.CseriesHelper):
         if old_ser.name != series:
             raise ValueError(f"Invalid series name '{series}': "
                              'did you use the branch name?')
-        chk, _ = cser_helper.split_name_version(name)
+        chk, _ = patchstream.split_name_version(name)
         if chk != name:
             raise ValueError(
                 f"Invalid series name '{name}': did you use the branch name?")

@@ -138,6 +138,11 @@ def _add_show_cover_comments(parser):
                         help='Show comments from the cover letter')
 
 
+def _add_archived(parser):
+    parser.add_argument('-A', '--include-archived', action='store_true',
+                        help='Show archived series as well')
+
+
 def add_patchwork_subparser(subparsers):
     """Add the 'patchwork' subparser
 
@@ -225,6 +230,9 @@ def add_series_subparser(subparsers):
     add.add_argument('-D', '--desc',
                      help='Series description / cover-letter title')
     add.add_argument(
+        '-u', '--use-commit', action='store_true',
+        help="Use the first commit's subject as series description if needed")
+    add.add_argument(
         '-f', '--force-version', action='store_true',
         help='Change the Series-version on a series to match its branch')
     _add_mark(add)
@@ -262,7 +270,8 @@ def add_series_subparser(subparsers):
 
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
-    series_subparsers.add_parser('ls')
+    ls = series_subparsers.add_parser('ls')
+    _add_archived(ls)
 
     mar = series_subparsers.add_parser('mark')
     mar.add_argument('-m', '--allow-marked', action='store_true',
@@ -283,6 +292,7 @@ def add_series_subparser(subparsers):
                       help='Show all series versions, not just the latest')
     prog.add_argument('-l', '--list-patches', action='store_true',
                       help='List patch subject and status')
+    _add_archived(prog)
 
     ren = series_subparsers.add_parser('rename')
     ren.add_argument('-N', '--new-name', help='New name for the series')

@@ -199,7 +199,7 @@ class TestCseries(unittest.TestCase, TestCommon):
             Pcommit(2, 1, 'spi: SPI fixes', 1, None, None, None, None),
             pclist[2])
 
-    def test_series_not_checked_out(self):
+    def test_series_add_not_checked_out(self):
         """Test adding a new cseries when a different one is checked out"""
         cser = self.get_cser()
         self.assertFalse(cser.db.series_get_dict())
@@ -441,6 +441,38 @@ class TestCseries(unittest.TestCase, TestCommon):
         # Since this is v1 the Series-version tag should have been removed
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
         self.assertNotIn('version', series)
+
+    def test_series_add_no_desc(self):
+        """Test adding a cseries with no cover letter"""
+        cser = self.get_cser()
+        self.assertFalse(cser.db.series_get_dict())
+
+        with self.assertRaises(ValueError) as exc:
+            with terminal.capture() as (out, _):
+                cser.add('first', allow_unmarked=True)
+        self.assertEqual(
+            "Branch 'first' has no cover letter - please provide description",
+            str(exc.exception))
+
+        with terminal.capture() as (out, _):
+            self.run_args('series', '-s', 'first', 'add', '--use-commit',
+                        '--allow-unmarked', pwork=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            "Adding series 'first' v1: mark False allow_unmarked True",
+            lines[0])
+        self.assertEqual(
+            "Using description from first commit: 'i2c: I2C things'",
+            lines[1])
+        self.assertEqual("Added series 'first' v1 (2 commits)", lines[2])
+        self.assertEqual(3, len(lines))
+
+        sdict = cser.db.series_get_dict()
+        self.assertEqual(1, len(sdict))
+        ser = sdict.get('first')
+        self.assertTrue(ser)
+        self.assertEqual('first', ser.name)
+        self.assertEqual('i2c: I2C things', ser.desc)
 
     def _fake_patchwork_cser(self, subpath):
         """Fake Patchwork server for the function below
@@ -720,7 +752,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.setup_second()
 
         self.db_close()
-        args = Namespace(subcmd='ls')
+        args = Namespace(subcmd='ls', include_archived=False)
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
@@ -737,12 +769,36 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             '     1/3  1 2', lines[3])
         self.assertTrue(lines[4].startswith('--'))
 
+    def test_series_list_archived(self):
+        """Archive a series and test listing it"""
+        self.setup_second()
+        self.cser.archive('first')
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'ls', pwork=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(4, len(lines))
+        self.assertEqual(
+            'second           Series for my board                       '
+            '     1/3  1 2', lines[2])
+
+        # Now list including archived series
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'ls', '--include-archived', pwork=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(5, len(lines))
+        self.assertEqual(
+            'first                                                      '
+            '     -/2  1', lines[2])
+        self.assertEqual(
+            'second           Series for my board                       '
+            '     1/3  1 2', lines[3])
+
     def test_do_series_add(self):
         """Add a new cseries"""
         self.make_git_tree()
         args = Namespace(subcmd='add', desc='my-description', series='first',
                          mark=False, allow_unmarked=True, upstream=None,
-                         dry_run=False)
+                         use_commit=False, dry_run=False)
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
 
@@ -756,6 +812,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         self.db_close()
         args.subcmd = 'ls'
+        args.include_archived = False
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
@@ -789,7 +846,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          force=True)
         args = Namespace(subcmd='add', series=None, mark=False,
                          allow_unmarked=True, upstream=None, dry_run=False,
-                         desc=None)
+                         desc=None, use_commit=False)
         with terminal.capture():
             control.do_series(args, test_db=self.tmpdir, pwork=True)
 
@@ -2972,7 +3029,8 @@ Date:   .*
 
         with self.stage('latest versions'):
             args = Namespace(subcmd='progress', series='second',
-                             show_all_versions=False, list_patches=True)
+                             show_all_versions=False, list_patches=True,
+                             include_archived=False)
             with terminal.capture() as (out, _):
                 control.do_series(args, test_db=self.tmpdir, pwork=True)
             lines = iter(out.getvalue().splitlines())
@@ -3009,7 +3067,8 @@ Date:   .*
 
         with self.stage('progress with patches'):
             args = Namespace(subcmd='progress', series=None,
-                             show_all_versions=False, list_patches=True)
+                             show_all_versions=False, list_patches=True,
+                             include_archived=False)
             with terminal.capture() as (out, _):
                 control.do_series(args, test_db=self.tmpdir, pwork=True)
             lines = iter(out.getvalue().splitlines())
@@ -3023,6 +3082,35 @@ Date:   .*
             lines = iter(out.getvalue().splitlines())
             self._check_first(lines)
             self._check_second(lines, True)
+
+    def test_series_progress_all_archived(self):
+        """Test showing progress for all cseries including archived ones"""
+        self.setup_second()
+        self.cser.archive('first')
+
+        with self.stage('progress without archived'):
+            with terminal.capture() as (out, _):
+                self.run_args('series', 'progress', pwork=True)
+            itr = iter(out.getvalue().splitlines())
+            self.assertEqual(
+                'Name             Description                               Count  Status',
+                next(itr))
+            self.assertTrue(next(itr).startswith('--'))
+            self.assertEqual(
+                'second2          The name of the cover letter              '
+                '    3  1:accepted 1:changes 1:rejected', next(itr))
+
+        with self.stage('progress with archived'):
+            with terminal.capture() as (out, _):
+                self.run_args('series', 'progress', '--include-archived',
+                              pwork=True)
+            lines = out.getvalue().splitlines()
+            self.assertEqual(
+                'first                                                      '
+                '    2  2:unknown', lines[2])
+            self.assertEqual(
+                'second2          The name of the cover letter              '
+                '    3  1:accepted 1:changes 1:rejected', lines[3])
 
     def test_series_progress_no_patches(self):
         """Test showing progress for all cseries without patches"""
@@ -3123,8 +3211,8 @@ Date:   .*
         repo = self.repo
 
         self.assertEqual(('fred', None),
-                         cser_helper.split_name_version('fred'))
-        self.assertEqual(('mary', 2), cser_helper.split_name_version('mary2'))
+                         patchstream.split_name_version('fred'))
+        self.assertEqual(('mary', 2), patchstream.split_name_version('mary2'))
 
         ser, version = cser._parse_series_and_version(None, None)
         self.assertEqual('first', ser.name)
@@ -3166,6 +3254,10 @@ Date:   .*
             cser._parse_series_and_version(None, None)
         self.assertEqual('No branch detected: please use -s <series>',
                          str(exc.exception))
+
+        name, version = patchstream.split_name_version('x86a')
+        self.assertEqual('x86a', name)
+        self.assertEqual(None, version)
 
     def test_name_version_extra(self):
         """More tests for some corner cases"""

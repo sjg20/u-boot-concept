@@ -21,6 +21,7 @@ from u_boot_pylib import tools
 valid_series = ['to', 'cc', 'version', 'changes', 'prefix', 'notes', 'name',
                 'cover_cc', 'process_log', 'links', 'patchwork_url', 'postfix']
 
+
 class Series(dict):
     """Holds information about a patch series, including all tags.
 

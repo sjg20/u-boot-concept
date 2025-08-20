@@ -21,8 +21,6 @@ from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
 from u_boot_pylib import tout
-from patman import cseries
-from patman import cser_helper
 from patman import patchstream
 from patman.patchwork import Patchwork
 from patman import send
@@ -94,7 +92,7 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     if not links:
         raise ValueError("Branch has no Series-links value")
 
-    _, version = cser_helper.split_name_version(branch)
+    _, version = patchstream.split_name_version(branch)
     link = series.get_link_for_version(version, links)
     if not link:
         raise ValueError('Series-links has no link for v{version}')
@@ -124,6 +122,8 @@ def do_series(args, test_db=None, pwork=None, cser=None):
             needed
         cser (Cseries): Cseries object to use, None to create one
     """
+    from patman import cseries
+
     if not cser:
         cser = cseries.Cseries(test_db)
     needs_patchwork = [
@@ -147,7 +147,7 @@ def do_series(args, test_db=None, pwork=None, cser=None):
         if args.subcmd == 'add':
             cser.add(args.series, args.desc, mark=args.mark,
                      allow_unmarked=args.allow_unmarked, end=args.upstream,
-                     dry_run=args.dry_run)
+                     use_commit=args.use_commit, dry_run=args.dry_run)
         elif args.subcmd == 'archive':
             cser.archive(args.series)
         elif args.subcmd == 'autolink':
@@ -174,7 +174,7 @@ def do_series(args, test_db=None, pwork=None, cser=None):
         elif args.subcmd == 'inc':
             cser.increment(args.series, args.dry_run)
         elif args.subcmd == 'ls':
-            cser.series_list()
+            cser.series_list(args.include_archived)
         elif args.subcmd == 'open':
             cser.open(pwork, args.series, args.version)
         elif args.subcmd == 'mark':
@@ -184,7 +184,7 @@ def do_series(args, test_db=None, pwork=None, cser=None):
                               args.patch)
         elif args.subcmd == 'progress':
             cser.progress(args.series, args.show_all_versions,
-                          args.list_patches)
+                          args.list_patches, args.include_archived)
         elif args.subcmd == 'rm':
             cser.remove(args.series, dry_run=args.dry_run)
         elif args.subcmd == 'rm-version':
@@ -226,6 +226,8 @@ def upstream(args, test_db=None):
         test_db (str or None): Directory containing the test database, None to
             use the normal one
     """
+    from patman import cseries
+
     cser = cseries.Cseries(test_db)
     try:
         cser.open_database()
@@ -257,6 +259,8 @@ def patchwork(args, test_db=None, pwork=None):
             use the normal one
         pwork (Patchwork): Patchwork object to use
     """
+    from patman import cseries
+
     cser = cseries.Cseries(test_db)
     try:
         cser.open_database()
