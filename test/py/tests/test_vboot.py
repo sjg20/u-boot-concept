@@ -634,7 +634,7 @@ def test_fdt_add_pubkey(ubman, name, sha_algo, padding, sign_options, algo_arg):
         # Check with fit_check_sign that FIT is signed with key
         utils.run_and_log(ubman, [fit_check_sign, '-f', fit, '-k', dtb])
 
-    tmpdir = os.path.join(ubman.config.result_dir, name) + '/'
+    tmpdir = os.path.join(ubman.config.result_dir, f'pk-{name}') + '/'
     if not os.path.exists(tmpdir):
         os.mkdir(tmpdir)
     datadir = ubman.config.source_dir + '/test/py/tests/vboot/'

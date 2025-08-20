@@ -232,6 +232,7 @@ class Patchwork:
         """
         pwork = Patchwork(None, show_progress=False)
         pwork.fake_request = func
+        pwork.url = 'https://my-fake-url'
         return pwork
 
     class _Stats:

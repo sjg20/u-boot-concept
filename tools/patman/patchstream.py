@@ -831,7 +831,7 @@ def fix_patch(backup_dir, fname, series, cmt, keep_change_id=False,
     fname = os.path.join(cwd or '', fname)
     handle, tmpname = tempfile.mkstemp()
     outfd = os.fdopen(handle, 'w', encoding='utf-8')
-    infd = open(fname, 'r', encoding='utf-8')
+    infd = open(fname, 'r', encoding='utf-8', errors='replace')
     pst = PatchStream(series, keep_change_id=keep_change_id,
                       insert_base_commit=insert_base_commit)
     pst.commit = cmt

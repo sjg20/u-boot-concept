@@ -511,7 +511,6 @@ class Cseries(cser_helper.CseriesHelper):
         """
         ser, version = self._parse_series_and_version(name, version)
         link = self.link_get(ser.name, version)
-        pwork.url = 'https://patchwork.ozlabs.org'
         url = self.loop.run_until_complete(pwork.get_series_url(link))
         print(f'Opening {url}')
 

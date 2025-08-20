@@ -336,6 +336,53 @@ Check packing of Python tools:
   script:
     - make pip
 
+# Template for running the 'make check' tools
+.python_check_template:
+  stage: test.py
+  rules:
+    - if: $LAB_ONLY == "1"
+      when: never
+    - if: $TEST_SUITES == "1"
+      when: always
+    - when: never
+  before_script:
+    - git config --global user.name "GitLab CI Runner";
+      git config --global user.email trini@konsulko.com;
+      git config --global --add safe.directory "${CI_PROJECT_DIR}";
+      export USER=gitlab;
+      python3 -m venv /tmp/venv;
+      . /tmp/venv/bin/activate;
+      pip install -r test/py/requirements.txt -r tools/binman/requirements.txt
+        -r tools/buildman/requirements.txt -r tools/patman/requirements.txt
+        -r tools/u_boot_pylib/requirements.txt;
+      export UBOOT_TRAVIS_BUILD_DIR=/tmp/tools-only;
+      export PYTHONPATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc/pylibfdt";
+      export PATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc:${PATH}";
+    # Set environment variables
+    - export TOOLPATH="--toolpath ${pwd}/build-sandbox/tools --toolpath /opt/coreboot"
+    - export PATH=/opt/qemu/bin:${PATH}
+
+Check make check:
+  extends: .python_check_template
+  script:
+    - make check
+
+Check make qcheck:
+  extends: .python_check_template
+  script:
+    - make qcheck
+
+Check make tcheck:
+  extends: .python_check_template
+  script:
+    - make tcheck
+
+# This currently fails, so disable it
+#Check make pcheck:
+#  extends: .python_check_template
+#  script:
+#    - make pcheck
+
 # Test sandbox with test.py
 sandbox test.py:
   variables:

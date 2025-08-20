@@ -3112,7 +3112,7 @@ Date:   .*
             with terminal.capture() as (out, _):
                 cser.open(pwork, 'second2', 2)
 
-        url = ('https://patchwork.ozlabs.org/project/uboot/list/?series=457'
+        url = ('https://my-fake-url/project/uboot/list/?series=457'
                '&state=*&archive=both')
         method.assert_called_once_with(['xdg-open', url])
         self.assertEqual(f'Opening {url}', out.getvalue().strip())

@@ -13,6 +13,8 @@ run_test() {
 	[ $? -ne 0 ] && failures=$((failures+1))
 }
 
+quiet=-q
+
 # Clean up things the Makefile created
 unset MAKE MAKEFLAGS MAKELEVEL MAKEOVERRIDES MAKE_TERMERR MAKE_TERMOUT
 
@@ -49,43 +51,51 @@ if [ -z "$tools_only" ]; then
 	# Run all tests that the standard sandbox build can support
 	echo "${prompt}"
 	run_test "sandbox" ./test/py/test.py --bd sandbox --build ${para} \
-		-k "${mark_expr}"
-fi
+		${quiet} -k "${mark_expr}"
 
-# Run tests which require sandbox_spl
-echo "${prompt}"
-run_test "sandbox_spl" ./test/py/test.py --bd sandbox_spl --build ${para} \
+	# Run tests which require sandbox_spl
+	echo "${prompt}"
+	run_test "sandbox_spl" ./test/py/test.py --bd sandbox_spl \
+		--build ${para} ${quiet} \
 		-k 'test_ofplatdata or test_handoff or test_spl'
 
-# Run the same tests with sandbox_noinst (i.e. without OF_PLATDATA_INST)
-echo "${prompt}"
-run_test "sandbox_noinst" ./test/py/test.py --bd sandbox_noinst --build ${para} \
+	# Run the same tests with sandbox_noinst (i.e. without OF_PLATDATA_INST)
+	echo "${prompt}"
+	run_test "sandbox_noinst" ./test/py/test.py --bd sandbox_noinst \
+		--build ${para} ${quiet} \
 		-k 'test_ofplatdata or test_handoff or test_spl'
 
-# Run tests which require sandbox_vpl
-echo "${prompt}"
-run_test "sandbox_vpl" ./test/py/test.py --bd sandbox_vpl --build ${para} \
+	# Run tests which require sandbox_vpl
+	echo "${prompt}"
+	run_test "sandbox_vpl" ./test/py/test.py --bd sandbox_vpl \
+		--build ${para} ${quiet} \
 		-k 'vpl or test_spl'
 
-if [ -z "$tools_only" ]; then
 	# Run tests for the flat-device-tree version of sandbox. This is a special
 	# build which does not enable CONFIG_OF_LIVE for the live device tree, so we can
 	# check that functionality is the same. The standard sandbox build (above) uses
 	# CONFIG_OF_LIVE.
 	echo "${prompt}"
 	run_test "sandbox_flattree" ./test/py/test.py --bd sandbox_flattree \
-		${para} --build -k "${ut_mark_expr}"
+		--build ${para} ${quiet} \
+		-k "${ut_mark_expr}"
+else
+	# Make sure sandbox_spl is built, as we need it from now on
+	./test/py/test.py --bd sandbox_spl --build -k none
 fi
 
 # Set up a path to dtc (device-tree compiler) and libfdt.py, a library it
 # provides and which is built by the sandbox_spl config. Also set up the path
 # to tools build by the build.
-DTC_DIR=build-sandbox_spl/scripts/dtc
+DTC_DIR=$(pwd)/build-sandbox_spl/scripts/dtc
 export PYTHONPATH=${DTC_DIR}/pylibfdt
 export DTC=${DTC_DIR}/dtc
-TOOLS_DIR=build-sandbox_spl/tools
+TOOLS_DIR=$(pwd)/build-sandbox_spl/tools
 
-run_test "binman" ./tools/binman/binman --toolpath ${TOOLS_DIR} test
+# TOOLPATH may be defined to provide mkimage, cbfstool, etc.
+export PATH=$PATH:${TOOLS_DIR}
+
+run_test "binman" ./tools/binman/binman ${TOOLPATH} test
 run_test "patman" ./tools/patman/patman test
 run_test "u_boot_pylib" ./tools/u_boot_pylib/u_boot_pylib
 
@@ -99,8 +109,7 @@ run_test "dtoc" ./tools/dtoc/dtoc -t
 
 # Code-coverage tests cannot run in parallel, so skip them in that case
 if [ -z "${para}" ]; then
-	export PATH=$PATH:${TOOLS_DIR}
-	run_test "binman code coverage" ./tools/binman/binman test -T
+	run_test "binman code coverage" ./tools/binman/binman ${TOOLPATH} test -T
 	run_test "dtoc code coverage" ./tools/dtoc/dtoc -T
 	run_test "fdt code coverage" ./tools/dtoc/test_fdt -T
 fi
