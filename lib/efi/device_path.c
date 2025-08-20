@@ -1291,67 +1291,87 @@ struct efi_device_path *search_gpt_dp_node(struct efi_device_path *device_path)
 	return NULL;
 }
 
-enum uclass_id efi_dp_guess_uclass(struct efi_device_path *device_path)
+const char *efi_dp_guess_uclass(struct efi_device_path *device_path,
+				enum uclass_id *guessp)
 {
 	struct efi_device_path *dp = device_path;
 	enum uclass_id best_guess = UCLASS_BLK;
+	const char *best_name = "blk";
 
 	while (dp) {
 		if (dp->type == DEVICE_PATH_TYPE_MESSAGING_DEVICE) {
 			switch (dp->sub_type) {
 			case DEVICE_PATH_SUB_TYPE_MSG_ATAPI:
-				return UCLASS_IDE;
+				*guessp = UCLASS_IDE;
+				return "ide";
 			case DEVICE_PATH_SUB_TYPE_MSG_SCSI:
 			case DEVICE_PATH_SUB_TYPE_MSG_ISCSI:
-				return UCLASS_SCSI;
+				*guessp = UCLASS_SCSI;
+				return "scsi";
 			case DEVICE_PATH_SUB_TYPE_MSG_FIREWIRE:
 			case DEVICE_PATH_SUB_TYPE_MSG_1394:
-				/* No specific FireWire uclass */
-				break;
+				*guessp = UCLASS_BLK;
+				return "firewire";
 			case DEVICE_PATH_SUB_TYPE_MSG_USB:
 			case DEVICE_PATH_SUB_TYPE_MSG_USB_CLASS:
 			case DEVICE_PATH_SUB_TYPE_MSG_USB_WWI:
-				return UCLASS_USB;
+				*guessp = UCLASS_USB;
+				return "usb";
 			case DEVICE_PATH_SUB_TYPE_MSG_I2O:
-				return UCLASS_BLK; /* I2O intelligent I/O */
+				*guessp = UCLASS_BLK;
+				return "i2o";
 			case DEVICE_PATH_SUB_TYPE_MSG_INFINIBAND:
-				return UCLASS_ETH; /* InfiniBand networking */
+				*guessp = UCLASS_ETH;
+				return "infiniband";
 			case DEVICE_PATH_SUB_TYPE_MSG_VENDOR:
-				return UCLASS_MISC; /* Vendor-specific */
+				*guessp = UCLASS_MISC;
+				return "vendor";
 			case DEVICE_PATH_SUB_TYPE_MSG_MAC_ADDR:
 			case DEVICE_PATH_SUB_TYPE_MSG_IPV4:
 			case DEVICE_PATH_SUB_TYPE_MSG_IPV6:
 			case DEVICE_PATH_SUB_TYPE_MSG_VLAN:
-				return UCLASS_ETH;
+				*guessp = UCLASS_ETH;
+				return "eth";
 			case DEVICE_PATH_SUB_TYPE_MSG_UART:
-				return UCLASS_SERIAL;
+				*guessp = UCLASS_SERIAL;
+				return "serial";
 			case DEVICE_PATH_SUB_TYPE_MSG_SATA:
-				return UCLASS_AHCI;
+				*guessp = UCLASS_AHCI;
+				return "ahci";
 			case DEVICE_PATH_SUB_TYPE_MSG_FIBRECHAN:
 			case DEVICE_PATH_SUB_TYPE_MSG_FIBRECHAN_EX:
+				*guessp = UCLASS_SCSI;
+				return "fibrechan";
 			case DEVICE_PATH_SUB_TYPE_MSG_SAS:
 			case DEVICE_PATH_SUB_TYPE_MSG_SAS_EX:
-				/* Fibre Channel and SAS use SCSI */
-				return UCLASS_SCSI;
+				*guessp = UCLASS_SCSI;
+				return "sas";
 			case DEVICE_PATH_SUB_TYPE_MSG_NVME:
-				return UCLASS_NVME;
+				*guessp = UCLASS_NVME;
+				return "nvme";
 			case DEVICE_PATH_SUB_TYPE_MSG_URI:
-				return UCLASS_ETH; /* Network URI */
+				*guessp = UCLASS_ETH;
+				return "uri";
 			case DEVICE_PATH_SUB_TYPE_MSG_UFS:
-				return UCLASS_UFS;
+				*guessp = UCLASS_UFS;
+				return "ufs";
 			case DEVICE_PATH_SUB_TYPE_MSG_SD:
 			case DEVICE_PATH_SUB_TYPE_MSG_MMC:
 			case DEVICE_PATH_SUB_TYPE_MSG_EMMC:
-				return UCLASS_MMC;
+				*guessp = UCLASS_MMC;
+				return "mmc";
 			default:
 				break;
 			}
 		} else if (dp->type == DEVICE_PATH_TYPE_HARDWARE_DEVICE) {
 			/* PCI devices could be many things, keep as fallback */
 			best_guess = UCLASS_PCI;
+			best_name = "pci";
 		}
 		dp = efi_dp_next(dp);
 	}
 
-	return best_guess;
+	*guessp = best_guess;
+
+	return best_name;
 }

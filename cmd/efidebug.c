@@ -1623,20 +1623,16 @@ static int do_efi_show_media(struct cmd_tbl *cmdtp, int flag,
 		return CMD_RET_FAILURE;
 	}
 
-	printf("Device               Uclass           Device Path\n");
+	printf("Device               Media type       Device Path\n");
 	printf("-------------------  ---------------  -----------\n");
 
 	uclass_foreach_dev(dev, uc) {
 		struct efi_media_plat *plat = dev_get_plat(dev);
-		enum uclass_id uclass_id = efi_dp_guess_uclass(plat->device_path);
-		const char *uclass_name = uclass_get_name(uclass_id);
+		enum uclass_id id;
+		const char *name = efi_dp_guess_uclass(plat->device_path, &id);
 
-		if (uclass_name)
-			printf("%-20s %-15s  %pD\n", dev->name, uclass_name,
-			       plat->device_path);
-		else
-			printf("%-20s %-15d  %pD\n", dev->name, uclass_id,
-			       plat->device_path);
+		printf("%-20s %-15s  %pD\n", dev->name, name,
+		       plat->device_path);
 	}
 
 	return CMD_RET_SUCCESS;
