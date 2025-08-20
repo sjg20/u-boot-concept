@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <mapmem.h>
 #include <tables_csum.h>
+#include <version.h>
 #include <version_string.h>
 #include <acpi/acpi_table.h>
 #include <asm/global_data.h>
@@ -174,8 +175,9 @@ void acpi_fill_header(struct acpi_table_header *header, char *signature)
 	memcpy(header->oem_id, OEM_ID, 6);
 	memcpy(header->oem_table_id, OEM_TABLE_ID, 8);
 	header->oem_revision = OEM_REVISION;
-	memcpy(header->creator_id, ASLC_ID, 4);
-	header->creator_revision = ASL_REVISION;
+	memcpy(header->creator_id, ACPI_CREATOR, 4);
+	header->creator_revision = (U_BOOT_VERSION_NUM << 16) |
+			 (U_BOOT_VERSION_NUM_PATCH << 8);
 }
 
 void acpi_align(struct acpi_ctx *ctx)
