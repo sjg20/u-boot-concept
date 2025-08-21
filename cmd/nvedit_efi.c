@@ -150,6 +150,7 @@ static int efi_dump_var_all(int argc,  char *const argv[],
 	efi_guid_t guid;
 	efi_status_t ret;
 	bool match = false;
+	bool ok = false;
 	u16 *name, *p;
 
 	buf_size = 128;
@@ -166,18 +167,14 @@ static int efi_dump_var_all(int argc,  char *const argv[],
 		if (ret == EFI_BUFFER_TOO_SMALL) {
 			buf_size = size;
 			p = realloc(name, buf_size);
-			if (!p) {
-				free(name);
-				return CMD_RET_FAILURE;
-			}
+			if (!p)
+				goto fail;
 			name = p;
 			ret = efi_get_next_variable_name_int(&size, name,
 							     &guid);
 		}
-		if (ret != EFI_SUCCESS) {
-			free(name);
-			return CMD_RET_FAILURE;
-		}
+		if (ret != EFI_SUCCESS)
+			goto fail;
 
 		if (guid_p && guidcmp(guid_p, &guid))
 			continue;
@@ -186,14 +183,18 @@ static int efi_dump_var_all(int argc,  char *const argv[],
 			efi_dump_single_var(name, &guid, verbose, nodump);
 		}
 	}
-	free(name);
 
 	if (!match && argc == 1) {
 		printf("Error: \"%s\" not defined\n", argv[0]);
-		return CMD_RET_FAILURE;
+		goto done;
 	}
 
-	return CMD_RET_SUCCESS;
+	ok = true;
+fail:
+done:
+	free(name);
+
+	return ok ? 0 : CMD_RET_FAILURE;
 }
 
 /**
