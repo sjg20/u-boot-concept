@@ -12,7 +12,7 @@ Synopsis
 ::
 
     printenv [-a] [name ...]
-    printenv -e [-guid guid][-n][-v] [name]
+    printenv -e [-guid guid][-n][-s][-v] [name]
 
 Description
 -----------
@@ -31,6 +31,9 @@ The printenv command is used to print environment or UEFI variables.
 
 \-n
     don't show hexadecimal dump of value
+
+\-s
+    sort variables by name before displaying
 
 \-v
     show verbose output including GUID, attributes, data size and hexadecimal
@@ -71,7 +74,8 @@ environment variables:
 The next example shows the different output modes when displaying UEFI
 variables and how to specify a vendor GUID. By default, only the variable
 name is shown. The *-v* flag shows full verbose output, while *-n* shows
-details but omits the hexadecimal dump:
+details but omits the hexadecimal dump. The *-s* flag sorts variables by
+name:
 
 ::
 
@@ -86,7 +90,65 @@ details but omits the hexadecimal dump:
         8be4df61-93ca-11d2-aa0d-00e098032b8c (EFI_GLOBAL_VARIABLE_GUID)
         BS|RT|RO, DataSize = 0x6
         00000000: 65 6e 2d 55 53 00                                en-US.
-    =>
+    => print -e -s
+    525400123456
+    525400123456
+    Attempt 1
+    Attempt 2
+    Attempt 3
+    Attempt 4
+    Attempt 5
+    Attempt 6
+    Attempt 7
+    Attempt 8
+    Boot0000
+    Boot0001
+    Boot0002
+    Boot0003
+    BootCurrent
+    BootOptionSupport
+    BootOrder
+    ClientId
+    ConIn
+    ConInDev
+    ConOut
+    ConOutDev
+    ErrOut
+    ErrOutDev
+    HDDP
+    InitialAttemptOrder
+    Key0000
+    Key0001
+    Lang
+    LangCodes
+    MTC
+    MemoryTypeInformation
+    OsIndicationsSupported
+    PlatformLang
+    PlatformLangCodes
+    PlatformRecovery0000
+    SbatLevel
+    Timeout
+    VarErrorFlag
+    cat
+    cd..
+    cd\
+    copy
+    debuglasterror
+    del
+    dir
+    lasterror
+    md
+    mem
+    mount
+    move
+    nonesting
+    path
+    profiles
+    ren
+    uefishellsupport
+    uefishellversion
+    uefiversion
 
 Configuration
 -------------

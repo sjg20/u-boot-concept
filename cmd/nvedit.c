@@ -1174,7 +1174,7 @@ U_BOOT_LONGHELP(env,
 #endif
 	"env print [-a | name ...] - print environment\n"
 #if defined(CONFIG_CMD_NVEDIT_EFI)
-	"env print -e [-guid guid] [-n] [-v] [name ...] print UEFI environment\n"
+	"env print -e [-guid guid] [-n] [-s] [-v] [name ...] print UEFI environment\n"
 #endif
 #if defined(CONFIG_CMD_RUN)
 	"env run var [...] - run commands in an environment variable\n"
@@ -1221,10 +1221,11 @@ U_BOOT_CMD_COMPLETE(
 	"print environment variables",
 	"[-a]\n    - print [all] values of all environment variables\n"
 #if defined(CONFIG_CMD_NVEDIT_EFI)
-	"printenv -e [-guid guid][-n] [-v] [name ...]\n"
+	"printenv -e [-guid guid][-n] [-s] [-v] [name ...]\n"
 	"    - print UEFI variable 'name' or all the variables\n"
 	"      \"-guid\": GUID xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n"
 	"      \"-n\": suppress dumping variable's value\n"
+	"      \"-s\": sort variables by name\n"
 	"      \"-v\": show GUID, flags, size; also dump (without -n)\n"
 #endif
 	"printenv name ...\n"

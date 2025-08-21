@@ -25,7 +25,7 @@ Synopsis
 	env info [-d] [-p] [-q]
 	env load
 	env print [-a | name ...]
-	env print -e [-guid guid] [-n] [-v] [name ...]
+	env print -e [-guid guid] [-n] [-s] [-v] [name ...]
 	env run var [...]
 	env save
 	env select [target]
@@ -233,6 +233,8 @@ in UEFI variables.
         with guid format = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".
     \-n
         don't show hexadecimal dump of value for UEFI variables.
+    \-s
+        sort UEFI variables by name before displaying.
     \-v
         show verbose output for UEFI variables including GUID, attributes, data
         size and hexadecimal dump of value.
