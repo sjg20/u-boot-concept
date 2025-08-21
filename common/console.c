@@ -321,7 +321,7 @@ static int console_tstc(int file)
 	return 0;
 }
 
-static void console_putc(int file, const char c)
+static void console_putc_pager(int file, const char c)
 {
 	int i;
 	struct stdio_dev *dev;
@@ -377,7 +377,7 @@ int console_printf_select_stderr(bool serial_only, const char *fmt, ...)
 	return ret;
 }
 
-static void console_puts(int file, const char *s)
+static void console_puts_pager(int file, const char *s)
 {
 	int i;
 	struct stdio_dev *dev;
@@ -433,7 +433,7 @@ static inline int console_tstc(int file)
 	return stdio_devices[file]->tstc(stdio_devices[file]);
 }
 
-static inline void console_putc(int file, const char c)
+static inline void console_putc_pager(int file, const char c)
 {
 	stdio_devices[file]->putc(stdio_devices[file], c);
 }
@@ -445,7 +445,7 @@ void console_puts_select(int file, bool serial_only, const char *s)
 		stdio_devices[file]->puts(stdio_devices[file], s);
 }
 
-static inline void console_puts(int file, const char *s)
+static inline void console_puts_pager(int file, const char *s)
 {
 	stdio_devices[file]->puts(stdio_devices[file], s);
 }
@@ -562,13 +562,13 @@ int ftstc(int file)
 void fputc(int file, const char c)
 {
 	if ((unsigned int)file < MAX_FILES)
-		console_putc(file, c);
+		console_putc_pager(file, c);
 }
 
 void fputs(int file, const char *s)
 {
 	if ((unsigned int)file < MAX_FILES)
-		console_puts(file, s);
+		console_puts_pager(file, s);
 }
 
 #ifdef CONFIG_CONSOLE_FLUSH_SUPPORT
