@@ -146,48 +146,47 @@ out:
 static int efi_dump_var_all(int argc,  char *const argv[],
 			    const efi_guid_t *guid_p, bool verbose, bool nodump)
 {
-	u16 *var_name16, *p;
 	efi_uintn_t buf_size, size;
 	efi_guid_t guid;
 	efi_status_t ret;
 	bool match = false;
+	u16 *name, *p;
 
 	buf_size = 128;
-	var_name16 = malloc(buf_size);
-	if (!var_name16)
+	name = malloc(buf_size);
+	if (!name)
 		return CMD_RET_FAILURE;
 
-	var_name16[0] = 0;
+	name[0] = 0;
 	for (;;) {
 		size = buf_size;
-		ret = efi_get_next_variable_name_int(&size, var_name16,
-						     &guid);
+		ret = efi_get_next_variable_name_int(&size, name, &guid);
 		if (ret == EFI_NOT_FOUND)
 			break;
 		if (ret == EFI_BUFFER_TOO_SMALL) {
 			buf_size = size;
-			p = realloc(var_name16, buf_size);
+			p = realloc(name, buf_size);
 			if (!p) {
-				free(var_name16);
+				free(name);
 				return CMD_RET_FAILURE;
 			}
-			var_name16 = p;
-			ret = efi_get_next_variable_name_int(&size, var_name16,
+			name = p;
+			ret = efi_get_next_variable_name_int(&size, name,
 							     &guid);
 		}
 		if (ret != EFI_SUCCESS) {
-			free(var_name16);
+			free(name);
 			return CMD_RET_FAILURE;
 		}
 
 		if (guid_p && guidcmp(guid_p, &guid))
 			continue;
-		if (!argc || match_name(argc, argv, var_name16)) {
+		if (!argc || match_name(argc, argv, name)) {
 			match = true;
-			efi_dump_single_var(var_name16, &guid, verbose, nodump);
+			efi_dump_single_var(name, &guid, verbose, nodump);
 		}
 	}
-	free(var_name16);
+	free(name);
 
 	if (!match && argc == 1) {
 		printf("Error: \"%s\" not defined\n", argv[0]);
