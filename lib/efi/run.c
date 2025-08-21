@@ -136,8 +136,8 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		fdt = map_sysmem(bflow->fdt_addr, 0);
 	}
 
-	printf("stopping\n");
-	return EFI_UNSUPPORTED;
+	// printf("stopping\n");
+	// return EFI_UNSUPPORTED;
 
 	ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device,
 				image);

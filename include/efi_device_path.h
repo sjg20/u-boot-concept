@@ -10,6 +10,7 @@
 
 #include <efi.h>
 
+enum uclass_id;
 struct blk_desc;
 struct efi_load_option;
 struct udevice;
