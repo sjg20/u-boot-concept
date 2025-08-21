@@ -39,6 +39,9 @@ const efi_guid_t efi_guid_driver_binding_protocol =
 			EFI_DRIVER_BINDING_PROTOCOL_GUID;
 const efi_guid_t efi_guid_component_name2 = EFI_COMPONENT_NAME2_PROTOCOL_GUID;
 
+const efi_guid_t efi_guid_image_security_database =
+		EFI_IMAGE_SECURITY_DATABASE_GUID;
+
 /* template EFI_DP_END node: */
 const struct efi_device_path EFI_DP_END = {
 	.type     = DEVICE_PATH_TYPE_END,
