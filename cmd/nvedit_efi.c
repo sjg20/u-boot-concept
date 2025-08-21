@@ -39,6 +39,17 @@ static const struct {
 };
 
 /**
+ * struct var_info - stores information about a single variable
+ *
+ * @name: Variable name (allocated)
+ * @guid: Variable guid
+ */
+struct var_info {
+	u16 *name;
+	efi_guid_t guid;
+};
+
+/**
  * efi_dump_single_var() - show information about a UEFI variable
  *
  * @name:	Name of the variable
@@ -147,9 +158,10 @@ static int efi_dump_var_all(int argc,  char *const argv[],
 			    const efi_guid_t *guid_p, bool verbose, bool nodump)
 {
 	efi_uintn_t buf_size, size;
+	struct var_info *var;
+	struct alist vars;
 	efi_guid_t guid;
 	efi_status_t ret;
-	bool match = false;
 	bool ok = false;
 	u16 *name, *p;
 
@@ -159,6 +171,7 @@ static int efi_dump_var_all(int argc,  char *const argv[],
 		return CMD_RET_FAILURE;
 
 	name[0] = 0;
+	alist_init_struct(&vars, struct var_info);
 	for (;;) {
 		size = buf_size;
 		ret = efi_get_next_variable_name_int(&size, name, &guid);
@@ -179,20 +192,33 @@ static int efi_dump_var_all(int argc,  char *const argv[],
 		if (guid_p && guidcmp(guid_p, &guid))
 			continue;
 		if (!argc || match_name(argc, argv, name)) {
-			match = true;
-			efi_dump_single_var(name, &guid, verbose, nodump);
+			struct var_info new_var;
+
+			new_var.name = (u16 *)memdup(name, size);
+			if (!new_var.name)
+				goto fail;
+			new_var.guid = guid;
+
+			if (!alist_add(&vars, new_var))
+				goto fail;
 		}
 	}
 
-	if (!match && argc == 1) {
+	if (!vars.count && argc == 1) {
 		printf("Error: \"%s\" not defined\n", argv[0]);
 		goto done;
 	}
+
+	alist_for_each(var, &vars)
+		efi_dump_single_var(var->name, &var->guid, verbose, nodump);
 
 	ok = true;
 fail:
 done:
 	free(name);
+	alist_for_each(var, &vars)
+		free(var->name);
+	alist_uninit(&vars);
 
 	return ok ? 0 : CMD_RET_FAILURE;
 }
