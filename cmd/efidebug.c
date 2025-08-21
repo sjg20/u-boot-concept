@@ -28,16 +28,6 @@
 #include <linux/ctype.h>
 #include <linux/err.h>
 
-static bool app_not_supported(const char *cmd)
-{
-	if (!IS_ENABLED(CONFIG_EFI_APP))
-		return false;
-
-	printf("Command '%s' is not yet supported in the app\n", cmd);
-
-	return true;
-}
-
 #ifdef CONFIG_EFI_HAVE_CAPSULE_SUPPORT
 /**
  * do_efi_capsule_update() - process a capsule update
@@ -372,7 +362,7 @@ static const char sep[] = "================";
 static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
 				      u16 **image_path)
 {
-	struct efi_handler *handler;
+	struct efi_boot_services *boot = efi_get_boot();
 	struct efi_loaded_image *image;
 	efi_status_t ret;
 
@@ -383,13 +373,13 @@ static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
 	*driver_name = NULL;
 
 	/* image name */
-	ret = efi_search_protocol(handle, &efi_guid_loaded_image, &handler);
+	ret = boot->handle_protocol(handle, &efi_guid_loaded_image,
+				   (void **)&image);
 	if (ret != EFI_SUCCESS) {
 		*image_path = NULL;
 		return 0;
 	}
 
-	image = handler->protocol_interface;
 	*image_path = efi_dp_str(image->file_path);
 
 	return 0;
@@ -410,17 +400,15 @@ static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
 static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
 			       int argc, char *const argv[])
 {
+	struct efi_boot_services *boot = efi_get_boot();
 	efi_handle_t *handles;
 	efi_uintn_t num, i;
 	u16 *driver_name, *image_path_text;
 	efi_status_t ret;
 
-	if (app_not_supported("show_drivers"))
-		return CMD_RET_FAILURE;
-
-	ret = EFI_CALL(efi_locate_handle_buffer(
-				BY_PROTOCOL, &efi_guid_driver_binding_protocol,
-				NULL, &num, &handles));
+	ret = boot->locate_handle_buffer(BY_PROTOCOL,
+					&efi_guid_driver_binding_protocol,
+					NULL, &num, &handles);
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
 
