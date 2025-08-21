@@ -43,11 +43,13 @@ static const struct {
  *
  * @name:	Name of the variable
  * @guid:	Vendor GUID
- * @verbose:	if true, dump data
+ * @verbose:	if true, show detailed information
+ * @nodump:	if true, don't show hexadecimal dump
  *
  * Show information encoded in one UEFI variable
  */
-static void efi_dump_single_var(u16 *name, const efi_guid_t *guid, bool verbose)
+static void efi_dump_single_var(u16 *name, const efi_guid_t *guid,
+				 bool verbose, bool nodump)
 {
 	u32 attributes;
 	u8 *data;
@@ -75,23 +77,27 @@ static void efi_dump_single_var(u16 *name, const efi_guid_t *guid, bool verbose)
 	if (ret != EFI_SUCCESS)
 		goto out;
 
-	rtc_to_tm(time, &tm);
-	printf("%ls:\n    %pUl (%pUs)\n", name, guid, guid);
-	if (attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
-		printf("    %04d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year,
-		       tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-	printf("    ");
-	for (count = 0, i = 0; i < ARRAY_SIZE(efi_var_attrs); i++)
-		if (attributes & efi_var_attrs[i].mask) {
-			if (count)
-				putc('|');
-			count++;
-			puts(efi_var_attrs[i].text);
-		}
-	printf(", DataSize = 0x%zx\n", size);
-	if (verbose)
-		print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
-			       data, size, true);
+	if (verbose) {
+		rtc_to_tm(time, &tm);
+		printf("%ls:\n    %pUl (%pUs)\n", name, guid, guid);
+		if (attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
+			printf("    %04d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year,
+			       tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+		printf("    ");
+		for (count = 0, i = 0; i < ARRAY_SIZE(efi_var_attrs); i++)
+			if (attributes & efi_var_attrs[i].mask) {
+				if (count)
+					putc('|');
+				count++;
+				puts(efi_var_attrs[i].text);
+			}
+		printf(", DataSize = 0x%zx\n", size);
+		if (!nodump)
+			print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
+				       data, size, true);
+	} else {
+		printf("%ls\n", name);
+	}
 
 out:
 	free(data);
@@ -130,13 +136,15 @@ out:
  *
  * @argc:	Number of arguments (variables)
  * @argv:	Argument (variable name) array
- * @verbose:	if true, dump data
+ * @guid_p:	GUID to filter by, or NULL for all
+ * @verbose:	if true, show detailed information
+ * @nodump:	if true, don't show hexadecimal dump
  * Return:	CMD_RET_SUCCESS on success, or CMD_RET_RET_FAILURE
  *
  * Show information encoded in all the UEFI variables
  */
 static int efi_dump_var_all(int argc,  char *const argv[],
-			    const efi_guid_t *guid_p, bool verbose)
+			    const efi_guid_t *guid_p, bool verbose, bool nodump)
 {
 	u16 *var_name16, *p;
 	efi_uintn_t buf_size, size;
@@ -176,7 +184,7 @@ static int efi_dump_var_all(int argc,  char *const argv[],
 			continue;
 		if (!argc || match_name(argc, argv, var_name16)) {
 			match = true;
-			efi_dump_single_var(var_name16, &guid, verbose);
+			efi_dump_single_var(var_name16, &guid, verbose, nodump);
 		}
 	}
 	free(var_name16);
@@ -199,16 +207,18 @@ static int efi_dump_var_all(int argc,  char *const argv[],
  * Return:	CMD_RET_SUCCESS on success, or CMD_RET_RET_FAILURE
  *
  * This function is for "env print -e" or "printenv -e" command:
- *   => env print -e [-n] [-guid <guid> | -all] [var [...]]
+ *   => env print -e [-v] [-guid <guid> | -all] [var [...]]
  * If one or more variable names are specified, show information
  * named UEFI variables, otherwise show all the UEFI variables.
+ * By default, only variable names are shown. Use -v for verbose output.
  */
 int do_env_print_efi(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[])
 {
 	const efi_guid_t *guid_p = NULL;
 	efi_guid_t guid;
-	bool verbose = true;
+	bool verbose = false;
+	bool nodump = false;
 	efi_status_t ret;
 
 	/* Initialize EFI drivers */
@@ -230,14 +240,17 @@ int do_env_print_efi(struct cmd_tbl *cmdtp, int flag, int argc,
 				return CMD_RET_USAGE;
 			guid_p = (const efi_guid_t *)guid.b;
 		} else if (!strcmp(argv[0], "-n")) {
-			verbose = false;
+			verbose = true;
+			nodump = true;
+		} else if (!strcmp(argv[0], "-v")) {
+			verbose = true;
 		} else {
 			return CMD_RET_USAGE;
 		}
 	}
 
 	/* enumerate and show all UEFI variables */
-	return efi_dump_var_all(argc, argv, guid_p, verbose);
+	return efi_dump_var_all(argc, argv, guid_p, verbose, nodump);
 }
 
 /**
