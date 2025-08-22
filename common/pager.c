@@ -148,6 +148,19 @@ bool pager_set_test_bypass(struct pager *pag, bool bypass)
 	return was_bypassed;
 }
 
+void pager_set_page_len(struct pager *pag, int page_len)
+{
+	if (page_len < 2)
+		return;
+	pag->page_len = page_len;
+	pag->line_count = 0;
+}
+
+void pager_reset(struct pager *pag)
+{
+	pag->line_count = 0;
+}
+
 void pager_uninit(struct pager *pag)
 {
 	abuf_uninit(&pag->buf);
