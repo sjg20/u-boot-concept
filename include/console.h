@@ -202,6 +202,16 @@ int console_clear(void);
  */
 int console_remove_by_name(const char *name);
 
+/**
+ * calc_check_console_lines() - Calculate console page length
+ *
+ * This calculates the appropriate number of lines to use for console paging,
+ * considering environment variables, config defaults, and device capabilities.
+ *
+ * Return: number of lines for paging, or 0 to disable paging
+ */
+int calc_check_console_lines(void);
+
 /*
  * CONSOLE multiplexing.
  */
