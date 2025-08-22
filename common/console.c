@@ -1185,6 +1185,15 @@ static int on_console(const char *name, const char *value, enum env_op op,
 		break;
 	}
 
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER) && console == stdout) {
+		int lines = calc_check_console_lines();
+
+		/* Set bypass mode if not connected to a terminal */
+		pager_set_bypass(gd_pager(), lines != 0);
+		if (lines)
+			pager_set_page_len(gd_pager(), lines);
+	}
+
 	return result;
 }
 U_BOOT_ENV_CALLBACK(console, on_console);
