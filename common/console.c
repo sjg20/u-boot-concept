@@ -1141,9 +1141,10 @@ static void stdio_print_current_devices(void)
 }
 
 static int on_console(const char *name, const char *value, enum env_op op,
-	int flags)
+		      int flags)
 {
 	int console = -1;
+	int result = 0;
 
 	/* Check for console redirection */
 	if (strcmp(name, "stdin") == 0)
@@ -1160,26 +1161,25 @@ static int on_console(const char *name, const char *value, enum env_op op,
 	switch (op) {
 	case env_op_create:
 	case env_op_overwrite:
-
 		if (CONFIG_IS_ENABLED(CONSOLE_MUX)) {
 			if (iomux_doenv(console, value))
-				return 1;
+				result = 1;
 		} else {
 			/* Try assigning specified device */
 			if (console_assign(console, value) < 0)
-				return 1;
+				result = 1;
 		}
-
-		return 0;
-
+		break;
 	case env_op_delete:
 		if ((flags & H_FORCE) == 0)
 			printf("Can't delete \"%s\"\n", name);
-		return 1;
-
+		result = 1;
+		break;
 	default:
-		return 0;
+		break;
 	}
+
+	return result;
 }
 U_BOOT_ENV_CALLBACK(console, on_console);
 
