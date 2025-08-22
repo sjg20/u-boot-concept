@@ -595,9 +595,11 @@ static_assert(sizeof(struct global_data) == GD_SIZE);
 #if CONFIG_IS_ENABLED(CONSOLE_PAGER)
 #define gd_pager()		gd->pager
 #define gd_pagerp()		&gd->pager
+#define gd_pager_page_len()	gd->pager->page_len
 #else
 #define gd_pager()		NULL
 #define gd_pagerp()		NULL
+#define gd_pager_page_len()	0
 #endif
 
 /**
