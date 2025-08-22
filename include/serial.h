@@ -2,6 +2,9 @@
 #define __SERIAL_H__
 
 #include <post.h>
+#ifdef CONFIG_SANDBOX
+#include <asm/state.h>
+#endif
 
 /* Escape value */
 #define cESC	'\x1b'
@@ -422,5 +425,23 @@ int serial_query_size(int *rowsp, int *colsp);
  * Returns:	0 on success, -ve on error
  */
 int serial_get_size(int *rowsp, int *colsp);
+
+/*
+ * serial_is_tty() - check if the serial console is connected to a terminal
+ *
+ * This does not indicate that there is actually a terminal, only that if there
+ * is one, we can assume it is present and connected
+ *
+ * Return: true if any serial console is likely connected to a terminal, false if not
+ */
+static inline bool serial_is_tty(void)
+{
+#ifdef CONFIG_SANDBOX
+	return sandbox_serial_is_tty();
+#else
+	/* assume that it is! */
+	return true;
+#endif
+}
 
 #endif
