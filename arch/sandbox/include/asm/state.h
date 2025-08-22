@@ -157,6 +157,7 @@ struct sandbox_state {
 	bool ignore_missing_state_on_read;	/* No error if state missing */
 	bool show_lcd;			/* Show LCD on start-up */
 	bool double_lcd;		/* Double display size for high-DPI */
+	bool serial_is_tty;		/* Serial console is connected to a tty */
 	enum sysreset_t last_sysreset;	/* Last system reset type */
 	bool sysreset_allowed[SYSRESET_COUNT];	/* Allowed system reset types */
 	enum state_terminal_raw term_raw;	/* Terminal raw/cooked */
@@ -376,6 +377,13 @@ int state_get_rel_filename(const char *rel_path, char *buf, int size);
  * @return 0 if OK, -ve on error
  */
 int state_load_other_fdt(const char **bufp, int *sizep);
+
+/**
+ * sandbox_serial_is_tty() - check if serial console is connected to a tty
+ *
+ * Return: true if serial console is connected to a terminal, false if not
+ */
+bool sandbox_serial_is_tty(void);
 
 /**
  * Initialize the test system state
