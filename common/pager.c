@@ -19,7 +19,7 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s)
 	struct membuf old;
 	int ret, len;
 
-	if (!pag || !use_pager)
+	if (!pag || !use_pager || pag->test_bypass)
 		return s;
 
 	len = strlen(s);
@@ -115,6 +115,19 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 	*pag->nulch = '\0';
 
 	return str;
+}
+
+bool pager_set_test_bypass(struct pager *pag, bool bypass)
+{
+	bool was_bypassed = false;
+
+	if (!pag)
+		return false;
+
+	was_bypassed = pag->test_bypass;
+	pag->test_bypass = bypass;
+
+	return was_bypassed;
 }
 
 void pager_uninit(struct pager *pag)
