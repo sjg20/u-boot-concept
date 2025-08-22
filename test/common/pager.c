@@ -578,3 +578,42 @@ static int pager_test_console(struct unit_test_state *uts)
 	return 0;
 }
 COMMON_TEST(pager_test_console, UTF_CONSOLE);
+
+/* Test bypass keypress ('b') functionality */
+static int pager_test_bypass_keypress(struct unit_test_state *uts)
+{
+	struct pager *pag;
+	const char *out;
+	int ret;
+
+	ret = pager_init(&pag, 3, SZ_1K);
+	ut_assertok(ret);
+
+	/* Post text that will trigger paging */
+	out = pager_post(pag, true, "line1\nline2\nline3\nline4\n");
+	ut_assertnonnull(out);
+	ut_asserteq_str("line1\nline2", out);
+
+	/* Should be waiting for user input */
+	out = pager_next(pag, true, 0);
+	ut_asserteq_str("\n: Press SPACE to continue, 'b' to bypass", out);
+
+	/* Press 'b' to bypass */
+	out = pager_next(pag, true, 'b');
+	ut_asserteq_str("\r                                        \r", out);
+
+	/* Verify pager is now in bypass mode */
+	ut_asserteq(PAGERST_TEST_BYPASS, pag->state);
+
+	/* Next call should return the remaining text without paging */
+	out = pager_next(pag, true, 0);
+	ut_asserteq_str("line3\nline4\n", out);
+
+	/* No more text should be available */
+	out = pager_next(pag, true, 0);
+	ut_asserteq_ptr(NULL, out);
+
+	pager_uninit(pag);
+	return 0;
+}
+COMMON_TEST(pager_test_bypass_keypress, 0);

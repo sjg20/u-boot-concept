@@ -70,6 +70,10 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		pag->state = PAGERST_WAIT_USER;
 		return PAGER_PROMPT;
 	case PAGERST_WAIT_USER:
+		if (key == 'b') {
+			pag->state = PAGERST_TEST_BYPASS;
+			return "\r                                        \r";
+		}
 		if (key != ' ')
 			return PAGER_WAITING;
 		pag->state = PAGERST_CLEAR_PROMPT;
