@@ -20,6 +20,7 @@
 #include <fdtdec.h>
 #include <hang.h>
 #include <malloc.h>
+#include <serial.h>
 #include <asm/global_data.h>
 #include <dm/ofnode.h>
 #include <linux/errno.h>
@@ -337,6 +338,6 @@ void cli_init(void)
 	hush_init_var();
 #endif
 
-	if (CONFIG_IS_ENABLED(VIDEO_ANSI))
+	if (CONFIG_IS_ENABLED(VIDEO_ANSI) && serial_is_tty())
 		printf(ANSI_CURSOR_SHOW "\n");
 }
