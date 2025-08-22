@@ -10,4 +10,5 @@ endif
 obj-$(CONFIG_CYCLIC) += cyclic.o
 obj-$(CONFIG_EVENT_DYNAMIC) += event.o
 obj-y += cread.o
+obj-$(CONFIG_CONSOLE_PAGER) += pager.o
 obj-$(CONFIG_$(PHASE_)CMDLINE) += print.o
