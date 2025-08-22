@@ -75,6 +75,12 @@
 #define DFU_CALLBACK
 #endif
 
+#ifdef CONFIG_CONSOLE_PAGER
+#define PAGER_CALLBACK	"pager:pager,"
+#else
+#define PAGER_CALLBACK
+#endif
+
 /*
  * This list of callback bindings is static, but may be overridden by defining
  * a new association in the ".callbacks" environment variable.
@@ -88,6 +94,7 @@
 	DFU_CALLBACK \
 	"loadaddr:loadaddr," \
 	SILENT_CALLBACK \
+	PAGER_CALLBACK \
 	"stdin:console,stdout:console,stderr:console," \
 	"serial#:serialno," \
 	CFG_ENV_CALLBACK_LIST_STATIC
