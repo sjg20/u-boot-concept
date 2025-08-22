@@ -12,6 +12,9 @@
 #include <test/common.h>
 #include <test/test.h>
 #include <test/ut.h>
+#include <asm/global_data.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* Test basic pager init and cleanup */
 static int pager_test_basic_init(struct unit_test_state *uts)
@@ -469,3 +472,109 @@ static int pager_test_putc(struct unit_test_state *uts)
 	return 0;
 }
 COMMON_TEST(pager_test_putc, 0);
+
+/* Test writing up to page limit then adding final newline */
+static int pager_test_limit_plus_newline(struct unit_test_state *uts)
+{
+	struct pager *pag;
+	const char *result;
+
+	/* Init with page length of 3 lines */
+	ut_assertok(pager_init(&pag, 3, 1024));
+
+	/* Write text that reaches exactly the page limit (2 newlines) */
+	result = pager_post(pag, true, "Line 1\nLine 2");
+	ut_assertnonnull(result);
+	ut_asserteq_str("Line 1\nLine 2", result);
+	ut_asserteq(1, pag->line_count); /* Should have 1 line counted */
+
+	/* Should be no more text yet - haven't hit limit */
+	result = pager_next(pag, true, 0);
+	ut_assertnull(result);
+
+	/* Now post a single newline - this should trigger the page limit */
+	result = pager_post(pag, true, "\n");
+	ut_assertnonnull(result);
+	/*
+	 * Should get empty string since we hit the limit and the newline is
+	 * consumed
+	 */
+	ut_asserteq_str("", result);
+
+	/* Next call should return the pager prompt since we hit the limit */
+	result = pager_next(pag, true, 0);
+	ut_assertnonnull(result);
+	ut_asserteq_str(PAGER_PROMPT, result);
+
+	/* Press space to continue */
+	result = pager_next(pag, true, ' ');
+	ut_assertnonnull(result);
+	ut_asserteq_str(PAGER_BLANK, result);
+
+	/* Should be no more text */
+	result = pager_next(pag, true, 0);
+	ut_assertnull(result);
+
+	pager_uninit(pag);
+
+	return 0;
+}
+COMMON_TEST(pager_test_limit_plus_newline, 0);
+
+/* Test console integration - pager prompt appears in console output */
+static int pager_test_console(struct unit_test_state *uts)
+{
+	struct pager *pag, *orig_pag;
+	char line[100];
+	int avail, ret;
+
+	/* Save original pager */
+	orig_pag = gd_pager();
+
+	/* Create our own pager for testing */
+	ret = pager_init(&pag, 2, 1024);
+	if (ret) {
+		gd->pager = orig_pag;
+		return CMD_RET_FAILURE;
+	}
+
+	/* Set up pager to be one away from limit (1 line already counted) */
+	pag->line_count = 1;
+
+	/* Assign our pager to the global data */
+	gd->pager = pag;
+
+	/* Trigger paging with a second newline */
+	putc('\n');
+
+	/* Check if there's any console output available at all */
+	avail = console_record_avail();
+
+	/* Restore original pager first */
+	gd->pager = orig_pag;
+	pager_uninit(pag);
+
+	/* Now check what we got */
+	if (!avail) {
+		ut_reportf("No console output was recorded at all");
+		return CMD_RET_FAILURE;
+	}
+
+	/* Try to read the actual output */
+	ret = console_record_readline(line, sizeof(line));
+	if (ret < 0) {
+		ut_reportf("Failed to read first line, avail was %d", avail);
+		return CMD_RET_FAILURE;
+	}
+
+	/*
+	 * console recording does not see the pager prompt, so we should have
+	 * just got a newline
+	 */
+	ut_asserteq_str("", line);
+
+	ut_assert_console_end();
+
+	return 0;
+}
+COMMON_TEST(pager_test_console, UTF_CONSOLE);
