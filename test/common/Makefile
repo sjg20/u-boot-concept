@@ -4,6 +4,8 @@ obj-$(CONFIG_AUTOBOOT) += test_autoboot.o
 ifneq ($(CONFIG_$(XPL_)BLOBLIST),)
 obj-$(CONFIG_$(XPL_)CMDLINE) += bloblist.o
 endif
+
+obj-y += console.o
 obj-$(CONFIG_CYCLIC) += cyclic.o
 obj-$(CONFIG_EVENT_DYNAMIC) += event.o
 obj-y += cread.o
