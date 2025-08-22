@@ -653,6 +653,7 @@ int cli_readline_into_buffer(const char *const prompt, char *buffer,
 	static int initted;
 	bool old_bypass;
 
+	pager_clear_quit(gd_pager());
 	old_bypass = pager_set_bypass(gd_pager(), true);
 
 	/*
