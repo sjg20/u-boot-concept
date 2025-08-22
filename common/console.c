@@ -344,7 +344,7 @@ static void console_puts(int file, bool use_pager, const char *s)
 
 static void console_puts_pager(int file, const char *s)
 {
-	if (IS_ENABLED(CONFIG_CONSOLE_PAGER)) {
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER) && gd_pager()) {
 		console_puts(file, true, s);
 	} else {
 		struct stdio_dev *dev;
@@ -400,6 +400,8 @@ static struct udevice *sdev_file_has_uclass(int file, enum uclass_id id)
 
 			if (device_get_uclass_id(dev) == id)
 				return dev;
+		} else if (id == UCLASS_SERIAL && console_dev_is_serial(sdev)) {
+			return gd->cur_serial_dev;
 		}
 	}
 
@@ -463,12 +465,18 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 	console_setfile(file, dev);
 }
 #endif
+
+static inline struct udevice *sdev_file_has_uclass(int file, enum uclass_id id)
+{
+	return NULL;
+}
+
 #endif /* CONIFIG_IS_ENABLED(CONSOLE_MUX) */
 
 static int calc_check_console_lines(void)
 {
+	int lines, dev_lines = -1;
 	struct udevice *dev;
-	int lines;
 
 	lines = env_get_hex("pager", -1);
 	if (lines != -1)
@@ -484,9 +492,21 @@ static int calc_check_console_lines(void)
 			struct vidconsole_priv *priv;
 
 			priv = dev_get_uclass_priv(dev);
-			lines = priv->rows;
+			dev_lines = priv->rows;
 		}
 	}
+	/* get number of lines from the serial console, if available */
+	if (IS_ENABLED(CONFIG_DM_SERIAL) &&
+	    sdev_file_has_uclass(stdout, UCLASS_SERIAL)) {
+		int cols;
+
+		if (!serial_is_tty())
+			dev_lines = 0;
+		else if (dev_lines == -1)  /* Keep as -1 if query fails */
+			serial_get_size(&dev_lines, &cols);
+	}
+	if (dev_lines != -1)
+		lines = dev_lines;
 
 	return lines;
 }
