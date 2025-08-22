@@ -14,12 +14,12 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-const char *pager_post(struct pager *pag, const char *s)
+const char *pager_post(struct pager *pag, bool use_pager, const char *s)
 {
 	struct membuf old;
 	int ret, len;
 
-	if (!pag)
+	if (!pag || !use_pager)
 		return s;
 
 	len = strlen(s);
@@ -44,13 +44,16 @@ const char *pager_post(struct pager *pag, const char *s)
 		pag->mb = old;
 	}
 
-	return pager_next(pag, 0);
+	return pager_next(pag, true, 0);
 }
 
-const char *pager_next(struct pager *pag, int key)
+const char *pager_next(struct pager *pag, bool use_pager, int key)
 {
 	char *str, *p, *end;
 	int ret;
+
+	if (!use_pager)
+		return NULL;
 
 	/* replace the real character we overwrite with nul, if needed */
 	if (pag->nulch) {
