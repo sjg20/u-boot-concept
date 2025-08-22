@@ -71,6 +71,10 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		pag->state = PAGERST_WAIT_USER;
 		return PAGER_PROMPT;
 	case PAGERST_WAIT_USER:
+		if (key == 'Q') {
+			pag->state = PAGERST_BYPASS;
+			return PAGER_BLANK;
+		}
 		if (key != ' ')
 			return PAGER_WAITING;
 		pag->state = PAGERST_CLEAR_PROMPT;
@@ -79,7 +83,7 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		pag->state = PAGERST_OK;
 		break;
 	case PAGERST_BYPASS:
-		return NULL;
+		break;
 	}
 
 	ret = membuf_getraw(&pag->mb, pag->buf.size - 1, false, &str);
@@ -93,17 +97,26 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		return NULL;
 	}
 
-	/* return lines until we reach the limit */
-	for (p = str, end = str + ret; p < end; p++) {
-		if (*p == '\n' && ++pag->line_count == pag->page_len - 1) {
-			/* remember to display the pager message next time */
-			pag->state = PAGERST_AT_LIMIT;
-			pag->line_count = 0;
+	end = str + ret;
+	if (pag->state != PAGERST_BYPASS) {
+		/* return lines until we reach the limit */
+		for (p = str; p < end; p++) {
+			if (*p == '\n' &&
+			    ++pag->line_count == pag->page_len - 1) {
+				/*
+				 * remember to display the pager message next
+				 * time
+				 */
+				pag->state = PAGERST_AT_LIMIT;
+				pag->line_count = 0;
 
-			/* skip the newline, since our prompt has one */
-			p++;
-			break;
+				/* skip the newline, since our prompt has one */
+				p++;
+				break;
+			}
 		}
+	} else {
+		p = end;
 	}
 
 	/* remove the used bytes from the membuf */
@@ -178,6 +191,7 @@ static int on_pager(const char *name, const char *value, enum env_op op,
 		if (value) {
 			new_page_len = simple_strtoul(value, NULL, 16);
 			pager_set_page_len(pag, new_page_len);
+			pager_set_bypass(pag, false);
 		}
 		break;
 	case env_op_delete:

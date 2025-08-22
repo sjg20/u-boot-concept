@@ -72,6 +72,9 @@ When activated, the pager pauses at the end of each 'page' (screenful) of
 output, shows a prompt ": Press SPACE to continue" and lets the user read the
 output. To continue to the next page, press the SPACE key.
 
+The pager can be bypassed by pressing 'Q' at the prompt. This disables the pager
+until the 'pager' environment variable is given a new value.
+
 Page Size Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
 
