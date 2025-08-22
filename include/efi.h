@@ -157,6 +157,8 @@ extern const efi_guid_t efi_guid_fdt;
 /* GUID of the EFI_DRIVER_BINDING_PROTOCOL */
 extern const efi_guid_t efi_guid_driver_binding_protocol;
 extern const efi_guid_t efi_guid_component_name2;
+/* GUIDs for authentication - most of these are still in efi_loader.h */
+extern const efi_guid_t efi_guid_image_security_database;
 
 /* Generic EFI table header */
 struct efi_table_hdr {

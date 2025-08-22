@@ -27,11 +27,11 @@ class TestEfiAuthVar(object):
             # Test Case 1a, Initial secure state
             output = ubman.run_command_list([
                 'host bind 0 %s' % disk_img,
-                'printenv -e SecureBoot'])
+                'printenv -e -v SecureBoot'])
             assert '00000000: 00' in ''.join(output)
 
             output = ubman.run_command(
-                'printenv -e SetupMode')
+                'printenv -e -v SetupMode')
             assert '00000000: 01' in output
 
         with ubman.log.section('Test Case 1b'):
@@ -46,14 +46,14 @@ class TestEfiAuthVar(object):
             output = ubman.run_command_list([
                 'fatload host 0:1 4000000 PK.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize PK',
-                'printenv -e -n PK'])
+                'printenv -e -v PK'])
             assert 'PK:' in ''.join(output)
 
             output = ubman.run_command(
-                'printenv -e SecureBoot')
+                'printenv -e -v SecureBoot')
             assert '00000000: 01' in output
             output = ubman.run_command(
-                'printenv -e SetupMode')
+                'printenv -e -v SetupMode')
             assert '00000000: 00' in output
 
         with ubman.log.section('Test Case 1d'):
@@ -78,11 +78,11 @@ class TestEfiAuthVar(object):
             output = ubman.run_command_list([
                 'fatload host 0:1 4000000 KEK.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize KEK',
-                'printenv -e -n KEK'])
+                'printenv -e -v KEK'])
             assert 'KEK:' in ''.join(output)
 
             output = ubman.run_command(
-                'printenv -e SecureBoot')
+                'printenv -e -v SecureBoot')
             assert '00000000: 01' in output
 
         with ubman.log.section('Test Case 1f'):
@@ -95,12 +95,12 @@ class TestEfiAuthVar(object):
             output = ubman.run_command_list([
                 'fatload host 0:1 4000000 db.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize db',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert 'db:' in ''.join(output)
 
             output = ubman.run_command(
-                'printenv -e SecureBoot')
+                'printenv -e -v SecureBoot')
             assert '00000000: 01' in output
 
         with ubman.log.section('Test Case 1g'):
@@ -113,12 +113,12 @@ class TestEfiAuthVar(object):
             output = ubman.run_command_list([
                 'fatload host 0:1 4000000 dbx.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize dbx',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f dbx'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f dbx'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert 'dbx:' in ''.join(output)
 
             output = ubman.run_command(
-                'printenv -e SecureBoot')
+                'printenv -e -v SecureBoot')
             assert '00000000: 01' in output
 
     def test_efi_var_auth2(self, ubman, efi_boot_env):
@@ -137,7 +137,7 @@ class TestEfiAuthVar(object):
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize KEK',
                 'fatload host 0:1 4000000 db.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize db',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert 'db:' in ''.join(output)
 
@@ -158,7 +158,7 @@ class TestEfiAuthVar(object):
             output = ubman.run_command_list([
                 'fatload host 0:1 4000000 db1.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize db',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert 'db:' in ''.join(output)
 
@@ -178,7 +178,7 @@ class TestEfiAuthVar(object):
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize KEK',
                 'fatload host 0:1 4000000 db.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize db',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert 'db:' in ''.join(output)
 
@@ -199,7 +199,7 @@ class TestEfiAuthVar(object):
             output = ubman.run_command_list([
                 'fatload host 0:1 4000000 db2.auth',
                 'setenv -e -nv -bs -rt -at -a -i 4000000:$filesize db',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert 'db:' in ''.join(output)
 
@@ -219,13 +219,13 @@ class TestEfiAuthVar(object):
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize KEK',
                 'fatload host 0:1 4000000 db.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize db',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert 'db:' in ''.join(output)
 
             output = ubman.run_command_list([
                 'setenv -e -nv -bs -rt db',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
             assert 'Failed to set EFI variable' in ''.join(output)
             assert 'db:' in ''.join(output)
 
@@ -233,7 +233,7 @@ class TestEfiAuthVar(object):
             # Test Case 4b, update without correct signature/data
             output = ubman.run_command_list([
                 'setenv -e -nv -bs -rt -at db',
-                'printenv -e -n -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
+                'printenv -e -v -guid d719b2cb-3d3a-4596-a3bc-dad00e67656f db'])
             assert 'Failed to set EFI variable' in ''.join(output)
             assert 'db:' in ''.join(output)
 
@@ -253,14 +253,14 @@ class TestEfiAuthVar(object):
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize KEK',
                 'fatload host 0:1 4000000 db.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize db',
-                'printenv -e -n PK'])
+                'printenv -e -v PK'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert 'PK:' in ''.join(output)
 
             output = ubman.run_command_list([
                 'fatload host 0:1 4000000 PK_null.esl',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize PK',
-                'printenv -e -n PK'])
+                'printenv -e -v PK'])
             assert 'Failed to set EFI variable' in ''.join(output)
             assert 'PK:' in ''.join(output)
 
@@ -269,13 +269,13 @@ class TestEfiAuthVar(object):
             output = ubman.run_command_list([
                 'fatload host 0:1 4000000 PK_null.auth',
                 'setenv -e -nv -bs -rt -at -i 4000000:$filesize PK',
-                'printenv -e -n PK'])
+                'printenv -e -v PK'])
             assert 'Failed to set EFI variable' not in ''.join(output)
             assert '\"PK\" not defined' in ''.join(output)
 
             output = ubman.run_command(
-                'printenv -e SecureBoot')
+                'printenv -e -v SecureBoot')
             assert '00000000: 00' in output
             output = ubman.run_command(
-                'printenv -e SetupMode')
+                'printenv -e -v SetupMode')
             assert '00000000: 01' in output

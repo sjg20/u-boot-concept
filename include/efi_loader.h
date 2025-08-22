@@ -353,7 +353,6 @@ extern const efi_guid_t efi_guid_hii_config_access_protocol;
 extern const efi_guid_t efi_guid_hii_database_protocol;
 extern const efi_guid_t efi_guid_hii_string_protocol;
 /* GUIDs for authentication */
-extern const efi_guid_t efi_guid_image_security_database;
 extern const efi_guid_t efi_guid_sha256;
 extern const efi_guid_t efi_guid_cert_x509;
 extern const efi_guid_t efi_guid_cert_x509_sha256;

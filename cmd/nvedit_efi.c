@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <rtc.h>
+#include <sort.h>
 #include <u-boot/uuid.h>
 #include <linux/kernel.h>
 
@@ -39,15 +40,28 @@ static const struct {
 };
 
 /**
+ * struct var_info - stores information about a single variable
+ *
+ * @name: Variable name (allocated)
+ * @guid: Variable guid
+ */
+struct var_info {
+	u16 *name;
+	efi_guid_t guid;
+};
+
+/**
  * efi_dump_single_var() - show information about a UEFI variable
  *
  * @name:	Name of the variable
  * @guid:	Vendor GUID
- * @verbose:	if true, dump data
+ * @verbose:	if true, show detailed information
+ * @nodump:	if true, don't show hexadecimal dump
  *
  * Show information encoded in one UEFI variable
  */
-static void efi_dump_single_var(u16 *name, const efi_guid_t *guid, bool verbose)
+static void efi_dump_single_var(u16 *name, const efi_guid_t *guid,
+				 bool verbose, bool nodump)
 {
 	u32 attributes;
 	u8 *data;
@@ -75,23 +89,27 @@ static void efi_dump_single_var(u16 *name, const efi_guid_t *guid, bool verbose)
 	if (ret != EFI_SUCCESS)
 		goto out;
 
-	rtc_to_tm(time, &tm);
-	printf("%ls:\n    %pUl (%pUs)\n", name, guid, guid);
-	if (attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
-		printf("    %04d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year,
-		       tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-	printf("    ");
-	for (count = 0, i = 0; i < ARRAY_SIZE(efi_var_attrs); i++)
-		if (attributes & efi_var_attrs[i].mask) {
-			if (count)
-				putc('|');
-			count++;
-			puts(efi_var_attrs[i].text);
-		}
-	printf(", DataSize = 0x%zx\n", size);
-	if (verbose)
-		print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
-			       data, size, true);
+	if (verbose) {
+		rtc_to_tm(time, &tm);
+		printf("%ls:\n    %pUl (%pUs)\n", name, guid, guid);
+		if (attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
+			printf("    %04d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year,
+			       tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+		printf("    ");
+		for (count = 0, i = 0; i < ARRAY_SIZE(efi_var_attrs); i++)
+			if (attributes & efi_var_attrs[i].mask) {
+				if (count)
+					putc('|');
+				count++;
+				puts(efi_var_attrs[i].text);
+			}
+		printf(", DataSize = 0x%zx\n", size);
+		if (!nodump)
+			print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
+				       data, size, true);
+	} else {
+		printf("%ls\n", name);
+	}
 
 out:
 	free(data);
@@ -126,67 +144,104 @@ out:
 }
 
 /**
+ * var_info_cmp() - compare two var_info structures by name
+ *
+ * @a: First var_info structure
+ * @b: Second var_info structure
+ * Return: comparison result for qsort
+ */
+static int var_info_cmp(const void *a, const void *b)
+{
+	const struct var_info *va = a;
+	const struct var_info *vb = b;
+
+	return u16_strcmp(va->name, vb->name);
+}
+
+/**
  * efi_dump_var_all() - show information about all the UEFI variables
  *
  * @argc:	Number of arguments (variables)
  * @argv:	Argument (variable name) array
- * @verbose:	if true, dump data
+ * @guid_p:	GUID to filter by, or NULL for all
+ * @verbose:	if true, show detailed information
+ * @nodump:	if true, don't show hexadecimal dump
+ * @sort:	if true, sort variables by name before printing
  * Return:	CMD_RET_SUCCESS on success, or CMD_RET_RET_FAILURE
  *
  * Show information encoded in all the UEFI variables
  */
 static int efi_dump_var_all(int argc,  char *const argv[],
-			    const efi_guid_t *guid_p, bool verbose)
+			    const efi_guid_t *guid_p, bool verbose, bool nodump,
+			    bool sort)
 {
-	u16 *var_name16, *p;
 	efi_uintn_t buf_size, size;
+	struct var_info *var;
+	struct alist vars;
 	efi_guid_t guid;
 	efi_status_t ret;
-	bool match = false;
+	bool ok = false;
+	u16 *name, *p;
 
 	buf_size = 128;
-	var_name16 = malloc(buf_size);
-	if (!var_name16)
+	name = malloc(buf_size);
+	if (!name)
 		return CMD_RET_FAILURE;
 
-	var_name16[0] = 0;
+	name[0] = 0;
+	alist_init_struct(&vars, struct var_info);
 	for (;;) {
 		size = buf_size;
-		ret = efi_get_next_variable_name_int(&size, var_name16,
-						     &guid);
+		ret = efi_get_next_variable_name_int(&size, name, &guid);
 		if (ret == EFI_NOT_FOUND)
 			break;
 		if (ret == EFI_BUFFER_TOO_SMALL) {
 			buf_size = size;
-			p = realloc(var_name16, buf_size);
-			if (!p) {
-				free(var_name16);
-				return CMD_RET_FAILURE;
-			}
-			var_name16 = p;
-			ret = efi_get_next_variable_name_int(&size, var_name16,
+			p = realloc(name, buf_size);
+			if (!p)
+				goto fail;
+			name = p;
+			ret = efi_get_next_variable_name_int(&size, name,
 							     &guid);
 		}
-		if (ret != EFI_SUCCESS) {
-			free(var_name16);
-			return CMD_RET_FAILURE;
-		}
+		if (ret != EFI_SUCCESS)
+			goto fail;
 
 		if (guid_p && guidcmp(guid_p, &guid))
 			continue;
-		if (!argc || match_name(argc, argv, var_name16)) {
-			match = true;
-			efi_dump_single_var(var_name16, &guid, verbose);
+		if (!argc || match_name(argc, argv, name)) {
+			struct var_info new_var;
+
+			new_var.name = (u16 *)memdup(name, size);
+			if (!new_var.name)
+				goto fail;
+			new_var.guid = guid;
+
+			if (!alist_add(&vars, new_var))
+				goto fail;
 		}
 	}
-	free(var_name16);
 
-	if (!match && argc == 1) {
+	if (!vars.count && argc == 1) {
 		printf("Error: \"%s\" not defined\n", argv[0]);
-		return CMD_RET_FAILURE;
+		goto done;
 	}
 
-	return CMD_RET_SUCCESS;
+	if (sort && vars.count > 1)
+		qsort(vars.data, vars.count, sizeof(struct var_info), var_info_cmp);
+
+	alist_for_each(var, &vars)
+		efi_dump_single_var(var->name, &var->guid, verbose, nodump);
+
+	ok = true;
+fail:
+done:
+	free(name);
+	alist_for_each(var, &vars)
+		free(var->name);
+	alist_uninit(&vars);
+
+	return ok ? 0 : CMD_RET_FAILURE;
 }
 
 /**
@@ -199,16 +254,20 @@ static int efi_dump_var_all(int argc,  char *const argv[],
  * Return:	CMD_RET_SUCCESS on success, or CMD_RET_RET_FAILURE
  *
  * This function is for "env print -e" or "printenv -e" command:
- *   => env print -e [-n] [-guid <guid> | -all] [var [...]]
+ *   => env print -e [-v] [-s] [-guid <guid> | -all] [var [...]]
  * If one or more variable names are specified, show information
  * named UEFI variables, otherwise show all the UEFI variables.
+ * By default, only variable names are shown. Use -v for verbose output.
+ * Use -s to sort variables by name.
  */
 int do_env_print_efi(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[])
 {
 	const efi_guid_t *guid_p = NULL;
 	efi_guid_t guid;
-	bool verbose = true;
+	bool verbose = false;
+	bool nodump = false;
+	bool sort = false;
 	efi_status_t ret;
 
 	/* Initialize EFI drivers */
@@ -230,14 +289,19 @@ int do_env_print_efi(struct cmd_tbl *cmdtp, int flag, int argc,
 				return CMD_RET_USAGE;
 			guid_p = (const efi_guid_t *)guid.b;
 		} else if (!strcmp(argv[0], "-n")) {
-			verbose = false;
+			verbose = true;
+			nodump = true;
+		} else if (!strcmp(argv[0], "-v")) {
+			verbose = true;
+		} else if (!strcmp(argv[0], "-s")) {
+			sort = true;
 		} else {
 			return CMD_RET_USAGE;
 		}
 	}
 
 	/* enumerate and show all UEFI variables */
-	return efi_dump_var_all(argc, argv, guid_p, verbose);
+	return efi_dump_var_all(argc, argv, guid_p, verbose, nodump, sort);
 }
 
 /**
