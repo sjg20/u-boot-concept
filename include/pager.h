@@ -1,0 +1,141 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
+/*
+ * Deals with splitting up text output into separate screenfuls
+ *
+ * Copyright 2025 Simon Glass <sjg@chromium.org>
+ */
+
+#ifndef __PAGER_H
+#define __PAGER_H
+
+#include <stdbool.h>
+#include <abuf.h>
+#include <membuf.h>
+#include <linux/sizes.h>
+
+#define PAGER_BUF_SIZE	SZ_4K
+
+/* Special return value from pager_next() indicating it's waiting for user input */
+#define PAGER_WAITING	((const char *)1)
+
+/**
+ * enum pager_state: Tracks the state of the pager
+ *
+ * @PAGERST_OK: Normal output is happening
+ * @PAGERST_AT_LIMIT: No more output can be provided; the next call to
+ * pager_next() will return a user prompt
+ * @PAGERST_WAIT_USER: Waiting for the user to press a key
+ * @PAGERST_CLEAR_PROMPT: Clearing the prompt ready for more output
+ */
+enum pager_state {
+	PAGERST_OK,
+	PAGERST_AT_LIMIT,
+	PAGERST_WAIT_USER,
+	PAGERST_CLEAR_PROMPT,
+};
+
+/**
+ * struct pager - pager state
+ *
+ * The pager uses a buffer @buf to hold text that it is in the process of
+ * sending out. This helps deal with the stdio puts() interface, which does not
+ * permit passing a string length, only a string, which means that strings must
+ * be nul-terminated. The termination is handled automatically by the pager.
+ *
+ * If the text passed to pager_post() is too large for @buf then all the next
+ * will be written at once, without any paging, in the next call to
+ * pager_next().
+ *
+ * The membuf @mb is only used to feed out text in chunks, with a pager message
+ * (and a keypress wait) inserted between each chunk.
+ *
+ * @line_count: Number of lines output since last pause
+ * @page_len: Sets the height of the page in lines. The maximum lines to display
+ * before pausing is one less than this. Set from 'pager' env variable
+ * @buf: Buffer containing text to eventually be returned
+ * @mb: Circular buffer to manage @buf
+ * @overflow: pointer to overflow text to send nexts
+ * @nulch: pointer to where a nul character was written, NULL if none
+ * @oldch: old character that was at @nulch
+ */
+struct pager {
+	int line_count;
+	int page_len;
+	struct abuf buf;
+	struct membuf mb;
+	const char *overflow;
+	char *nulch;
+	int oldch;
+	enum pager_state state;
+};
+
+#if CONFIG_IS_ENABLED(CONSOLE_PAGER)
+
+/**
+ * pager_post() - Add text to the input buffer for later handling
+ *
+ * The text is added to the pager buffer and fed out a screenful
+ * at a time. This function calls pager_post() after storing the text.
+ *
+ * After calling pager_post(), if it returns anything other than NULL, you must
+ * repeatedly call pager_next() until it returns NULL, otherwise text may be
+ * lost
+ *
+ * If @pag is NULL, this does nothing but return @s
+ *
+ * @pag: Pager to use, may be NULL
+ * @s: Text to add
+ * Return: text which should be sent to output, or NULL if there is no more.
+ */
+const char *pager_post(struct pager *pag, const char *s);
+
+/**
+ * pager_next() - Returns the next screenful of text to show
+ *
+ * If this function returns PAGER_WAITING then the caller must check for user
+ * input and pass in the keypress in the next call to pager_next(). It can
+ * busy-wait for a keypress, if desired, since pager_next() will only ever
+ * return PAGER_WAITING until @ch is non-zero.
+ *
+ * @pag: Pager to use
+ * @ch: Key that the user has pressed, or 0 if none
+ *
+ * Return: text which should be sent to output, or PAGER_WAITING if waiting for
+ * the user to press a key, or NULL if there is no more text.
+ */
+const char *pager_next(struct pager *pag, int ch);
+
+/**
+ * pager_uninit() - Uninit the pager
+ *
+ * Frees all memory and also @pag
+ *
+ * @pag: Pager to uninit
+ */
+void pager_uninit(struct pager *pag);
+
+#else
+static inline const char *pager_post(struct pager *pag, const char *s)
+{
+	return s;
+}
+
+static inline const char *pager_next(struct pager *pag, int ch)
+{
+	return NULL;
+}
+
+#endif
+
+/**
+ * pager_init() - Set up a new pager
+ *
+ * @pagp: Returns allocaed pager, on success
+ * @pagelen: Number of lines per page
+ * @buf_size: Buffer size to use in bytes, this is the maximum amount of output
+ * that can be paged
+ * Return: 0 if OK, -ENOMEM if out of memory
+ */
+int pager_init(struct pager **pagp, int page_len, int buf_size);
+
+#endif
