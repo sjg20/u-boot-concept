@@ -613,6 +613,10 @@ int sandbox_main(int argc, char *argv[])
 	if (os_parse_args(state, argc, argv))
 		return 1;
 
+	/* Detect if serial console is connected to a terminal */
+	state->serial_is_tty = os_isatty(1) &&
+		state->term_raw != STATE_TERM_COOKED;
+
 	if (state->ram_buf_fname) {
 		ret = os_read_ram_buf(state->ram_buf_fname);
 		if (ret) {
