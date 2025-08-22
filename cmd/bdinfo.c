@@ -105,7 +105,8 @@ static void print_serial(struct udevice *dev)
 	if (ret)
 		return;
 
-	lprint_num_l("serial addr", info.addr);
+	lprint_str("serial", dev->name);
+	lprint_num_l(" addr", info.addr);
 	lprint_num_l(" width", info.reg_width);
 	lprint_num_l(" shift", info.reg_shift);
 	lprint_num_l(" offset", info.reg_offset);
