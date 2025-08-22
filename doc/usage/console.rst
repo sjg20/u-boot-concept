@@ -60,3 +60,19 @@ file ('stdin', 'stdout' or 'stderr')
 
 Remember that FILE-related functions CANNOT be used before U-Boot relocation,
 which is done in `board_init_r()`.
+
+Pager
+-----
+
+U-Boot has a simple pager feature, enabled with `CONFIG_CONSOLE_PAGER`. It is
+only available if both `CONFIG_CONSOLE_MUX` is enabled.
+
+When activated, the pager pauses at the end of each 'page' (screenful) of
+output, shows a prompt and lets the user read the output. To continue, press
+SPACE.
+
+The number of lines before the pager kicks in is configurable using the `pager`
+environment variable, which should contain a decimal value. Set it to 0 (or
+leave it unset) to disable the pager. If the variable is not present then the
+number of lines in the video console is used. If there is no video console, then
+`CONSOLE_PAGER_LINES` sets the number of lines.
