@@ -16,6 +16,7 @@
 #include <efi_loader.h>
 #include <env.h>
 #include <log.h>
+#include <serial.h>
 #include <stdio_dev.h>
 #include <video_console.h>
 #include <linux/delay.h>
@@ -59,9 +60,6 @@ const efi_guid_t efi_guid_text_input_protocol =
 const efi_guid_t efi_guid_text_output_protocol =
 			EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL_GUID;
 
-#define cESC '\x1b'
-#define ESC "\x1b"
-
 /*
  * efi_con_mode - mode information of the Simple Text Output Protocol
  *
@@ -76,76 +74,6 @@ static struct simple_text_output_mode efi_con_mode = {
 	.cursor_row = 0,
 	.cursor_visible = 1,
 };
-
-/**
- * term_get_char() - read a character from the console
- *
- * Wait for up to 100 ms to read a character from the console.
- *
- * @c:		pointer to the buffer to receive the character
- * Return:	0 on success, 1 otherwise
- */
-static int term_get_char(s32 *c)
-{
-	u64 timeout;
-
-	/* Wait up to 100 ms for a character */
-	timeout = timer_get_us() + 100000;
-
-	while (!tstc())
-		if (timer_get_us() > timeout)
-			return 1;
-
-	*c = getchar();
-	return 0;
-}
-
-/**
- * term_read_reply() - receive and parse a reply from the terminal
- *
- * @n:		array of return values
- * @num:	number of return values expected
- * @end_char:	character indicating end of terminal message
- * Return:	non-zero indicates error
- */
-static int term_read_reply(int *n, int num, char end_char)
-{
-	s32 c;
-	int i = 0;
-
-	if (term_get_char(&c) || c != cESC)
-		return -1;
-
-	if (term_get_char(&c) || c != '[')
-		return -1;
-
-	n[0] = 0;
-	while (1) {
-		if (!term_get_char(&c)) {
-			if (c == ';') {
-				i++;
-				if (i >= num)
-					return -1;
-				n[i] = 0;
-				continue;
-			} else if (c == end_char) {
-				break;
-			} else if (c > '9' || c < '0') {
-				return -1;
-			}
-
-			/* Read one more decimal position */
-			n[i] *= 10;
-			n[i] += c - '0';
-		} else {
-			return -1;
-		}
-	}
-	if (i != num - 1)
-		return -1;
-
-	return 0;
-}
 
 /**
  * efi_cout_output_string() - write Unicode string to console
@@ -273,52 +201,6 @@ static bool cout_mode_matches(struct cout_mode *mode, int rows, int cols)
 }
 
 /**
- * query_console_serial() - query serial console size
- *
- * When using a serial console or the net console we can only devise the
- * terminal size by querying the terminal using ECMA-48 control sequences.
- *
- * @rows:	pointer to return number of rows
- * @cols:	pointer to return number of columns
- * Returns:	0 on success
- */
-static int query_console_serial(int *rows, int *cols)
-{
-	int ret = 0;
-	int n[2];
-
-	/* Empty input buffer */
-	while (tstc())
-		getchar();
-
-	/*
-	 * Not all terminals understand CSI [18t for querying the console size.
-	 * We should adhere to escape sequences documented in the console_codes
-	 * man page and the ECMA-48 standard.
-	 *
-	 * So here we follow a different approach. We position the cursor to the
-	 * bottom right and query its position. Before leaving the function we
-	 * restore the original cursor position.
-	 */
-	printf(ESC "7"		/* Save cursor position */
-	       ESC "[r"		/* Set scrolling region to full window */
-	       ESC "[999;999H"	/* Move to bottom right corner */
-	       ESC "[6n");	/* Query cursor position */
-
-	/* Read {rows,cols} */
-	if (term_read_reply(n, 2, 'R')) {
-		ret = 1;
-		goto out;
-	}
-
-	*cols = n[1];
-	*rows = n[0];
-out:
-	printf(ESC "8");	/* Restore cursor position */
-	return ret;
-}
-
-/**
  * query_vidconsole() - query video console size
  *
  *
@@ -364,7 +246,7 @@ void efi_setup_console_size(void)
 	if (IS_ENABLED(CONFIG_VIDEO))
 		ret = query_vidconsole(&rows, &cols);
 	if (ret)
-		ret = query_console_serial(&rows, &cols);
+		ret = serial_query_size(&rows, &cols);
 	if (ret)
 		return;
 
