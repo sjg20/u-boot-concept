@@ -335,6 +335,7 @@ config CONSOLE_PAGER
 	bool "Enable console output paging"
 	depends on CONSOLE_MUX
 	imply CMD_CONSOLE_EXTRA
+	imply SERIAL_TERM_PRESENT
 	default y if SANDBOX
 	help
 	  Enable pager functionality for console output. When enabled, long
