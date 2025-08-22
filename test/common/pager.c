@@ -429,3 +429,43 @@ static int pager_test_bypass_mode(struct unit_test_state *uts)
 	return 0;
 }
 COMMON_TEST(pager_test_bypass_mode, 0);
+
+/* Test that single character output via putc goes through pager */
+static int pager_test_putc(struct unit_test_state *uts)
+{
+	struct pager *pag;
+	const char *result;
+
+	/* Init pager */
+	ut_assertok(pager_init(&pag, 20, 1024));
+	pager_set_bypass(pag, true);
+
+	/*
+	 * Test that individual characters can be posted via pager API
+	 * This verifies that console_putc_pager() routes through the pager
+	 * system
+	 */
+	result = pager_post(pag, true, "A");
+	ut_asserteq_ptr("A", result); /* Bypass mode returns original pointer */
+
+	result = pager_post(pag, true, "\n");
+	ut_asserteq_ptr("\n", result);
+
+	result = pager_post(pag, true, "B");
+	ut_asserteq_ptr("B", result);
+
+	/* Disable bypass to test normal functionality with single chars */
+	pager_set_bypass(pag, false);
+
+	result = pager_post(pag, true, "X");
+	ut_assertnonnull(result);
+	ut_asserteq_str("X", result);
+
+	result = pager_next(pag, true, 0);
+	ut_assertnull(result);
+
+	pager_uninit(pag);
+
+	return 0;
+}
+COMMON_TEST(pager_test_putc, 0);
