@@ -68,12 +68,16 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		break;
 	case PAGERST_AT_LIMIT:
 		pag->state = PAGERST_WAIT_USER;
-		return "\n: Press SPACE to continue";
+		return "\n: Press SPACE to continue, 'b' to bypass";
 	case PAGERST_WAIT_USER:
+		if (key == 'b') {
+			pag->state = PAGERST_TEST_BYPASS;
+			return "\r                                        \r";
+		}
 		if (key != ' ')
 			return PAGER_WAITING;
 		pag->state = PAGERST_CLEAR_PROMPT;
-		return "\r                         \r";
+		return "\r                                        \r";
 	case PAGERST_CLEAR_PROMPT:
 		pag->state = PAGERST_OK;
 		break;

@@ -101,6 +101,10 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s);
  * busy-wait for a keypress, if desired, since pager_next() will only ever
  * return PAGER_WAITING until @ch is non-zero.
  *
+ * When the pager prompts for user input, pressing SPACE continues to the next
+ * page, while pressing 'b' puts the pager into bypass mode and disables
+ * further paging.
+ *
  * @pag: Pager to use
  * @use_pager: Whether or not to use the pager functionality
  * @ch: Key that the user has pressed, or 0 if none
