@@ -448,6 +448,9 @@ struct global_data {
 	 */
 	struct upl *upl;
 #endif
+#if CONFIG_IS_ENABLED(CONSOLE_PAGER)
+	struct pager *pager;
+#endif
 };
 #ifndef DO_DEPS_ONLY
 static_assert(sizeof(struct global_data) == GD_SIZE);
@@ -579,6 +582,14 @@ static_assert(sizeof(struct global_data) == GD_SIZE);
 #define gd_video_top()		0
 #define gd_video_bottom()	0
 #define gd_video_size()		0
+#endif
+
+#if CONFIG_IS_ENABLED(CONSOLE_PAGER)
+#define gd_pager()		gd->pager
+#define gd_pagerp()		&gd->pager
+#else
+#define gd_pager()		NULL
+#define gd_pagerp()		NULL
 #endif
 
 /**

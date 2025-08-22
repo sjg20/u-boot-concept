@@ -16,6 +16,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <os.h>
+#include <pager.h>
 #include <serial.h>
 #include <stdio_dev.h>
 #include <exports.h>
@@ -359,14 +360,57 @@ void console_puts_select_stderr(bool serial_only, const char *s)
 		console_puts_select(stderr, serial_only, s);
 }
 
+int console_printf_select_stderr(bool serial_only, const char *fmt, ...)
+{
+	char buf[CONFIG_SYS_PBSIZE];
+	va_list args;
+	int ret;
+
+	va_start(args, fmt);
+
+	/* For this to work, buf must be larger than anything we ever want to
+	 * print.
+	 */
+	ret = vscnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	console_puts_select_stderr(serial_only, buf);
+
+	return ret;
+}
+
+static void console_puts(int file, bool use_pager, const char *s)
+{
+	int key = 0;
+
+	for (s = pager_post(gd_pager(), use_pager, s); s;
+	     s = pager_next(gd_pager(), use_pager, key)) {
+		struct stdio_dev *dev;
+		int i;
+
+		key = 0;
+		if (IS_ENABLED(CONFIG_CONSOLE_PAGER) && s == PAGER_WAITING) {
+			key = getchar();
+		} else if (*s) {
+			for_each_console_dev(i, file, dev) {
+				if (dev->puts != NULL)
+					dev->puts(dev, s);
+			}
+		}
+	}
+}
+
 static void console_puts_pager(int file, const char *s)
 {
-	int i;
-	struct stdio_dev *dev;
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER)) {
+		console_puts(file, true, s);
+	} else {
+		struct stdio_dev *dev;
+		int i;
 
-	for_each_console_dev(i, file, dev) {
-		if (dev->puts != NULL)
-			dev->puts(dev, s);
+		for_each_console_dev(i, file, dev) {
+			if (dev->puts != NULL)
+				dev->puts(dev, s);
+		}
 	}
 }
 
@@ -389,7 +433,8 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 	iomux_doenv(file, dev->name);
 }
 #endif
-#else
+
+#else /* !CONSOLE_MUX */
 
 static void console_devices_set(int file, struct stdio_dev *dev)
 {
@@ -1083,6 +1128,21 @@ static void stdio_print_current_devices(void)
 	printf("%s\n", stderrname);
 }
 
+static void setup_pager(void)
+{
+	/* Init pager now that console is ready */
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER)) {
+		int lines = IF_ENABLED_INT(CONFIG_CONSOLE_PAGER,
+					   CONFIG_CONSOLE_PAGER_LINES);
+		int ret;
+
+		ret = pager_init(gd_pagerp(), env_get_hex("pager", lines),
+				 PAGER_BUF_SIZE);
+		if (ret)
+			printf("Failed to init pager\n");
+	}
+}
+
 #if CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV)
 /* Called after the relocation - use desired console functions */
 int console_init_r(void)
@@ -1167,6 +1227,7 @@ done:
 	}
 
 	gd->flags |= GD_FLG_DEVINIT;	/* device initialization completed */
+	setup_pager();
 
 	print_pre_console_buffer(flushpoint);
 	return 0;
@@ -1234,6 +1295,7 @@ int console_init_r(void)
 	}
 
 	gd->flags |= GD_FLG_DEVINIT;	/* device initialization completed */
+	setup_pager();
 
 	print_pre_console_buffer(flushpoint);
 	return 0;
