@@ -13,6 +13,7 @@
 #include <command.h>
 #include <hang.h>
 #include <malloc.h>
+#include <pager.h>
 #include <time.h>
 #include <watchdog.h>
 #include <linux/errno.h>
@@ -650,6 +651,9 @@ int cli_readline_into_buffer(const char *const prompt, char *buffer,
 	uint len = CONFIG_SYS_CBSIZE;
 	int rc;
 	static int initted;
+	bool old_bypass;
+
+	old_bypass = pager_set_bypass(gd_pager(), true);
 
 	/*
 	 * Say N to CMD_HISTORY_USE_CALLOC will skip runtime
@@ -673,9 +677,14 @@ int cli_readline_into_buffer(const char *const prompt, char *buffer,
 			puts(prompt);
 
 		rc = cread_line(prompt, p, &len, timeout);
-		return rc < 0 ? rc : len;
+		rc = rc < 0 ? rc : len;
 
 	} else {
-		return cread_line_simple(prompt, p);
+		rc = cread_line_simple(prompt, p);
 	}
+
+	pager_set_bypass(gd_pager(), old_bypass);
+	pager_reset(gd_pager());
+
+	return rc;
 }
