@@ -1134,6 +1134,21 @@ static void setup_pager(void)
 					   CONFIG_CONSOLE_PAGER_LINES);
 		int ret;
 
+		/* get number of lines from the video console, if available */
+		if (IS_ENABLED(CONFIG_VIDEO)) {
+			struct udevice *dev;
+			int ret;
+
+			ret = uclass_first_device_err(UCLASS_VIDEO_CONSOLE,
+						      &dev);
+			if (!ret) {
+				struct vidconsole_priv *priv;
+
+				priv = dev_get_uclass_priv(dev);
+				lines = priv->rows;
+			}
+		}
+
 		ret = pager_init(gd_pagerp(), env_get_hex("pager", lines),
 				 PAGER_BUF_SIZE);
 		if (ret)
