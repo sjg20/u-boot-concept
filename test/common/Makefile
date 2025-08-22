@@ -7,6 +7,7 @@ obj-$(CONFIG_$(PHASE_)CMDLINE) += bloblist.o
 endif
 endif
 
+obj-y += console.o
 obj-$(CONFIG_CYCLIC) += cyclic.o
 obj-$(CONFIG_EVENT_DYNAMIC) += event.o
 obj-y += cread.o

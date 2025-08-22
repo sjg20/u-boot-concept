@@ -467,7 +467,7 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 #endif
 #endif /* CONIFIG_IS_ENABLED(CONSOLE_MUX) */
 
-static int calc_check_console_lines(void)
+int calc_check_console_lines(void)
 {
 	int lines, dev_lines = -1;
 	struct udevice *dev;
