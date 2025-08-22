@@ -141,6 +141,21 @@ bool pager_set_bypass(struct pager *pag, bool bypass)
 	return was_bypassed;
 }
 
+void pager_set_page_len(struct pager *pag, int page_len)
+{
+	if (page_len < 2)
+		return;
+	pag->page_len = page_len;
+	pag->line_count = 0;
+	if (!page_len)
+		pag->state = PAGERST_TEST_BYPASS;
+}
+
+void pager_reset(struct pager *pag)
+{
+	pag->line_count = 0;
+}
+
 int pager_init(struct pager **pagp, int page_len, int buf_size)
 {
 	struct pager *pag;

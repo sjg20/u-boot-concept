@@ -124,6 +124,15 @@ const char *pager_next(struct pager *pag, bool use_pager, int ch);
 bool pager_set_bypass(struct pager *pag, bool bypass);
 
 /**
+ * pager_reset() - reset the line count in the pager
+ *
+ * Sets line_count to zero so that the pager starts afresh with its counting.
+ *
+ * @pag: Pager to update
+ */
+void pager_reset(struct pager *pag);
+
+/**
  * pager_uninit() - Uninit the pager
  *
  * Frees all memory and also @pag
@@ -147,6 +156,10 @@ static inline const char *pager_next(struct pager *pag, bool use_pager, int ch)
 static inline bool pager_set_bypass(struct pager *pag, bool bypass)
 {
 	return true;
+}
+
+static void pager_reset(struct pager *pag)
+{
 }
 
 #endif
