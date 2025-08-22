@@ -34,6 +34,10 @@ const efi_guid_t efi_file_info_guid = EFI_FILE_INFO_GUID;
 const efi_guid_t efi_u_boot_guid = U_BOOT_GUID;
 /* GUID of the device tree table */
 const efi_guid_t efi_guid_fdt = EFI_FDT_GUID;
+/* GUID of the EFI_DRIVER_BINDING_PROTOCOL */
+const efi_guid_t efi_guid_driver_binding_protocol =
+			EFI_DRIVER_BINDING_PROTOCOL_GUID;
+const efi_guid_t efi_guid_component_name2 = EFI_COMPONENT_NAME2_PROTOCOL_GUID;
 
 /* template EFI_DP_END node: */
 const struct efi_device_path EFI_DP_END = {
@@ -371,6 +375,10 @@ __maybe_unused static unsigned int dp_size(struct udevice *dev)
 				size =
 				      sizeof(struct efi_device_path_controller);
 			break;
+		case UCLASS_EFI_MEDIA:
+			/* EFI app */
+			size = sizeof(struct efi_device_path_udevice);
+			break;
 		default:
 			/* UCLASS_BLKMAP, UCLASS_HOST, UCLASS_VIRTIO */
 			size = sizeof(struct efi_device_path_udevice);
@@ -384,6 +392,9 @@ __maybe_unused static unsigned int dp_size(struct udevice *dev)
 	case UCLASS_MASS_STORAGE:
 	case UCLASS_USB_HUB:
 		size = sizeof(struct efi_device_path_usb);
+		break;
+	case UCLASS_EFI_MEDIA:
+		size = sizeof(struct efi_device_path_udevice);
 		break;
 	default:
 		size = sizeof(struct efi_device_path_udevice);
@@ -514,6 +525,22 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 			dp->controller_number = desc->lun;
 			return &dp[1];
 			}
+			break;
+		case UCLASS_EFI_MEDIA:
+		if (IS_ENABLED(CONFIG_EFI_APP)) {
+			struct efi_device_path_udevice *dp = buf;
+			struct blk_desc *desc = dev_get_uclass_plat(dev);
+
+			dp->dp.type = DEVICE_PATH_TYPE_HARDWARE_DEVICE;
+			dp->dp.sub_type = DEVICE_PATH_SUB_TYPE_VENDOR;
+			dp->dp.length = sizeof(*dp);
+			memcpy(&dp->guid, &efi_u_boot_guid, sizeof(efi_guid_t));
+			dp->uclass_id = (UCLASS_BLK & 0xffff) |
+					(desc->uclass_id << 16);
+			dp->dev_number = desc->devnum;
+
+			return &dp[1];
+		}
 			break;
 		default: {
 			/* UCLASS_BLKMAP, UCLASS_HOST, UCLASS_VIRTIO */
@@ -1010,6 +1037,86 @@ out:
 }
 
 /**
+ * efi_dp_from_efi_app() - create device path for EFI app
+ *
+ * Create a device path for EFI applications using firmware device paths
+ * from EFI media devices
+ *
+ * @devnr:	device number string (format: "dev:part")
+ * @descp:	pointer to store block device descriptor
+ * @partp:	pointer to store partition number
+ * @dp:		pointer to store created device path
+ * Return:	U-Boot error code (0 on success, negative on error)
+ */
+static int efi_dp_from_efi_app(const char *devnr,
+			       struct blk_desc **descp, int *partp,
+			       struct efi_device_path **dpp)
+{
+	struct efi_media_plat *plat;
+	struct efi_device_path *dp;
+	struct udevice *media_dev;
+	struct blk_desc *desc;
+	int part, dev_num;
+	char *ep;
+	int ret;
+
+	log_debug("using EFI app firmware device path for devnr='%s'\n", devnr);
+
+	/* parse device number from devnr (format: "devnum:part") */
+	dev_num = hextoul(devnr, &ep);
+	if (*ep != ':') {
+		log_err("invalid EFI device format: '%s'\n", devnr);
+		return log_msg_ret("eda", -EINVAL);
+	}
+
+	/* find the EFI media device */
+	ret = uclass_get_device(UCLASS_EFI_MEDIA, dev_num, &media_dev);
+	if (ret) {
+		log_err("cannot find EFI media device %d\n", dev_num);
+		return log_msg_ret("eda", -ENODEV);
+	}
+	plat = dev_get_plat(media_dev);
+
+	log_debug("found EFI media device %d with firmware device path: %pD\n",
+		  dev_num, plat->device_path);
+
+	/* use the firmware device path and append partition */
+	part = simple_strtoul(ep + 1, NULL, 16);
+	if (part > 0) {
+		struct efi_device_path *part_dp;
+		struct disk_partition pinfo;
+
+		/* Get partition info */
+		part = blk_get_device_part_str("efi", devnr, &desc, &pinfo, 1);
+		if (part < 0 || !desc) {
+			log_err("cannot get partition info for '%s'\n", devnr);
+			return log_msg_ret("edb", part < 0 ? part : -ENODEV);
+		}
+
+		/* Create partition node */
+		part_dp = efi_dp_part_node(desc, part);
+		if (!part_dp)
+			return log_msg_ret("edn", -ENOMEM);
+
+		/* Combine firmware device path with partition */
+		dp = efi_dp_append_node(plat->device_path, part_dp);
+		efi_free_pool(part_dp);
+	} else {
+		/* Use whole device */
+		dp = efi_dp_dup(plat->device_path);
+	}
+	if (!dp)
+		return log_msg_ret("ede", -ENOMEM);
+
+	log_debug("created final device path: %pD\n", dp);
+	*descp = desc;
+	*partp = part;
+	*dpp = dp;
+
+	return 0;
+}
+
+/**
  * efi_dp_from_name() - convert U-Boot device and file path to device path
  *
  * @dev:	U-Boot device, e.g. 'mmc'
@@ -1046,11 +1153,22 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 		efi_net_dp_from_dev(&dp, eth_get_dev(), false);
 	} else if (!strcmp(dev, "Uart")) {
 		dp = efi_dp_from_uart();
+	} else if (IS_ENABLED(CONFIG_EFI_APP) && !strcmp(dev, "efi")) {
+		int ret;
+
+		ret = efi_dp_from_efi_app(devnr, &desc, &part, &dp);
+		if (ret)
+			return EFI_INVALID_PARAMETER;
 	} else {
+		log_debug("calling blk_get_device_part_str dev='%s', devnr='%s'\n",
+			  dev, devnr);
 		part = blk_get_device_part_str(dev, devnr, &desc, &fs_partition,
 					       1);
-		if (part < 0 || !desc)
+		if (part < 0 || !desc) {
+			log_err("Failed to find fs: dev='%s', devnr='%s', part=%d, desc=%p\n",
+				dev, devnr, part, desc);
 			return EFI_INVALID_PARAMETER;
+		}
 
 		dp = efi_dp_from_part(desc, part);
 	}

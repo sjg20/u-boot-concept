@@ -579,7 +579,10 @@ def show_timings():
             value (int): Value to display, i.e. the relative length of the bar
         """
         if value:
-            bar_length = int((value / max_count) * max_bar_length)
+            if max_count:
+                bar_length = int((value / max_count) * max_bar_length)
+            else:
+                bar_length = 1
             print(f"{key:>8} : {get_time_delta(msecs):>7}  |{'#' * bar_length} {value}", file=buf)
 
     # Create the buckets we will use, each has a count and a total time

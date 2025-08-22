@@ -68,9 +68,6 @@ efi_status_t efi_uninstall_protocol
 /* 1 if inside U-Boot code, 0 if inside EFI payload code */
 static int entry_count = 1;
 static int nesting_level;
-/* GUID of the EFI_DRIVER_BINDING_PROTOCOL */
-const efi_guid_t efi_guid_driver_binding_protocol =
-			EFI_DRIVER_BINDING_PROTOCOL_GUID;
 
 /* event group ExitBootServices() invoked */
 const efi_guid_t efi_guid_event_group_exit_boot_services =
@@ -4028,4 +4025,9 @@ efi_status_t efi_initialize_system_table(void)
 struct efi_system_table *efi_get_sys_table(void)
 {
 	return &systab;
+}
+
+struct efi_boot_services *efi_get_boot(void)
+{
+	return systab.boottime;
 }

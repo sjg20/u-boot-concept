@@ -11,7 +11,7 @@ config EFI
 
 	  This is used to provide libraries shared by both.
 
-if EFI_LOADER
+if EFI_LOADER || EFI_APP
 
 config EFI_BINARY_EXEC
 	bool "Execute UEFI binary"
