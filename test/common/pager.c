@@ -50,12 +50,12 @@ static int pager_test_simple_text(struct unit_test_state *uts)
 	ut_assertok(pager_init(&pag, 20, 1024));
 
 	/* Post some text and get it back */
-	result = pager_post(pag, text);
+	result = pager_post(pag, true, text);
 	ut_assertnonnull(result);
 	ut_asserteq_str(text, result);
 
 	/* Should be no more text */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnull(result);
 
 	pager_uninit(pag);
@@ -76,28 +76,28 @@ static int pager_test_multiline(struct unit_test_state *uts)
 	ut_assertok(pager_init(&pag, 20, 1024));
 
 	/* Post multiple pieces of text */
-	result = pager_post(pag, text1);
+	result = pager_post(pag, true, text1);
 	ut_assertnonnull(result);
 	ut_asserteq_str(text1, result);
 
 	/* Should be no more text after first post */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnull(result);
 
-	result = pager_post(pag, text2);
+	result = pager_post(pag, true, text2);
 	ut_assertnonnull(result);
 	ut_asserteq_str(text2, result);
 
 	/* Should be no more text after second post */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnull(result);
 
-	result = pager_post(pag, text3);
+	result = pager_post(pag, true, text3);
 	ut_assertnonnull(result);
 	ut_asserteq_str(text3, result);
 
 	/* Should be no more text after third post */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnull(result);
 
 	pager_uninit(pag);
@@ -115,10 +115,10 @@ static int pager_test_large_text(struct unit_test_state *uts)
 	ut_assertok(pager_init(&pag, 20, 16)); /* Small buffer */
 
 	/* Post large text - should fit in buffer */
-	result = pager_post(pag, "this is 16 chars");
+	result = pager_post(pag, true, "this is 16 chars");
 	ut_assertnonnull(result);
 	ut_asserteq_str("this is 16 chars", result);
-	ut_assertnull(pager_next(pag, 0));
+	ut_assertnull(pager_next(pag, true, 0));
 
 	pager_uninit(pag);
 
@@ -135,12 +135,12 @@ static int pager_test_overflow(struct unit_test_state *uts)
 	ut_assertok(pager_init(&pag, 20, 4)); /* Small buffer */
 
 	/* send some text which is too long for the buffer */
-	result = pager_post(pag, "test1");
+	result = pager_post(pag, true, "test1");
 	ut_assertnonnull(result);
 
 	/* overflow handling should return the text */
 	ut_asserteq_str("test1", result);
-	ut_assertnull(pager_next(pag, 0));
+	ut_assertnull(pager_next(pag, true, 0));
 
 	pager_uninit(pag);
 
@@ -154,7 +154,7 @@ static int pager_test_null_input(struct unit_test_state *uts)
 	const char *result;
 
 	/* Test pager_post with NULL pager */
-	result = pager_post(NULL, "test");
+	result = pager_post(NULL, true, "test");
 	ut_asserteq_str("test", result);
 
 	return 0;
@@ -170,11 +170,11 @@ static int pager_test_empty_strings(struct unit_test_state *uts)
 	ut_assertok(pager_init(&pag, 20, 1024));
 
 	/* Post empty string */
-	result = pager_post(pag, "");
+	result = pager_post(pag, true, "");
 	ut_assertnull(result);
 
 	/* Should be no more text */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnull(result);
 
 	pager_uninit(pag);
@@ -197,7 +197,7 @@ static int pager_test_buffer_management(struct unit_test_state *uts)
 	ut_asserteq(1024, pag->buf.size);
 
 	/* Post text and verify buffer state */
-	result = pager_post(pag, text);
+	result = pager_post(pag, true, text);
 	ut_assertnonnull(result);
 
 	/* Verify the buffer contains our text */
@@ -225,7 +225,7 @@ static int pager_test_long_single_line(struct unit_test_state *uts)
 	long_line[sizeof(long_line) - 1] = '\0';
 
 	/* Post the long line */
-	result = pager_post(pag, long_line);
+	result = pager_post(pag, true, long_line);
 	ut_assertnonnull(result);
 
 	/* Should get our text back */
@@ -248,7 +248,7 @@ static int pager_test_line_counting(struct unit_test_state *uts)
 	ut_assertok(pager_init(&pag, 4, 1024));
 
 	/* Post multiline text */
-	result = pager_post(pag, multiline_text);
+	result = pager_post(pag, true, multiline_text);
 	ut_assertnonnull(result);
 
 	/* Should get first 3 lines (excluding the 3rd newline) */
@@ -257,22 +257,22 @@ static int pager_test_line_counting(struct unit_test_state *uts)
 	ut_asserteq(0, pag->line_count);
 
 	/* Next call should return pager prompt */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnonnull(result);
 	ut_asserteq_str("\n: Press SPACE to continue", result);
 
 	/* Press space to continue */
-	result = pager_next(pag, ' ');
+	result = pager_next(pag, true, ' ');
 	ut_assertnonnull(result);
 	ut_asserteq_str("\r                         \r", result);
 
 	/* Get remaining lines */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnonnull(result);
 	ut_asserteq_str("Line 4\nLine 5\n", result);
 
 	/* Should be no more text */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnull(result);
 
 	pager_uninit(pag);
@@ -291,30 +291,30 @@ static int pager_test_pager_waiting(struct unit_test_state *uts)
 	ut_assertok(pager_init(&pag, 3, 1024));
 
 	/* Post text that fills exactly the page limit */
-	result = pager_post(pag, "Line 1\nLine 2\n");
+	result = pager_post(pag, true, "Line 1\nLine 2\n");
 	ut_assertnonnull(result);
 	ut_asserteq_str("Line 1\nLine 2", result);
 
 	/* Next call should return the prompt */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnonnull(result);
 	ut_asserteq_str("\n: Press SPACE to continue", result);
 
 	/* Next call without space key should return PAGER_WAITING */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_asserteq_ptr(PAGER_WAITING, result);
 
 	/* Another call without space should still return PAGER_WAITING */
-	result = pager_next(pag, 'x');  /* Wrong key */
+	result = pager_next(pag, true, 'x');  /* Wrong key */
 	ut_asserteq_ptr(PAGER_WAITING, result);
 
 	/* Pressing space should clear the prompt */
-	result = pager_next(pag, ' ');
+	result = pager_next(pag, true, ' ');
 	ut_assertnonnull(result);
 	ut_asserteq_str("\r                         \r", result);
 
 	/* Now should return NULL (no more content) */
-	result = pager_next(pag, 0);
+	result = pager_next(pag, true, 0);
 	ut_assertnull(result);
 
 	pager_uninit(pag);
@@ -322,3 +322,70 @@ static int pager_test_pager_waiting(struct unit_test_state *uts)
 	return 0;
 }
 COMMON_TEST(pager_test_pager_waiting, 0);
+
+/* Test use_pager parameter - output text directly, while buffer is non-empty */
+static int pager_test_use_pager_param(struct unit_test_state *uts)
+{
+	struct pager *pag;
+	const char *buffered_text = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n";
+	const char *direct_text = "This should be written immediately";
+	const char *result;
+
+	/* Init with small page length to ensure paging occurs */
+	ut_assertok(pager_init(&pag, 3, 1024));
+
+	/* Post text with use_pager=true - should trigger paging */
+	result = pager_post(pag, true, buffered_text);
+	ut_assertnonnull(result);
+	/* Should get first 2 lines */
+	ut_asserteq_str("Line 1\nLine 2", result);
+
+	/* Now call pager_post with use_pager=false while text is still buffered */
+	result = pager_post(pag, false, direct_text);
+	/* Should get the text immediately, not from buffer */
+	ut_asserteq_ptr(direct_text, result);
+
+	/* Call pager_next with use_pager=false - should return NULL */
+	result = pager_next(pag, false, 0);
+	ut_assertnull(result);
+
+	/* Now continue with use_pager=true to get buffered text */
+	result = pager_next(pag, true, 0);
+	ut_assertnonnull(result);
+	/* Should get the pager prompt */
+	ut_asserteq_str("\n: Press SPACE to continue", result);
+
+	/* Press space to continue */
+	result = pager_next(pag, true, ' ');
+	ut_assertnonnull(result);
+	ut_asserteq_str("\r                         \r", result);
+
+	/* Get remaining buffered lines - should be next 2 lines due to page limit */
+	result = pager_next(pag, true, 0);
+	ut_assertnonnull(result);
+	ut_asserteq_str("Line 3\nLine 4", result);
+
+	/* Should get pager prompt again */
+	result = pager_next(pag, true, 0);
+	ut_assertnonnull(result);
+	ut_asserteq_str("\n: Press SPACE to continue", result);
+
+	/* Press space to continue */
+	result = pager_next(pag, true, ' ');
+	ut_assertnonnull(result);
+	ut_asserteq_str("\r                         \r", result);
+
+	/* Get final line */
+	result = pager_next(pag, true, 0);
+	ut_assertnonnull(result);
+	ut_asserteq_str("Line 5\n", result);
+
+	/* Should be no more text */
+	result = pager_next(pag, true, 0);
+	ut_assertnull(result);
+
+	pager_uninit(pag);
+
+	return 0;
+}
+COMMON_TEST(pager_test_use_pager_param, 0);
