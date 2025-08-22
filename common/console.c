@@ -322,14 +322,22 @@ static int console_tstc(int file)
 	return 0;
 }
 
+static void console_puts_pager(int file, const char *s);
+
 static void console_putc_pager(int file, const char c)
 {
-	int i;
-	struct stdio_dev *dev;
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER) && gd_pager()) {
+		char str[2] = {c, '\0'};
 
-	for_each_console_dev(i, file, dev) {
-		if (dev->putc != NULL)
-			dev->putc(dev, c);
+		console_puts_pager(file, str);
+	} else {
+		int i;
+		struct stdio_dev *dev;
+
+		for_each_console_dev(i, file, dev) {
+			if (dev->putc)
+				dev->putc(dev, c);
+		}
 	}
 }
 
