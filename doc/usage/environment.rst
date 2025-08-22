@@ -337,6 +337,7 @@ netretry
 
 pager
     Decimal number of visible lines on the display, or serial console.
+    :doc:`/usage/console`.
 
 rng_seed_size
     Size of random value added to device-tree node /chosen/rng-seed.

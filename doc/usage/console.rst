@@ -1,6 +1,7 @@
 .. SPDX-License-Identifier: GPL-2.0+
 .. sectionauthor:: Paolo Scaffardi, AIRVENT SAM s.p.a - RIMINI(ITALY), arsenio@tin.it
 ..  (C) Copyright 2000
+.. sectionauthor:: Simon Glass <sjg@chromium.org>
 
 =======================
 U-Boot console handling
@@ -60,3 +61,47 @@ file ('stdin', 'stdout' or 'stderr')
 
 Remember that FILE-related functions CANNOT be used before U-Boot relocation,
 which is done in `board_init_r()`.
+
+Pager
+-----
+
+U-Boot has a simple pager feature, enabled with `CONFIG_CONSOLE_PAGER`. It is
+only available if `CONFIG_CONSOLE_MUX` is also enabled.
+
+When activated, the pager pauses at the end of each 'page' (screenful) of
+output, shows a prompt ": Press SPACE to continue" and lets the user read the
+output. To continue to the next page, press the SPACE key.
+
+Page Size Configuration
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The number of lines per page is determined in the following order of priority:
+
+1. **Environment variable**: The `pager` environment variable (hex value)
+   takes highest priority. Set to 0 to disable paging.
+
+2. **Video console detection**: If no environment variable is set and a video
+   console is active, the pager uses the number of rows from the video console.
+
+3. **Serial TTY detection**: For serial consoles, the pager checks if the
+   output is connected to a terminal (TTY). If not connected to a TTY, paging
+   is disabled. This check works by sending a few special characters to the
+   terminal and (hopefully) receiving a reply. If you are logging the output of
+   U-Boot, you may see these characters in the log. Disable
+   `CONFIG_SERIAL_TERM_PRESENT` is this is unwanted.
+
+4. **Configuration default**: If none of the above apply, falls back to
+   `CONFIG_CONSOLE_PAGER_LINES`.
+
+Examples::
+
+    # Set page size to 30 lines (hex value 1e)
+    setenv pager 1e
+
+    # Set page size to 24 lines (hex value 18)  
+    setenv pager 18
+
+    # Disable paging
+    setenv pager 0
+
+For developer documentation, please see :doc:`/develop/console`.
