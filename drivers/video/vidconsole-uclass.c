@@ -745,7 +745,7 @@ static int vidconsole_post_probe(struct udevice *dev)
 		strcpy(sdev->name, "vidconsole");
 	}
 
-	sdev->flags = DEV_FLAGS_OUTPUT;
+	sdev->flags = DEV_FLAGS_OUTPUT | DEV_FLAGS_DM;
 	sdev->putc = vidconsole_putc;
 	sdev->puts = vidconsole_puts;
 	sdev->priv = dev;
