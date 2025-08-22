@@ -26,6 +26,8 @@ obj-$(CONFIG_MII) += miiphyutil.o
 obj-$(CONFIG_CMD_MII) += miiphyutil.o
 obj-$(CONFIG_PHYLIB) += miiphyutil.o
 
+obj-$(CONFIG_CONSOLE_PAGER) += pager.o
+
 obj-$(CONFIG_USB_HOST) += usb.o usb_hub.o
 obj-$(CONFIG_USB_GADGET) += usb.o
 obj-$(CONFIG_USB_STORAGE) += usb_storage.o
