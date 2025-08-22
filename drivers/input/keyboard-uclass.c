@@ -68,7 +68,7 @@ static int keyboard_pre_probe(struct udevice *dev)
 	int ret;
 
 	strlcpy(sdev->name, dev->name, sizeof(sdev->name));
-	sdev->flags = DEV_FLAGS_INPUT;
+	sdev->flags = DEV_FLAGS_INPUT | DEV_FLAGS_DM;
 	sdev->getc = keyboard_getc;
 	sdev->tstc = keyboard_tstc;
 	sdev->start = keyboard_start;
