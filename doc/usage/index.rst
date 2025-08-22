@@ -6,6 +6,7 @@ Use U-Boot
 
    spl_boot
    blkmap
+   console
    dfu
    environment
    fdt_overlays
