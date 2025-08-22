@@ -26,12 +26,14 @@
  * pager_next() will return a user prompt
  * @PAGERST_WAIT_USER: Waiting for the user to press a key
  * @PAGERST_CLEAR_PROMPT: Clearing the prompt ready for more output
+ * @PAGERST_TEST_BYPASS: Pager is being bypassed since tests are running
  */
 enum pager_state {
 	PAGERST_OK,
 	PAGERST_AT_LIMIT,
 	PAGERST_WAIT_USER,
 	PAGERST_CLEAR_PROMPT,
+	PAGERST_TEST_BYPASS,
 };
 
 /**
@@ -110,6 +112,18 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s);
 const char *pager_next(struct pager *pag, bool use_pager, int ch);
 
 /**
+ * pager_set_bypass() - put the pager into bypass mode
+ *
+ * This is used for tests. Bypass mode stops the pager from doing anything to
+ * interrupt output
+ *
+ * @pag: Pager to use, may be NULL in which case this function does nothing
+ * @bypass: true to put the pager in bypass mode, false to return to normal mode
+ * Return: old value of the bypass flag
+ */
+bool pager_set_bypass(struct pager *pag, bool bypass);
+
+/**
  * pager_uninit() - Uninit the pager
  *
  * Frees all memory and also @pag
@@ -128,6 +142,11 @@ static inline const char *pager_post(struct pager *pag, bool use_pager,
 static inline const char *pager_next(struct pager *pag, bool use_pager, int ch)
 {
 	return NULL;
+}
+
+static inline bool pager_set_bypass(struct pager *pag, bool bypass)
+{
+	return true;
 }
 
 #endif
