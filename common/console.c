@@ -442,6 +442,35 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 }
 #endif
 
+/**
+ * sdev_file_has_uclass() - Find a file has a device of a particular uclass
+ *
+ * Given a file, this returns the first device of the given uclass that is found
+ * within that file.
+ *
+ * This only works with driver model
+ *
+ * @file: File to check (e.g. stdout)
+ * @id: uclass ID to look for
+ * Return: device, if found, NULL if not
+ */
+static struct udevice *sdev_file_has_uclass(int file, enum uclass_id id)
+{
+	struct stdio_dev *sdev;
+	int i;
+
+	for_each_console_dev(i, file, sdev) {
+		if (sdev->flags & DEV_FLAGS_DM) {
+			struct udevice *dev = sdev->priv;
+
+			if (device_get_uclass_id(dev) == id)
+				return dev;
+		}
+	}
+
+	return NULL;
+}
+
 #else /* !CONSOLE_MUX */
 
 static void console_devices_set(int file, struct stdio_dev *dev)
@@ -500,6 +529,32 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 }
 #endif
 #endif /* CONIFIG_IS_ENABLED(CONSOLE_MUX) */
+
+static int calc_check_console_lines(void)
+{
+	struct udevice *dev;
+	int lines;
+
+	lines = env_get_hex("pager", -1);
+	if (lines != -1)
+		return lines;
+	lines = IF_ENABLED_INT(CONFIG_CONSOLE_PAGER,
+			       CONFIG_CONSOLE_PAGER_LINES);
+
+	/* get number of lines from the video console, if available */
+	if (IS_ENABLED(CONFIG_VIDEO) && video_is_visible()) {
+		dev = sdev_file_has_uclass(stdout, UCLASS_VIDEO_CONSOLE);
+
+		if (dev) {
+			struct vidconsole_priv *priv;
+
+			priv = dev_get_uclass_priv(dev);
+			lines = priv->rows;
+		}
+	}
+
+	return lines;
+}
 
 static void __maybe_unused console_setfile_and_devices(int file, struct stdio_dev *dev)
 {
@@ -1140,11 +1195,9 @@ static void setup_pager(void)
 {
 	/* Init pager now that console is ready */
 	if (IS_ENABLED(CONFIG_CONSOLE_PAGER)) {
-		int lines = IF_ENABLED_INT(CONFIG_CONSOLE_PAGER,
-					   CONFIG_CONSOLE_PAGER_LINES);
 		int ret;
 
-		ret = pager_init(gd_pagerp(), env_get_hex("pager", lines),
+		ret = pager_init(gd_pagerp(), calc_check_console_lines(),
 				 PAGER_BUF_SIZE);
 		if (ret)
 			printf("Failed to init pager\n");
