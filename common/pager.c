@@ -7,6 +7,7 @@
 
 #define LOG_CATEGORY LOGC_CONSOLE
 
+#include <env.h>
 #include <errno.h>
 #include <malloc.h>
 #include <pager.h>
@@ -153,6 +154,33 @@ void pager_reset(struct pager *pag)
 {
 	pag->line_count = 0;
 }
+
+static int on_pager(const char *name, const char *value, enum env_op op,
+		    int flags)
+{
+	struct pager *pag = gd_pager();
+	int new_page_len;
+
+	if (!IS_ENABLED(CONFIG_CONSOLE_PAGER) || !pag)
+		return 0;
+
+	switch (op) {
+	case env_op_create:
+	case env_op_overwrite:
+		if (value) {
+			new_page_len = simple_strtoul(value, NULL, 16);
+			pager_set_page_len(pag, new_page_len);
+		}
+		break;
+	case env_op_delete:
+		/* Reset to default when deleted */
+		pager_set_page_len(pag, CONFIG_CONSOLE_PAGER_LINES);
+		break;
+	}
+
+	return 0;
+}
+U_BOOT_ENV_CALLBACK(pager, on_pager);
 
 int pager_init(struct pager **pagp, int page_len, int buf_size)
 {
