@@ -592,6 +592,14 @@ static_assert(sizeof(struct global_data) == GD_SIZE);
 #define gd_pagerp()		NULL
 #endif
 
+#if CONFIG_IS_ENABLED(CONSOLE_PAGER)
+#define gd_pager()		gd->pager
+#define gd_pagerp()		&gd->pager
+#else
+#define gd_pager()		NULL
+#define gd_pagerp()		NULL
+#endif
+
 /**
  * enum gd_flags - global data flags
  *
