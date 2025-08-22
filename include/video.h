@@ -8,6 +8,9 @@
 #define _VIDEO_H_
 
 #include <stdio_dev.h>
+#ifdef CONFIG_SANDBOX
+#include <asm/state.h>
+#endif
 
 struct udevice;
 
@@ -459,5 +462,23 @@ int video_reserve_from_bloblist(struct video_handoff *ho);
  * there is no device
  */
 ulong video_get_fb(void);
+
+/**
+ * video_is_visible() - check if the video display is being used
+ *
+ * This does not indicate that there is actually a display, only that if there
+ * is one, we can assume it is present
+ *
+ * Return: true if any display is likely visible, false if not
+ */
+static inline bool video_is_visible(void)
+{
+#ifdef CONFIG_SANDBOX
+	return sandbox_video_is_visible();
+#else
+	/* assume that it is! */
+	return true;
+#endif
+}
 
 #endif
