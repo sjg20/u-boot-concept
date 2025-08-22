@@ -1,11 +1,10 @@
-SPDX-License-Identifier: GPL-2.0+
-/*
- * (C) Copyright 2000
- * Paolo Scaffardi, AIRVENT SAM s.p.a - RIMINI(ITALY), arsenio@tin.it
- */
+.. SPDX-License-Identifier: GPL-2.0+
+.. sectionauthor:: Paolo Scaffardi, AIRVENT SAM s.p.a - RIMINI(ITALY), arsenio@tin.it
+..  (C) Copyright 2000
 
+=======================
 U-Boot console handling
-========================
+=======================
 
 HOW THE CONSOLE WORKS?
 ----------------------
@@ -57,4 +56,4 @@ You can use the following functions to access the console:
     fgetc	(like getc but redirected to a file)
 
 Remember that all FILE-related functions CANNOT be used before
-U-Boot relocation (done in 'board_init_r' in arch/*/lib/board.c).
+U-Boot relocation (done in 'board_init_r' in `arch/*/lib/board.c`).
