@@ -344,6 +344,15 @@ config CONSOLE_PAGER
 	  controlled by the 'pager' environment variable. If the variable is
 	  not set or is empty, paging is disabled.
 
+config CONSOLE_PAGER_LINES
+	int "Number of lines per page"
+	depends on CONSOLE_PAGER
+	default 25
+	help
+	  Sets the default number of lines that the pager assumes is visible on
+	  the display. This is used as a default if the "pager" environment
+	  variable is unset.
+
 endmenu
 
 menu "Logging"

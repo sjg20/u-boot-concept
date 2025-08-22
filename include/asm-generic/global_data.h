@@ -24,6 +24,7 @@
 #include <event_internal.h>
 #include <fdtdec.h>
 #include <membuf.h>
+#include <pager.h>
 #include <linux/list.h>
 #include <linux/build_bug.h>
 #include <asm-offsets.h>
@@ -477,6 +478,14 @@ struct global_data {
 	 */
 	struct upl *upl;
 #endif
+#if CONFIG_IS_ENABLED(CONSOLE_PAGER)
+	/**
+	 * @pager: Pointer to the pager settings, or NULL if none
+	 *
+	 * This is set up in console_init_r()
+	 */
+	struct pager *pager;
+#endif
 };
 #ifndef DO_DEPS_ONLY
 static_assert(sizeof(struct global_data) == GD_SIZE);
@@ -616,6 +625,14 @@ static_assert(sizeof(struct global_data) == GD_SIZE);
 #else
 #define gd_passage_bloblist()	0
 #define gd_passage_dtb()	0
+#endif
+
+#if CONFIG_IS_ENABLED(CONSOLE_PAGER)
+#define gd_pager()		gd->pager
+#define gd_pagerp()		&gd->pager
+#else
+#define gd_pager()		NULL
+#define gd_pagerp()		NULL
 #endif
 
 /**
