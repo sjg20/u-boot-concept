@@ -14,6 +14,7 @@
 #include <net.h>
 #include <of_live.h>
 #include <os.h>
+#include <pager.h>
 #include <spl.h>
 #include <usb.h>
 #include <dm/ofnode.h>
@@ -747,8 +748,10 @@ int ut_run_list(struct unit_test_state *uts, const char *category,
 		memcpy(uts->fdt_copy, gd->fdt_blob, uts->fdt_size);
 	}
 	uts->force_run = force_run;
+	pager_set_bypass(gd_pager(), true);
 	ret = ut_run_tests(uts, prefix, tests, count, select_name,
 			   test_insert);
+	pager_set_bypass(gd_pager(), false);
 
 	/* Best efforts only...ignore errors */
 	if (has_dm_tests)
