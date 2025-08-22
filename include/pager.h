@@ -74,7 +74,7 @@ struct pager {
 /**
  * pager_post() - Add text to the input buffer for later handling
  *
- * The text is added to the pager buffer and fed out a screenful
+ * If @use_pager the text is added to the pager buffer and fed out a screenful
  * at a time. This function calls pager_post() after storing the text.
  *
  * After calling pager_post(), if it returns anything other than NULL, you must
@@ -84,10 +84,12 @@ struct pager {
  * If @pag is NULL, this does nothing but return @s
  *
  * @pag: Pager to use, may be NULL
+ * @use_pager: Whether or not to use the pager functionality
  * @s: Text to add
  * Return: text which should be sent to output, or NULL if there is no more.
+ * If !@use_pager this just returns @s and does not affect the pager state
  */
-const char *pager_post(struct pager *pag, const char *s);
+const char *pager_post(struct pager *pag, bool use_pager, const char *s);
 
 /**
  * pager_next() - Returns the next screenful of text to show
@@ -98,12 +100,14 @@ const char *pager_post(struct pager *pag, const char *s);
  * return PAGER_WAITING until @ch is non-zero.
  *
  * @pag: Pager to use
+ * @use_pager: Whether or not to use the pager functionality
  * @ch: Key that the user has pressed, or 0 if none
  *
  * Return: text which should be sent to output, or PAGER_WAITING if waiting for
  * the user to press a key, or NULL if there is no more text.
+ * If !@use_pager this just returns NULL and does not affect the pager state
  */
-const char *pager_next(struct pager *pag, int ch);
+const char *pager_next(struct pager *pag, bool use_pager, int ch);
 
 /**
  * pager_uninit() - Uninit the pager
@@ -115,12 +119,13 @@ const char *pager_next(struct pager *pag, int ch);
 void pager_uninit(struct pager *pag);
 
 #else
-static inline const char *pager_post(struct pager *pag, const char *s)
+static inline const char *pager_post(struct pager *pag, bool use_pager,
+				     const char *s)
 {
 	return s;
 }
 
-static inline const char *pager_next(struct pager *pag, int ch)
+static inline const char *pager_next(struct pager *pag, bool use_pager, int ch)
 {
 	return NULL;
 }
