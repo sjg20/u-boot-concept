@@ -5,6 +5,7 @@
  *  Copyright (c) 2018 AKASHI Takahiro, Linaro Limited
  */
 
+#include <abuf.h>
 #include <charset.h>
 #include <command.h>
 #include <efi_loader.h>
@@ -50,6 +51,36 @@ struct var_info {
 	efi_guid_t guid;
 };
 
+int efi_read_var(const u16 *name, const efi_guid_t *guid, u32 *attrp,
+		 struct abuf *buf, u64 *timep)
+{
+	efi_uintn_t size;
+	efi_status_t eret;
+	u32 attr;
+	u64 time;
+
+	abuf_init(buf);
+	size = 0;
+	eret = efi_get_variable_int(name, guid, &attr, &size, NULL, &time);
+	if (eret == EFI_BUFFER_TOO_SMALL) {
+		if (!abuf_realloc(buf, size))
+			return -ENOMEM;
+
+		eret = efi_get_variable_int(name, guid, &attr, &size, buf->data,
+					    &time);
+	}
+	if (eret == EFI_NOT_FOUND)
+		return -ENOENT;
+	if (eret != EFI_SUCCESS)
+		return -EBADF;
+	if (attrp)
+		*attrp = attr;
+	if (timep)
+		*timep = time;
+
+	return 0;
+}
+
 /**
  * efi_dump_single_var() - show information about a UEFI variable
  *
@@ -63,30 +94,20 @@ struct var_info {
 static void efi_dump_single_var(u16 *name, const efi_guid_t *guid,
 				 bool verbose, bool nodump)
 {
-	u32 attributes;
-	u8 *data;
-	u64 time;
 	struct rtc_time tm;
 	efi_uintn_t size;
+	u32 attributes;
+	struct abuf buf;
 	int count, i;
-	efi_status_t ret;
+	u64 time;
+	int ret;
 
-	data = NULL;
-	size = 0;
-	ret = efi_get_variable_int(name, guid, &attributes, &size, data, &time);
-	if (ret == EFI_BUFFER_TOO_SMALL) {
-		data = malloc(size);
-		if (!data)
-			goto out;
-
-		ret = efi_get_variable_int(name, guid, &attributes, &size,
-					   data, &time);
-	}
-	if (ret == EFI_NOT_FOUND) {
+	ret = efi_read_var(name, guid, &attributes, &buf, &time);
+	if (ret == -ENOENT) {
 		printf("Error: \"%ls\" not defined\n", name);
 		goto out;
 	}
-	if (ret != EFI_SUCCESS)
+	if (ret)
 		goto out;
 
 	if (verbose) {
@@ -106,13 +127,13 @@ static void efi_dump_single_var(u16 *name, const efi_guid_t *guid,
 		printf(", DataSize = 0x%zx\n", size);
 		if (!nodump)
 			print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
-				       data, size, true);
+				       buf.data, size, true);
 	} else {
 		printf("%ls\n", name);
 	}
 
 out:
-	free(data);
+	abuf_uninit(&buf);
 }
 
 static bool match_name(int argc, char *const argv[], u16 *var_name16)

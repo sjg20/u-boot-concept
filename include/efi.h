@@ -23,6 +23,7 @@
 #include <net.h>
 #endif
 
+struct abuf;
 struct bootflow;
 
 /* Type INTN in UEFI specification */
@@ -161,6 +162,9 @@ extern const efi_guid_t efi_guid_driver_binding_protocol;
 extern const efi_guid_t efi_guid_component_name2;
 /* GUIDs for authentication - most of these are still in efi_loader.h */
 extern const efi_guid_t efi_guid_image_security_database;
+
+/* Access to Shim variables */
+extern const efi_guid_t efi_shim_lock;
 
 /* Generic EFI table header */
 struct efi_table_hdr {
@@ -862,5 +866,8 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
  */
 int efi_dp_from_bootdev(const struct udevice *dev,
 			const struct efi_device_path **dpp);
+
+int efi_read_var(const u16 *name, const efi_guid_t *guid, u32 *attrp,
+		 struct abuf *buf, u64 *timep);
 
 #endif /* _LINUX_EFI_H */

@@ -408,6 +408,44 @@ static struct udevice *sdev_file_has_uclass(int file, enum uclass_id id)
 	return NULL;
 }
 
+int calc_check_console_lines(void)
+{
+	int lines, dev_lines = -1;
+	struct udevice *dev;
+
+	lines = env_get_hex("pager", -1);
+	if (lines != -1)
+		return lines;
+	lines = IF_ENABLED_INT(CONFIG_CONSOLE_PAGER,
+			       CONFIG_CONSOLE_PAGER_LINES);
+
+	/* get number of lines from the video console, if available */
+	if (IS_ENABLED(CONFIG_VIDEO) && video_is_visible()) {
+		dev = sdev_file_has_uclass(stdout, UCLASS_VIDEO_CONSOLE);
+
+		if (dev) {
+			struct vidconsole_priv *priv;
+
+			priv = dev_get_uclass_priv(dev);
+			dev_lines = priv->rows;
+		}
+	}
+	/* get number of lines from the serial console, if available */
+	if (IS_ENABLED(CONFIG_DM_SERIAL) &&
+	    sdev_file_has_uclass(stdout, UCLASS_SERIAL)) {
+		int cols;
+
+		if (!serial_is_tty())
+			dev_lines = 0;
+		else if (dev_lines == -1)
+			serial_query_size(&dev_lines, &cols);
+	}
+	if (dev_lines != -1)
+		lines = dev_lines;
+
+	return lines;
+}
+
 #else /* !CONSOLE_MUX */
 
 static void console_devices_set(int file, struct stdio_dev *dev)
@@ -465,45 +503,13 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 	console_setfile(file, dev);
 }
 #endif
-#endif /* CONIFIG_IS_ENABLED(CONSOLE_MUX) */
 
 int calc_check_console_lines(void)
 {
-	int lines, dev_lines = -1;
-	struct udevice *dev;
-
-	lines = env_get_hex("pager", -1);
-	if (lines != -1)
-		return lines;
-	lines = IF_ENABLED_INT(CONFIG_CONSOLE_PAGER,
-			       CONFIG_CONSOLE_PAGER_LINES);
-
-	/* get number of lines from the video console, if available */
-	if (IS_ENABLED(CONFIG_VIDEO) && video_is_visible()) {
-		dev = sdev_file_has_uclass(stdout, UCLASS_VIDEO_CONSOLE);
-
-		if (dev) {
-			struct vidconsole_priv *priv;
-
-			priv = dev_get_uclass_priv(dev);
-			dev_lines = priv->rows;
-		}
-	}
-	/* get number of lines from the serial console, if available */
-	if (IS_ENABLED(CONFIG_DM_SERIAL) &&
-	    sdev_file_has_uclass(stdout, UCLASS_SERIAL)) {
-		int cols;
-
-		if (!serial_is_tty())
-			dev_lines = 0;
-		else if (dev_lines == -1)
-			serial_query_size(&dev_lines, &cols);
-	}
-	if (dev_lines != -1)
-		lines = dev_lines;
-
-	return lines;
+	return 0;
 }
+
+#endif /* CONIFIG_IS_ENABLED(CONSOLE_MUX) */
 
 static void __maybe_unused console_setfile_and_devices(int file, struct stdio_dev *dev)
 {
