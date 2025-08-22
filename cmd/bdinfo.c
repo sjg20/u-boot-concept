@@ -126,7 +126,8 @@ static void print_serial(struct udevice *dev)
 	if (ret)
 		return;
 
-	bdinfo_print_num_l("serial addr", info.addr);
+	bdinfo_print_str("serial", dev->name);
+	bdinfo_print_num_l(" addr", info.addr);
 	bdinfo_print_num_l(" width", info.reg_width);
 	bdinfo_print_num_l(" shift", info.reg_shift);
 	bdinfo_print_num_l(" offset", info.reg_offset);
