@@ -30,71 +30,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define CSI "\x1b["
 
-static int on_console(const char *name, const char *value, enum env_op op,
-	int flags)
-{
-	int console = -1;
-
-	/* Check for console redirection */
-	if (strcmp(name, "stdin") == 0)
-		console = stdin;
-	else if (strcmp(name, "stdout") == 0)
-		console = stdout;
-	else if (strcmp(name, "stderr") == 0)
-		console = stderr;
-
-	/* if not actually setting a console variable, we don't care */
-	if (console == -1 || (gd->flags & GD_FLG_DEVINIT) == 0)
-		return 0;
-
-	switch (op) {
-	case env_op_create:
-	case env_op_overwrite:
-
-		if (CONFIG_IS_ENABLED(CONSOLE_MUX)) {
-			if (iomux_doenv(console, value))
-				return 1;
-		} else {
-			/* Try assigning specified device */
-			if (console_assign(console, value) < 0)
-				return 1;
-		}
-
-		return 0;
-
-	case env_op_delete:
-		if ((flags & H_FORCE) == 0)
-			printf("Can't delete \"%s\"\n", name);
-		return 1;
-
-	default:
-		return 0;
-	}
-}
-U_BOOT_ENV_CALLBACK(console, on_console);
-
-#ifdef CONFIG_SILENT_CONSOLE
-static int on_silent(const char *name, const char *value, enum env_op op,
-	int flags)
-{
-	if (!CONFIG_IS_ENABLED(SILENT_CONSOLE_UPDATE_ON_SET))
-		if (flags & H_INTERACTIVE)
-			return 0;
-
-	if (!CONFIG_IS_ENABLED(SILENT_CONSOLE_UPDATE_ON_RELOC))
-		if ((flags & H_INTERACTIVE) == 0)
-			return 0;
-
-	if (value != NULL)
-		gd->flags |= GD_FLG_SILENT;
-	else
-		gd->flags &= ~GD_FLG_SILENT;
-
-	return 0;
-}
-U_BOOT_ENV_CALLBACK(silent, on_silent);
-#endif
-
 #ifdef CONFIG_CONSOLE_RECORD
 /* helper function: access to gd->console_out and gd->console_in */
 static void console_record_putc(const char c)
@@ -1204,6 +1139,71 @@ static void stdio_print_current_devices(void)
 	puts("Err:   ");
 	printf("%s\n", stderrname);
 }
+
+static int on_console(const char *name, const char *value, enum env_op op,
+	int flags)
+{
+	int console = -1;
+
+	/* Check for console redirection */
+	if (strcmp(name, "stdin") == 0)
+		console = stdin;
+	else if (strcmp(name, "stdout") == 0)
+		console = stdout;
+	else if (strcmp(name, "stderr") == 0)
+		console = stderr;
+
+	/* if not actually setting a console variable, we don't care */
+	if (console == -1 || (gd->flags & GD_FLG_DEVINIT) == 0)
+		return 0;
+
+	switch (op) {
+	case env_op_create:
+	case env_op_overwrite:
+
+		if (CONFIG_IS_ENABLED(CONSOLE_MUX)) {
+			if (iomux_doenv(console, value))
+				return 1;
+		} else {
+			/* Try assigning specified device */
+			if (console_assign(console, value) < 0)
+				return 1;
+		}
+
+		return 0;
+
+	case env_op_delete:
+		if ((flags & H_FORCE) == 0)
+			printf("Can't delete \"%s\"\n", name);
+		return 1;
+
+	default:
+		return 0;
+	}
+}
+U_BOOT_ENV_CALLBACK(console, on_console);
+
+#ifdef CONFIG_SILENT_CONSOLE
+static int on_silent(const char *name, const char *value, enum env_op op,
+	int flags)
+{
+	if (!CONFIG_IS_ENABLED(SILENT_CONSOLE_UPDATE_ON_SET))
+		if (flags & H_INTERACTIVE)
+			return 0;
+
+	if (!CONFIG_IS_ENABLED(SILENT_CONSOLE_UPDATE_ON_RELOC))
+		if ((flags & H_INTERACTIVE) == 0)
+			return 0;
+
+	if (value != NULL)
+		gd->flags |= GD_FLG_SILENT;
+	else
+		gd->flags &= ~GD_FLG_SILENT;
+
+	return 0;
+}
+U_BOOT_ENV_CALLBACK(silent, on_silent);
+#endif
 
 static void setup_pager(void)
 {
