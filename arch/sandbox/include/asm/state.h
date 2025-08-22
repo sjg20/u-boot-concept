@@ -310,6 +310,13 @@ int state_load_other_fdt(const char **bufp, int *sizep);
  */
 bool sandbox_serial_is_tty(void);
 
+/*
+ * sandbox_video_is_visible() - check if video display is showing
+ *
+ * Return: true if display is active, false if just using the serial console
+ */
+bool sandbox_video_is_visible(void);
+
 /**
  * Initialize the test system state
  */

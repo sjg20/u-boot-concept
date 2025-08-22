@@ -482,6 +482,13 @@ bool sandbox_serial_is_tty(void)
 	return state->serial_is_tty;
 }
 
+bool sandbox_video_is_visible(void)
+{
+	struct sandbox_state *state = state_get_current();
+
+	return state->show_lcd;
+}
+
 int state_init(void)
 {
 	state = &main_state;
