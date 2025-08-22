@@ -600,10 +600,10 @@ static int pager_test_bypass_keypress(struct unit_test_state *uts)
 
 	/* Press 'b' to bypass */
 	out = pager_next(pag, true, 'b');
-	ut_asserteq_str("\r                                        \r", out);
+	ut_asserteq_str("\r                                                  \r", out);
 
 	/* Verify pager is now in bypass mode */
-	ut_asserteq(PAGERST_TEST_BYPASS, pag->state);
+	ut_asserteq(PAGERST_BYPASS, pag->state);
 
 	/* Next call should return the remaining text without paging */
 	out = pager_next(pag, true, 0);
@@ -617,3 +617,46 @@ static int pager_test_bypass_keypress(struct unit_test_state *uts)
 	return 0;
 }
 COMMON_TEST(pager_test_bypass_keypress, 0);
+
+/* Test quit keypress ('q') functionality */
+static int pager_test_quit_keypress(struct unit_test_state *uts)
+{
+	struct pager *pag;
+	const char *out;
+	int ret;
+
+	ret = pager_init(&pag, 3, SZ_1K);
+	ut_assertok(ret);
+
+	/* Post text that will trigger paging */
+	out = pager_post(pag, true, "line1\nline2\nline3\nline4\n");
+	ut_assertnonnull(out);
+	ut_asserteq_str("line1\nline2", out);
+
+	/* Should be waiting for user input */
+	out = pager_next(pag, true, 0);
+	ut_asserteq_str("\n: Press SPACE to continue, 'b' to bypass, 'q' to quit", out);
+
+	/* Press 'q' to quit and suppress */
+	out = pager_next(pag, true, 'q');
+	ut_asserteq_str("\r                                                  \r", out);
+
+	/* Verify pager is now in quit suppress mode */
+	ut_asserteq(PAGERST_QUIT_SUPPRESS, pag->state);
+
+	/* Next call should return NULL (suppressed) */
+	out = pager_next(pag, true, 0);
+	ut_asserteq_ptr(NULL, out);
+
+	/* Posting new text should also return NULL (suppressed) */
+	out = pager_post(pag, true, "new text\n");
+	ut_asserteq_ptr(NULL, out);
+
+	/* Test that pager_clear_quit() restores normal operation */
+	pager_clear_quit(pag);
+	ut_asserteq(PAGERST_OK, pag->state);
+
+	pager_uninit(pag);
+	return 0;
+}
+COMMON_TEST(pager_test_quit_keypress, 0);

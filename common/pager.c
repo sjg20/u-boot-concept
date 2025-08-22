@@ -20,8 +20,12 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s)
 	struct membuf old;
 	int ret, len;
 
-	if (!pag || !use_pager || pag->test_bypass || pag->state == PAGERST_BYPASS)
+	if (!pag || !use_pager || pag->test_bypass ||
+	    pag->state == PAGERST_BYPASS)
 		return s;
+	
+	if (pag->state == PAGERST_QUIT_SUPPRESS)
+		return NULL;
 
 	len = strlen(s);
 	if (!len)
@@ -71,8 +75,12 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		return PAGER_PROMPT;
 	case PAGERST_WAIT_USER:
 		if (key == 'b') {
-			pag->state = PAGERST_TEST_BYPASS;
-			return "\r                                        \r";
+			pag->state = PAGERST_BYPASS;
+			return "\r                                                  \r";
+		}
+		if (key == 'q') {
+			pag->state = PAGERST_QUIT_SUPPRESS;
+			return "\r                                                  \r";
 		}
 		if (key != ' ')
 			return PAGER_WAITING;
@@ -82,6 +90,8 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		pag->state = PAGERST_OK;
 		break;
 	case PAGERST_BYPASS:
+		return NULL;
+	case PAGERST_QUIT_SUPPRESS:
 		return NULL;
 	}
 
@@ -164,6 +174,15 @@ void pager_set_page_len(struct pager *pag, int page_len)
 void pager_reset(struct pager *pag)
 {
 	pag->line_count = 0;
+}
+
+void pager_clear_quit(struct pager *pag)
+{
+	if (!pag)
+		return;
+	
+	if (pag->state == PAGERST_QUIT_SUPPRESS)
+		pag->state = PAGERST_OK;
 }
 
 static int on_pager(const char *name, const char *value, enum env_op op,
