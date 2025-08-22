@@ -389,3 +389,39 @@ static int pager_test_use_pager_param(struct unit_test_state *uts)
 	return 0;
 }
 COMMON_TEST(pager_test_use_pager_param, 0);
+
+/* Test pager bypass mode */
+static int pager_test_bypass_mode(struct unit_test_state *uts)
+{
+	struct pager *pag;
+	const char *text = "This text should be returned directly";
+	const char *result;
+
+	/* Init with small page length to ensure paging would normally occur */
+	ut_assertok(pager_init(&pag, 2, 1024));
+
+	/* Enable bypass mode */
+	pager_set_bypass(pag, true);
+
+	/* Post text - should get original string back directly */
+	result = pager_post(pag, true, text);
+	ut_asserteq_ptr(text, result); /* Should be same pointer */
+
+	/* pager_next should return NULL in bypass mode */
+	result = pager_next(pag, true, 0);
+	ut_assertnull(result);
+
+	/* Disable bypass mode */
+	pager_set_bypass(pag, false);
+
+	/* Now pager should work normally */
+	result = pager_post(pag, true, text);
+	ut_assertnonnull(result);
+	/* In normal mode, result should be different from original text */
+	ut_assert(result != text);
+
+	pager_uninit(pag);
+
+	return 0;
+}
+COMMON_TEST(pager_test_bypass_mode, 0);
