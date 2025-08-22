@@ -64,6 +64,7 @@ enum pager_state {
  * @nulch: pointer to where a nul character was written, NULL if none
  * @oldch: old character that was at @nulch
  * @state: current state of the pager state-machine
+ * @test_bypass: true if pager should behave as if in test mode (bypass all)
  */
 struct pager {
 	int line_count;
@@ -74,6 +75,7 @@ struct pager {
 	char *nulch;
 	int oldch;
 	enum pager_state state;
+	bool test_bypass;
 };
 
 #if CONFIG_IS_ENABLED(CONSOLE_PAGER)
@@ -117,6 +119,18 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s);
 const char *pager_next(struct pager *pag, bool use_pager, int ch);
 
 /**
+ * pager_set_test_bypass() - put the pager into test bypass mode
+ *
+ * This is used for tests. Test bypass mode stops the pager from doing
+ * anything to interrupt output, regardless of the current pager state.
+ *
+ * @pag: Pager to use, may be NULL in which case this function does nothing
+ * @bypass: true to put the pager in test bypass mode, false for normal
+ * Return: old value of the test bypass flag
+ */
+bool pager_set_test_bypass(struct pager *pag, bool bypass);
+
+/**
  * pager_uninit() - Uninit the pager
  *
  * Frees all memory and also @pag
@@ -135,6 +149,11 @@ static inline const char *pager_post(struct pager *pag, bool use_pager,
 static inline const char *pager_next(struct pager *pag, bool use_pager, int ch)
 {
 	return NULL;
+}
+
+static inline bool pager_set_test_bypass(struct pager *pag, bool bypass)
+{
+	return true;
 }
 
 #endif
