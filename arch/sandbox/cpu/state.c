@@ -475,6 +475,13 @@ bool sandbox_sf_bootdev_enabled(void)
 	return !state->disable_sf_bootdevs;
 }
 
+bool sandbox_serial_is_tty(void)
+{
+	struct sandbox_state *state = state_get_current();
+
+	return state->serial_is_tty;
+}
+
 int state_init(void)
 {
 	state = &main_state;

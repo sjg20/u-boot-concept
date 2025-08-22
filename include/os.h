@@ -91,6 +91,14 @@ int os_open(const char *pathname, int flags);
 int os_close(int fd);
 
 /**
+ * os_isatty() - check if file descriptor refers to a terminal
+ *
+ * @fd:		File descriptor to check
+ * Return:	1 if fd is a terminal, 0 if not, -1 on error
+ */
+int os_isatty(int fd);
+
+/**
  * os_unlink() - access to the OS unlink() system call
  *
  * @pathname:	Path of file to delete
