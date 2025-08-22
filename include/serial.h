@@ -406,8 +406,8 @@ int serial_tstc(void);
  * When using a serial console or the net console we can only devise the
  * terminal size by querying the terminal using ECMA-48 control sequences.
  *
- * @rowsp:	returns number of rows
- * @colsp:	returns number of columns
+ * @rowsp:	returns number of rows on success
+ * @colsp:	returns number of columns on success
  * Returns:	0 on success, -NOENT if no terminal is present, -ETIMEDOUT if we
  * checked for a terminal but didn't get a response in time, -EPROTO if the
  * terminal did not respond as expected
