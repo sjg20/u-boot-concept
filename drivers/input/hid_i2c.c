@@ -421,22 +421,12 @@ static int hid_i2c_read_keys(struct input_config *input)
 {
 	struct udevice *dev = input->dev;
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
-	int ret, i, keys_found = 0;
+	int ret, i;
 	u8 current_keys[6];
-	bool report_changed = false;
 
 	/* Read input data from device */
 	if (!priv->max_input_len) {
 		return 0;
-	}
-
-	/* Check if there's new data available before reading */
-	ret = hid_i2c_check_interrupt(dev);
-	if (ret < 0) {
-		return ret; /* Error checking status */
-	}
-	if (ret == 0) {
-		return 0; /* No new data available */
 	}
 
 	memset(priv->input_buf, '\0', HID_I2C_MAX_INPUT_LENGTH);
@@ -454,45 +444,48 @@ static int hid_i2c_read_keys(struct input_config *input)
 	memcpy(current_keys, &priv->input_buf[5], 6);
 
 	/* Check if report changed from previous */
-	if (memcmp(current_keys, priv->prev_keys, 6) != 0) {
-		report_changed = true;
-		
-		log_debug("report change: ");
-		for (i = 0; i < 6; i++)
-			log_debug("%02x ", current_keys[i]);
-		log_debug("\n");
+	if (memcmp(current_keys, priv->prev_keys, 6) == 0) {
+		return 0; /* No change */
+	}
 
-		/* Process key changes - track press and release */
-		for (i = 0; i < 6; i++) {
-			u8 old_key = priv->prev_keys[i];
-			u8 new_key = current_keys[i];
+	log_debug("report change: ");
+	for (i = 0; i < 6; i++)
+		log_debug("%02x ", current_keys[i]);
+	log_debug("\n");
 
-			/* Key release: was pressed, now not pressed */
-			if (old_key != 0 && new_key == 0) {
-				int keycode = hid_to_linux_keycode(old_key);
-				if (keycode) {
-					log_debug("key release: HID 0x%02x -> Linux %d\n", old_key, keycode);
-					input_add_keycode(input, keycode, true);
-					keys_found++;
-				}
-			}
+	/* Process key changes - find what changed */
+	for (i = 0; i < 6; i++) {
+		u8 old_key = priv->prev_keys[i];
+		u8 new_key = current_keys[i];
 
-			/* Key press: wasn't pressed, now pressed */
-			if (old_key == 0 && new_key != 0) {
-				int keycode = hid_to_linux_keycode(new_key);
-				if (keycode) {
-					log_debug("key press: HID 0x%02x -> Linux %d\n", new_key, keycode);
-					input_add_keycode(input, keycode, false);
-					keys_found++;
-				}
+		/* Key release: was pressed, now not pressed */
+		if (old_key != 0 && new_key == 0) {
+			int keycode = hid_to_linux_keycode(old_key);
+			if (keycode) {
+				log_debug("key release: HID 0x%02x -> Linux %d\n", old_key, keycode);
+				input_add_keycode(input, keycode, true);
+				/* Save state and return - process one event at a time like i8042 */
+				memcpy(priv->prev_keys, current_keys, 6);
+				return 1;
 			}
 		}
 
-		/* Save current state for next comparison */
-		memcpy(priv->prev_keys, current_keys, 6);
+		/* Key press: wasn't pressed, now pressed */
+		if (old_key == 0 && new_key != 0) {
+			int keycode = hid_to_linux_keycode(new_key);
+			if (keycode) {
+				log_debug("key press: HID 0x%02x -> Linux %d\n", new_key, keycode);
+				input_add_keycode(input, keycode, false);
+				/* Save state and return - process one event at a time like i8042 */
+				memcpy(priv->prev_keys, current_keys, 6);
+				return 1;
+			}
+		}
 	}
 
-	return keys_found;
+	/* Save current state */
+	memcpy(priv->prev_keys, current_keys, 6);
+	return 0;
 }
 
 
@@ -556,6 +549,8 @@ static int hid_i2c_probe(struct udevice *dev)
 	
 	printf("HID I2C: Device %s at I2C address 0x%02x\n", dev->name, (unsigned)priv->addr);
 	
+	ret = irq_get_by_index
+
 	/* Try to identify the device by reading common ID registers */
 	u8 id_buf[4];
 	int id_found = 0;
@@ -638,7 +633,8 @@ static int hid_i2c_probe(struct udevice *dev)
 	
 	// input_init(input, false);   (done by keyboard_pre_probe())
 	input_add_tables(input, false);
-	input_set_delays(input, 0, 0);
+	input_allow_repeats(input, true);
+	input_set_delays(input, 250, 33); /* 250ms delay, 30Hz repeat rate */
 
 	/* Register the device */
 	input->dev = dev;
