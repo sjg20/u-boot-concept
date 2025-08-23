@@ -8,6 +8,9 @@
  * Copyright (c) 2025
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	UCLASS_KEYBOARD
+
 #include <dm.h>
 #include <errno.h>
 #include <i2c.h>
@@ -59,7 +62,7 @@ struct hid_descriptor {
 
 /* HID over I2C device private data */
 struct hid_i2c_priv {
-	uint			addr;		/* I2C device address */
+	ulong			addr;		/* I2C device address */
 	struct hid_descriptor	desc;
 	u16			desc_addr;
 	u16			command_reg;
@@ -375,6 +378,8 @@ static int hid_i2c_probe(struct udevice *dev)
 	struct keyboard_priv *kbd_priv = dev_get_uclass_priv(dev);
 	int ret;
 
+	log_debug("HID start\n");
+
 	/* Get I2C address */
 	priv->addr = dev_read_addr(dev);
 	if (priv->addr == FDT_ADDR_T_NONE) {
@@ -395,15 +400,17 @@ static int hid_i2c_probe(struct udevice *dev)
 		}
 	}
 
-	log_debug("HID I2C device at address 0x%02x, descriptor at 0x%04x\n",
+	log_debug("HID I2C device at address %lx, descriptor at 0x%04x\n",
 		  priv->addr, priv->desc_addr);
 
 	/* Read HID descriptor */
+	// crashes
 	ret = hid_i2c_read_hid_descriptor(dev);
 	if (ret) {
 		log_err("Failed to read HID descriptor: %d\n", ret);
 		return ret;
 	}
+	return -ENODEV;
 
 	/* Initialize input system */
 	kbd_priv->input.dev = dev;

@@ -21,8 +21,10 @@
 	aliases {
 		serial0 = &uart21;
 		keyboard0 = &hid_keyboard;
+#if 0
 		touchpad0 = &hid_touchpad; 
 		touchscreen0 = &hid_touchscreen;
+#endif
 	};
 
 	wcd938x: audio-codec {
@@ -704,7 +706,7 @@
 	clock-frequency = <400000>;
 
 	status = "okay";
-
+#if 0
 	hid_touchpad: touchpad@15 {
 		compatible = "hid-over-i2c";
 		reg = <0x15>;
@@ -725,7 +727,7 @@
 
 		wakeup-source;
 	};
-
+#endif
 	hid_keyboard: keyboard@3a {
 		compatible = "hid-over-i2c";
 		reg = <0x3a>;
@@ -738,11 +740,11 @@
 
 		pinctrl-0 = <&kybd_default>;
 		pinctrl-names = "default";
-
 		/* Power supply for keyboard */
+/*
 		vdd-supply = <&vreg_l8b_3p0>;
 		post-power-on-delay-ms = <100>;
-
+*/
 		wakeup-source;
 	};
 };
@@ -764,11 +766,12 @@
 
 		pinctrl-0 = <&ts0_default>;
 		pinctrl-names = "default";
-
 		/* Power supplies for touchscreen */
+/*
 		vdd-supply = <&vreg_l9b_2p9>;
 		vddl-supply = <&vreg_l1b_1p8>;
 		post-power-on-delay-ms = <120>;
+*/
 	};
 };
 
