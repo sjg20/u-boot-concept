@@ -70,6 +70,7 @@ config EFI_STUB_32BIT
 
 config EFI_STUB_64BIT
 	bool "Produce a stub for running with 64-bit EFI"
+	select ARM64 if ARM
 
 endchoice
 
