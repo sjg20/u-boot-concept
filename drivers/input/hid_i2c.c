@@ -120,6 +120,18 @@ static int hid_i2c_read_register(struct udevice *dev, u16 reg, u8 *data, int len
 	u8 reg_buf[2];
 	int ret;
 
+	/* Safety checks to prevent crashes */
+	if (!dev || !priv || !data || len <= 0 || len > 256) {
+		log_err("Invalid parameters for I2C read: dev=%p, priv=%p, data=%p, len=%d\n",
+			dev, priv, data, len);
+		return -EINVAL;
+	}
+	
+	if (!dev->parent) {
+		log_err("Device has no parent I2C bus\n");
+		return -ENODEV;
+	}
+
 	log_debug("Reading register 0x%04x, length %d from device 0x%02x\n", 
 		  reg, len, priv->addr);
 
@@ -137,6 +149,14 @@ static int hid_i2c_read_register(struct udevice *dev, u16 reg, u8 *data, int len
 	msgs[1].len = len;
 	msgs[1].buf = data;
 
+	log_debug("About to perform I2C transaction: addr=0x%02x, reg=0x%04x, len=%d\n",
+		  priv->addr, reg, len);
+	
+	/* Ensure data buffer is zeroed before read */
+	log_debug("memset\n");
+	memset(data, 0, len);
+	
+	log_debug("i2c\n");
 	ret = dm_i2c_xfer(dev->parent, msgs, 2);
 	if (ret) {
 		log_debug("I2C transfer failed: %d\n", ret);
@@ -233,13 +253,23 @@ static int hid_i2c_read_hid_descriptor(struct udevice *dev)
 {
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
 	int ret, retry;
+	u8 test_byte;
 
 	if (!priv) {
 		log_err("Invalid private data\n");
 		return -EINVAL;
 	}
 
-	log_debug("Reading HID descriptor from address 0x%04x\n", priv->desc_addr);
+	log_debug("Testing basic I2C connectivity first\n");
+	
+	/* Try a simple 1-byte read first to test I2C connectivity */
+	ret = hid_i2c_read_register(dev, 0x0000, &test_byte, 1);
+	if (ret) {
+		log_err("Basic I2C connectivity test failed: %d\n", ret);
+		return ret;
+	}
+	
+	log_debug("Basic I2C test passed, now reading HID descriptor from address 0x%04x\n", priv->desc_addr);
 
 	/* Try reading HID descriptor with retries */
 	for (retry = 0; retry < HID_I2C_MAX_RETRIES; retry++) {
@@ -497,7 +527,7 @@ int hid_i2c_init(void)
 	int ret, found = 0;
 
 	log_info("HID I2C: Initializing HID over I2C devices...\n");
-	dm_dump_tree(NULL, false, true);
+	// dm_dump_tree(NULL, false, true);
 
 	printf("nop devices:\n");
 	uclass_id_foreach_dev(UCLASS_NOP, dev, uc) {
