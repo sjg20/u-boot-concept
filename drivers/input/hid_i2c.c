@@ -438,6 +438,7 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return 0; /* No new data available */
 	}
 
+	// printf("new\n");
 	memset(priv->input_buf, '\0', HID_I2C_MAX_INPUT_LENGTH);
 	ret = hid_i2c_read_register(dev, priv->input_reg, 
 				   priv->input_buf, priv->max_input_len);
@@ -462,7 +463,7 @@ static int hid_i2c_read_keys(struct input_config *input)
 		log_debug("report: ");
 		for (i = 0; i < 6; i++)
 			log_debug("%02x ", priv->input_buf[i + 5]);
-		log_debug(":  ");
+		log_debug("\n");
 
 		input_report_start(input);
 		/* Keycodes start at offset 5 for this device */
