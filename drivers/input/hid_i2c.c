@@ -354,11 +354,44 @@ static int hid_i2c_process_keyboard_report(struct udevice *dev, u8 *data, int le
 	return input_send_keycodes(input, keys, num_keys);
 }
 
+static int hid_i2c_read_keys(struct input_config *input)
+{
+	struct udevice *dev = input->dev;
+	struct hid_i2c_priv *priv = dev_get_priv(dev);
+	int ret, len;
+
+	/* Read input data from HID device */
+	if (!priv->input_reg || !priv->max_input_len) {
+		log_debug("HID I2C: No input register configured\n");
+		return 0;
+	}
+
+	ret = hid_i2c_read_register(dev, priv->input_reg, 
+				   priv->input_buf, priv->max_input_len);
+	if (ret) {
+		log_debug("HID I2C: Failed to read input data: %d\n", ret);
+		return ret;
+	}
+
+	/* Get report length from first 2 bytes */
+	len = priv->input_buf[0] | (priv->input_buf[1] << 8);
+	log_debug("HID I2C: Read %d bytes, report length: %d\n", priv->max_input_len, len);
+	
+	if (len > 2 && len <= priv->max_input_len) {
+		log_debug("HID I2C: Processing keyboard report\n");
+		hid_i2c_process_keyboard_report(dev, priv->input_buf, len);
+	} else if (len > 0) {
+		log_debug("HID I2C: Invalid report length: %d\n", len);
+	}
+
+	return 0;
+}
+
 static int hid_i2c_start(struct udevice *dev)
 {
 	int ret;
 
-	log_debug("Starting HID I2C device\n");
+	printf("HID I2C: Starting HID I2C device %s\n", dev->name);
 
 	/* Power on device */
 	ret = hid_i2c_set_power(dev, true);
@@ -386,9 +419,13 @@ static int hid_i2c_stop(struct udevice *dev)
 static int hid_i2c_tstc(struct udevice *dev)
 {
 	struct keyboard_priv *kbd_priv = dev_get_uclass_priv(dev);
+	int ret;
 	
-	/* Check if input is available */
-	return input_tstc(&kbd_priv->input);
+	ret = input_tstc(&kbd_priv->input);
+	if (ret)
+		printf("HID I2C: tstc called for %s, returning %d\n", dev->name, ret);
+	
+	return ret;
 }
 
 static int hid_i2c_getc(struct udevice *dev)
@@ -396,6 +433,8 @@ static int hid_i2c_getc(struct udevice *dev)
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
 	struct keyboard_priv *kbd_priv = dev_get_uclass_priv(dev);
 	int ret, len;
+
+	printf("HID I2C: getc called for %s\n", dev->name);
 
 	/* Try to read input first if no keys are pending */
 	if (!input_tstc(&kbd_priv->input)) {
@@ -488,15 +527,20 @@ static int hid_i2c_probe(struct udevice *dev)
 	}
 
 	/* Initialize input system */
-	ret = input_init(&kbd_priv->input, 0);
+	struct input_config *input = &kbd_priv->input;
+	
+	input->dev = dev;
+	input->read_keys = hid_i2c_read_keys;
+	ret = input_init(input, 0);
 	if (ret) {
 		log_err("Failed to initialize input: %d\n", ret);
 		return ret;
 	}
 
+	printf("HID I2C: Input system initialized with read_keys function\n");
 	log_debug("Input system initialized successfully\n");
 
-	ret = input_add_tables(&kbd_priv->input, false);
+	ret = input_add_tables(input, false);
 	if (ret) {
 		log_err("Failed to add input tables: %d\n", ret);
 		return ret;
@@ -587,7 +631,7 @@ int hid_i2c_init(void)
 			log_debug("HID I2C: I2C bus %s failed to initialize, skipping\n", bus->name);
 			continue;
 		}
-
+#if 1
 		log_debug("HID I2C: Scanning active I2C bus %s\n", bus->name);
 
 		/* Look for HID over I2C devices on this bus */
@@ -595,7 +639,8 @@ int hid_i2c_init(void)
 			log_debug("- dev '%s'\n", dev->name);
 			if (device_is_compatible(dev, "hid-over-i2c")) {
 				log_info("HID I2C: Found HID device: %s\n", dev->name);
-				
+				found++;
+#if 0
 				/* Probe the device */
 				ret = device_probe(dev);
 				if (ret) {
@@ -606,17 +651,27 @@ int hid_i2c_init(void)
 						 dev->name);
 					found++;
 				}
+#endif
 			}
 		}
+#endif
 	}
 
 	if (found > 0) {
+		struct udevice *kdev;
+
 		log_info("HID I2C: Initialized %d HID device(s)\n", found);
 		
 		/* Try to register HID keyboards with stdio */
 		printf("HID I2C: Attempting to add keyboards to stdio\n");
 		run_command("coninfo", 0);
-		
+		log_debug("searching for keyboards:\n");
+		uclass_foreach_dev_probe(UCLASS_KEYBOARD, kdev)
+			printf("keyboard: %s\n", kdev->name);
+		run_command("coninfo", 0);
+		env_set("stdin", "keyboard@3a");
+		printf("stdin3: %s\n", env_get("stdin"));
+
 	} else {
 		log_info("HID I2C: No HID over I2C devices found\n");
 	}
