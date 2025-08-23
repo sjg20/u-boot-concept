@@ -26,6 +26,8 @@ static void panic_finish(void)
 #else
 	flush();  /* flush the panic message before reset */
 
+	printf("waiting 30s for reset\n");
+	mdelay(30 * 1000);
 	do_reset(NULL, 0, 0, NULL);
 #endif
 	while (1)
