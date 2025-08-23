@@ -15,12 +15,12 @@
 #include <console.h>
 #include <env.h>
 #include <fdtdec.h>
-#include <hang.h>
 #include <init.h>
 #include <net.h>
 #include <version_string.h>
 #include <efi_loader.h>
 #include <hid_i2c.h>
+#include <vsprintf.h>
 
 static void run_preboot_environment_command(void)
 {
@@ -84,8 +84,7 @@ void main_loop(void)
 	/* Initialize HID over I2C devices late in boot for debug visibility */
 	if (hid_i2c_init()) {
 		printf("HID over I2C initialization failed\n");
-		printf("Hanging to view debug output...\n");
-		hang();
+		panic("no device");
 	}
 
 	cli_loop();

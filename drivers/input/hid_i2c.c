@@ -21,6 +21,7 @@
 #include <linux/delay.h>
 #include <linux/input.h>
 #include <dm/device-internal.h>
+#include <dm/util.h>
 
 #define HID_I2C_DEFAULT_DESC_ADDR	0x0001
 #define HID_I2C_ALT_DESC_ADDR		0x0020	/* Alternative address */
@@ -495,6 +496,7 @@ int hid_i2c_init(void)
 	int ret, found = 0;
 
 	log_info("HID I2C: Initializing HID over I2C devices...\n");
+	dm_dump_tree(NULL, false, true);
 
 	/* Find all I2C buses - use _check to handle probe failures gracefully */
 	for (ret = uclass_first_device_check(UCLASS_I2C, &bus); bus;
