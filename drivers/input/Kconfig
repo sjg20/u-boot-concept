@@ -100,3 +100,13 @@ config TWL4030_INPUT
 	bool "Enable TWL4030 Input controller"
 	help
 	  Enable TWL4030 Input controller
+
+config HID_I2C
+	bool "Enable HID over I2C support"
+	depends on DM_KEYBOARD && DM_I2C
+	help
+	  Enable support for HID over I2C devices such as keyboards,
+	  touchpads, and other input devices. This driver implements
+	  the Microsoft HID over I2C specification and is compatible
+	  with devices that use the standard "hid-over-i2c" device
+	  tree binding.
