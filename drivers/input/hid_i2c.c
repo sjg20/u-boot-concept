@@ -251,9 +251,34 @@ static int hid_i2c_read_hid_descriptor(struct udevice *dev)
 	desc_len = le16_to_cpu(desc_len);
 	printf("HID descriptor reports length: %d bytes\n", desc_len);
 	
-	if (desc_len < 4 || desc_len > sizeof(priv->desc)) {
-		printf("Invalid HID descriptor length: %d\n", desc_len);
-		return -EINVAL;
+	if (desc_len < 30 || desc_len > sizeof(priv->desc)) {
+		printf("Invalid HID descriptor length: %d, trying alternative address 0x%04x\n", 
+		       desc_len, HID_I2C_ALT_DESC_ADDR);
+		
+		/* Try alternative descriptor address */
+		ret = hid_i2c_read_register(dev, HID_I2C_ALT_DESC_ADDR, (u8 *)&desc_len, 2);
+		if (ret) {
+			printf("Failed to read from alternative address: %d\n", ret);
+			return ret;
+		}
+		
+		desc_len = le16_to_cpu(desc_len);
+		printf("Alternative address reports length: %d bytes\n", desc_len);
+		
+		if (desc_len < 30 || desc_len > sizeof(priv->desc)) {
+			printf("Both addresses failed, skipping HID descriptor\n");
+			printf("Device may not be standard HID over I2C - using direct keyboard polling\n");
+			
+			/* Skip HID descriptor, set up for direct keyboard access */
+			priv->command_reg = 0x0000;
+			priv->data_reg = 0x0000;
+			priv->input_reg = 0x0000;  /* Try reading from register 0 */
+			priv->max_input_len = 8;   /* Standard keyboard report size */
+			
+			return 0;  /* Success - we'll try direct access */
+		}
+		
+		priv->desc_addr = HID_I2C_ALT_DESC_ADDR;
 	}
 	
 	/* Now read the full descriptor based on reported length */
@@ -321,10 +346,8 @@ static int hid_i2c_read_keys(struct input_config *input)
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
 	int ret, len, i;
 
-	/* Read input data from HID device */
-	if (!priv->input_reg || !priv->max_input_len) {
-		// log_debug("read_keys: input_reg %x max_input_len %x\n",
-			  // priv->input_reg, priv->max_input_len);
+	/* Read input data from device */
+	if (!priv->max_input_len) {
 		return 0;
 	}
 
@@ -335,7 +358,38 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return ret;
 	}
 
-	/* Get report length from first 2 bytes */
+	/* For direct register access, treat the whole buffer as potential keyboard data */
+	if (priv->input_reg == 0x0000) {
+		/* Direct access mode - look for standard 8-byte keyboard report */
+		printf("Direct read (8 bytes): ");
+		for (i = 0; i < 8; i++) {
+			printf("%02x ", priv->input_buf[i]);
+		}
+		printf("\n");
+		
+		/* Look for keyboard data in standard HID boot report format */
+		/* Byte 0: modifier keys, Byte 1: reserved, Bytes 2-7: key codes */
+		for (i = 2; i < 8; i++) {
+			if (priv->input_buf[i] != 0 && priv->input_buf[i] >= 0x04 && priv->input_buf[i] <= 0x65) {
+				u8 hid_code = priv->input_buf[i];
+				int linux_code = 0;
+				
+				if (hid_code >= 0x04 && hid_code <= 0x1D) {
+					linux_code = KEY_A + (hid_code - 0x04);
+				} else if (hid_code >= 0x1E && hid_code <= 0x27) {
+					linux_code = KEY_1 + (hid_code - 0x1E);
+				}
+				
+				if (linux_code != 0) {
+					printf("Direct keyboard: HID 0x%02x -> Linux %d\n", hid_code, linux_code);
+					input_add_keycode(input, linux_code, 1);
+				}
+			}
+		}
+		return 0;
+	}
+	
+	/* Original HID over I2C processing */
 	len = priv->input_buf[0] | (priv->input_buf[1] << 8);
 	
 	/* Skip processing - this appears to be touchpad data, not keyboard */
@@ -410,6 +464,8 @@ static int hid_i2c_probe(struct udevice *dev)
 	/* Get HID descriptor address from device tree */
 	priv->desc_addr = dev_read_u32_default(dev, "hid-descr-addr", 
 					       HID_I2C_DEFAULT_DESC_ADDR);
+	
+	printf("HID I2C: Using descriptor address 0x%04x\n", priv->desc_addr);
 	
 	/* Try alternative descriptor address if the first one fails */
 	if (priv->desc_addr == HID_I2C_DEFAULT_DESC_ADDR) {
