@@ -327,7 +327,7 @@ static struct input_key_xlate *process_modifier(struct input_config *config,
  * @param key	Key value to find
  * Return: element where value was first found, -1 if none
  */
-static int array_search(int *array, int count, int key)
+static int array_search(const int *array, int count, int key)
 {
 	int i;
 
@@ -353,8 +353,8 @@ static int array_search(int *array, int count, int key)
  * Return: number of elements in dest that are in order (these will be at the
  *	start of dest).
  */
-static int sort_array_by_ordering(int *dest, int count, int *order,
-				   int ocount)
+static int sort_array_by_ordering(int *dest, int count, const int *order,
+				  int ocount)
 {
 	int temp[count];
 	int dest_count;
@@ -388,7 +388,8 @@ static int sort_array_by_ordering(int *dest, int count, int *order,
  * as last time.
  *
  * @param config	Input state
- * @param keycode	List of key codes to examine
+ * @param keycode	List of key codes to examine; updated to change the
+ *			order to match previous keycodes
  * @param num_keycodes	Number of key codes
  * @param same		Returns number of key codes which are the same
  */

@@ -576,6 +576,7 @@ static int hid_i2c_probe(struct udevice *dev)
 	
 	// input_init(input, false);   (done by keyboard_pre_probe())
 	input_add_tables(input, false);
+	input_set_delays(input, 0, 0);
 
 	/* Register the device */
 	input->dev = dev;
