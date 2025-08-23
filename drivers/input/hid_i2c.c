@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <i2c.h>
 #include <input.h>
+#include <irq.h>
 #include <keyboard.h>
 #include <log.h>
 #include <malloc.h>
@@ -73,6 +74,7 @@ struct hid_i2c_priv {
 	u16			input_reg;
 	u16			max_input_len;
 	bool			powered;
+	struct irq irq;
 	u8			input_buf[HID_I2C_MAX_INPUT_LENGTH];
 	u8			prev_keys[6]; /* Previous keyboard report */
 };
@@ -549,7 +551,7 @@ static int hid_i2c_probe(struct udevice *dev)
 	
 	printf("HID I2C: Device %s at I2C address 0x%02x\n", dev->name, (unsigned)priv->addr);
 	
-	ret = irq_get_by_index
+	ret = irq_get_by_index(dev, 0, &priv->irq);
 
 	/* Try to identify the device by reading common ID registers */
 	u8 id_buf[4];
