@@ -496,13 +496,24 @@ int hid_i2c_init(void)
 
 	log_info("HID I2C: Initializing HID over I2C devices...\n");
 
-	/* Find all I2C buses */
-	for (uclass_first_device(UCLASS_I2C, &bus); bus; 
-	     uclass_next_device(&bus)) {
-		if (!device_active(bus))
+	/* Find all I2C buses - use _check to handle probe failures gracefully */
+	for (ret = uclass_first_device_check(UCLASS_I2C, &bus); bus;
+	     ret = uclass_next_device_check(&bus)) {
+		if (ret) {
+			log_debug("%s: Failed to probe bus (err=%dE)\n",
+				  bus->name, ret);
 			continue;
+		}
 
-		log_debug("HID I2C: Scanning I2C bus %s\n", bus->name);
+		log_debug("HID I2C: Found I2C bus %s\n", bus->name);
+		
+		/* Skip buses that failed to probe */
+		if (!device_active(bus)) {
+			log_debug("HID I2C: I2C bus %s failed to initialize, skipping\n", bus->name);
+			continue;
+		}
+		
+		log_debug("HID I2C: Scanning active I2C bus %s\n", bus->name);
 
 		/* Look for HID over I2C devices on this bus */
 		device_foreach_child(dev, bus) {
