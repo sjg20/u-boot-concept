@@ -2160,11 +2160,11 @@ config ARCH_GXP
 	select OF_CONTROL
 	imply CMD_DM
 
+endchoice
+
 config ARCH_EFI_ARM
 	bool "efi"
 	select ARCH_EFI
-
-endchoice
 
 config SUPPORT_PASSING_ATAGS
 	bool "Support pre-devicetree ATAG-based booting"
