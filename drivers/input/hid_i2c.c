@@ -22,6 +22,7 @@
 #include <linux/input.h>
 #include <dm/device-internal.h>
 #include <dm/util.h>
+#include <pager.h>
 
 #define HID_I2C_DEFAULT_DESC_ADDR	0x0001
 #define HID_I2C_ALT_DESC_ADDR		0x0020	/* Alternative address */
@@ -496,8 +497,12 @@ int hid_i2c_init(void)
 	struct uclass *uc;
 	int ret, found = 0;
 
+	printf("pager done line_count %d page_len %d state %d\n",
+		       gd_pager()->line_count, gd_pager()->page_len,
+	       gd_pager()->state);
+
 	log_info("HID I2C: Initializing HID over I2C devices...\n");
-	dm_dump_tree(NULL, false, true);
+	// dm_dump_tree(NULL, false, true);
 
 	printf("nop devices:\n");
 	uclass_id_foreach_dev(UCLASS_NOP, dev, uc) {

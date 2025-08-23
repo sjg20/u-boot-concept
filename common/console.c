@@ -1222,8 +1222,13 @@ static void setup_pager(void)
 
 		ret = pager_init(gd_pagerp(), calc_check_console_lines(),
 				 PAGER_BUF_SIZE);
-		if (ret)
+		if (ret) {
 			printf("Failed to init pager\n");
+			panic("pager");
+		}
+		printf("pager done line_count %d page_len %d\n",
+		       gd_pager()->line_count, gd_pager()->page_len);
+		mdelay(5 * 1000);
 	}
 }
 
