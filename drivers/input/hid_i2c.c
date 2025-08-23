@@ -11,7 +11,9 @@
 #define LOG_DEBUG
 #define LOG_CATEGORY	UCLASS_KEYBOARD
 
+#include <command.h>
 #include <dm.h>
+#include <env.h>
 #include <errno.h>
 #include <i2c.h>
 #include <input.h>
@@ -397,19 +399,32 @@ static int hid_i2c_getc(struct udevice *dev)
 
 	/* Try to read input first if no keys are pending */
 	if (!input_tstc(&kbd_priv->input)) {
+		log_debug("HID I2C: No keys pending, reading input register 0x%04x\n", priv->input_reg);
 		ret = hid_i2c_read_register(dev, priv->input_reg, 
 					   priv->input_buf, priv->max_input_len);
 		if (ret == 0) {
 			/* Get report length from first 2 bytes */
 			len = priv->input_buf[0] | (priv->input_buf[1] << 8);
+			log_debug("HID I2C: Read %d bytes, report length: %d\n", priv->max_input_len, len);
 			if (len > 2 && len <= priv->max_input_len) {
+				log_debug("HID I2C: Processing keyboard report\n");
 				hid_i2c_process_keyboard_report(dev, priv->input_buf, len);
+			} else {
+				log_debug("HID I2C: Invalid report length: %d\n", len);
 			}
+		} else {
+			log_debug("HID I2C: Failed to read input register: %d\n", ret);
 		}
+	} else {
+		log_debug("HID I2C: Keys already pending\n");
 	}
 
 	/* Return next available key */
-	return input_getc(&kbd_priv->input);
+	ret = input_getc(&kbd_priv->input);
+	if (ret > 0) {
+		log_debug("HID I2C: Returning key: 0x%02x ('%c')\n", ret, ret >= 32 ? ret : '?');
+	}
+	return ret;
 }
 
 static int hid_i2c_update_leds(struct udevice *dev, int leds)
@@ -432,6 +447,7 @@ static int hid_i2c_probe(struct udevice *dev)
 	struct keyboard_priv *kbd_priv = dev_get_uclass_priv(dev);
 	int ret;
 
+	printf("HID I2C: probe starting for device %s\n", dev->name);
 	log_debug("HID start\n");
 
 	/* Get I2C address */
@@ -472,13 +488,12 @@ static int hid_i2c_probe(struct udevice *dev)
 	}
 
 	/* Initialize input system */
-	kbd_priv->input.dev = dev;
 	ret = input_init(&kbd_priv->input, 0);
 	if (ret) {
 		log_err("Failed to initialize input: %d\n", ret);
 		return ret;
 	}
-	
+
 	log_debug("Input system initialized successfully\n");
 
 	ret = input_add_tables(&kbd_priv->input, false);
@@ -487,6 +502,17 @@ static int hid_i2c_probe(struct udevice *dev)
 		return ret;
 	}
 	
+	printf("HID I2C: probe completed successfully for %s\n", dev->name);
+	printf("HID I2C: input_reg=0x%04x, max_input_len=%d\n", priv->input_reg, priv->max_input_len);
+	
+	/* Register keyboard with stdio system */
+	ret = input_stdio_register(&kbd_priv->sdev);
+	if (ret) {
+		log_err("Failed to register keyboard with stdio: %d\n", ret);
+		return ret;
+	}
+	
+	printf("HID I2C: keyboard registered with stdio system\n");
 	log_debug("HID I2C probe completed successfully\n");
 	return 0;
 }
@@ -540,6 +566,10 @@ int hid_i2c_init(void)
 		printf("NOP device: %s\n", dev->name);
 	}
 	printf("--\n");
+	printf("stdin: %s\n", env_get("stdin"));
+	run_command("coninfo", 0);
+	env_set("stdin", "keyboard@3a");
+	printf("stdin2: %s\n", env_get("stdin"));
 
 	/* Find all I2C buses - use _check to handle probe failures gracefully */
 	for (ret = uclass_first_device_check(UCLASS_I2C, &bus); bus;
@@ -582,6 +612,11 @@ int hid_i2c_init(void)
 
 	if (found > 0) {
 		log_info("HID I2C: Initialized %d HID device(s)\n", found);
+		
+		/* Try to register HID keyboards with stdio */
+		printf("HID I2C: Attempting to add keyboards to stdio\n");
+		run_command("coninfo", 0);
+		
 	} else {
 		log_info("HID I2C: No HID over I2C devices found\n");
 	}
