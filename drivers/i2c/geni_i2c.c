@@ -7,6 +7,8 @@
  * Based on Linux driver: drivers/i2c/busses/i2c-qcom-geni.c
  */
 
+#define LOG_CATEGORY	UCLASS_I2C
+
 #include <log.h>
 #include <dm/device.h>
 #include <dm/read.h>
@@ -266,12 +268,7 @@ static int geni_i2c_xfer(struct udevice *bus, struct i2c_msg msgs[], int num)
 	struct geni_i2c_priv *geni = dev_get_priv(bus);
 	int i, ret = 0;
 
-	printf("GENI I2C: xfer called with %d messages on bus %s\n", num, bus->name);
-	
-	for (i = 0; i < num; i++) {
-		printf("GENI I2C: msg[%d]: addr=0x%02x, flags=0x%x, len=%d\n", 
-		       i, msgs[i].addr, msgs[i].flags, msgs[i].len);
-	}
+	/* Reduced debug output */
 
 	qcom_geni_i2c_conf(geni);
 
@@ -281,28 +278,18 @@ static int geni_i2c_xfer(struct udevice *bus, struct i2c_msg msgs[], int num)
 
 		m_param |= ((msg->addr << SLV_ADDR_SHFT) & SLV_ADDR_MSK);
 
-		printf("GENI I2C: processing msg[%d]: addr=0x%02x, %s, len=%d, m_param=0x%08x\n",
-		       i, msg->addr, (msg->flags & I2C_M_RD) ? "READ" : "write", 
-		       msg->len, m_param);
-
 		if (msg->flags & I2C_M_RD)
 			ret = geni_i2c_xfer_rx(geni, msg, m_param);
 		else
 			ret = geni_i2c_xfer_tx(geni, msg, m_param);
-
-		printf("GENI I2C: msg[%d] completed with result: %d\n", i, ret);
 
 		if (ret)
 			break;
 	}
 
 	if (ret) {
-		printf("GENI I2C: transfer failed with error %d\n", ret);
-		
 		if (ret == -ETIMEDOUT) {
 			u32 status;
-			
-			printf("GENI I2C: timeout detected, aborting transaction\n");
 
 			writel(M_GENI_CMD_ABORT, geni->base + SE_GENI_M_CMD_CTRL_REG);
 
@@ -312,13 +299,10 @@ static int geni_i2c_xfer(struct udevice *bus, struct i2c_msg msgs[], int num)
 			} while ((status & M_CMD_ABORT_EN) == 0);
 
 			writel(status, geni->base + SE_GENI_M_IRQ_STATUS);
-			printf("GENI I2C: abort completed, status=0x%08x\n", status);
 		}
 
 		return ret;
 	}
-
-	printf("GENI I2C: all messages completed successfully\n");
 	return 0;
 }
 

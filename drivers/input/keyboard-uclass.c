@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Google, Inc
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_KEYBOARD
 
 #include <dm.h>
@@ -38,10 +39,13 @@ static int keyboard_tstc(struct stdio_dev *sdev)
 	struct keyboard_ops *ops = keyboard_get_ops(dev);
 
 	/* Just get input to do this for us if we can */
-	if (priv->input.dev)
+	if (priv->input.dev) {
+		// log_debug("%s: calling input_tstc())\n", sdev->name);
 		return input_tstc(&priv->input);
-	else if (ops->tstc)
+	} else if (ops->tstc) {
+		// log_debug("%s: calling opts->tstc())\n", sdev->name);
 		return ops->tstc(dev);
+	}
 
 	return -ENOSYS;
 }

@@ -6,6 +6,8 @@
  * (C) Copyright 2004 DENX Software Engineering, Wolfgang Denk, wd@denx.de
  */
 
+#define LOG_DEBUG
+
 #include <console.h>
 #include <dm.h>
 #include <env.h>
@@ -221,8 +223,11 @@ static int input_queue_ascii(struct input_config *config, int ch)
 int input_tstc(struct input_config *config)
 {
 	if (config->fifo_in == config->fifo_out && config->read_keys) {
-		if (!(*config->read_keys)(config))
+		// log_debug("calling read_keys())\n");
+		if (!(*config->read_keys)(config)) {
+			//log_debug("result: 0");
 			return 0;
+		}
 	}
 	return config->fifo_in != config->fifo_out;
 }

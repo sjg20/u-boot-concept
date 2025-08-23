@@ -81,39 +81,6 @@ struct hid_i2c_priv {
  * HID usage table for keyboard - maps HID usage codes to Linux keycodes
  * Based on USB HID specification and existing keyboard drivers
  */
-static const u8 hid_kbd_keymap[] = {
-	KEY_RESERVED, 0xff, 0xff, 0xff,				/* 0x00 - 0x03 */
-	KEY_A, KEY_B, KEY_C, KEY_D,				/* 0x04 - 0x07 */
-	KEY_E, KEY_F, KEY_G, KEY_H,				/* 0x08 - 0x0b */
-	KEY_I, KEY_J, KEY_K, KEY_L,				/* 0x0c - 0x0f */
-	KEY_M, KEY_N, KEY_O, KEY_P,				/* 0x10 - 0x13 */
-	KEY_Q, KEY_R, KEY_S, KEY_T,				/* 0x14 - 0x17 */
-	KEY_U, KEY_V, KEY_W, KEY_X,				/* 0x18 - 0x1b */
-	KEY_Y, KEY_Z, KEY_1, KEY_2,				/* 0x1c - 0x1f */
-	KEY_3, KEY_4, KEY_5, KEY_6,				/* 0x20 - 0x23 */
-	KEY_7, KEY_8, KEY_9, KEY_0,				/* 0x24 - 0x27 */
-	KEY_ENTER, KEY_ESC, KEY_BACKSPACE, KEY_TAB,		/* 0x28 - 0x2b */
-	KEY_SPACE, KEY_MINUS, KEY_EQUAL, KEY_LEFTBRACE,		/* 0x2c - 0x2f */
-	KEY_RIGHTBRACE, KEY_BACKSLASH, 0xff, KEY_SEMICOLON,	/* 0x30 - 0x33 */
-	KEY_APOSTROPHE, KEY_GRAVE, KEY_COMMA, KEY_DOT,		/* 0x34 - 0x37 */
-	KEY_SLASH, KEY_CAPSLOCK, KEY_F1, KEY_F2,		/* 0x38 - 0x3b */
-	KEY_F3, KEY_F4, KEY_F5, KEY_F6,				/* 0x3c - 0x3f */
-	KEY_F7, KEY_F8, KEY_F9, KEY_F10,			/* 0x40 - 0x43 */
-	KEY_F11, KEY_F12, KEY_SYSRQ, KEY_SCROLLLOCK,		/* 0x44 - 0x47 */
-	KEY_PAUSE, KEY_INSERT, KEY_HOME, KEY_PAGEUP,		/* 0x48 - 0x4b */
-	KEY_DELETE, KEY_END, KEY_PAGEDOWN, KEY_RIGHT,		/* 0x4c - 0x4f */
-	KEY_LEFT, KEY_DOWN, KEY_UP, KEY_NUMLOCK,		/* 0x50 - 0x53 */
-};
-
-/* Modifier key mapping for HID keyboard boot protocol */
-#define HID_MOD_LEFTCTRL	BIT(0)
-#define HID_MOD_LEFTSHIFT	BIT(1)
-#define HID_MOD_LEFTALT		BIT(2)
-#define HID_MOD_LEFTGUI		BIT(3)
-#define HID_MOD_RIGHTCTRL	BIT(4)
-#define HID_MOD_RIGHTSHIFT	BIT(5)
-#define HID_MOD_RIGHTALT	BIT(6)
-#define HID_MOD_RIGHTGUI	BIT(7)
 
 static int hid_i2c_read_register(struct udevice *dev, u16 reg, u8 *data, int len)
 {
@@ -134,8 +101,8 @@ static int hid_i2c_read_register(struct udevice *dev, u16 reg, u8 *data, int len
 		return -ENODEV;
 	}
 
-	log_debug("%s: Reading register 0x%04x, length %d from device 0x%02x\n",
-		  dev->name, reg, len, priv->addr);
+	// log_debug("%s: Reading register 0x%04x, length %d from device 0x%02x\n",
+		  // dev->name, reg, len, priv->addr);
 
 	/* Register address is little-endian */
 	reg_buf[0] = reg & 0xff;
@@ -151,19 +118,19 @@ static int hid_i2c_read_register(struct udevice *dev, u16 reg, u8 *data, int len
 	msgs[1].len = len;
 	msgs[1].buf = data;
 
-	log_debug("About to perform I2C transaction: addr=0x%02x, reg=0x%04x, len=%d\n",
-		  priv->addr, reg, len);
+	// log_debug("About to perform I2C transaction: addr=0x%02x, reg=0x%04x, len=%d\n",
+		  // priv->addr, reg, len);
 	
 	/* Ensure data buffer is zeroed before read */
-	log_debug("memset\n");
+	// log_debug("memset\n");
 	memset(data, 0, len);
 	
-	log_debug("i2c\n");
+	// log_debug("i2c\n");
 	ret = dm_i2c_xfer(dev, msgs, 2);
 	if (ret) {
 		log_debug("I2C transfer failed: %d\n", ret);
 	} else {
-		log_debug("I2C transfer successful\n");
+		// log_debug("I2C transfer successful\n");
 	}
 	return ret;
 }
@@ -273,21 +240,47 @@ static int hid_i2c_read_hid_descriptor(struct udevice *dev)
 	
 	log_debug("Basic I2C test passed, now reading HID descriptor from address 0x%04x\n", priv->desc_addr);
 
-	/* Try reading HID descriptor with retries */
+	/* First, read just the descriptor length */
+	u16 desc_len;
+	ret = hid_i2c_read_register(dev, priv->desc_addr, (u8 *)&desc_len, 2);
+	if (ret) {
+		printf("Failed to read HID descriptor length: %d\n", ret);
+		return ret;
+	}
+	
+	desc_len = le16_to_cpu(desc_len);
+	printf("HID descriptor reports length: %d bytes\n", desc_len);
+	
+	if (desc_len < 4 || desc_len > sizeof(priv->desc)) {
+		printf("Invalid HID descriptor length: %d\n", desc_len);
+		return -EINVAL;
+	}
+	
+	/* Now read the full descriptor based on reported length */
 	for (retry = 0; retry < HID_I2C_MAX_RETRIES; retry++) {
 		/* Clear the descriptor buffer before reading */
 		memset(&priv->desc, 0, sizeof(priv->desc));
 		
+		printf("HID I2C: Reading %d bytes from descriptor addr 0x%04x\n", 
+		       desc_len, priv->desc_addr);
+		
 		ret = hid_i2c_read_register(dev, priv->desc_addr, 
-					   (u8 *)&priv->desc, sizeof(priv->desc));
+					   (u8 *)&priv->desc, desc_len);
+		printf("HID I2C: Read result: %d\n", ret);
+		
 		if (ret == 0) {
-			log_debug("HID descriptor read successful on attempt %d\n", retry + 1);
+			printf("HID I2C: Full descriptor data: ");
+			u8 *raw = (u8 *)&priv->desc;
+			for (int i = 0; i < desc_len; i++) {
+				printf("%02x ", raw[i]);
+			}
+			printf("\n");
 			break;
 		}
 		
-		log_debug("HID descriptor read attempt %d failed: %d\n", retry + 1, ret);
+		printf("HID descriptor read attempt %d failed: %d\n", retry + 1, ret);
 		if (retry < HID_I2C_MAX_RETRIES - 1)
-			mdelay(50);  /* Longer delay between retries */
+			mdelay(50);
 	}
 	
 	if (ret) {
@@ -302,86 +295,53 @@ static int hid_i2c_read_hid_descriptor(struct udevice *dev)
 	priv->input_reg = le16_to_cpu(priv->desc.wInputRegister);
 	priv->max_input_len = le16_to_cpu(priv->desc.wMaxInputLength);
 
+	printf("HID descriptor raw: wMaxInputLength=0x%04x (%d)\n", 
+	       priv->desc.wMaxInputLength, le16_to_cpu(priv->desc.wMaxInputLength));
+
 	if (priv->max_input_len > HID_I2C_MAX_INPUT_LENGTH)
 		priv->max_input_len = HID_I2C_MAX_INPUT_LENGTH;
+	
+	/* If max_input_len is 0, set a reasonable default */
+	if (priv->max_input_len == 0) {
+		printf("HID descriptor has invalid max_input_len=0, using default 64\n");
+		priv->max_input_len = 64;
+	}
 
 	log_debug("HID descriptor: cmd_reg=0x%04x, data_reg=0x%04x, input_reg=0x%04x\n",
 		  priv->command_reg, priv->data_reg, priv->input_reg);
+	panic("check it");
 
 	return 0;
 }
 
-static int hid_i2c_process_keyboard_report(struct udevice *dev, u8 *data, int len)
-{
-	struct keyboard_priv *kbd_priv = dev_get_uclass_priv(dev);
-	struct input_config *input = &kbd_priv->input;
-	u8 modifiers, *keycodes;
-	int i, keycode, num_keys = 0;
-	int keys[8]; /* Maximum simultaneous keys */
-
-	if (len < 8) {
-		log_debug("Keyboard report too short: %d bytes\n", len);
-		return -EINVAL;
-	}
-
-	/* Skip report length field (first 2 bytes) */
-	modifiers = data[2];
-	keycodes = &data[4]; /* Skip reserved byte at data[3] */
-
-	/* Process modifier keys */
-	if (modifiers & HID_MOD_LEFTCTRL) keys[num_keys++] = KEY_LEFTCTRL;
-	if (modifiers & HID_MOD_LEFTSHIFT) keys[num_keys++] = KEY_LEFTSHIFT;
-	if (modifiers & HID_MOD_LEFTALT) keys[num_keys++] = KEY_LEFTALT;
-	if (modifiers & HID_MOD_LEFTGUI) keys[num_keys++] = KEY_LEFTMETA;
-	if (modifiers & HID_MOD_RIGHTCTRL) keys[num_keys++] = KEY_RIGHTCTRL;
-	if (modifiers & HID_MOD_RIGHTSHIFT) keys[num_keys++] = KEY_RIGHTSHIFT;
-	if (modifiers & HID_MOD_RIGHTALT) keys[num_keys++] = KEY_RIGHTALT;
-	if (modifiers & HID_MOD_RIGHTGUI) keys[num_keys++] = KEY_RIGHTMETA;
-
-	/* Process regular keys */
-	for (i = 0; i < 6 && num_keys < 8; i++) {
-		if (keycodes[i] == 0)
-			continue;
-		
-		if (keycodes[i] < ARRAY_SIZE(hid_kbd_keymap)) {
-			keycode = hid_kbd_keymap[keycodes[i]];
-			if (keycode != 0xff && keycode != KEY_RESERVED)
-				keys[num_keys++] = keycode;
-		}
-	}
-
-	/* Send keys to input system */
-	return input_send_keycodes(input, keys, num_keys);
-}
 
 static int hid_i2c_read_keys(struct input_config *input)
 {
 	struct udevice *dev = input->dev;
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
-	int ret, len;
+	int ret, len, i;
 
 	/* Read input data from HID device */
 	if (!priv->input_reg || !priv->max_input_len) {
-		log_debug("HID I2C: No input register configured\n");
+		// log_debug("read_keys: input_reg %x max_input_len %x\n",
+			  // priv->input_reg, priv->max_input_len);
 		return 0;
 	}
 
+	memset(priv->input_buf, '\0', HID_I2C_MAX_INPUT_LENGTH);
 	ret = hid_i2c_read_register(dev, priv->input_reg, 
 				   priv->input_buf, priv->max_input_len);
 	if (ret) {
-		log_debug("HID I2C: Failed to read input data: %d\n", ret);
 		return ret;
 	}
 
 	/* Get report length from first 2 bytes */
 	len = priv->input_buf[0] | (priv->input_buf[1] << 8);
-	log_debug("HID I2C: Read %d bytes, report length: %d\n", priv->max_input_len, len);
 	
-	if (len > 2 && len <= priv->max_input_len) {
-		log_debug("HID I2C: Processing keyboard report\n");
-		hid_i2c_process_keyboard_report(dev, priv->input_buf, len);
-	} else if (len > 0) {
-		log_debug("HID I2C: Invalid report length: %d\n", len);
+	/* Skip processing - this appears to be touchpad data, not keyboard */
+	if (len == 30 && priv->input_buf[2] != 0) {
+		/* This looks like a 30-byte touchpad report, not keyboard input */
+		return 0;
 	}
 
 	return 0;
@@ -416,55 +376,6 @@ static int hid_i2c_stop(struct udevice *dev)
 	return hid_i2c_set_power(dev, false);
 }
 
-static int hid_i2c_tstc(struct udevice *dev)
-{
-	struct keyboard_priv *kbd_priv = dev_get_uclass_priv(dev);
-	int ret;
-	
-	ret = input_tstc(&kbd_priv->input);
-	if (ret)
-		printf("HID I2C: tstc called for %s, returning %d\n", dev->name, ret);
-	
-	return ret;
-}
-
-static int hid_i2c_getc(struct udevice *dev)
-{
-	struct hid_i2c_priv *priv = dev_get_priv(dev);
-	struct keyboard_priv *kbd_priv = dev_get_uclass_priv(dev);
-	int ret, len;
-
-	printf("HID I2C: getc called for %s\n", dev->name);
-
-	/* Try to read input first if no keys are pending */
-	if (!input_tstc(&kbd_priv->input)) {
-		log_debug("HID I2C: No keys pending, reading input register 0x%04x\n", priv->input_reg);
-		ret = hid_i2c_read_register(dev, priv->input_reg, 
-					   priv->input_buf, priv->max_input_len);
-		if (ret == 0) {
-			/* Get report length from first 2 bytes */
-			len = priv->input_buf[0] | (priv->input_buf[1] << 8);
-			log_debug("HID I2C: Read %d bytes, report length: %d\n", priv->max_input_len, len);
-			if (len > 2 && len <= priv->max_input_len) {
-				log_debug("HID I2C: Processing keyboard report\n");
-				hid_i2c_process_keyboard_report(dev, priv->input_buf, len);
-			} else {
-				log_debug("HID I2C: Invalid report length: %d\n", len);
-			}
-		} else {
-			log_debug("HID I2C: Failed to read input register: %d\n", ret);
-		}
-	} else {
-		log_debug("HID I2C: Keys already pending\n");
-	}
-
-	/* Return next available key */
-	ret = input_getc(&kbd_priv->input);
-	if (ret > 0) {
-		log_debug("HID I2C: Returning key: 0x%02x ('%c')\n", ret, ret >= 32 ? ret : '?');
-	}
-	return ret;
-}
 
 static int hid_i2c_update_leds(struct udevice *dev, int leds)
 {
@@ -475,8 +386,6 @@ static int hid_i2c_update_leds(struct udevice *dev, int leds)
 static const struct keyboard_ops hid_i2c_ops = {
 	.start		= hid_i2c_start,
 	.stop		= hid_i2c_stop,
-	.tstc		= hid_i2c_tstc,
-	.getc		= hid_i2c_getc,
 	.update_leds	= hid_i2c_update_leds,
 };
 
@@ -495,6 +404,8 @@ static int hid_i2c_probe(struct udevice *dev)
 		log_err("Failed to get I2C address\n");
 		return -EINVAL;
 	}
+	
+	printf("HID I2C: Device %s at I2C address 0x%02x\n", dev->name, (unsigned)priv->addr);
 
 	/* Get HID descriptor address from device tree */
 	priv->desc_addr = dev_read_u32_default(dev, "hid-descr-addr", 
@@ -516,48 +427,40 @@ static int hid_i2c_probe(struct udevice *dev)
 	log_debug("Attempting to read HID descriptor...\n");
 	ret = hid_i2c_read_hid_descriptor(dev);
 	if (ret) {
-		log_debug("HID descriptor read failed (%d), using defaults\n", ret);
+		printf("HID descriptor read failed (%d), using defaults\n", ret);
 		/* Set some default values for testing */
 		priv->command_reg = 0x0022;
 		priv->data_reg = 0x0023;
 		priv->input_reg = 0x0024;
 		priv->max_input_len = 64;
+		printf("HID I2C: Using default registers - input_reg=0x%04x, max_input_len=%d\n", 
+		       priv->input_reg, priv->max_input_len);
 	} else {
-		log_debug("HID descriptor read successfully\n");
+		printf("HID descriptor read successfully\n");
+		printf("HID I2C: From descriptor - input_reg=0x%04x, max_input_len=%d\n", 
+		       priv->input_reg, priv->max_input_len);
 	}
 
 	/* Initialize input system */
 	struct input_config *input = &kbd_priv->input;
+	struct stdio_dev *sdev = &kbd_priv->sdev;
 	
+	// input_init(input, false);   (done by keyboard_pre_probe())
+	input_add_tables(input, false);
+
+	/* Register the device */
 	input->dev = dev;
 	input->read_keys = hid_i2c_read_keys;
-	ret = input_init(input, 0);
-	if (ret) {
-		log_err("Failed to initialize input: %d\n", ret);
-		return ret;
-	}
-
-	printf("HID I2C: Input system initialized with read_keys function\n");
-	log_debug("Input system initialized successfully\n");
-
-	ret = input_add_tables(input, false);
-	if (ret) {
-		log_err("Failed to add input tables: %d\n", ret);
-		return ret;
-	}
-	
-	printf("HID I2C: probe completed successfully for %s\n", dev->name);
-	printf("HID I2C: input_reg=0x%04x, max_input_len=%d\n", priv->input_reg, priv->max_input_len);
-	
-	/* Register keyboard with stdio system */
-	ret = input_stdio_register(&kbd_priv->sdev);
+	strcpy(sdev->name, dev->name);
+	ret = input_stdio_register(sdev);
 	if (ret) {
 		log_err("Failed to register keyboard with stdio: %d\n", ret);
 		return ret;
 	}
 	
+	printf("HID I2C: probe completed successfully for %s\n", dev->name);
+	printf("HID I2C: input_reg=0x%04x, max_input_len=%d\n", priv->input_reg, priv->max_input_len);
 	printf("HID I2C: keyboard registered with stdio system\n");
-	log_debug("HID I2C probe completed successfully\n");
 	return 0;
 }
 
@@ -671,7 +574,6 @@ int hid_i2c_init(void)
 		run_command("coninfo", 0);
 		env_set("stdin", "keyboard@3a");
 		printf("stdin3: %s\n", env_get("stdin"));
-
 	} else {
 		log_info("HID I2C: No HID over I2C devices found\n");
 	}

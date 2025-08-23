@@ -213,12 +213,12 @@ int dm_i2c_write(struct udevice *dev, uint offset, const uint8_t *buffer,
 
 int dm_i2c_xfer(struct udevice *dev, struct i2c_msg *msg, int nmsgs)
 {
-	log_debug("here\n");
+	// log_debug("here\n");
 
 	struct udevice *bus = dev_get_parent(dev);
 	struct dm_i2c_ops *ops = i2c_get_ops(bus);
 
-	log_debug("parent %p %s ops %p\n", bus, bus->name, ops);
+	// log_debug("parent %p %s ops %p\n", bus, bus->name, ops);
 	if (!ops->xfer)
 		return -ENOSYS;
 
