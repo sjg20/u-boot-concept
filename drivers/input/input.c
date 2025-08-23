@@ -362,12 +362,12 @@ static int sort_array_by_ordering(int *dest, int count, const int *order,
 	int same; /* number of elements which are the same */
 	int i;
 
-	printf("sort_array_by_ordering: count=%d, ocount=%d\n", count, ocount);
-	printf("dest   (cur): ");
-	for (i = 0; i < count; i++) printf("%02x ", dest[i]);
-	printf("order (prev): ");
-	for (i = 0; i < ocount; i++) printf("%02x ", order[i]);
-	printf("\n");
+	log_debug("sort_array_by_ordering: count=%d, ocount=%d\n", count, ocount);
+	log_debug("dest   (cur): ");
+	for (i = 0; i < count; i++) log_debug("%02x ", dest[i]);
+	log_debug("order (prev): ");
+	for (i = 0; i < ocount; i++) log_debug("%02x ", order[i]);
+	log_debug("\n");
 
 	/* setup output items, copy items to be sorted into our temp area */
 	memcpy(temp, dest, count * sizeof(*dest));
@@ -386,10 +386,10 @@ static int sort_array_by_ordering(int *dest, int count, const int *order,
 			dest[dest_count++] = temp[i];
 	}
 	assert(dest_count == count);
-	printf("new dest: ");
-	for (i = 0; i < dest_count; i++) printf("%02x ", dest[i]);
-	printf("   (same %d)\n", same);
-	mdelay(1000);
+	log_debug("new dest: ");
+	for (i = 0; i < dest_count; i++) log_debug("%02x ", dest[i]);
+	log_debug("   (same %d)\n", same);
+	// mdelay(1000);
 
 	return same;
 }
@@ -685,7 +685,7 @@ int input_init(struct input_config *config, int leds)
 void input_report_start(struct input_config *config)
 {
 	config->num_cur_keycodes = 0;
-	printf("start: ");
+	log_debug("start: ");
 }
 
 int input_report_add(struct input_config *config, int keycode)
@@ -693,14 +693,14 @@ int input_report_add(struct input_config *config, int keycode)
 	if (config->num_cur_keycodes >= INPUT_BUFFER_LEN)
 		return -ENOSPC;
 	config->cur_keycodes[config->num_cur_keycodes++] = keycode;
-	printf("%02x ", keycode);
+	log_debug("%02x ", keycode);
 
 	return 0;
 }
 
 int input_report_done(struct input_config *config)
 {
-	printf("done, num_cur_keycodes %d\n", config->num_cur_keycodes);
+	log_debug("done, num_cur_keycodes %d\n", config->num_cur_keycodes);
 	return _input_send_keycodes(config, config->cur_keycodes,
 				    config->num_cur_keycodes, true);
 }

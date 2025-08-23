@@ -8,7 +8,6 @@
  * Copyright (c) 2025
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY	UCLASS_KEYBOARD
 
 #include <command.h>
@@ -396,15 +395,47 @@ static int hid_i2c_read_hid_descriptor(struct udevice *dev)
 }
 
 
+static int hid_i2c_check_interrupt(struct udevice *dev)
+{
+	u8 status_buf[4];
+	int ret;
+	static int debug_count = 0;
+
+	/* Check status/interrupt register at 0x0001 */
+	ret = hid_i2c_read_register(dev, 0x0001, status_buf, 4);
+	if (ret) {
+		return ret;
+	}
+
+	/* Debug: show status register contents occasionally */
+	if (++debug_count % 20 == 1) {
+		log_debug("status reg: %02x %02x %02x %02x\n",
+		       status_buf[0], status_buf[1], status_buf[2], status_buf[3]);
+	}
+
+	/* Always return 1 to read data - let the main function filter zeros */
+	return 1;
+}
+
 static int hid_i2c_read_keys(struct input_config *input)
 {
 	struct udevice *dev = input->dev;
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
-	int ret, i;
+	int ret, i, keys_found = 0;
+	bool has_any_keys = false;
 
 	/* Read input data from device */
 	if (!priv->max_input_len) {
 		return 0;
+	}
+
+	/* Check if there's new data available before reading */
+	ret = hid_i2c_check_interrupt(dev);
+	if (ret < 0) {
+		return ret; /* Error checking status */
+	}
+	if (ret == 0) {
+		return 0; /* No new data available */
 	}
 
 	memset(priv->input_buf, '\0', HID_I2C_MAX_INPUT_LENGTH);
@@ -418,24 +449,37 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return 0; /* Not a valid keyboard report */
 	}
 
-	printf("report: ");
-	for (i = 0; i < 6; i++)
-		printf("%02x ", priv->input_buf[i + 5]);
-	printf(":  ");
-
-	input_report_start(input);
-	/* Keycodes start at offset 5 for this device */
+	/* Check if report has any keys before processing */
 	for (i = 0; i < 6; i++) {
-		u8 hid_code = priv->input_buf[i + 5];
-		if (hid_code) {
-			int keycode = hid_to_linux_keycode(hid_code);
-			if (keycode)
-				input_report_add(input, keycode);
+		if (priv->input_buf[i + 5] != 0) {
+			has_any_keys = true;
+			break;
 		}
 	}
-	input_report_done(input);
 
-	return 0;
+	/* Only show debug output and process if there are keys */
+	if (has_any_keys) {
+		log_debug("report: ");
+		for (i = 0; i < 6; i++)
+			log_debug("%02x ", priv->input_buf[i + 5]);
+		log_debug(":  ");
+
+		input_report_start(input);
+		/* Keycodes start at offset 5 for this device */
+		for (i = 0; i < 6; i++) {
+			u8 hid_code = priv->input_buf[i + 5];
+			if (hid_code) {
+				int keycode = hid_to_linux_keycode(hid_code);
+				if (keycode) {
+					input_report_add(input, keycode);
+					keys_found++;
+				}
+			}
+		}
+		input_report_done(input);
+	}
+
+	return keys_found;
 }
 
 
