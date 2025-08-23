@@ -90,8 +90,8 @@ static int pinctrl_select_state_full(struct udevice *dev, const char *statename)
 
 		ret = pinctrl_config_one(config);
 		if (ret) {
-			dev_warn(dev, "%s: pinctrl_config_one: err=%d\n",
-				__func__, ret);
+			dev_warn(dev, "%s: pinctrl_config_one: dev '%s' err %d\n",
+				__func__, config->name, ret);
 			continue;
 		}
 	}
