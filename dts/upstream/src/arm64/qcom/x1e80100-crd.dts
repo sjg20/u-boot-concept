@@ -735,15 +735,15 @@
 		hid-descr-addr = <0x1>;
 		interrupts-extended = <&tlmm 67 IRQ_TYPE_LEVEL_LOW>;
 
-		vdd-supply = <&vreg_misc_3p3>;
-		vddl-supply = <&vreg_l12b_1p2>;
+		//vdd-supply = <&vreg_misc_3p3>;
+		//vddl-supply = <&vreg_l12b_1p2>;
 
 		pinctrl-0 = <&kybd_default>;
 		pinctrl-names = "default";
 		/* Power supply for keyboard */
 
-		vdd-supply = <&vreg_l8b_3p0>;
-		post-power-on-delay-ms = <100>;
+		//vdd-supply = <&vreg_l8b_3p0>;
+		//post-power-on-delay-ms = <100>;
 
 		wakeup-source;
 	};
