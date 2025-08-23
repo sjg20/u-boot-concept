@@ -214,7 +214,7 @@ static int input_queue_ascii(struct input_config *config, int ch)
 			return -1; /* buffer full */
 		config->fifo_in++;
 	}
-	debug(" {%02x} ", ch);
+	log_debug(" {%02x} ", ch);
 	config->fifo[config->fifo_in] = (uchar)ch;
 
 	return 0;

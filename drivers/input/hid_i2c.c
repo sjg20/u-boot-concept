@@ -344,7 +344,7 @@ static int hid_i2c_read_keys(struct input_config *input)
 {
 	struct udevice *dev = input->dev;
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
-	int ret, len, i;
+	int ret, len, i, keys_found = 0;
 
 	/* Read input data from device */
 	if (!priv->max_input_len) {
@@ -376,23 +376,26 @@ static int hid_i2c_read_keys(struct input_config *input)
 						/* A-Z keys */
 						int linux_code = KEY_A + (hid_code - 0x04);
 						input_add_keycode(input, linux_code, 1);
+						keys_found++;
 					} else if (hid_code >= 0x1E && hid_code <= 0x27) {
 						/* 1-0 keys */
 						int linux_code = KEY_1 + (hid_code - 0x1E);
 						input_add_keycode(input, linux_code, 1);
+						keys_found++;
 					} else if (hid_code == 0x28) {
 						/* Enter */
 						input_add_keycode(input, KEY_ENTER, 1);
+						keys_found++;
 					} else if (hid_code == 0x2C) {
 						/* Space */
 						input_add_keycode(input, KEY_SPACE, 1);
+						keys_found++;
 					}
 				}
 				break; /* Found the report, stop searching */
 			}
 		}
-		/* Don't panic - let it continue polling */
-		return 0;
+		return keys_found;
 	}
 	
 	/* Original HID over I2C processing */
