@@ -75,6 +75,7 @@ struct hid_i2c_priv {
 	u16			max_input_len;
 	bool			powered;
 	u8			input_buf[HID_I2C_MAX_INPUT_LENGTH];
+	u8			prev_keys[6]; /* Previous keyboard report */
 };
 
 /*
@@ -344,7 +345,9 @@ static int hid_i2c_read_keys(struct input_config *input)
 {
 	struct udevice *dev = input->dev;
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
-	int ret, len, i, keys_found = 0;
+	int ret, i, j;
+	bool found;
+	u8 *cur_keys;
 
 	/* Read input data from device */
 	if (!priv->max_input_len) {
@@ -358,54 +361,48 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return ret;
 	}
 
-	/* For direct register access, treat the whole buffer as potential keyboard data */
-	if (priv->input_reg == 0x0000) {
-		/* Direct access mode - try different read sizes to find keyboard data */
-		static int read_sizes[] = {8, 16, 32};
-		static int size_idx = 0;
-		int read_size = read_sizes[size_idx % 3];
-		size_idx++;
-		
-		/* Look for Report ID 0x07 (keyboard report) in the data */
-		for (i = 0; i < read_size - 8; i++) {
-			if (priv->input_buf[i] == 0x07) {
-				/* Process the key codes from this keyboard report */
-				for (int j = 3; j < 9; j++) {
-					u8 hid_code = priv->input_buf[i+j];
-					if (hid_code >= 0x04 && hid_code <= 0x1D) {
-						/* A-Z keys */
-						int linux_code = KEY_A + (hid_code - 0x04);
-						input_add_keycode(input, linux_code, 1);
-						keys_found++;
-					} else if (hid_code >= 0x1E && hid_code <= 0x27) {
-						/* 1-0 keys */
-						int linux_code = KEY_1 + (hid_code - 0x1E);
-						input_add_keycode(input, linux_code, 1);
-						keys_found++;
-					} else if (hid_code == 0x28) {
-						/* Enter */
-						input_add_keycode(input, KEY_ENTER, 1);
-						keys_found++;
-					} else if (hid_code == 0x2C) {
-						/* Space */
-						input_add_keycode(input, KEY_SPACE, 1);
-						keys_found++;
-					}
+	/* Standard HID keyboard reports have modifiers in byte 0 and keys in 2-7 */
+	if (priv->max_input_len < 8) {
+		return 0; /* Not a valid keyboard report */
+	}
+
+	/* Assume the keycodes start at offset 2 of the report */
+	cur_keys = &priv->input_buf[2];
+
+	/* Check for released keys */
+	for (i = 0; i < 6; i++) {
+		if (priv->prev_keys[i]) {
+			found = false;
+			for (j = 0; j < 6; j++) {
+				if (priv->prev_keys[i] == cur_keys[j]) {
+					found = true;
+					break;
 				}
-				break; /* Found the report, stop searching */
+			}
+			if (!found) {
+				input_add_keycode(input, priv->prev_keys[i], true);
 			}
 		}
-		return keys_found;
 	}
-	
-	/* Original HID over I2C processing */
-	len = priv->input_buf[0] | (priv->input_buf[1] << 8);
-	
-	/* Skip processing - this appears to be touchpad data, not keyboard */
-	if (len == 30 && priv->input_buf[2] != 0) {
-		/* This looks like a 30-byte touchpad report, not keyboard input */
-		return 0;
+
+	/* Check for pressed keys */
+	for (i = 0; i < 6; i++) {
+		if (cur_keys[i]) {
+			found = false;
+			for (j = 0; j < 6; j++) {
+				if (cur_keys[i] == priv->prev_keys[j]) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				input_add_keycode(input, cur_keys[i], false);
+			}
+		}
 	}
+
+	/* Save current keys for next time */
+	memcpy(priv->prev_keys, cur_keys, 6);
 
 	return 0;
 }
