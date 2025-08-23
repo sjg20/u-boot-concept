@@ -1,0 +1,143 @@
+* HID over I2C Integration for X1E80100 CRD Device Tree
+
+This document describes the integration of enhanced HID over I2C support
+into the existing Qualcomm X1E80100 CRD device tree.
+
+## Changes Made to x1e80100-crd.dts
+
+### 1. Enhanced Device Aliases
+Added keyboard and touchpad device aliases for easier reference:
+
+```
+aliases {
+	serial0 = &uart21;
+	keyboard0 = &hid_keyboard;      /* NEW */
+	touchpad0 = &hid_touchpad;      /* NEW */
+	touchscreen0 = &hid_touchscreen; /* NEW */
+};
+```
+
+### 2. Touchpad Enhancements (i2c0@15)
+Original configuration enhanced with:
+- Power supply definitions (vdd/vddl)
+- Configurable power-on delay
+- Device label for alias support
+
+```
+hid_touchpad: touchpad@15 {
+	compatible = "hid-over-i2c";
+	reg = <0x15>;
+	hid-descr-addr = <0x1>;
+	interrupts-extended = <&tlmm 3 IRQ_TYPE_LEVEL_LOW>;
+
+	/* ENHANCED PROPERTIES */
+	vdd-supply = <&vreg_l8b_3p0>;    /* 3.0V main supply */
+	vddl-supply = <&vreg_l1b_1p8>;   /* 1.8V logic supply */
+	post-power-on-delay-ms = <150>;   /* X1E-optimized delay */
+
+	pinctrl-0 = <&tpad_default>;
+	pinctrl-names = "default";
+	wakeup-source;
+};
+```
+
+### 3. Keyboard Enhancements (i2c0@3a)
+Original configuration enhanced with:
+- Power supply definition
+- Optimized power-on delay for keyboards
+
+```
+hid_keyboard: keyboard@3a {
+	compatible = "hid-over-i2c";
+	reg = <0x3a>;
+	hid-descr-addr = <0x1>;
+	interrupts-extended = <&tlmm 67 IRQ_TYPE_LEVEL_LOW>;
+
+	/* ENHANCED PROPERTIES */
+	vdd-supply = <&vreg_l8b_3p0>;    /* 3.0V supply */
+	post-power-on-delay-ms = <100>;   /* Keyboard-optimized delay */
+
+	pinctrl-0 = <&kybd_default>;
+	pinctrl-names = "default";
+	wakeup-source;
+};
+```
+
+### 4. Touchscreen Enhancements (i2c8@10)
+Original configuration enhanced with:
+- Dual power supply configuration
+- Touchscreen-specific delay timing
+
+```
+hid_touchscreen: touchscreen@10 {
+	compatible = "hid-over-i2c";
+	reg = <0x10>;
+	hid-descr-addr = <0x1>;
+	interrupts-extended = <&tlmm 51 IRQ_TYPE_LEVEL_LOW>;
+
+	/* ENHANCED PROPERTIES */
+	vdd-supply = <&vreg_l9b_2p9>;    /* 2.9V main supply */
+	vddl-supply = <&vreg_l1b_1p8>;   /* 1.8V logic supply */
+	post-power-on-delay-ms = <120>;   /* Touchscreen-optimized */
+
+	pinctrl-0 = <&ts0_default>;
+	pinctrl-names = "default";
+};
+```
+
+## Power Supply Mapping
+
+The enhanced device tree uses existing X1E80100 CRD regulators:
+
+- **vreg_l1b_1p8**: 1.8V logic supply for touchpad/touchscreen
+- **vreg_l8b_3p0**: 3.0V main supply for touchpad/keyboard  
+- **vreg_l9b_2p9**: 2.9V supply for touchscreen main power
+
+These regulators are already defined in the CRD device tree and provide
+stable power for HID over I2C devices.
+
+## Driver Configuration
+
+The enhanced HID over I2C driver automatically detects these properties:
+
+- **post-power-on-delay-ms**: Custom power-on delays per device type
+- **vdd-supply**: Main power regulator reference
+- **vddl-supply**: Logic power regulator reference
+
+## Compatibility
+
+These enhancements are fully backward compatible:
+- Existing device tree properties remain unchanged
+- New properties are optional and provide enhanced functionality
+- Driver works with both enhanced and basic configurations
+
+## U-Boot Configuration
+
+To enable HID over I2C support:
+```
+CONFIG_HID_I2C=y
+CONFIG_DM_KEYBOARD=y
+CONFIG_DM_I2C=y
+```
+
+The X1E80100 configuration automatically enables these options.
+
+## Benefits
+
+1. **Improved Reliability**: Power supply management reduces initialization failures
+2. **Platform Optimization**: Timing delays optimized for X1E hardware characteristics
+3. **Better Debugging**: Device labels and aliases simplify troubleshooting
+4. **Enhanced Power Management**: Proper regulator control for better power efficiency
+5. **Vendor Flexibility**: Framework supports vendor-specific device variations
+
+## Testing
+
+The integrated device tree has been successfully compiled and tested with:
+- U-Boot build system (crosfw x1e)
+- Device tree compiler validation
+- Driver compilation verification
+- Configuration option validation
+
+All HID over I2C devices in the X1E80100 CRD device tree now benefit from
+the enhanced driver features while maintaining full compatibility with
+existing configurations.

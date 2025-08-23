@@ -1,0 +1,105 @@
+* HID over I2C Device-Tree bindings for Qualcomm X1E80100 platforms
+
+This binding extends the standard hid-over-i2c binding with specific
+configurations optimized for Qualcomm Snapdragon X Elite (X1E80100) platforms.
+
+The HID over I2C driver supports keyboards, touchpads, touchscreens, and other
+HID devices commonly found on X1E80100-based laptops.
+
+Required properties:
+- compatible: must include "hid-over-i2c", may also include vendor-specific
+  strings for better device identification:
+  * "elan,ekth3000" - ELAN touchpads (older)
+  * "elan,ekth3500" - ELAN touchpads (newer)
+  * "synaptics,tm3038-005" - Synaptics touchpads
+  * "synaptics,tm3253-005" - Synaptics touchpads (alternative)
+  * "wacom,w9013" - Wacom digitizers/stylus devices
+- reg: I2C slave address (commonly 0x15, 0x2C, or 0x10)
+- hid-descr-addr: HID descriptor address (commonly 0x0001 or 0x0020)
+- interrupts: interrupt specification
+
+Optional properties (commonly used on X1E platforms):
+- vdd-supply: 3.0V main power supply regulator
+- vddl-supply: 1.8V logic power supply regulator  
+- post-power-on-delay-ms: Delay in milliseconds after power-on before
+  device communication (default 200ms, range 100-500ms)
+- touchscreen-inverted-x: boolean, X axis is inverted
+- touchscreen-inverted-y: boolean, Y axis is inverted
+- touchscreen-size-x: X resolution for touchscreens
+- touchscreen-size-y: Y resolution for touchscreens
+
+X1E80100-specific considerations:
+- Many devices require longer power-on delays (100-200ms)
+- ELAN devices typically use I2C address 0x15 or 0x2C
+- Synaptics devices commonly use 0x2C
+- Keyboards often use HID descriptor address 0x0020
+- Touchpads typically use 0x0001
+
+Examples:
+
+1. ELAN touchpad (common on X1E laptops):
+	touchpad@15 {
+		compatible = "elan,ekth3000", "hid-over-i2c";
+		reg = <0x15>;
+		hid-descr-addr = <0x0001>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <12 IRQ_TYPE_LEVEL_LOW>;
+		
+		vdd-supply = <&vreg_l8a_3p0>;
+		vddl-supply = <&vreg_l7a_1p8>;
+		post-power-on-delay-ms = <150>;
+	};
+
+2. Generic HID keyboard:
+	keyboard@2c {
+		compatible = "hid-over-i2c";
+		reg = <0x2c>;
+		hid-descr-addr = <0x0020>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <33 IRQ_TYPE_LEVEL_LOW>;
+		
+		vdd-supply = <&vreg_l8a_3p0>;
+		post-power-on-delay-ms = <100>;
+	};
+
+3. Synaptics touchpad:
+	touchpad@2c {
+		compatible = "synaptics,tm3038-005", "hid-over-i2c";
+		reg = <0x2c>;
+		hid-descr-addr = <0x0001>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <9 IRQ_TYPE_EDGE_FALLING>;
+		
+		vdd-supply = <&vreg_l8a_3p0>;
+		vddl-supply = <&vreg_l7a_1p8>;
+		post-power-on-delay-ms = <120>;
+		
+		touchscreen-inverted-x;
+	};
+
+4. Wacom digitizer/stylus:
+	digitizer@10 {
+		compatible = "wacom,w9013", "hid-over-i2c";
+		reg = <0x10>;
+		hid-descr-addr = <0x0001>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <31 IRQ_TYPE_LEVEL_LOW>;
+		
+		vdd-supply = <&vreg_l9a_3p0>;
+		vddl-supply = <&vreg_l7a_1p8>;
+		post-power-on-delay-ms = <200>;
+		
+		touchscreen-size-x = <21600>;
+		touchscreen-size-y = <13500>;
+	};
+
+Driver Configuration:
+To enable HID over I2C support, set CONFIG_HID_I2C=y in your U-Boot config.
+This driver depends on CONFIG_DM_KEYBOARD and CONFIG_DM_I2C.
+
+Troubleshooting:
+- If the device is not detected, verify the I2C address and HID descriptor address
+- Increase post-power-on-delay-ms if the device fails to respond after reset
+- Check power supply configurations (vdd/vddl) match the device requirements
+- Ensure interrupt configuration matches the device's requirements
+- Some devices may require specific vendor-compatible strings for proper initialization

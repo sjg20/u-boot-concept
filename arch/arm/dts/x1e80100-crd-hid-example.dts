@@ -1,0 +1,188 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Example device tree configuration for HID over I2C devices
+ * on Qualcomm X1E80100 (Snapdragon X Elite) platforms
+ */
+
+/dts-v1/;
+
+/ {
+	model = "Qualcomm X1E80100 CRD with HID devices";
+	compatible = "qcom,x1e80100-crd", "qcom,x1e80100";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	aliases {
+		i2c0 = &i2c0;
+		keyboard0 = &hid_keyboard;
+		touchpad0 = &hid_touchpad;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	/* I2C bus configuration - typical for X1E80100 platforms */
+	i2c0: i2c@880000 {
+		compatible = "qcom,i2c-qup-v2.2.1";
+		reg = <0x0 0x880000 0x0 0x4000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clock-frequency = <400000>;
+		status = "okay";
+
+		/*
+		 * Example HID over I2C keyboard
+		 * Common on Qualcomm X1E laptops
+		 */
+		hid_keyboard: keyboard@2c {
+			compatible = "hid-over-i2c";
+			reg = <0x2c>;
+			hid-descr-addr = <0x0020>;
+			interrupt-parent = <&tlmm>;
+			interrupts = <33 IRQ_TYPE_LEVEL_LOW>;
+			
+			/* Power management for X1E platforms */
+			vdd-supply = <&vreg_l8a_3p0>;
+			vddl-supply = <&vreg_l7a_1p8>;
+			post-power-on-delay-ms = <100>;
+			
+			status = "okay";
+		};
+
+		/*
+		 * Example HID over I2C touchpad
+		 * Typical ELAN or Synaptics configuration
+		 */
+		hid_touchpad: touchpad@15 {
+			compatible = "hid-over-i2c";
+			reg = <0x15>;
+			hid-descr-addr = <0x0001>;
+			interrupt-parent = <&tlmm>;
+			interrupts = <12 IRQ_TYPE_LEVEL_LOW>;
+			
+			/* Touchpad specific properties */
+			vdd-supply = <&vreg_l8a_3p0>;
+			vddl-supply = <&vreg_l7a_1p8>;
+			post-power-on-delay-ms = <200>;
+			
+			/* Touchscreen/touchpad specific properties */
+			touchscreen-inverted-x;
+			touchscreen-inverted-y;
+			
+			status = "okay";
+		};
+
+		/*
+		 * Alternative touchpad configuration for different vendors
+		 */
+		hid_touchpad_alt: touchpad@2c {
+			compatible = "elan,ekth3000", "hid-over-i2c";
+			reg = <0x2c>;
+			hid-descr-addr = <0x0001>;
+			interrupt-parent = <&tlmm>;
+			interrupts = <9 IRQ_TYPE_EDGE_FALLING>;
+			
+			vdd-supply = <&vreg_l8a_3p0>;
+			post-power-on-delay-ms = <100>;
+			
+			status = "disabled";
+		};
+	};
+
+	/* Example I2C1 bus for additional HID devices */
+	i2c1: i2c@884000 {
+		compatible = "qcom,i2c-qup-v2.2.1";
+		reg = <0x0 0x884000 0x0 0x4000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clock-frequency = <400000>;
+		status = "okay";
+
+		/*
+		 * Touch screen example
+		 */
+		hid_touchscreen: touchscreen@10 {
+			compatible = "hid-over-i2c";
+			reg = <0x10>;
+			hid-descr-addr = <0x0001>;
+			interrupt-parent = <&tlmm>;
+			interrupts = <31 IRQ_TYPE_LEVEL_LOW>;
+			
+			vdd-supply = <&vreg_l9a_3p0>;
+			vddl-supply = <&vreg_l7a_1p8>;
+			post-power-on-delay-ms = <120>;
+			
+			touchscreen-size-x = <1920>;
+			touchscreen-size-y = <1080>;
+			
+			status = "disabled";
+		};
+	};
+
+	/* Regulators commonly found on X1E platforms */
+	regulators {
+		compatible = "simple-bus";
+		
+		vreg_l7a_1p8: l7a-1p8 {
+			compatible = "regulator-fixed";
+			regulator-name = "vreg_l7a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-always-on;
+		};
+		
+		vreg_l8a_3p0: l8a-3p0 {
+			compatible = "regulator-fixed";
+			regulator-name = "vreg_l8a_3p0";
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3000000>;
+			regulator-always-on;
+		};
+		
+		vreg_l9a_3p0: l9a-3p0 {
+			compatible = "regulator-fixed";
+			regulator-name = "vreg_l9a_3p0";
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3000000>;
+		};
+	};
+
+	/* GPIO controller stub - would reference actual X1E TLMM */
+	tlmm: pinctrl@f000000 {
+		compatible = "qcom,x1e80100-tlmm";
+		reg = <0x0 0xf000000 0x0 0x1000000>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+	};
+};
+
+/*
+ * Configuration notes for X1E80100 HID over I2C devices:
+ * 
+ * 1. I2C addresses commonly used:
+ *    - 0x15: Synaptics touchpads
+ *    - 0x2C: ELAN touchpads/keyboards  
+ *    - 0x10: Various touchscreens
+ *    - 0x5C: Some alternative configurations
+ *
+ * 2. HID descriptor addresses:
+ *    - 0x0001: Most common for touchpads
+ *    - 0x0020: Alternative address for some devices
+ *
+ * 3. Power supplies:
+ *    - VDD: 3.0V main supply
+ *    - VDDL: 1.8V logic supply
+ *    - Post-power delays vary by device (100-200ms typical)
+ *
+ * 4. Interrupts:
+ *    - Most devices use level-triggered low interrupts
+ *    - Some ELAN devices prefer edge-triggered falling
+ *
+ * 5. Vendor-specific compatibles:
+ *    - "elan,ekth3000" for ELAN touchpads
+ *    - "wacom,w9013" for Wacom digitizers
+ *    - "synaptics,tm3038-005" for Synaptics touchpads
+ */
