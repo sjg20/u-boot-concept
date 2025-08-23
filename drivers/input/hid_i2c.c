@@ -360,32 +360,38 @@ static int hid_i2c_read_keys(struct input_config *input)
 
 	/* For direct register access, treat the whole buffer as potential keyboard data */
 	if (priv->input_reg == 0x0000) {
-		/* Direct access mode - look for standard 8-byte keyboard report */
-		printf("Direct read (8 bytes): ");
-		for (i = 0; i < 8; i++) {
-			printf("%02x ", priv->input_buf[i]);
-		}
-		printf("\n");
+		/* Direct access mode - try different read sizes to find keyboard data */
+		static int read_sizes[] = {8, 16, 32};
+		static int size_idx = 0;
+		int read_size = read_sizes[size_idx % 3];
+		size_idx++;
 		
-		/* Look for keyboard data in standard HID boot report format */
-		/* Byte 0: modifier keys, Byte 1: reserved, Bytes 2-7: key codes */
-		for (i = 2; i < 8; i++) {
-			if (priv->input_buf[i] != 0 && priv->input_buf[i] >= 0x04 && priv->input_buf[i] <= 0x65) {
-				u8 hid_code = priv->input_buf[i];
-				int linux_code = 0;
-				
-				if (hid_code >= 0x04 && hid_code <= 0x1D) {
-					linux_code = KEY_A + (hid_code - 0x04);
-				} else if (hid_code >= 0x1E && hid_code <= 0x27) {
-					linux_code = KEY_1 + (hid_code - 0x1E);
+		/* Look for Report ID 0x07 (keyboard report) in the data */
+		for (i = 0; i < read_size - 8; i++) {
+			if (priv->input_buf[i] == 0x07) {
+				/* Process the key codes from this keyboard report */
+				for (int j = 3; j < 9; j++) {
+					u8 hid_code = priv->input_buf[i+j];
+					if (hid_code >= 0x04 && hid_code <= 0x1D) {
+						/* A-Z keys */
+						int linux_code = KEY_A + (hid_code - 0x04);
+						input_add_keycode(input, linux_code, 1);
+					} else if (hid_code >= 0x1E && hid_code <= 0x27) {
+						/* 1-0 keys */
+						int linux_code = KEY_1 + (hid_code - 0x1E);
+						input_add_keycode(input, linux_code, 1);
+					} else if (hid_code == 0x28) {
+						/* Enter */
+						input_add_keycode(input, KEY_ENTER, 1);
+					} else if (hid_code == 0x2C) {
+						/* Space */
+						input_add_keycode(input, KEY_SPACE, 1);
+					}
 				}
-				
-				if (linux_code != 0) {
-					printf("Direct keyboard: HID 0x%02x -> Linux %d\n", hid_code, linux_code);
-					input_add_keycode(input, linux_code, 1);
-				}
+				break; /* Found the report, stop searching */
 			}
 		}
+		/* Don't panic - let it continue polling */
 		return 0;
 	}
 	
@@ -486,6 +492,19 @@ static int hid_i2c_probe(struct udevice *dev)
 	
 	if (!id_found) {
 		printf("  No readable ID registers found\n");
+	} else {
+		/* Try reading more data from address 0x0001 since it showed 0x1e (30 bytes) */
+		u8 extended_buf[32];
+		memset(extended_buf, 0, sizeof(extended_buf));
+		ret = hid_i2c_read_register(dev, 0x0001, extended_buf, 30);
+		if (ret == 0) {
+			printf("  Full 30-byte read from addr 0x0001:\n    ");
+			for (int k = 0; k < 30; k++) {
+				printf("%02x ", extended_buf[k]);
+				if ((k + 1) % 16 == 0) printf("\n    ");
+			}
+			printf("\n");
+		}
 	}
 
 	/* Get HID descriptor address from device tree */
