@@ -75,7 +75,6 @@ struct hid_i2c_priv {
 	u16			max_input_len;
 	bool			powered;
 	u8			input_buf[HID_I2C_MAX_INPUT_LENGTH];
-	u8			prev_keys[6]; /* Previous keyboard report */
 };
 
 /*
@@ -400,10 +399,9 @@ static int hid_i2c_read_keys(struct input_config *input)
 {
 	struct udevice *dev = input->dev;
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
-	int ret, i, j;
-	bool found;
-	u8 *cur_keys;
-	int keycode;
+	int ret, i;
+	int keycodes[6]; /* Max 6 keys in a boot report */
+	int count = 0;
 
 	/* Read input data from device */
 	if (!priv->max_input_len) {
@@ -417,55 +415,32 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return ret;
 	}
 
+	
+
 	/* Standard HID keyboard reports have modifiers in byte 0 and keys in 2-7 */
 	if (priv->max_input_len < 8) {
 		return 0; /* Not a valid keyboard report */
 	}
 
-	/* Assume the keycodes start at offset 2 of the report */
-	cur_keys = &priv->input_buf[2];
-
-	/* Check for released keys */
+	/* Translate all currently pressed keys */
 	for (i = 0; i < 6; i++) {
-		if (priv->prev_keys[i]) {
-			found = false;
-			for (j = 0; j < 6; j++) {
-				if (priv->prev_keys[i] == cur_keys[j]) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				keycode = hid_to_linux_keycode(priv->prev_keys[i]);
-				if (keycode)
-					input_add_keycode(input, keycode, true);
+		/* Keycodes seem to start at offset 5 for this device */
+		u8 hid_code = priv->input_buf[i + 5];
+		if (hid_code) {
+			int keycode = hid_to_linux_keycode(hid_code);
+			if (keycode) {
+				keycodes[count++] = keycode;
 			}
 		}
 	}
 
-	/* Check for pressed keys */
-	for (i = 0; i < 6; i++) {
-		if (cur_keys[i]) {
-			found = false;
-			for (j = 0; j < 6; j++) {
-				if (cur_keys[i] == priv->prev_keys[j]) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				keycode = hid_to_linux_keycode(cur_keys[i]);
-				if (keycode)
-					input_add_keycode(input, keycode, false);
-			}
-		}
-	}
-
-	/* Save current keys for next time */
-	memcpy(priv->prev_keys, cur_keys, 6);
+	/* Send the whole state to the input subsystem */
+	input_send_keycodes(input, keycodes, count);
+	// mdelay(200);
 
 	return 0;
 }
+
 
 static int hid_i2c_start(struct udevice *dev)
 {

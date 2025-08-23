@@ -6,8 +6,6 @@
  * (C) Copyright 2004 DENX Software Engineering, Wolfgang Denk, wd@denx.de
  */
 
-#define LOG_DEBUG
-
 #include <console.h>
 #include <dm.h>
 #include <env.h>
@@ -576,7 +574,7 @@ int input_send_keycodes(struct input_config *config, int keycode[],
 int input_add_keycode(struct input_config *config, int new_keycode,
 		      bool release)
 {
-	int keycode[INPUT_MAX_MODIFIERS + 1];
+	int keycode[INPUT_BUFFER_LEN];
 	int count, i;
 
 	/* Add the old keycodes which are not removed by this new one */
