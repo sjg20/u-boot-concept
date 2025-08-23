@@ -493,10 +493,17 @@ U_BOOT_DRIVER(hid_i2c) = {
 int hid_i2c_init(void)
 {
 	struct udevice *bus, *dev;
+	struct uclass *uc;
 	int ret, found = 0;
 
 	log_info("HID I2C: Initializing HID over I2C devices...\n");
 	dm_dump_tree(NULL, false, true);
+
+	printf("nop devices:\n");
+	uclass_id_foreach_dev(UCLASS_NOP, dev, uc) {
+		printf("dev '%s'", dev->name);
+	}
+	printf("--\n");
 
 	/* Find all I2C buses - use _check to handle probe failures gracefully */
 	for (ret = uclass_first_device_check(UCLASS_I2C, &bus); bus;

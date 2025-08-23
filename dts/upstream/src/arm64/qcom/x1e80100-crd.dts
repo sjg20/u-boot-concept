@@ -705,7 +705,7 @@
 &i2c0 {
 	clock-frequency = <400000>;
 
-	status = "ok";
+	status = "okay";
 #if 0
 	hid_touchpad: touchpad@15 {
 		compatible = "hid-over-i2c";
