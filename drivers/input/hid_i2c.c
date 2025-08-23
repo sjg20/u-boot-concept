@@ -422,7 +422,8 @@ static int hid_i2c_read_keys(struct input_config *input)
 	struct udevice *dev = input->dev;
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
 	int ret, i, keys_found = 0;
-	bool has_any_keys = false;
+	u8 current_keys[6];
+	bool report_changed = false;
 
 	/* Read input data from device */
 	if (!priv->max_input_len) {
@@ -438,7 +439,6 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return 0; /* No new data available */
 	}
 
-	// printf("new\n");
 	memset(priv->input_buf, '\0', HID_I2C_MAX_INPUT_LENGTH);
 	ret = hid_i2c_read_register(dev, priv->input_reg, 
 				   priv->input_buf, priv->max_input_len);
@@ -450,34 +450,46 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return 0; /* Not a valid keyboard report */
 	}
 
-	/* Check if report has any keys before processing */
-	for (i = 0; i < 6; i++) {
-		if (priv->input_buf[i + 5] != 0) {
-			has_any_keys = true;
-			break;
-		}
-	}
+	/* Extract current keys from report */
+	memcpy(current_keys, &priv->input_buf[5], 6);
 
-	/* Only show debug output and process if there are keys */
-	if (has_any_keys) {
-		log_debug("report: ");
+	/* Check if report changed from previous */
+	if (memcmp(current_keys, priv->prev_keys, 6) != 0) {
+		report_changed = true;
+		
+		log_debug("report change: ");
 		for (i = 0; i < 6; i++)
-			log_debug("%02x ", priv->input_buf[i + 5]);
+			log_debug("%02x ", current_keys[i]);
 		log_debug("\n");
 
-		input_report_start(input);
-		/* Keycodes start at offset 5 for this device */
+		/* Process key changes - track press and release */
 		for (i = 0; i < 6; i++) {
-			u8 hid_code = priv->input_buf[i + 5];
-			if (hid_code) {
-				int keycode = hid_to_linux_keycode(hid_code);
+			u8 old_key = priv->prev_keys[i];
+			u8 new_key = current_keys[i];
+
+			/* Key release: was pressed, now not pressed */
+			if (old_key != 0 && new_key == 0) {
+				int keycode = hid_to_linux_keycode(old_key);
 				if (keycode) {
-					input_report_add(input, keycode);
+					log_debug("key release: HID 0x%02x -> Linux %d\n", old_key, keycode);
+					input_add_keycode(input, keycode, true);
+					keys_found++;
+				}
+			}
+
+			/* Key press: wasn't pressed, now pressed */
+			if (old_key == 0 && new_key != 0) {
+				int keycode = hid_to_linux_keycode(new_key);
+				if (keycode) {
+					log_debug("key press: HID 0x%02x -> Linux %d\n", new_key, keycode);
+					input_add_keycode(input, keycode, false);
 					keys_found++;
 				}
 			}
 		}
-		input_report_done(input);
+
+		/* Save current state for next comparison */
+		memcpy(priv->prev_keys, current_keys, 6);
 	}
 
 	return keys_found;
