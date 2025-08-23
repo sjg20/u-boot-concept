@@ -83,6 +83,61 @@ struct hid_i2c_priv {
  * Based on USB HID specification and existing keyboard drivers
  */
 
+static const u8 hid_to_linux_keycode_map[256] = {
+	[0x04] = KEY_A, [0x05] = KEY_B, [0x06] = KEY_C, [0x07] = KEY_D,
+	[0x08] = KEY_E, [0x09] = KEY_F, [0x0a] = KEY_G, [0x0b] = KEY_H,
+	[0x0c] = KEY_I, [0x0d] = KEY_J, [0x0e] = KEY_K, [0x0f] = KEY_L,
+	[0x10] = KEY_M, [0x11] = KEY_N, [0x12] = KEY_O, [0x13] = KEY_P,
+	[0x14] = KEY_Q, [0x15] = KEY_R, [0x16] = KEY_S, [0x17] = KEY_T,
+	[0x18] = KEY_U, [0x19] = KEY_V, [0x1a] = KEY_W, [0x1b] = KEY_X,
+	[0x1c] = KEY_Y, [0x1d] = KEY_Z,
+	[0x1e] = KEY_1, [0x1f] = KEY_2, [0x20] = KEY_3, [0x21] = KEY_4,
+	[0x22] = KEY_5, [0x23] = KEY_6, [0x24] = KEY_7, [0x25] = KEY_8,
+	[0x26] = KEY_9, [0x27] = KEY_0,
+	[0x28] = KEY_ENTER,
+	[0x29] = KEY_ESC,
+	[0x2a] = KEY_BACKSPACE,
+	[0x2b] = KEY_TAB,
+	[0x2c] = KEY_SPACE,
+	[0x2d] = KEY_MINUS,
+	[0x2e] = KEY_EQUAL,
+	[0x2f] = KEY_LEFTBRACE,
+	[0x30] = KEY_RIGHTBRACE,
+	[0x31] = KEY_BACKSLASH,
+	[0x33] = KEY_SEMICOLON,
+	[0x34] = KEY_APOSTROPHE,
+	[0x35] = KEY_GRAVE,
+	[0x36] = KEY_COMMA,
+	[0x37] = KEY_DOT,
+	[0x38] = KEY_SLASH,
+	[0x39] = KEY_CAPSLOCK,
+	/* F-keys */
+	[0x3a] = KEY_F1, [0x3b] = KEY_F2, [0x3c] = KEY_F3, [0x3d] = KEY_F4,
+	[0x3e] = KEY_F5, [0x3f] = KEY_F6, [0x40] = KEY_F7, [0x41] = KEY_F8,
+	[0x42] = KEY_F9, [0x43] = KEY_F10, [0x44] = KEY_F11, [0x45] = KEY_F12,
+	/* Arrow keys */
+	[0x4f] = KEY_RIGHT,
+	[0x50] = KEY_LEFT,
+	[0x51] = KEY_DOWN,
+	[0x52] = KEY_UP,
+	/* Modifier keys */
+	[0xe0] = KEY_LEFTCTRL,
+	[0xe1] = KEY_LEFTSHIFT,
+	[0xe2] = KEY_LEFTALT,
+	[0xe3] = KEY_LEFTMETA,
+	[0xe4] = KEY_RIGHTCTRL,
+	[0xe5] = KEY_RIGHTSHIFT,
+	[0xe6] = KEY_RIGHTALT,
+	[0xe7] = KEY_RIGHTMETA,
+};
+
+static int hid_to_linux_keycode(u8 hid_code)
+{
+	if (hid_code >= ARRAY_SIZE(hid_to_linux_keycode_map))
+		return 0;
+	return hid_to_linux_keycode_map[hid_code];
+}
+
 static int hid_i2c_read_register(struct udevice *dev, u16 reg, u8 *data, int len)
 {
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
@@ -348,6 +403,7 @@ static int hid_i2c_read_keys(struct input_config *input)
 	int ret, i, j;
 	bool found;
 	u8 *cur_keys;
+	int keycode;
 
 	/* Read input data from device */
 	if (!priv->max_input_len) {
@@ -380,7 +436,9 @@ static int hid_i2c_read_keys(struct input_config *input)
 				}
 			}
 			if (!found) {
-				input_add_keycode(input, priv->prev_keys[i], true);
+				keycode = hid_to_linux_keycode(priv->prev_keys[i]);
+				if (keycode)
+					input_add_keycode(input, keycode, true);
 			}
 		}
 	}
@@ -396,7 +454,9 @@ static int hid_i2c_read_keys(struct input_config *input)
 				}
 			}
 			if (!found) {
-				input_add_keycode(input, cur_keys[i], false);
+				keycode = hid_to_linux_keycode(cur_keys[i]);
+				if (keycode)
+					input_add_keycode(input, keycode, false);
 			}
 		}
 	}
