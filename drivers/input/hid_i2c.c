@@ -418,6 +418,11 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return 0; /* Not a valid keyboard report */
 	}
 
+	printf("report: ");
+	for (i = 0; i < 6; i++)
+		printf("%02x ", priv->input_buf[i + 5]);
+	printf(":  ");
+
 	input_report_start(input);
 	/* Keycodes start at offset 5 for this device */
 	for (i = 0; i < 6; i++) {
