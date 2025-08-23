@@ -318,17 +318,19 @@ int smbios_locate(ulong addr, struct smbios_info *info)
 
 int smbios_get_manuf(const char **namep)
 {
-	int max_size, count, version, ret;
-	struct smbios_header *table;
-	struct smbios_header *hdr;
+	// int max_size, count, version, ret;
+	// struct smbios_header *table;
+	const struct smbios_header *hdr;
 	struct smbios_type1 *sys;
+	struct smbios_info info;
 	const char *ptr;
+	int ret;
 
-	ret = smbios_locate(&table, &max_size, &count, &version);
+	ret = smbios_locate(gd_smbios_start(), &info);
 	if (ret)
 		return ret;
 
-	hdr = smbios_get_header(table, count, SMBIOS_SYSTEM_INFORMATION);
+	hdr = smbios_get_header(&info, SMBIOS_SYSTEM_INFORMATION);
 	if (!hdr)
 		return log_msg_ret("tab", -ENOENT);
 	sys = (struct smbios_type1 *)hdr;

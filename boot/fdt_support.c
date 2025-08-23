@@ -6,7 +6,7 @@
  * Copyright 2010-2011 Freescale Semiconductor, Inc.
  */
 
-#define LOG_DEBUG
+// #define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <dm.h>

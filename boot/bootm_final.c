@@ -8,8 +8,12 @@
 #include <bootm.h>
 #include <bootstage.h>
 #include <event.h>
+#include <pager.h>
 #include <usb.h>
+#include <asm/global_data.h>
 #include <dm/root.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 __weak void board_quiesce_devices(void)
 {
@@ -29,7 +33,8 @@ void bootm_final(enum bootm_final_t flags)
 		bootstage_fdt_add_report();
 	if (IS_ENABLED(CONFIG_BOOTSTAGE_REPORT))
 		bootstage_report();
-
+	pager_set_bypass(gd_pager(), true);
+#if 0
 	board_quiesce_devices();
 
 	if (IS_ENABLED(CONFIG_USB_DEVICE))
@@ -43,6 +48,7 @@ void bootm_final(enum bootm_final_t flags)
 	 * a second round.
 	 */
 	dm_remove_devices_active();
+#endif
 
 	final.flags = flags;
 	ret = event_notify(EVT_BOOTM_FINAL, &final, sizeof(final));
@@ -51,10 +57,10 @@ void bootm_final(enum bootm_final_t flags)
 		       ret);
 		return;
 	}
+#if 0
 	if (!(flags & BOOTM_FINAL_FAKE)) {
 		bootm_disable_interrupts();
 //	printf("after event\n");
-#if 1
 	if (!(flags & BOOTM_FINAL_FAKE)) {
 		bootm_disable_interrupts();
 

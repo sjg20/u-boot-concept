@@ -77,16 +77,27 @@ int fdt_simplefb_add_node(void *blob)
 	int off, ret;
 
 	off = fdt_add_subnode(blob, 0, "framebuffer");
-	if (off < 0)
-		return -1;
+	if (off < 0) {
+		if (off == -FDT_ERR_EXISTS) {
+			log_debug("/framebuffer exists");
+			log_debug("finding framebuffer node\n");
+			off = fdt_node_offset_by_compatible(blob, -1, "simple-framebuffer");
+			if (off < 0) {
+				log_debug("not found\n");
+				return off;
+			}
+		} else {
+			return off;
+		}
+	}
 
 	ret = fdt_setprop(blob, off, "status", disabled, sizeof(disabled));
 	if (ret < 0)
-		return -1;
+		return -ret;
 
 	ret = fdt_setprop(blob, off, "compatible", compat, sizeof(compat));
 	if (ret < 0)
-		return -1;
+		return -ret;
 
 	return fdt_simplefb_configure_node(blob, off);
 }

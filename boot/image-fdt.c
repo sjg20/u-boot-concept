@@ -688,7 +688,7 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 
 	ret = fdt_simplefb_add_node(blob);
 	if (ret) {
-		printf("failed to set up simplefb\n");
+		printf("failed to set up simplefb (err=%d)\n", ret);
 		goto err;
 	}
 	printf("added simplefb\n");
