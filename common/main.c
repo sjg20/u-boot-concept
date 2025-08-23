@@ -19,6 +19,7 @@
 #include <net.h>
 #include <version_string.h>
 #include <efi_loader.h>
+#include <hid_i2c.h>
 
 static void run_preboot_environment_command(void)
 {
@@ -78,6 +79,10 @@ void main_loop(void)
 		printf("Standard boot failed (err=%dE)\n", ret);
 		panic("Failed to boot");
 	}
+
+	/* Initialize HID over I2C devices late in boot for debug visibility */
+	if (hid_i2c_init())
+		printf("HID over I2C initialization failed\n");
 
 	cli_loop();
 

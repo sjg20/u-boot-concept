@@ -20,6 +20,7 @@
 #include <malloc.h>
 #include <linux/delay.h>
 #include <linux/input.h>
+#include <dm/device-internal.h>
 
 #define HID_I2C_DEFAULT_DESC_ADDR	0x0001
 #define HID_I2C_ALT_DESC_ADDR		0x0020	/* Alternative address */
@@ -478,3 +479,55 @@ U_BOOT_DRIVER(hid_i2c) = {
 	.priv_auto	= sizeof(struct hid_i2c_priv),
 	.ops		= &hid_i2c_ops,
 };
+
+/**
+ * hid_i2c_init() - Initialize HID over I2C devices late in boot
+ *
+ * This function manually probes for HID over I2C devices after the display
+ * is up and running, allowing debug output to be visible. It should be called
+ * from main_loop() just before cli_loop().
+ *
+ * Return: 0 if successful, negative error code otherwise
+ */
+int hid_i2c_init(void)
+{
+	struct udevice *bus, *dev;
+	int ret, found = 0;
+
+	log_info("HID I2C: Initializing HID over I2C devices...\n");
+
+	/* Find all I2C buses */
+	for (uclass_first_device(UCLASS_I2C, &bus); bus; 
+	     uclass_next_device(&bus)) {
+		if (!device_active(bus))
+			continue;
+
+		log_debug("HID I2C: Scanning I2C bus %s\n", bus->name);
+
+		/* Look for HID over I2C devices on this bus */
+		device_foreach_child(dev, bus) {
+			if (device_is_compatible(dev, "hid-over-i2c")) {
+				log_info("HID I2C: Found HID device: %s\n", dev->name);
+				
+				/* Probe the device */
+				ret = device_probe(dev);
+				if (ret) {
+					log_err("HID I2C: Failed to probe %s: %d\n", 
+						dev->name, ret);
+				} else {
+					log_info("HID I2C: Successfully probed %s\n", 
+						 dev->name);
+					found++;
+				}
+			}
+		}
+	}
+
+	if (found > 0) {
+		log_info("HID I2C: Initialized %d HID device(s)\n", found);
+	} else {
+		log_info("HID I2C: No HID over I2C devices found\n");
+	}
+
+	return found > 0 ? 0 : -ENODEV;
+}
