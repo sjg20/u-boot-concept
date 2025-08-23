@@ -132,8 +132,8 @@ static int hid_i2c_read_register(struct udevice *dev, u16 reg, u8 *data, int len
 		return -ENODEV;
 	}
 
-	log_debug("Reading register 0x%04x, length %d from device 0x%02x\n", 
-		  reg, len, priv->addr);
+	log_debug("%s: Reading register 0x%04x, length %d from device 0x%02x\n",
+		  dev->name, reg, len, priv->addr);
 
 	/* Register address is little-endian */
 	reg_buf[0] = reg & 0xff;
@@ -157,7 +157,7 @@ static int hid_i2c_read_register(struct udevice *dev, u16 reg, u8 *data, int len
 	memset(data, 0, len);
 	
 	log_debug("i2c\n");
-	ret = dm_i2c_xfer(dev->parent, msgs, 2);
+	ret = dm_i2c_xfer(dev, msgs, 2);
 	if (ret) {
 		log_debug("I2C transfer failed: %d\n", ret);
 	} else {
@@ -187,7 +187,7 @@ static int hid_i2c_write_register(struct udevice *dev, u16 reg, const u8 *data, 
 	msg.len = len + 2;
 	msg.buf = buf;
 
-	ret = dm_i2c_xfer(dev->parent, &msg, 1);
+	ret = dm_i2c_xfer(dev, &msg, 1);
 	free(buf);
 	return ret;
 }
@@ -529,9 +529,15 @@ int hid_i2c_init(void)
 	log_info("HID I2C: Initializing HID over I2C devices...\n");
 	// dm_dump_tree(NULL, false, true);
 
-	printf("nop devices:\n");
+	printf("I2C devices:\n");
+	uclass_id_foreach_dev(UCLASS_I2C, dev, uc) {
+		printf("I2C device: %s (parent: %s)\n", dev->name, dev->parent ? dev->parent->name : "none");
+	}
+	printf("--\n");
+
+	printf("NOP devices:\n");
 	uclass_id_foreach_dev(UCLASS_NOP, dev, uc) {
-		printf("dev '%s'", dev->name);
+		printf("NOP device: %s\n", dev->name);
 	}
 	printf("--\n");
 
@@ -544,7 +550,7 @@ int hid_i2c_init(void)
 			continue;
 		}
 
-		log_info("HID I2C: Successfully probed I2C bus %s\n", bus->name);
+		log_info("HID I2C: Successfully probed I2C bus %s (uclass=%d)\n", bus->name, bus->uclass->uc_drv->id);
 		
 		/* Skip buses that failed to probe */
 		if (!device_active(bus)) {
