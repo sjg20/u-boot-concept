@@ -48,6 +48,8 @@ struct input_config {
 	int prev_keycodes[INPUT_BUFFER_LEN];	/* keys held last time */
 	int num_prev_keycodes;	/* number of prev keys */
 	struct input_key_xlate table[INPUT_MAX_MODIFIERS];
+	int num_cur_keycodes;
+	int cur_keycodes[INPUT_BUFFER_LEN];	/* keys held last time */
 
 	/**
 	 * Function the input helper calls to scan the keyboard
@@ -95,6 +97,37 @@ int input_send_keycodes(struct input_config *config, int keycode[], int count);
  */
 int input_add_keycode(struct input_config *config, int new_keycode,
 		      bool release);
+
+/**
+ * Start a new input report
+ *
+ * This clears the list of keycodes in the current report. Drivers can
+ * then call input_report_add() for each currently pressed key. Finally
+ * input_report_done() tells the input layer to process the report.
+ *
+ * @param config	Input state
+ */
+void input_report_start(struct input_config *config);
+
+/**
+ * Add a keycode to the current input report
+ *
+ * @param config	Input state
+ * @param keycode	Keycode to add
+ * @return 0 if OK, -ENOSPC if the keycode buffer is full
+ */
+int input_report_add(struct input_config *config, int keycode);
+
+/**
+ * Mark the current input report as complete and process it
+ *
+ * This will compare the new report (of currently pressed keys) with the
+ * previous one and generate press/release events accordingly.
+ *
+ * @param config	Input state
+ * @return number of characters generated, or a negative error code
+ */
+int input_report_done(struct input_config *config);
 
 /**
  * Add a new key translation table to the input

@@ -662,10 +662,32 @@ int input_add_tables(struct input_config *config, bool german)
 int input_init(struct input_config *config, int leds)
 {
 	memset(config, '\0', sizeof(*config));
+
 	config->leds = leds;
 
 	return 0;
 }
+
+void input_report_start(struct input_config *config)
+{
+	config->num_cur_keycodes = 0;
+}
+
+int input_report_add(struct input_config *config, int keycode)
+{
+	if (config->num_cur_keycodes >= INPUT_BUFFER_LEN)
+		return -ENOSPC;
+	config->cur_keycodes[config->num_cur_keycodes++] = keycode;
+	return 0;
+}
+
+int input_report_done(struct input_config *config)
+{
+	return _input_send_keycodes(config, config->cur_keycodes,
+				    config->num_cur_keycodes, true);
+}
+
+
 
 int input_stdio_register(struct stdio_dev *dev)
 {

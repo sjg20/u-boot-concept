@@ -75,6 +75,7 @@ struct hid_i2c_priv {
 	u16			max_input_len;
 	bool			powered;
 	u8			input_buf[HID_I2C_MAX_INPUT_LENGTH];
+	u8			prev_keys[6]; /* Previous keyboard report */
 };
 
 /*
@@ -266,7 +267,7 @@ static int hid_i2c_set_power(struct udevice *dev, bool on)
 	if (on) {
 		/* Longer power-on delay for X1E platforms */
 		int delay = dev_read_u32_default(dev, "post-power-on-delay-ms", 
-						 HID_I2C_POWERON_DELAY_MS);
+							 HID_I2C_POWERON_DELAY_MS);
 		mdelay(delay);
 	}
 
@@ -345,7 +346,7 @@ static int hid_i2c_read_hid_descriptor(struct udevice *dev)
 		       desc_len, priv->desc_addr);
 		
 		ret = hid_i2c_read_register(dev, priv->desc_addr, 
-					   (u8 *)&priv->desc, desc_len);
+						   (u8 *)&priv->desc, desc_len);
 		printf("HID I2C: Read result: %d\n", ret);
 		
 		if (ret == 0) {
@@ -400,8 +401,6 @@ static int hid_i2c_read_keys(struct input_config *input)
 	struct udevice *dev = input->dev;
 	struct hid_i2c_priv *priv = dev_get_priv(dev);
 	int ret, i;
-	int keycodes[6]; /* Max 6 keys in a boot report */
-	int count = 0;
 
 	/* Read input data from device */
 	if (!priv->max_input_len) {
@@ -415,28 +414,21 @@ static int hid_i2c_read_keys(struct input_config *input)
 		return ret;
 	}
 
-	
-
-	/* Standard HID keyboard reports have modifiers in byte 0 and keys in 2-7 */
 	if (priv->max_input_len < 8) {
 		return 0; /* Not a valid keyboard report */
 	}
 
-	/* Translate all currently pressed keys */
+	input_report_start(input);
+	/* Keycodes start at offset 5 for this device */
 	for (i = 0; i < 6; i++) {
-		/* Keycodes seem to start at offset 5 for this device */
 		u8 hid_code = priv->input_buf[i + 5];
 		if (hid_code) {
 			int keycode = hid_to_linux_keycode(hid_code);
-			if (keycode) {
-				keycodes[count++] = keycode;
-			}
+			if (keycode)
+				input_report_add(input, keycode);
 		}
 	}
-
-	/* Send the whole state to the input subsystem */
-	input_send_keycodes(input, keycodes, count);
-	// mdelay(200);
+	input_report_done(input);
 
 	return 0;
 }
@@ -544,7 +536,7 @@ static int hid_i2c_probe(struct udevice *dev)
 
 	/* Get HID descriptor address from device tree */
 	priv->desc_addr = dev_read_u32_default(dev, "hid-descr-addr", 
-					       HID_I2C_DEFAULT_DESC_ADDR);
+							       HID_I2C_DEFAULT_DESC_ADDR);
 	
 	printf("HID I2C: Using descriptor address 0x%04x\n", priv->desc_addr);
 	
