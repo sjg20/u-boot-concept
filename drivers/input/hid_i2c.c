@@ -460,6 +460,33 @@ static int hid_i2c_probe(struct udevice *dev)
 	}
 	
 	printf("HID I2C: Device %s at I2C address 0x%02x\n", dev->name, (unsigned)priv->addr);
+	
+	/* Try to identify the device by reading common ID registers */
+	u8 id_buf[4];
+	int id_found = 0;
+	
+	/* Try reading from various common ID register addresses */
+	u16 id_addrs[] = {0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0010, 0x0020, 0x00FE, 0x00FF};
+	
+	printf("HID I2C: Probing for device identification:\n");
+	for (int j = 0; j < ARRAY_SIZE(id_addrs); j++) {
+		memset(id_buf, 0, sizeof(id_buf));
+		ret = hid_i2c_read_register(dev, id_addrs[j], id_buf, 4);
+		if (ret == 0) {
+			/* Check if we got non-zero, non-0xFF data */
+			if (id_buf[0] != 0 || id_buf[1] != 0 || id_buf[2] != 0 || id_buf[3] != 0) {
+				if (!(id_buf[0] == 0xFF && id_buf[1] == 0xFF && id_buf[2] == 0xFF && id_buf[3] == 0xFF)) {
+					printf("  Addr 0x%04x: %02x %02x %02x %02x\n", 
+					       id_addrs[j], id_buf[0], id_buf[1], id_buf[2], id_buf[3]);
+					id_found = 1;
+				}
+			}
+		}
+	}
+	
+	if (!id_found) {
+		printf("  No readable ID registers found\n");
+	}
 
 	/* Get HID descriptor address from device tree */
 	priv->desc_addr = dev_read_u32_default(dev, "hid-descr-addr", 
