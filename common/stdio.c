@@ -303,7 +303,7 @@ int stdio_add_devices(void)
 	struct udevice *dev;
 	int ret;
 
-	if (IS_ENABLED(CONFIG_DM_KEYBOARD)) {
+	if (0 && IS_ENABLED(CONFIG_DM_KEYBOARD)) {
 		/*
 		 * For now we probe all the devices here. At some point this
 		 * should be done only when the devices are required - e.g. we
