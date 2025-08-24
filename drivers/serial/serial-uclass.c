@@ -13,6 +13,7 @@
 #include <os.h>
 #include <serial.h>
 #include <stdio_dev.h>
+#include <time.h>
 #include <watchdog.h>
 #include <asm/global_data.h>
 #include <dm/lists.h>
@@ -556,6 +557,123 @@ static int on_baudrate(const char *name, const char *value, enum env_op op,
 	}
 }
 U_BOOT_ENV_CALLBACK(baudrate, on_baudrate);
+
+/**
+ * term_get_char() - read a character from the console
+ *
+ * Wait for up to 100 ms to read a character from the console.
+ *
+ * @c:		pointer to the buffer to receive the character
+ * Return:	0 on success, -ETIMEDOUT if timed out
+ */
+static int term_get_char(s32 *c)
+{
+	u64 timeout;
+
+	/* Wait up to 100 ms for a character */
+	timeout = timer_get_us() + 100000;
+
+	while (!tstc())
+		if (timer_get_us() > timeout)
+			return -ETIMEDOUT;
+
+	*c = getchar();
+
+	return 0;
+}
+
+/**
+ * term_read_reply() - receive and parse a reply from the terminal
+ *
+ * @n:		array of return values
+ * @num:	number of return values expected
+ * @end_char:	character indicating end of terminal message
+ * Return:	non-zero indicates error
+ */
+static int term_read_reply(int *n, int num, char end_char)
+{
+	int ret, i = 0;
+	s32 c;
+
+	ret = term_get_char(&c);
+	if (ret)
+		return ret;
+	if (c != cESC)
+		return -EPROTO;
+
+	ret = term_get_char(&c);
+	if (ret)
+		return ret;
+	if (c != '[')
+		return -EPROTO;
+
+	n[0] = 0;
+	while (1) {
+		int ret;
+
+		ret = term_get_char(&c);
+		if (ret)
+			return ret;
+
+		if (c == ';') {
+			i++;
+			if (i >= num)
+				return -EPROTO;
+			n[i] = 0;
+			continue;
+		} else if (c == end_char) {
+			break;
+		} else if (c > '9' || c < '0') {
+			return -EPROTO;
+		}
+
+		/* Read one more decimal position */
+		n[i] *= 10;
+		n[i] += c - '0';
+	}
+	if (i != num - 1)
+		return -EPROTO;
+
+	return 0;
+}
+
+int serial_query_size(int *rowsp, int *colsp)
+{
+	int ret = 0;
+	int n[2];
+
+	if (!CONFIG_IS_ENABLED(SERIAL_TERM_PRESENT))
+		return -ENOENT;
+
+	/* Empty input buffer */
+	while (tstc())
+		getchar();
+
+	/*
+	 * Not all terminals understand CSI [18t for querying the console size.
+	 * We should adhere to escape sequences documented in the console_codes
+	 * man page and the ECMA-48 standard.
+	 *
+	 * So here we follow a different approach. We position the cursor to the
+	 * bottom right and query its position. Before leaving the function we
+	 * restore the original cursor position.
+	 */
+	puts(ESC "7"		/* Save cursor position */
+	     ESC "[r"		/* Set scrolling region to full window */
+	     ESC "[999;999H"	/* Move to bottom right corner */
+	     ESC "[6n");	/* Query cursor position */
+
+	/* Read {rows,cols} */
+	ret = term_read_reply(n, 2, 'R');
+	if (!ret) {
+		*colsp = n[1];
+		*rowsp = n[0];
+	}
+
+	printf(ESC "8");	/* Restore cursor position */
+
+	return ret;
+}
 
 #if CONFIG_IS_ENABLED(SERIAL_PRESENT)
 static int serial_post_probe(struct udevice *dev)
