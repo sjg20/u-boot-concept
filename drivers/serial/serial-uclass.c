@@ -24,6 +24,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define ESC "\x1b"
+
 /*
  * Table with supported baudrates (defined in config_xyz.h)
  */
@@ -666,11 +668,46 @@ int serial_query_size(int *rowsp, int *colsp)
 	/* Read {rows,cols} */
 	ret = term_read_reply(n, 2, 'R');
 	if (!ret) {
+		struct serial_priv *priv;
+		struct uclass *uc;
+
 		*colsp = n[1];
 		*rowsp = n[0];
+
+		/* Store in serial uclass private data if available */
+		if (!uclass_get(UCLASS_SERIAL, &uc)) {
+			priv = uclass_get_priv(uc);
+			priv->rows = n[0];
+			priv->cols = n[1];
+		}
 	}
 
 	printf(ESC "8");	/* Restore cursor position */
+
+	return ret;
+}
+
+int serial_get_size(int *rowsp, int *colsp)
+{
+	struct serial_priv *priv;
+	struct uclass *uc;
+	int ret;
+
+	ret = uclass_get(UCLASS_SERIAL, &uc);
+	if (ret)
+		return ret;
+
+	priv = uclass_get_priv(uc);
+
+	/* Check if we have cached values */
+	if (priv->rows && priv->cols) {
+		*rowsp = priv->rows;
+		*colsp = priv->cols;
+		return 0;
+	}
+
+	/* No cached values, query the terminal */
+	ret = serial_query_size(rowsp, colsp);
 
 	return ret;
 }
@@ -730,5 +767,6 @@ UCLASS_DRIVER(serial) = {
 	.post_probe	= serial_post_probe,
 	.pre_remove	= serial_pre_remove,
 	.per_device_auto	= sizeof(struct serial_dev_priv),
+	.priv_auto	= sizeof(struct serial_priv),
 };
 #endif
