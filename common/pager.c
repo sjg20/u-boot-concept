@@ -19,7 +19,7 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s)
 	struct membuf old;
 	int ret, len;
 
-	if (!pag || !use_pager || pag->test_bypass)
+	if (!pag || !use_pager || pag->test_bypass || pag->state == PAGERST_BYPASS)
 		return s;
 
 	len = strlen(s);
@@ -52,7 +52,7 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 	char *str, *p, *end;
 	int ret;
 
-	if (!use_pager)
+	if (!use_pager || (pag && pag->test_bypass))
 		return NULL;
 
 	/* replace the real character we overwrite with nul, if needed */
@@ -76,6 +76,8 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 	case PAGERST_CLEAR_PROMPT:
 		pag->state = PAGERST_OK;
 		break;
+	case PAGERST_BYPASS:
+		return NULL;
 	}
 
 	ret = membuf_getraw(&pag->mb, pag->buf.size - 1, false, &str);
@@ -115,6 +117,22 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 	*pag->nulch = '\0';
 
 	return str;
+}
+
+bool pager_set_bypass(struct pager *pag, bool bypass)
+{
+	bool was_bypassed = false;
+
+	if (!pag)
+		return false;
+
+	was_bypassed = pag->state == PAGERST_BYPASS;
+	if (bypass)
+		pag->state = PAGERST_BYPASS;
+	else
+		pag->state = PAGERST_OK;
+
+	return was_bypassed;
 }
 
 bool pager_set_test_bypass(struct pager *pag, bool bypass)
