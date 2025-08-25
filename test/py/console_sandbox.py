@@ -52,6 +52,10 @@ class ConsoleSandbox(ConsoleBase):
         if self.use_dtb:
             cmd += ['-d', self.config.dtb]
         cmd += self.sandbox_flags
+
+        # Always disable the pager
+        cmd.append('-P')
+
         return Spawn(cmd, cwd=self.config.source_dir, decode_signal=True)
 
     def restart_uboot_with_flags(self, flags, use_dtb=True):
