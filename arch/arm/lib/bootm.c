@@ -267,29 +267,44 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
 	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
+	printf("still here\n");
 
 	if (!fake) {
+		printf("%d  ", __LINE__);
 #ifdef CONFIG_ARMV8_PSCI
+		printf("%d  ", __LINE__);
 		armv8_setup_psci();
+		printf("%d  ", __LINE__);
 #endif
+		printf("%d  ", __LINE__);
 		do_nonsec_virt_switch();
+		printf("%d  ", __LINE__);
 
 		update_os_arch_secondary_cores(images->os.arch);
+		printf("%d  ", __LINE__);
 
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
+		printf("%d  ", __LINE__);
 		armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
 				    (u64)switch_to_el1, ES_TO_AARCH64);
+		printf("%d  ", __LINE__);
 #else
+		printf("%d  ", __LINE__);
 		if ((IH_ARCH_DEFAULT == IH_ARCH_ARM64) &&
-		    (images->os.arch == IH_ARCH_ARM))
+		    (images->os.arch == IH_ARCH_ARM)) {
+		printf("%d  ", __LINE__);
 			armv8_switch_to_el2(0, (u64)gd->bd->bi_arch_number,
 					    (u64)images->ft_addr, 0,
 					    (u64)images->ep,
 					    ES_TO_AARCH32);
-		else
+		printf("%d  ", __LINE__);
+		} else {
+		printf("%d  ", __LINE__);  // gets to here
 			armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
 					    images->ep,
 					    ES_TO_AARCH64);
+		printf("%d  ", __LINE__);
+		}
 #endif
 	}
 #else
@@ -334,6 +349,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 			kernel_entry(0, machid, r2);
 	}
 #endif
+		printf("%d  ", __LINE__);
 }
 
 /* Main Entry point for arm bootm implementation
