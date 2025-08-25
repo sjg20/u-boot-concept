@@ -56,6 +56,9 @@ class ConsoleSandbox(ConsoleBase):
         # Always disable the pager
         cmd.append('-P')
 
+        # Always disable detected the terminal size
+        cmd.append('-A')
+
         return Spawn(cmd, cwd=self.config.source_dir, decode_signal=True)
 
     def restart_uboot_with_flags(self, flags, use_dtb=True):
