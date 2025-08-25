@@ -15,6 +15,8 @@
 
 #if defined(CONFIG_POST)
 
+#include <config.h>
+
 #ifndef CFG_POST_EXTERNAL_WORD_FUNCS
 #ifdef CFG_SYS_POST_WORD_ADDR
 #define _POST_WORD_ADDR	CFG_SYS_POST_WORD_ADDR
