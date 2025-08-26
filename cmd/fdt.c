@@ -524,7 +524,7 @@ static int do_fdt(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		else
 			prop = NULL;
 
-		ret = fdt_print(pathp, prop, depth);
+		ret = fdt_print_path(pathp, prop, depth);
 		if (ret != 0)
 			return ret;
 

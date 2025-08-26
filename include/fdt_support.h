@@ -504,7 +504,7 @@ int fdt_kaslrseed(void *blob, bool overwrite);
 bool fdt_printable_str(const void *data, int len);
 
 /**
- * fdt_print() - Print a portion of the device tree
+ * fdt_print_path() - Print a portion of the device tree
  *
  * Recursively prints the working device tree starting from the given path.
  * The depth parameter controls how deeply nested nodes are printed.
@@ -514,6 +514,6 @@ bool fdt_printable_str(const void *data, int len);
  * @depth: Maximum depth to print
  * Return: 0 on success, 1 on error
  */
-int fdt_print(const char *pathp, char *prop, int depth);
+int fdt_print_path(const char *pathp, char *prop, int depth);
 
 #endif /* ifndef __FDT_SUPPORT_H */
