@@ -46,9 +46,6 @@ void bootm_final(enum bootm_final_t flags)
 
 	final.flags = flags;
 	ret = event_notify(EVT_BOOTM_FINAL, &final, sizeof(final));
-
-	return;
-
 	if (ret) {
 		printf("Event handler failed to finalise (err %dE\n",
 		       ret);

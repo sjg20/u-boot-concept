@@ -611,6 +611,8 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 		log_debug("using zboot\n");
 		ret = zboot_run(&bmi);
 	}
+	printf("boot done\n");
+	env_set_hex("fdt_fixed", (ulong)bmi.images->ft_addr);
 
 	unmap_sysmem(buf);
 	if (ret)

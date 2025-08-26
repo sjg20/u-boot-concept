@@ -17,6 +17,7 @@
 #include <bootstage.h>
 #include <command.h>
 #include <cpu_func.h>
+#include <display_options.h>
 #include <dm.h>
 #include <init.h>
 #include <log.h>
@@ -239,41 +240,53 @@ __weak void update_os_arch_secondary_cores(uint8_t os_arch)
 {
 }
 
-#if 0
+#if 1
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
 static void switch_to_el1(void)
 {
 	if ((IH_ARCH_DEFAULT == IH_ARCH_ARM64) &&
-	    (images.os.arch == IH_ARCH_ARM))
+	    (images.os.arch == IH_ARCH_ARM)) {
+		printf("%d  ", __LINE__);
 		armv8_switch_to_el1(0, (u64)gd->bd->bi_arch_number,
 				    (u64)images.ft_addr, 0,
 				    (u64)images.ep,
 				    ES_TO_AARCH32);
-	else
+	} else {
+		printf("%d  ", __LINE__);
 		armv8_switch_to_el1((u64)images.ft_addr, 0, 0, 0,
 				    images.ep,
 				    ES_TO_AARCH64);
+	}
+	printf("%d  ", __LINE__);
 }
 #endif
 #endif
 #endif
 
-static void show_dt(const void *fdt)
+static void show_dt(void *fdt)
 {
 	int chosen;
-	int size;
+	// int size;
 	int node;
 
 	printf("fdt %p\n", fdt);
 	chosen = fdt_subnode_offset(fdt, 0, "chosen");
 	printf("chosen %d\n", chosen);
-	printf("bootargs: %s\n",
-	       (char *)fdt_getprop(fdt, chosen, "bootargs", &size));
+	// printf("bootargs: %s\n",
+	       // (char *)fdt_getprop(fdt, chosen, "bootargs", &size));
+	// fdt_delprop(fdt, chosen, "linux,initrd-start");
+	// fdt_delprop(fdt, chosen, "linux,initrd-end");
+	fdt_print(fdt, chosen, 3);
 	fdt_for_each_subnode(node, fdt, 0) {
 		const char *name = fdt_get_name(fdt, node, NULL);
 
-		if (strncmp("memory", name, 6))
+		// if (!strstr(name, "memory"))
+			// continue;
+		if (!strstr(name, "framebuffer"))
 			continue;
+		// if (strncmp("memory", name, 6) &&
+		    // strncmp("reserved-memory", name, 15))
+			// continue;
 
 		printf("- %s\n", name);
 		fdt_print(fdt, node, 4);
@@ -287,9 +300,12 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
 
 	printf("## Transferring control to Linux (at address %lx)...\n",
-	       (ulong)images->ep);
+	       images->ep);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
+	print_buffer(images->ep, (void *)images->ep, 1, 64, 0);
+
 	show_dt(images->ft_addr);
+	//return;
 
 	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
 	printf("still here\n");
@@ -310,11 +326,13 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
 		printf("%d  ", __LINE__);
-		typedef void (*h_func)(ulong fdt, int zero, int arch,
-				       uint params);
-		h_func func = (h_func)images->ep;
+		armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
+				    (u64)switch_to_el1, ES_TO_AARCH64);
+		// typedef void (*h_func)(ulong fdt, int zero, int arch,
+				       // uint params);
+		// h_func func = (h_func)images->ep;
 
-		func((ulong)images->ft_addr, 0, 0, 0);
+		// func((ulong)images->ft_addr, 0, 0, 0);
 
 				    // (u64)switch_to_el1, ES_TO_AARCH64);
 
