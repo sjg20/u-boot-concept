@@ -506,14 +506,15 @@ bool fdt_printable_str(const void *data, int len);
 /*
  * fdt_print() - Print a portion of the device tree starting from a node
  *
- * Recursively prints the working device tree starting from the given node offset.
+ * Recursively prints the device tree starting from the given node offset.
  * The depth parameter controls how deeply nested nodes are printed.
  *
+ * @fdt: Pointer to the device tree blob
  * @nodeoffset: Node offset to start printing from
  * @depth: Maximum depth to print
  * Return: 0 on success, 1 on error
  */
-int fdt_print(int nodeoffset, int depth);
+int fdt_print(const void *fdt, int nodeoffset, int depth);
 
 /**
  * fdt_print_path() - Print a portion of the device tree
