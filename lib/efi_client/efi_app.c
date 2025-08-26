@@ -344,6 +344,8 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 			ram_end = limit;
 	}
 
+	ram_start = 0x80000000;
+	ram_end = ram_start + 4 * SZ_4G;
 	log_info("RAM extends from %llx to %llx\n", ram_start, ram_end);
 	ret = fdt_fixup_memory(fdt, ram_start, ram_end - ram_start);
 	if (ret) {

@@ -239,6 +239,7 @@ __weak void update_os_arch_secondary_cores(uint8_t os_arch)
 {
 }
 
+#if 0
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
 static void switch_to_el1(void)
 {
@@ -255,17 +256,27 @@ static void switch_to_el1(void)
 }
 #endif
 #endif
+#endif
 
 static void show_dt(const void *fdt)
 {
 	int chosen;
 	int size;
+	int node;
 
 	printf("fdt %p\n", fdt);
 	chosen = fdt_subnode_offset(fdt, 0, "chosen");
 	printf("chosen %d\n", chosen);
 	printf("bootargs: %s\n",
 	       (char *)fdt_getprop(fdt, chosen, "bootargs", &size));
+	fdt_for_each_subnode(node, fdt, 0) {
+		const char *name = fdt_get_name(fdt, node, NULL);
+
+		if (strncmp("memory", name, 6))
+			continue;
+
+		printf("- %s\n", name);
+	}
 }
 
 /* Subcommand: GO */
@@ -274,8 +285,8 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 #ifdef CONFIG_ARM64
 	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
 
-	debug("## Transferring control to Linux (at address %lx)...\n",
-		(ulong)images->ep);
+	printf("## Transferring control to Linux (at address %lx)...\n",
+	       (ulong)images->ep);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 	show_dt(images->ft_addr);
 
