@@ -276,6 +276,7 @@ static void show_dt(const void *fdt)
 			continue;
 
 		printf("- %s\n", name);
+		fdt_print(fdt, node, 4);
 	}
 }
 
