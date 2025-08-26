@@ -438,6 +438,15 @@ static int sandbox_cmdline_cb_autoboot_keyed(struct sandbox_state *state,
 }
 SANDBOX_CMDLINE_OPT(autoboot_keyed, 0, "Allow keyed autoboot");
 
+static int sandbox_cmdline_cb_no_term_present(struct sandbox_state *state,
+					      const char *arg)
+{
+	state->no_term_present = true;
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(no_term_present, 'A', 0,
+			  "Assume no terminal present (for pager testing)");
+
 static int sandbox_cmdline_cb_upl(struct sandbox_state *state, const char *arg)
 {
 	state->upl = true;

@@ -176,6 +176,7 @@ struct sandbox_state {
 	bool no_flattree_tests;		/* Don't run second set of DM tests */
 	bool soft_fail;			/* Continue on failure */
 	bool pager_bypass;		/* Enable pager-bypass mode */
+	bool no_term_present;		/* Assume no terminal present */
 
 	/* Pointer to information for each SPI bus/cs */
 	struct sandbox_spi_info spi[CONFIG_SANDBOX_SPI_MAX_BUS]
