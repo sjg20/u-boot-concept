@@ -490,4 +490,30 @@ void fdt_fixup_pstore(void *blob);
  */
 int fdt_kaslrseed(void *blob, bool overwrite);
 
+/**
+ * fdt_printable_str() - checks if a property value appears to be a string
+ *
+ * Check a property of a given length to see if it is all printable and
+ * has a valid terminator. The property can contain either a single string,
+ * or multiple strings each of non-zero length.
+ *
+ * @data: data to check
+ * @len: data length including terminator
+ * Return: true if a valid printable string, false if not
+ */
+bool fdt_printable_str(const void *data, int len);
+
+/**
+ * fdt_print() - Print a portion of the device tree
+ *
+ * Recursively prints the working device tree starting from the given path.
+ * The depth parameter controls how deeply nested nodes are printed.
+ *
+ * @pathp: Path to the starting node
+ * @prop: Property to print (if NULL, prints all properties)
+ * @depth: Maximum depth to print
+ * Return: 0 on success, 1 on error
+ */
+int fdt_print(const char *pathp, char *prop, int depth);
+
 #endif /* ifndef __FDT_SUPPORT_H */
