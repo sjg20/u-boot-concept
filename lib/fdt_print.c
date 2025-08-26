@@ -110,56 +110,24 @@ static void print_data(const void *data, int len)
 /****************************************************************************/
 
 /*
- * Recursively print (a portion of) the working_fdt.  The depth parameter
- * determines how deeply nested the fdt is printed.
+ * Recursively print (a portion of) the working_fdt starting from a node.
+ * The depth parameter determines how deeply nested the fdt is printed.
  */
-int fdt_print_path(const char *pathp, char *prop, int depth)
+int fdt_print(int nodeoffset, int depth)
 {
 	static char tabs[MAX_LEVEL+1] =
 		"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
 		"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
 	const void *nodep;	/* property node pointer */
-	int  nodeoffset;	/* node offset from libfdt */
 	int  nextoffset;	/* next node offset from libfdt */
 	uint32_t tag;		/* tag */
 	int  len;		/* length of the property */
 	int  level = 0;		/* keep track of nesting level */
 	const struct fdt_property *fdt_prop;
-
-	nodeoffset = fdt_path_offset (working_fdt, pathp);
-	if (nodeoffset < 0) {
-		/*
-		 * Not found or something else bad happened.
-		 */
-		printf ("libfdt fdt_path_offset() returned %s\n",
-			fdt_strerror(nodeoffset));
-		return 1;
-	}
-	/*
-	 * The user passed in a property as well as node path.
-	 * Print only the given property and then return.
-	 */
-	if (prop) {
-		nodep = fdt_getprop (working_fdt, nodeoffset, prop, &len);
-		if (len == 0) {
-			/* no property value */
-			printf("%s %s\n", pathp, prop);
-			return 0;
-		} else if (nodep && len > 0) {
-			printf("%s = ", prop);
-			print_data (nodep, len);
-			printf("\n");
-			return 0;
-		} else {
-			printf ("libfdt fdt_getprop(): %s\n",
-				fdt_strerror(len));
-			return 1;
-		}
-	}
+	const char *pathp;
 
 	/*
-	 * The user passed in a node path and no property,
-	 * print the node and all subnodes.
+	 * Print the node and all subnodes.
 	 */
 	while(level >= 0) {
 		tag = fdt_next_tag(working_fdt, nodeoffset, &nextoffset);
@@ -228,4 +196,49 @@ int fdt_print_path(const char *pathp, char *prop, int depth)
 		nodeoffset = nextoffset;
 	}
 	return 0;
+}
+
+/*
+ * Print a portion of the working_fdt starting from a path.
+ * The depth parameter determines how deeply nested the fdt is printed.
+ */
+int fdt_print_path(const char *pathp, char *prop, int depth)
+{
+	const void *nodep;	/* property node pointer */
+	int  nodeoffset;	/* node offset from libfdt */
+	int  len;		/* length of the property */
+
+	nodeoffset = fdt_path_offset (working_fdt, pathp);
+	if (nodeoffset < 0) {
+		/*
+		 * Not found or something else bad happened.
+		 */
+		printf ("libfdt fdt_path_offset() returned %s\n",
+			fdt_strerror(nodeoffset));
+		return 1;
+	}
+	/*
+	 * The user passed in a property as well as node path.
+	 * Print only the given property and then return.
+	 */
+	if (prop) {
+		nodep = fdt_getprop (working_fdt, nodeoffset, prop, &len);
+		if (len == 0) {
+			/* no property value */
+			printf("%s %s\n", pathp, prop);
+			return 0;
+		} else if (nodep && len > 0) {
+			printf("%s = ", prop);
+			print_data (nodep, len);
+			printf("\n");
+			return 0;
+		} else {
+			printf ("libfdt fdt_getprop(): %s\n",
+				fdt_strerror(len));
+			return 1;
+		}
+	}
+
+	/* Print the node and all subnodes using fdt_print() */
+	return fdt_print(nodeoffset, depth);
 }
