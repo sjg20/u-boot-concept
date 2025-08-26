@@ -256,6 +256,18 @@ static void switch_to_el1(void)
 #endif
 #endif
 
+static void show_dt(const void *fdt)
+{
+	int chosen;
+	int size;
+
+	printf("fdt %p\n", fdt);
+	chosen = fdt_subnode_offset(fdt, 0, "chosen");
+	printf("chosen %d\n", chosen);
+	printf("bootargs: %s\n",
+	       (char *)fdt_getprop(fdt, chosen, "bootargs", &size));
+}
+
 /* Subcommand: GO */
 static void boot_jump_linux(struct bootm_headers *images, int flag)
 {
@@ -265,6 +277,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 	debug("## Transferring control to Linux (at address %lx)...\n",
 		(ulong)images->ep);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
+	show_dt(images->ft_addr);
 
 	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
 	printf("still here\n");
@@ -285,8 +298,16 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
 		printf("%d  ", __LINE__);
-		armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
-				    (u64)switch_to_el1, ES_TO_AARCH64);
+		typedef void (*h_func)(ulong fdt, int zero, int arch,
+				       uint params);
+		h_func func = (h_func)images->ep;
+
+		func((ulong)images->ft_addr, 0, 0, 0);
+
+				    // (u64)switch_to_el1, ES_TO_AARCH64);
+
+		// armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
+				    // (u64)switch_to_el1, ES_TO_AARCH64);
 		printf("%d  ", __LINE__);
 #else
 		printf("%d  ", __LINE__);
