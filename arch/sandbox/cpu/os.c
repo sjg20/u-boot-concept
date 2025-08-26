@@ -142,6 +142,11 @@ int os_close(int fd)
 	return -1;
 }
 
+int os_isatty(int fd)
+{
+	return isatty(fd);
+}
+
 int os_unlink(const char *pathname)
 {
 	return unlink(pathname);

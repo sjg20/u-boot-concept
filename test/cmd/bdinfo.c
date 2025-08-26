@@ -201,7 +201,9 @@ static int bdinfo_test_all(struct unit_test_state *uts)
 		ut_assertnonnull(gd->cur_serial_dev);
 		ut_assertok(serial_getinfo(gd->cur_serial_dev, &info));
 
-		ut_assertok(test_num_l(uts, "serial addr", info.addr));
+		ut_assert_nextline("serial      = %s",
+				   gd->cur_serial_dev->name);
+		ut_assertok(test_num_l(uts, " addr", info.addr));
 		ut_assertok(test_num_l(uts, " width", info.reg_width));
 		ut_assertok(test_num_l(uts, " shift", info.reg_shift));
 		ut_assertok(test_num_l(uts, " offset", info.reg_offset));

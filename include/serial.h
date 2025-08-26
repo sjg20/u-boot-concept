@@ -2,6 +2,13 @@
 #define __SERIAL_H__
 
 #include <post.h>
+#ifdef CONFIG_SANDBOX
+#include <asm/state.h>
+#endif
+
+/* Escape value */
+#define cESC	'\x1b'
+#define ESC	"\x1b"
 
 struct serial_device {
 	/* enough bytes to match alignment of following func pointer */
@@ -288,6 +295,17 @@ struct dm_serial_ops {
 };
 
 /**
+ * struct serial_priv - private data for serial uclass
+ *
+ * @rows:	Number of terminal rows (0 if unknown)
+ * @cols:	Number of terminal columns (0 if unknown)
+ */
+struct serial_priv {
+	int rows;
+	int cols;
+};
+
+/**
  * struct serial_dev_priv - information about a device used by the uclass
  *
  * @sdev:	stdio device attached to this uart
@@ -381,5 +399,49 @@ static inline void serial_flush(void) {}
 #endif
 int serial_getc(void);
 int serial_tstc(void);
+
+/**
+ * serial_query_size() - query serial console size
+ *
+ * When using a serial console or the net console we can only devise the
+ * terminal size by querying the terminal using ECMA-48 control sequences.
+ *
+ * @rowsp:	returns number of rows on success
+ * @colsp:	returns number of columns on success
+ * Returns:	0 on success, -NOENT if no terminal is present, -ETIMEDOUT if we
+ * checked for a terminal but didn't get a response in time, -EPROTO if the
+ * terminal did not respond as expected
+ */
+int serial_query_size(int *rowsp, int *colsp);
+
+/**
+ * serial_get_size() - get serial console size
+ *
+ * Get the terminal size, using cached values if available, or failing that,
+ * query the terminal
+ *
+ * @rowsp:	returns number of rows
+ * @colsp:	returns number of columns
+ * Returns:	0 on success, -ve on error
+ */
+int serial_get_size(int *rowsp, int *colsp);
+
+/*
+ * serial_is_tty() - check if the serial console is connected to a terminal
+ *
+ * This does not indicate that there is actually a terminal, only that if there
+ * is one, we can assume it is present and connected
+ *
+ * Return: true if any serial console is likely connected to a terminal, false if not
+ */
+static inline bool serial_is_tty(void)
+{
+#ifdef CONFIG_SANDBOX
+	return sandbox_serial_is_tty();
+#else
+	/* assume that it is! */
+	return true;
+#endif
+}
 
 #endif

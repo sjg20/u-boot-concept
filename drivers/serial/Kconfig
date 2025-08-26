@@ -202,6 +202,21 @@ config VPL_DM_SERIAL
 	  implements serial_putc() etc. The uclass interface is
 	  defined in include/serial.h.
 
+config SERIAL_TERM_PRESENT
+	bool "Assume there is a serial terminal present on the serial line"
+	depends on DM_SERIAL
+	default y if EFI_LOADER
+	help
+	  In some cases boards are connected to a serial terminal and it is
+	  useful to emit ANSI codes or other characters to determine the
+	  properties of the terminal.
+
+	  Enable this if you wish to have these features.
+
+	  Note that enabling this for a board which is sending its output to
+	  a log will result in junk in the log. It also introduces a delay of
+	  up to 100ms on startup.
+
 config DEBUG_UART
 	bool "Enable an early debug UART for debugging"
 	help
