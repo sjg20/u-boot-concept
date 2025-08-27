@@ -31,6 +31,8 @@
 #include <dm/lists.h>
 #include <dm/root.h>
 #include <mapmem.h>
+#include <linux/libfdt.h>
+#include <fdt_support.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -307,6 +309,144 @@ int efi_app_exit_boot_services(struct efi_priv *priv, uint key)
 	return 0;
 }
 
+/**
+ * compare_efi_dt_memory_reservations() - Compare EFI memory map with DT reserved-memory nodes
+ *
+ * This function compares the EFI memory map with the device tree's reserved-memory
+ * nodes and prints out regions that are reserved in EFI but not mentioned in the
+ * device tree's /reserved-memory node. This helps identify memory regions that
+ * EFI considers reserved but which Linux might try to use.
+ *
+ * @fdt: Pointer to the device tree blob
+ */
+static void compare_efi_dt_memory_reservations(void *fdt)
+{
+	struct efi_mem_desc *map, *desc, *end;
+	int desc_size, size, upto;
+	uint version, key;
+	int ret;
+	bool found_unreported = false;
+
+	printf("=== Comparing EFI Memory Map with Device Tree Reserved Regions ===\n");
+
+	/* Get the EFI memory map */
+	ret = efi_get_mmap(&map, &size, &key, &desc_size, &version);
+	if (ret) {
+		printf("Failed to get EFI memory map: %d\n", ret);
+		return;
+	}
+
+	printf("EFI Memory Map Analysis:\n");
+	printf("%-4s %-18s %-18s %-18s %s\n", "ID", "Type", "Start", "End", "In DT?");
+	printf("------------------------------------------------------------------------\n");
+
+	end = (void *)map + size;
+	for (upto = 0, desc = map; desc < end;
+	     desc = efi_get_next_mem_desc(desc, desc_size), upto++) {
+		u64 start = desc->physical_start;
+		u64 end_addr = start + (desc->num_pages << EFI_PAGE_SHIFT) - 1;
+		bool is_reserved = false;
+		bool in_dt_reserved = false;
+
+		/* Check if this is a reserved/runtime/ACPI/etc type that should be preserved */
+		switch (desc->type) {
+		case EFI_RESERVED_MEMORY_TYPE:
+		case EFI_RUNTIME_SERVICES_CODE:
+		case EFI_RUNTIME_SERVICES_DATA:
+		case EFI_UNUSABLE_MEMORY:
+		case EFI_ACPI_RECLAIM_MEMORY:
+		case EFI_ACPI_MEMORY_NVS:
+			is_reserved = true;
+			break;
+		default:
+			/* Skip conventional memory and boot services */
+			continue;
+		}
+
+		if (!is_reserved)
+			continue;
+
+		/* Check if this region overlaps with any reserved-memory node entries */
+		int reserved_mem_node = fdt_path_offset(fdt, "/reserved-memory");
+		if (reserved_mem_node >= 0) {
+			int child;
+			fdt_for_each_subnode(child, fdt, reserved_mem_node) {
+				const fdt32_t *reg;
+				int len;
+				
+				reg = fdt_getprop(fdt, child, "reg", &len);
+				if (!reg || len < 8)
+					continue;
+				
+				/* Parse reg property - assuming #address-cells=2, #size-cells=2 */
+				u64 rsv_start = fdt64_to_cpu(*(fdt64_t *)reg);
+				u64 rsv_size = fdt64_to_cpu(*((fdt64_t *)reg + 1));
+				u64 rsv_end = rsv_start + rsv_size - 1;
+
+				/* Check for overlap */
+				if (!(end_addr < rsv_start || start > rsv_end)) {
+					in_dt_reserved = true;
+					break;
+				}
+			}
+		}
+
+		/* Print the region */
+		printf("%-4d %-18s 0x%-16llx 0x%-16llx %s\n",
+		       upto,
+		       efi_mem_type_name(desc->type),
+		       start,
+		       end_addr,
+		       in_dt_reserved ? "YES" : "NO");
+
+		if (!in_dt_reserved) {
+			found_unreported = true;
+		}
+	}
+
+	if (found_unreported) {
+		printf("\n*** WARNING: Found EFI reserved regions not in device tree! ***\n");
+		printf("Consider adding these regions to the device tree's reserved-memory node.\n");
+	} else {
+		printf("\n✓ All EFI reserved regions are covered by device tree reservations.\n");
+	}
+
+	/* Also print DT reserved-memory nodes for reference */
+	printf("\nDevice Tree Reserved-Memory Regions:\n");
+	printf("%-4s %-20s %-18s %-18s\n", "ID", "Name", "Start", "Size");
+	printf("----------------------------------------------------------------\n");
+	int reserved_mem_node = fdt_path_offset(fdt, "/reserved-memory");
+	if (reserved_mem_node >= 0) {
+		int child, id = 0;
+		fdt_for_each_subnode(child, fdt, reserved_mem_node) {
+			const char *name = fdt_get_name(fdt, child, NULL);
+			const fdt32_t *reg;
+			int len;
+			
+			reg = fdt_getprop(fdt, child, "reg", &len);
+			if (reg && len >= 8) {
+				/* Parse reg property - assuming #address-cells=2, #size-cells=2 */
+				u64 rsv_start = fdt64_to_cpu(*(fdt64_t *)reg);
+				u64 rsv_size = fdt64_to_cpu(*((fdt64_t *)reg + 1));
+				printf("%-4d %-20s 0x%-16llx 0x%-16llx\n", 
+				       id++, name ? name : "(unnamed)", rsv_start, rsv_size);
+			} else {
+				printf("%-4d %-20s %-18s %-18s\n", 
+				       id++, name ? name : "(unnamed)", "(no reg)", "(no reg)");
+			}
+		}
+		if (id == 0) {
+			printf("No reserved-memory regions found\n");
+		}
+	} else {
+		printf("No /reserved-memory node found in device tree\n");
+	}
+
+	printf("=== End Memory Comparison ===\n\n");
+
+	free(map);
+}
+
 int ft_system_setup(void *fdt, struct bd_info *bd)
 {
 	struct efi_mem_desc *map, *desc, *end;
@@ -362,6 +502,9 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 		if (ret)
 			log_warning("failed to set up simplefb\n");
 	}
+
+	/* Compare EFI memory map with device tree reserved regions */
+	compare_efi_dt_memory_reservations(fdt);
 
 	free(map);
 
