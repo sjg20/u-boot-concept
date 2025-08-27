@@ -354,6 +354,11 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 			log_warning("failed to set up simplefb\n");
 	}
 
+	/* Compare EFI memory map with device tree reserved regions */
+	ret = efi_mem_reserved_sync(fdt, true);
+	if (ret)
+		log_warning("failed to set up reserved memory\n");
+
 	free(map);
 
 	return 0;
