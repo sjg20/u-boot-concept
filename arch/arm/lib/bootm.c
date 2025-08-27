@@ -322,7 +322,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 	dev = env_get("dev");
 	other = !strcmp(dev, "1") ? "2" : "1";
 
-	bool boot_same = false;
+	bool boot_same = true;
 
 	if (boot_same) {
 		use_dev = other;
