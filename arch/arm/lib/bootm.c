@@ -19,6 +19,7 @@
 #include <cpu_func.h>
 #include <display_options.h>
 #include <dm.h>
+#include <fs_legacy.h>
 #include <init.h>
 #include <log.h>
 #include <asm/global_data.h>
@@ -240,7 +241,7 @@ __weak void update_os_arch_secondary_cores(uint8_t os_arch)
 {
 }
 
-#if 1
+#if 0
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
 static void switch_to_el1(void)
 {
@@ -277,20 +278,30 @@ static void show_dt(void *fdt)
 	// fdt_delprop(fdt, chosen, "linux,initrd-start");
 	// fdt_delprop(fdt, chosen, "linux,initrd-end");
 	fdt_print(fdt, chosen, 3);
-	fdt_for_each_subnode(node, fdt, 0) {
+#if 1
+	// fdt_for_each_subnode(node, fdt, 0) {
+	for (node = 0; node >= 0;
+	     node = fdt_next_node(fdt, node, NULL)) {
 		const char *name = fdt_get_name(fdt, node, NULL);
 
+		// printf("- %s\n", name);
 		// if (!strstr(name, "memory"))
 			// continue;
-		if (!strstr(name, "framebuffer"))
-			continue;
-		// if (strncmp("memory", name, 6) &&
-		    // strncmp("reserved-memory", name, 15))
+		// if (!strstr(name, "framebuffer"))
 			// continue;
+		// if (!strstr(name, "watchdog"))
+			// continue;
+		if (strncmp("memory", name, 6) &&
+		    strncmp("reserved-memory", name, 15))
+			continue;
+		// fdt_setprop(fdt, node, "status", "disabled", 9);
 
-		printf("- %s\n", name);
 		fdt_print(fdt, node, 4);
 	}
+#endif
+	//node = fdt_subnode_offset(fdt, 0, "watchdog@1c840000");
+	// node = fdt_subnode_offset(fdt, 0, "watchdog");
+	// printf("watchdog %d\n", node);
 }
 
 /* Subcommand: GO */
@@ -298,14 +309,54 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 {
 #ifdef CONFIG_ARM64
 	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
+	loff_t actread;
+	char *dev, *other, *use_dev;
+	char dev_part[10], *fname;
+	int ret, part;
 
 	printf("## Transferring control to Linux (at address %lx)...\n",
 	       images->ep);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 	print_buffer(images->ep, (void *)images->ep, 1, 64, 0);
 
+	dev = env_get("dev");
+	other = !strcmp(dev, "1") ? "2" : "1";
+
+	bool boot_same = false;
+
+	if (boot_same) {
+		use_dev = other;
+		part = 1;
+		fname = "orig";
+	} else {
+		use_dev = other;
+		part = 1;
+		fname = "Image";
+	}
+	sprintf(dev_part, "%s:%d", use_dev, part);
+	if (fs_set_blk_dev("efi", dev_part, FS_TYPE_ANY)) {
+		printf("2fs_set_blk_dev failed\n");
+	}
+	printf("Replacing kernel fname '%s' dev_part %s at %lx size %lx\n",
+	       fname, dev_part, images->os.load, images->os.image_len);
+	ret = fs_legacy_read(fname, images->os.load, 0, 0, &actread);
+	printf("1ret = %d\n", ret);
+#if 0
+	if (ret) {
+		if (fs_set_blk_dev("efi", "1", FS_TYPE_ANY)) {
+			printf("1fs_set_blk_dev failed\n");
+		}
+		ret = fs_legacy_read("Image", images->os.load, 0, 0, &actread);
+		printf("2ret = %d actread %lx end %lx\n", ret, (ulong)actread,
+		       images->os.load + (ulong)actread);
+	}
+#endif
+	print_buffer(images->ep, (void *)images->ep, 1, 64, 0);
+
 	show_dt(images->ft_addr);
-	//return;
+	// printf("booti %lx - %lx\n", images->os.load, (ulong)working_fdt);
+	// printf("not booting\n");
+	// return;
 
 	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
 	printf("still here\n");
@@ -326,13 +377,13 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
 		printf("%d  ", __LINE__);
-		armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
-				    (u64)switch_to_el1, ES_TO_AARCH64);
-		// typedef void (*h_func)(ulong fdt, int zero, int arch,
-				       // uint params);
-		// h_func func = (h_func)images->ep;
+		// armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
+				    // (u64)switch_to_el1, ES_TO_AARCH64);
+		typedef void (*h_func)(ulong fdt, int zero, int arch,
+				       uint params);
+		h_func func = (h_func)images->ep;
 
-		// func((ulong)images->ft_addr, 0, 0, 0);
+		func((ulong)images->ft_addr, 0, 0, 0);
 
 				    // (u64)switch_to_el1, ES_TO_AARCH64);
 

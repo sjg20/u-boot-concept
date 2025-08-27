@@ -520,7 +520,7 @@ static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
 				}
 			}
 
-			if (label->kaslrseed)
+			// if (label->kaslrseed)
 				label_boot_kaslrseed();
 
 #ifdef CONFIG_OF_LIBFDT_OVERLAY
