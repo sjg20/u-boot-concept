@@ -332,6 +332,28 @@ config SYS_DEVICE_NULLDEV
 	  operation of the console by setting stdout to "nulldev". Enable
 	  this to use a serial console under board control.
 
+config CONSOLE_PAGER
+	bool "Enable console output paging"
+	depends on CONSOLE_MUX
+	imply CMD_CONSOLE_EXTRA
+	imply SERIAL_TERM_PRESENT
+	default y if SANDBOX
+	help
+	  Enable pager functionality for console output. When enabled, long
+	  output will be paused after a configurable number of lines, waiting
+	  for user input (SPACE) to continue. The number of lines per page is
+	  controlled by the 'pager' environment variable. If the variable is
+	  not set or is empty, paging is disabled.
+
+config CONSOLE_PAGER_LINES
+	int "Number of lines per page"
+	depends on CONSOLE_PAGER
+	default 25
+	help
+	  Sets the default number of lines that the pager assumes is visible on
+	  the display. This is used as a default if the "pager" environment
+	  variable is unset.
+
 endmenu
 
 menu "Logging"

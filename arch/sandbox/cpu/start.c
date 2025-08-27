@@ -12,6 +12,7 @@
 #include <init.h>
 #include <log.h>
 #include <os.h>
+#include <pager.h>
 #include <sandbox_host.h>
 #include <sort.h>
 #include <spl.h>
@@ -135,6 +136,10 @@ SANDBOX_CMDLINE_OPT_SHORT(help, 'h', 0, "Display help");
 int sandbox_main_loop_init(void)
 {
 	struct sandbox_state *state = state_get_current();
+
+	/* Apply pager bypass if requested */
+	if (state->pager_bypass)
+		pager_set_test_bypass(gd_pager(), true);
 
 	/* Execute command if required */
 	if (state->cmd || state->run_distro_boot) {
@@ -433,6 +438,15 @@ static int sandbox_cmdline_cb_autoboot_keyed(struct sandbox_state *state,
 }
 SANDBOX_CMDLINE_OPT(autoboot_keyed, 0, "Allow keyed autoboot");
 
+static int sandbox_cmdline_cb_no_term_present(struct sandbox_state *state,
+					      const char *arg)
+{
+	state->no_term_present = true;
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(no_term_present, 'A', 0,
+			  "Assume no terminal present (for pager testing)");
+
 static int sandbox_cmdline_cb_upl(struct sandbox_state *state, const char *arg)
 {
 	state->upl = true;
@@ -479,6 +493,16 @@ static int sandbox_cmdline_cb_soft_fail(struct sandbox_state *state,
 }
 SANDBOX_CMDLINE_OPT_SHORT(soft_fail, 'f', 0,
 			  "continue test execution even after it fails");
+
+static int sandbox_cmdline_cb_pager_bypass(struct sandbox_state *state,
+					   const char *arg)
+{
+	state->pager_bypass = true;
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(pager_bypass, 'P', 0,
+			  "Enable pager bypass mode");
 
 static int sandbox_cmdline_cb_bind(struct sandbox_state *state, const char *arg)
 {

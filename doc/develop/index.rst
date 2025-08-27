@@ -35,6 +35,7 @@ Implementation
    ci_testing
    commands
    config_binding
+   console
    cyclic
    devicetree/index
    distro

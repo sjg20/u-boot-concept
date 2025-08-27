@@ -18,6 +18,9 @@
 #include <asm/global_data.h>
 #include <dm/lists.h>
 #include <dm/device-internal.h>
+#ifdef CONFIG_SANDBOX
+#include <asm/state.h>
+#endif
 #include <dm/of_access.h>
 #include <linux/build_bug.h>
 #include <linux/delay.h>
@@ -646,6 +649,14 @@ int serial_query_size(int *rowsp, int *colsp)
 
 	if (!CONFIG_IS_ENABLED(SERIAL_TERM_PRESENT))
 		return -ENOENT;
+
+#ifdef CONFIG_SANDBOX
+	if (IS_ENABLED(CONFIG_SANDBOX)) {
+		struct sandbox_state *state = state_get_current();
+		if (state->no_term_present)
+			return -ENOENT;
+	}
+#endif
 
 	/* Empty input buffer */
 	while (tstc())

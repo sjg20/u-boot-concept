@@ -14,6 +14,7 @@
 #include <lmb.h>
 #include <mapmem.h>
 #include <net.h>
+#include <pager.h>
 #include <serial.h>
 #include <video.h>
 #include <vsprintf.h>
@@ -132,6 +133,8 @@ static int bdinfo_print_all(struct bd_info *bd)
 	lprint_num_l("fdt_blob", (ulong)map_to_sysmem(gd->fdt_blob));
 	if (IS_ENABLED(CONFIG_VIDEO))
 		show_video_info();
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER))
+		printf("pager       = %d\n", gd_pager_page_len());
 #if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
 	lprint_num_l("multi_dtb_fit", (ulong)gd->multi_dtb_fit);
 #endif

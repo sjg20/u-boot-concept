@@ -16,6 +16,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <os.h>
+#include <pager.h>
 #include <serial.h>
 #include <stdio_dev.h>
 #include <exports.h>
@@ -256,14 +257,22 @@ static int console_tstc(int file)
 	return 0;
 }
 
-static void console_putc(int file, const char c)
-{
-	int i;
-	struct stdio_dev *dev;
+static void console_puts_pager(int file, const char *s);
 
-	for_each_console_dev(i, file, dev) {
-		if (dev->putc != NULL)
-			dev->putc(dev, c);
+static void console_putc_pager(int file, const char c)
+{
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER) && gd_pager()) {
+		char str[2] = {c, '\0'};
+
+		console_puts_pager(file, str);
+	} else {
+		int i;
+		struct stdio_dev *dev;
+
+		for_each_console_dev(i, file, dev) {
+			if (dev->putc)
+				dev->putc(dev, c);
+		}
 	}
 }
 
@@ -312,14 +321,39 @@ int console_printf_select_stderr(bool serial_only, const char *fmt, ...)
 	return ret;
 }
 
-static void console_puts(int file, const char *s)
+static void console_puts(int file, bool use_pager, const char *s)
 {
-	int i;
-	struct stdio_dev *dev;
+	int key = 0;
 
-	for_each_console_dev(i, file, dev) {
-		if (dev->puts != NULL)
-			dev->puts(dev, s);
+	for (s = pager_post(gd_pager(), use_pager, s); s;
+	     s = pager_next(gd_pager(), use_pager, key)) {
+		struct stdio_dev *dev;
+		int i;
+
+		key = 0;
+		if (IS_ENABLED(CONFIG_CONSOLE_PAGER) && s == PAGER_WAITING) {
+			key = getchar();
+		} else if (*s) {
+			for_each_console_dev(i, file, dev) {
+				if (dev->puts != NULL)
+					dev->puts(dev, s);
+			}
+		}
+	}
+}
+
+static void console_puts_pager(int file, const char *s)
+{
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER) && gd_pager()) {
+		console_puts(file, true, s);
+	} else {
+		struct stdio_dev *dev;
+		int i;
+
+		for_each_console_dev(i, file, dev) {
+			if (dev->puts != NULL)
+				dev->puts(dev, s);
+		}
 	}
 }
 
@@ -342,7 +376,39 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 	iomux_doenv(file, dev->name);
 }
 #endif
-#else
+
+/**
+ * sdev_file_has_uclass() - Find a file has a device of a particular uclass
+ *
+ * Given a file, this returns the first device of the given uclass that is found
+ * within that file.
+ *
+ * This only works with driver model
+ *
+ * @file: File to check (e.g. stdout)
+ * @id: uclass ID to look for
+ * Return: device, if found, NULL if not
+ */
+static struct udevice *sdev_file_has_uclass(int file, enum uclass_id id)
+{
+	struct stdio_dev *sdev;
+	int i;
+
+	for_each_console_dev(i, file, sdev) {
+		if (sdev->flags & DEV_FLAGS_DM) {
+			struct udevice *dev = sdev->priv;
+
+			if (device_get_uclass_id(dev) == id)
+				return dev;
+		} else if (id == UCLASS_SERIAL && console_dev_is_serial(sdev)) {
+			return gd->cur_serial_dev;
+		}
+	}
+
+	return NULL;
+}
+
+#else /* !CONSOLE_MUX */
 
 static void console_devices_set(int file, struct stdio_dev *dev)
 {
@@ -368,7 +434,7 @@ static inline int console_tstc(int file)
 	return stdio_devices[file]->tstc(stdio_devices[file]);
 }
 
-static inline void console_putc(int file, const char c)
+static inline void console_putc_pager(int file, const char c)
 {
 	stdio_devices[file]->putc(stdio_devices[file], c);
 }
@@ -380,7 +446,7 @@ void console_puts_select(int file, bool serial_only, const char *s)
 		stdio_devices[file]->puts(stdio_devices[file], s);
 }
 
-static inline void console_puts(int file, const char *s)
+static inline void console_puts_pager(int file, const char *s)
 {
 	stdio_devices[file]->puts(stdio_devices[file], s);
 }
@@ -399,7 +465,51 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 	console_setfile(file, dev);
 }
 #endif
+
+static inline struct udevice *sdev_file_has_uclass(int file, enum uclass_id id)
+{
+	return NULL;
+}
+
 #endif /* CONIFIG_IS_ENABLED(CONSOLE_MUX) */
+
+int calc_check_console_lines(void)
+{
+	int lines, dev_lines = -1;
+	struct udevice *dev;
+
+	lines = env_get_hex("pager", -1);
+	if (lines != -1)
+		return lines;
+	lines = IF_ENABLED_INT(CONFIG_CONSOLE_PAGER,
+			       CONFIG_CONSOLE_PAGER_LINES);
+
+	/* get number of lines from the video console, if available */
+	if (IS_ENABLED(CONFIG_VIDEO) && video_is_visible()) {
+		dev = sdev_file_has_uclass(stdout, UCLASS_VIDEO_CONSOLE);
+
+		if (dev) {
+			struct vidconsole_priv *priv;
+
+			priv = dev_get_uclass_priv(dev);
+			dev_lines = priv->rows;
+		}
+	}
+	/* get number of lines from the serial console, if available */
+	if (IS_ENABLED(CONFIG_DM_SERIAL) &&
+	    sdev_file_has_uclass(stdout, UCLASS_SERIAL)) {
+		int cols;
+
+		if (!serial_is_tty())
+			dev_lines = 0;
+		else if (dev_lines == -1)  /* Keep as -1 if query fails */
+			serial_get_size(&dev_lines, &cols);
+	}
+	if (dev_lines != -1)
+		lines = dev_lines;
+
+	return lines;
+}
 
 static void __maybe_unused console_setfile_and_devices(int file, struct stdio_dev *dev)
 {
@@ -497,13 +607,13 @@ int ftstc(int file)
 void fputc(int file, const char c)
 {
 	if ((unsigned int)file < MAX_FILES)
-		console_putc(file, c);
+		console_putc_pager(file, c);
 }
 
 void fputs(int file, const char *s)
 {
 	if ((unsigned int)file < MAX_FILES)
-		console_puts(file, s);
+		console_puts_pager(file, s);
 }
 
 #ifdef CONFIG_CONSOLE_FLUSH_SUPPORT
@@ -1075,6 +1185,15 @@ static int on_console(const char *name, const char *value, enum env_op op,
 		break;
 	}
 
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER) && console == stdout) {
+		int lines = calc_check_console_lines();
+
+		/* Set bypass mode if not connected to a terminal */
+		pager_set_bypass(gd_pager(), lines != 0);
+		if (lines)
+			pager_set_page_len(gd_pager(), lines);
+	}
+
 	return result;
 }
 U_BOOT_ENV_CALLBACK(console, on_console);
@@ -1100,6 +1219,19 @@ static int on_silent(const char *name, const char *value, enum env_op op,
 }
 U_BOOT_ENV_CALLBACK(silent, on_silent);
 #endif
+
+static void setup_pager(void)
+{
+	/* Init pager now that console is ready */
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER)) {
+		int ret;
+
+		ret = pager_init(gd_pagerp(), calc_check_console_lines(),
+				 PAGER_BUF_SIZE);
+		if (ret)
+			printf("Failed to init pager\n");
+	}
+}
 
 #if CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV)
 /* Called after the relocation - use desired console functions */
@@ -1185,6 +1317,7 @@ done:
 	}
 
 	gd->flags |= GD_FLG_DEVINIT;	/* device initialization completed */
+	setup_pager();
 
 	print_pre_console_buffer(flushpoint);
 	return 0;
@@ -1252,6 +1385,7 @@ int console_init_r(void)
 	}
 
 	gd->flags |= GD_FLG_DEVINIT;	/* device initialization completed */
+	setup_pager();
 
 	print_pre_console_buffer(flushpoint);
 	return 0;

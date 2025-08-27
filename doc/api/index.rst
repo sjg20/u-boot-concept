@@ -20,6 +20,7 @@ U-Boot API documentation
    lmb
    logging
    nvmem
+   pager
    part
    pinctrl
    rng

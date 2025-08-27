@@ -184,6 +184,9 @@ static int bdinfo_test_all(struct unit_test_state *uts)
 	if (IS_ENABLED(CONFIG_VIDEO))
 		ut_assertok(test_video_info(uts));
 
+	if (IS_ENABLED(CONFIG_CONSOLE_PAGER))
+		ut_assert_nextline("pager       = %d", gd_pager_page_len());
+
 	/* The gd->multi_dtb_fit may not be available, hence, #if below. */
 #if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
 	ut_assertok(test_num_l(uts, "multi_dtb_fit", (ulong)gd->multi_dtb_fit));
