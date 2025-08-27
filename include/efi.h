@@ -23,6 +23,7 @@
 #include <net.h>
 #endif
 
+struct abuf;
 struct udevice;
 
 /* Type INTN in UEFI specification */
@@ -862,5 +863,19 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
  */
 int efi_dp_from_bootdev(const struct udevice *dev,
 			const struct efi_device_path **dpp);
+
+/**
+ * efi_read_var() - Read an EFI variable
+ *
+ * @name: Name of variable to read
+ * @guid: GUID for the variable
+ * @attrp: Returns variable attributes if non-NULL, on success
+ * @buf: Returns allocated buffer containing the value
+ * @timep: Returns the timestamp for the variable if non_NULL
+ * Return: 0 if OK, -ENOENT if the variable was not found, -EBADF if something
+ * went wrong when reading
+ */
+int efi_read_var(const u16 *name, const efi_guid_t *guid, u32 *attrp,
+		 struct abuf *buf, u64 *timep);
 
 #endif /* _LINUX_EFI_H */
