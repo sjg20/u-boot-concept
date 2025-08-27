@@ -13,6 +13,7 @@
 #include <command.h>
 #include <console.h>
 #include <dm.h>
+#include <efi_device_path.h>
 #include <expo.h>
 #include <log.h>
 #include <mapmem.h>
@@ -453,6 +454,22 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf("FDT addr:  %lx\n", bflow->fdt_addr);
 	}
 	printf("Error:     %d\n", bflow->err);
+	if (IS_ENABLED(CONFIG_BOOTMETH_EFI) &&
+	    bflow->method->driver == DM_DRIVER_GET(bootmeth_4efi)) {
+		struct efi_device_path *dp;
+		bool alloced;
+
+		ret = efi_dp_from_bootflow(bflow, &dp, &alloced);
+		printf("EFI path   ");
+		if (!ret) {
+			printf("%pD\n", dp);
+			if (alloced)
+				efi_free_pool(dp);
+		} else {
+			printf("(err %dE)\n", ret);
+		}
+	}
+
 	if (dump && bflow->buf) {
 		/* Set some sort of maximum on the size */
 		int size = min(bflow->size, 10 << 10);

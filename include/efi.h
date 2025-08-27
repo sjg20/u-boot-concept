@@ -23,6 +23,8 @@
 #include <net.h>
 #endif
 
+struct udevice;
+
 /* Type INTN in UEFI specification */
 #define efi_intn_t ssize_t
 /* Type UINTN in UEFI specification*/
@@ -847,5 +849,18 @@ efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
 efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 			   struct efi_device_path *dp_dev,
 			   struct efi_device_path *dp_img);
+
+/**
+ * efi_dp_from_bootdev() - Get the device path from a bootdev
+ *
+ * This is only available in the app. It looks up the bootdev and returns the
+ * assocated device path (attached to its sibling block device)
+ *
+ * @dev: UCLASS_BOOTDEV device to check
+ * @dpp: Returns device path on success
+ * Returns: 0 if OK, -ve on error
+ */
+int efi_dp_from_bootdev(const struct udevice *dev,
+			const struct efi_device_path **dpp);
 
 #endif /* _LINUX_EFI_H */

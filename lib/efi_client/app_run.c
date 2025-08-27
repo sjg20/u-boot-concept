@@ -7,6 +7,7 @@
  */
 
 #include <bootm.h>
+#include <dm.h>
 #include <efi.h>
 #include <efi_api.h>
 #include <efi_device_path.h>
@@ -88,4 +89,21 @@ efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
 			       struct efi_device_path *dp_img)
 {
 	return efi_run_image(image, size, dp_dev, dp_img);
+}
+
+int efi_dp_from_bootdev(const struct udevice *dev,
+			const struct efi_device_path **dpp)
+{
+	const struct udevice *media = dev_get_parent(dev);
+	const struct efi_media_plat *plat;
+
+	log_debug("dev '%s': uclass ID %d\n", media->name,
+		  device_get_uclass_id(media));
+	if (device_get_uclass_id(media) != UCLASS_EFI_MEDIA)
+		return log_msg_ret("efb", -ENOTSUPP);
+
+	plat = dev_get_plat(media);
+	*dpp = plat->device_path;
+
+	return 0;
 }
