@@ -1464,3 +1464,43 @@ static int fdt_test_apply(struct unit_test_state *uts)
 	return 0;
 }
 FDT_TEST(fdt_test_apply, UTF_CONSOLE);
+
+/* Test 'fdt reserved' reading reserved-memory nodes */
+static int fdt_test_reserved(struct unit_test_state *uts)
+{
+	struct fdt_header *old_working_fdt;
+	char fdt[8192];
+	ulong addr;
+
+	if (!IS_ENABLED(CONFIG_SANDBOX))
+		return -EAGAIN;
+
+	/* Save the original working_fdt */
+	old_working_fdt = working_fdt;
+
+	/* Set working_fdt to control FDT (sandbox has reserved memory) */
+	working_fdt = (struct fdt_header *)gd->fdt_blob;
+
+	ut_assertok(run_command("fdt reserved", 0));
+
+	/* Just verify we get the header */
+	ut_assert_nextlinen("ID");
+	ut_assert_nextlinen("------");
+
+	/* Verify we get a tcg_event_log entry with correct address/size */
+	ut_assert_nextline("0    tcg_event_log        0x100000           0x2000            ");
+
+	/* Test with FDT that has no reserved-memory node */
+	ut_assertok(make_test_fdt(uts, fdt, sizeof(fdt), &addr));
+	ut_assertok(run_command("fdt reserved", 0));
+	ut_assert_nextlinen("ID   Name                 Start              Size");
+	ut_assert_nextline("----------------------------------------------------------------");
+	ut_assert_nextline("No /reserved-memory node found in device tree");
+	ut_assert_console_end();
+
+	/* Restore the original working_fdt */
+	working_fdt = old_working_fdt;
+
+	return 0;
+}
+FDT_TEST(fdt_test_reserved, UTF_CONSOLE);
