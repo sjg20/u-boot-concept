@@ -408,12 +408,12 @@ static int add_efi_region_to_dt(void *fdt, u64 start, u64 size, const char *type
 	}
 
 	/* Create node name based on type and address */
-	snprintf(node_name, sizeof(node_name), "efi_%s@%llx", type_name, start);
+	snprintf(node_name, sizeof(node_name), "efi-%s@%llx", type_name, start);
 	
-	/* Convert spaces and special chars to underscores for valid node name */
+	/* Convert spaces and underscores to hyphens for a valid node name */
 	for (char *p = node_name; *p; p++) {
-		if (*p == ' ' || *p == '-')
-			*p = '_';
+		if (*p == ' ' || *p == '_')
+			*p = '-';
 	}
 
 	/* Add new subnode */
@@ -449,12 +449,12 @@ static int add_efi_region_to_dt(void *fdt, u64 start, u64 size, const char *type
 }
 
 /**
- * print_efi_reserved_regions() - Print EFI reserved regions and add missing ones to DT
+ * sync_efi_reserved_regions_to_dt() - Print EFI reserved regions and add missing ones to DT
  *
  * @fdt: Device tree blob
  * Return: true if any uncovered regions found, false otherwise
  */
-static bool print_efi_reserved_regions(void *fdt)
+static bool sync_efi_reserved_regions_to_dt(void *fdt)
 {
 	struct efi_mem_desc *map, *desc, *end;
 	int desc_size, size, upto;
@@ -566,13 +566,12 @@ static void compare_efi_dt_memory_reservations(void *fdt)
 {
 	printf("=== Comparing EFI Memory Map with Device Tree Reserved Regions ===\n");
 
-	bool found_unreported = print_efi_reserved_regions(fdt);
+	bool found_unreported = sync_efi_reserved_regions_to_dt(fdt);
 
 	if (found_unreported) {
-		printf("\n*** WARNING: Found EFI reserved regions not in device tree! ***\n");
-		printf("Consider adding these regions to the device tree's reserved-memory node.\n");
+		printf("\n✓ Added missing EFI reserved regions to device tree.\n");
 	} else {
-		printf("\n✓ All EFI reserved regions are covered by device tree reservations.\n");
+		printf("\n✓ All EFI reserved regions were already covered by device tree reservations.\n");
 	}
 
 	print_dt_reserved_memory_regions(fdt);
@@ -618,7 +617,7 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 	}
 
 	ram_start = 0x80000000;
-	ram_end = ram_start + 4 * SZ_4G;
+	ram_end = ram_start + 2 * SZ_4G;
 	// ram_end = ram_start + 1 * SZ_4G;
 	// ram_start = SZ_4G;
 	// ram_end = 4 * SZ_4G;
