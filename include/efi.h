@@ -795,6 +795,23 @@ static inline bool efi_mem_is_boot_services(int type)
 const char *efi_mem_type_name(enum efi_memory_type type);
 
 /**
+ * efi_mem_reserved_sync() - Sync EFI memory map with DT reserved-memory nodes
+ *
+ * Compares the EFI memory map with the device tree's reserved-memory nodes and
+ * adds regions to the devicetree that are reserved in EFI but not mentioned in
+ * the devicetree's '/reserved-memory' node. This ensures that memory regions
+ * which EFI considers reserved are not used by the OS, e.g. because a
+ * hypervisor may be in use..
+ *
+ * Note: This only works with #address-cells and #size-cells of 2
+ *
+ * @fdt: Pointer to the devicetree blob
+ * @verbose: If true, show detailed output; if false, only show errors
+ * Return: Number of regions synced, or -ve on error
+ */
+int efi_mem_reserved_sync(void *fdt, bool verbose);
+
+/**
  * efi_dump_mem_table() - Dump out the EFI memory map
  *
  * @desc: List of descriptors to dump
