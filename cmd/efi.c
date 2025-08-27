@@ -17,6 +17,34 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+static bool is_app(void)
+{
+	if (!IS_ENABLED(CONFIG_EFI_APP)) {
+		printf("This command is only available in the app\n");
+		return false;
+	}
+
+	return true;
+}
+
+static int do_efi_image(struct cmd_tbl *cmdtp, int flag, int argc,
+			char *const argv[])
+{
+	struct efi_loaded_image *lim;
+	struct efi_priv *priv;
+	u16 *path;
+
+	if (!is_app())
+		return CMD_RET_FAILURE;
+
+	priv = efi_get_priv();
+	lim = priv->loaded_image;
+	path = efi_dp_str(lim->file_path);
+	printf("Loaded-image path: %ls\n", path);
+
+	return 0;
+}
+
 static int h_cmp_entry(const void *v1, const void *v2)
 {
 	const struct efi_mem_desc *desc1 = v1;
@@ -186,6 +214,7 @@ static int do_efi_tables(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 static struct cmd_tbl efi_commands[] = {
+	U_BOOT_CMD_MKENT(image, 1, 1, do_efi_image, "", ""),
 	U_BOOT_CMD_MKENT(mem, 1, 1, do_efi_mem, "", ""),
 	U_BOOT_CMD_MKENT(tables, 1, 1, do_efi_tables, "", ""),
 };
@@ -211,6 +240,7 @@ static int do_efi(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 U_BOOT_CMD(
 	efi,     3,      1,      do_efi,
 	"EFI access",
+	"image            Dump loaded-image info\n"
 	"mem [all]        Dump memory information [include boot services]\n"
 	"tables               Dump tables"
 );
