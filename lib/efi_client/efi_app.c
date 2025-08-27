@@ -367,7 +367,89 @@ static bool is_region_in_dt_reserved_memory(void *fdt, u64 start, u64 end)
 }
 
 /**
- * print_efi_reserved_regions() - Print EFI reserved regions and their DT coverage
+ * add_efi_region_to_dt() - Add EFI reserved region to device tree reserved-memory
+ *
+ * @fdt: Device tree blob
+ * @start: Start address of region
+ * @size: Size of region  
+ * @type_name: EFI memory type name for node naming
+ * Return: 0 on success, negative error code on failure
+ */
+static int add_efi_region_to_dt(void *fdt, u64 start, u64 size, const char *type_name)
+{
+	int reserved_mem_node, new_node;
+	char node_name[64];
+	fdt32_t reg_prop[4];
+	int ret;
+
+	/* Find or create /reserved-memory node */
+	reserved_mem_node = fdt_path_offset(fdt, "/reserved-memory");
+	if (reserved_mem_node < 0) {
+		/* Create /reserved-memory node */
+		reserved_mem_node = fdt_add_subnode(fdt, 0, "reserved-memory");
+		if (reserved_mem_node < 0) {
+			printf("Failed to create /reserved-memory node: %s\n", 
+			       fdt_strerror(reserved_mem_node));
+			return reserved_mem_node;
+		}
+
+		/* Set required properties for reserved-memory */
+		fdt32_t addr_cells = cpu_to_fdt32(2);
+		fdt32_t size_cells = cpu_to_fdt32(2);
+		
+		ret = fdt_setprop(fdt, reserved_mem_node, "#address-cells", &addr_cells, sizeof(addr_cells));
+		if (ret < 0) return ret;
+		
+		ret = fdt_setprop(fdt, reserved_mem_node, "#size-cells", &size_cells, sizeof(size_cells));
+		if (ret < 0) return ret;
+		
+		ret = fdt_setprop(fdt, reserved_mem_node, "ranges", NULL, 0);
+		if (ret < 0) return ret;
+	}
+
+	/* Create node name based on type and address */
+	snprintf(node_name, sizeof(node_name), "efi_%s@%llx", type_name, start);
+	
+	/* Convert spaces and special chars to underscores for valid node name */
+	for (char *p = node_name; *p; p++) {
+		if (*p == ' ' || *p == '-')
+			*p = '_';
+	}
+
+	/* Add new subnode */
+	new_node = fdt_add_subnode(fdt, reserved_mem_node, node_name);
+	if (new_node < 0) {
+		printf("Failed to create node %s: %s\n", node_name, fdt_strerror(new_node));
+		return new_node;
+	}
+
+	/* Set reg property - #address-cells=2, #size-cells=2 */
+	reg_prop[0] = cpu_to_fdt32(start >> 32);
+	reg_prop[1] = cpu_to_fdt32(start & 0xffffffff);
+	reg_prop[2] = cpu_to_fdt32(size >> 32);
+	reg_prop[3] = cpu_to_fdt32(size & 0xffffffff);
+
+	ret = fdt_setprop(fdt, new_node, "reg", reg_prop, sizeof(reg_prop));
+	if (ret < 0) {
+		printf("Failed to set reg property: %s\n", fdt_strerror(ret));
+		return ret;
+	}
+
+	/* Add no-map property to prevent Linux from using this memory */
+	ret = fdt_setprop(fdt, new_node, "no-map", NULL, 0);
+	if (ret < 0) {
+		printf("Failed to set no-map property: %s\n", fdt_strerror(ret));
+		return ret;
+	}
+
+	printf("  -> Added reserved-memory node: %s (0x%llx - 0x%llx)\n", 
+	       node_name, start, start + size - 1);
+
+	return 0;
+}
+
+/**
+ * print_efi_reserved_regions() - Print EFI reserved regions and add missing ones to DT
  *
  * @fdt: Device tree blob
  * Return: true if any uncovered regions found, false otherwise
@@ -396,6 +478,7 @@ static bool print_efi_reserved_regions(void *fdt)
 	     desc = efi_get_next_mem_desc(desc, desc_size), upto++) {
 		u64 start = desc->physical_start;
 		u64 end_addr = start + (desc->num_pages << EFI_PAGE_SHIFT) - 1;
+		u64 region_size = desc->num_pages << EFI_PAGE_SHIFT;
 
 		if (!is_efi_memory_reserved(desc->type))
 			continue;
@@ -403,15 +486,26 @@ static bool print_efi_reserved_regions(void *fdt)
 		bool in_dt_reserved = is_region_in_dt_reserved_memory(fdt, start, end_addr);
 
 		/* Print the region */
-		printf("%-4d %-18s 0x%-16llx 0x%-16llx %s\n",
+		printf("%-4d %-18s 0x%-16llx 0x%-16llx %s",
 		       upto,
 		       efi_mem_type_name(desc->type),
 		       start,
 		       end_addr,
 		       in_dt_reserved ? "YES" : "NO");
 
-		if (!in_dt_reserved)
+		if (!in_dt_reserved) {
 			found_unreported = true;
+			printf(" -> ADDING\n");
+			
+			/* Add this region to device tree */
+			const char *type_name = efi_mem_type_name(desc->type);
+			int ret = add_efi_region_to_dt(fdt, start, region_size, type_name);
+			if (ret < 0) {
+				printf("  -> Failed to add region: %s\n", fdt_strerror(ret));
+			}
+		} else {
+			printf("\n");
+		}
 	}
 
 	free(map);
