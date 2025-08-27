@@ -2265,7 +2265,7 @@ void fdt_print_reserved(void *fdt)
 	int node, reserved, id;
 	int addr_cells, size_cells;
 
-	printf("%-4s %-20s %-18s %-18s\n", "ID", "Name", "Start", "Size");
+	printf("%-4s %-20s %-16s %-16s\n", "ID", "Name", "Start", "Size");
 	printf("--------------------------------------------------------"
 	       "--------\n");
 
@@ -2300,7 +2300,7 @@ void fdt_print_reserved(void *fdt)
 				rsv_size = (rsv_size << 32) |
 					   fdt32_to_cpu(reg[cells++]);
 
-			printf("%-4d %-20s 0x%-16llx 0x%-16llx\n",
+			printf("%-4d %-20s %-16llx %-16llx\n",
 			       id++, name ? name : "(unnamed)", rsv_start,
 			       rsv_size);
 		} else {
