@@ -136,7 +136,7 @@ static int make_fuller_fdt(struct unit_test_state *uts, void *fdt, int size,
 	/*
 	 * <u32>
 	 * This value is deliberate as it used to break cmd/fdt.c
-	 * is_printable_string() implementation.
+	 * fdt_printable_str() implementation.
 	 */
 	ut_assertok(fdt_property_u32(fdt, "clock-frequency", 16640000));
 	/* <prop-encoded-array> */
