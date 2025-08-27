@@ -881,4 +881,6 @@ int efi_dp_from_bootdev(const struct udevice *dev,
 int efi_read_var(const u16 *name, const efi_guid_t *guid, u32 *attrp,
 		 struct abuf *buf, u64 *timep);
 
+uint16_t *efi_dp_str(struct efi_device_path *dp);
+
 #endif /* _LINUX_EFI_H */

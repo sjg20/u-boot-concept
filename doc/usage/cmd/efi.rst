@@ -12,6 +12,7 @@ Synopsis
 
 ::
 
+    efi image
     efi mem [all]
     efi tables
 
@@ -25,6 +26,16 @@ When running as an EFI app, this command queries EFI boot services for the
 information. When running as an EFI payload, EFI boot services have been
 stopped, so it uses the information collected by the boot stub before that
 happened.
+
+efi image
+~~~~~~~~~
+
+This shows the loaded image path information for the currently running EFI
+application. The loaded image protocol provides access to the device path
+from which the image was loaded.
+
+The output shows the file path in EFI device path format, displayed as a
+human-readable Unicode string.
 
 efi mem
 ~~~~~~~
@@ -70,6 +81,9 @@ Example
 -------
 
 ::
+
+    => efi image
+    Loaded-image path: u-boot-app.efi
 
     => efi mem
     EFI table at 0, memory map 000000001ad38b60, size 1260, key a79, version 1, descr. size 0x30
