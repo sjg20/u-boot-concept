@@ -437,7 +437,7 @@ int bootmeth_common_read_file(struct udevice *dev, struct bootflow *bflow,
 		return ret;
 	*sizep = len_read;
 
-	if (!bootflow_img_add(bflow, bflow->fname, type, *addrp, size))
+	if (!bootflow_img_add(bflow, file_path, type, *addrp, size))
 		return log_msg_ret("bci", -ENOMEM);
 
 	return 0;
