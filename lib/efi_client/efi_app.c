@@ -348,9 +348,11 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 		return ret;
 	}
 
-	ret = fdt_simplefb_add_node(fdt);
-	if (ret)
-		log_warning("failed to set up simplefb\n");
+	if (IS_ENABLED(CONFIG_FDT_SIMPLEFB)) {
+		ret = fdt_simplefb_add_node(fdt);
+		if (ret)
+			log_warning("failed to set up simplefb\n");
+	}
 
 	free(map);
 
