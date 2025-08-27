@@ -163,6 +163,9 @@ extern const efi_guid_t efi_guid_component_name2;
 /* GUIDs for authentication - most of these are still in efi_loader.h */
 extern const efi_guid_t efi_guid_image_security_database;
 
+/* Access to Shim variables */
+extern const efi_guid_t efi_shim_lock;
+
 /* Generic EFI table header */
 struct efi_table_hdr {
 	u64 signature;

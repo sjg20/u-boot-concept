@@ -547,6 +547,15 @@ config SYS_XIMG_LEN
 	  It should be large enough to fit uncompressed size of
 	  FIT piece we are extracting.
 
+config CMD_SHIM
+	bool "shim"
+	depends on CMD_NVEDIT_EFI
+	default y if SANDBOX || EFI_APP
+	help
+	  Provides a few commands for dealing with Shim being in the boot
+	  chain. This can be useful when debugging booting, particularly on
+	  x86 machines.
+
 config CMD_SPL
 	bool "spl export - Export boot information for Falcon boot"
 	depends on SPL
