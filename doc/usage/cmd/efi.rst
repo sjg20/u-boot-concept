@@ -14,6 +14,7 @@ Synopsis
 
     efi image
     efi mem [all]
+    efi memsync [-v]
     efi tables
 
 Description
@@ -68,6 +69,24 @@ Size
 Attributes
     Shows a code for memory attributes. The key for this is shown below the
     table.
+
+efi memsync
+~~~~~~~~~~~
+
+This synchronizes EFI reserved memory regions with the device tree's
+reserved-memory nodes. When running as an EFI application, U-Boot can access
+the EFI memory map to identify regions that EFI considers reserved (such as
+runtime services code/data, ACPI tables, etc.). This command compares these
+EFI reserved regions with the device tree's /reserved-memory nodes and adds
+any missing regions to prevent Linux from using memory that EFI has reserved.
+
+Use the optional '-v' flag for verbose output showing the detailed memory
+map analysis. Without this flag, only errors are displayed.
+
+This is useful for ensuring proper memory management when transitioning from
+EFI boot services to the operating system, particularly in complex firmware
+environments where EFI may have reserved memory regions not explicitly
+documented in the device tree.
 
 efi tables
 ~~~~~~~~~~
@@ -234,3 +253,20 @@ Example
     000000001fb7e000  eb9d2d30-2d88-11d3-9a16-0090273fc14d  EFI_GUID_EFI_ACPI1
     000000001fb7e014  8868e871-e4f1-11d3-bc22-0080c73c8881  ACPI table
     000000001e654018  dcfa911d-26eb-469f-a220-38b7dc461220  (unknown)
+
+    => efi memsync
+    Regions added: 2
+
+    => efi memsync -v
+    Comparing EFI memory-map with reserved-memory
+    EFI Memory Map Analysis:
+    ID   Type               Start              End                In DT?
+    ------------------------------------------------------------------------
+    0    EFI_RUNTIME_SERVICES_CODE 0x001f9ef000       0x001faef000       no -> adding
+    1    EFI_ACPI_RECLAIM_MEMORY   0x001fb6f000       0x001fb7f000       no -> adding
+    2    EFI_ACPI_MEMORY_NVS       0x001fb7f000       0x001fbff000       yes
+    Regions added: 2
+    Reserved memory regions:
+    0    tcg_event_log        0x100000           0x2000
+    1    efi-runtime-services-code@1f9ef000 0x1f9ef000       0x100000
+    2    efi-acpi-reclaim@1fb6f000 0x1fb6f000        0x10000
