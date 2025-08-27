@@ -70,11 +70,26 @@ static void report_bootflow_err(struct bootflow *bflow, int err)
  */
 static void show_bootflow(int index, struct bootflow *bflow, bool errors)
 {
+	const char *name = NULL;
+
+	if (IS_ENABLED(CONFIG_EFI_APP)) {
+		struct efi_device_path *dp;
+		enum uclass_id id;
+		int ret;
+
+		ret = efi_dp_from_bootflow(bflow, &dp, NULL);
+		if (!ret)
+			name = efi_dp_guess_uclass(dp, &id);
+	} else if (bflow->dev) {
+		name = dev_get_uclass_name(dev_get_parent(bflow->dev));
+	}
+	if (!name)
+		name = "(none)";
+
 	printf("%3x  %-11s  %-6s  %-9.9s %4x  %-25.25s %s\n", index,
 	       bflow->method ? bflow->method->name : "(none)",
-	       bootflow_state_get_name(bflow->state),
-	       bflow->dev ? dev_get_uclass_name(dev_get_parent(bflow->dev)) :
-	       "(none)", bflow->part, bflow->name, bflow->fname ?: "");
+	       bootflow_state_get_name(bflow->state), name, bflow->part,
+	       bflow->name, bflow->fname ?: "");
 	if (errors)
 		report_bootflow_err(bflow, bflow->err);
 }
