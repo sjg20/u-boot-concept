@@ -106,7 +106,7 @@ int bc_oslist_next(struct udevice *dev, struct oslist_iter *iter,
 	struct bc_oslist_ops *ops = bc_oslist_get_ops(dev);
 	int ret;
 
-	printf("oslist flags %x\n", iter->bf_iter.flags);
+	log_debug("oslist flags %x\n", iter->bf_iter.flags);
 	ret = ops->next(dev, iter, info);
 	if (ret)
 		return log_msg_ret("bon", ret);

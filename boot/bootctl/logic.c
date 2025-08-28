@@ -84,7 +84,7 @@ static int logic_start(struct udevice *dev)
 
 	ret = bc_ui_show(priv->ui);
 	if (ret) {
-		log_error("Cannot show display (err=%dE)\n", ret);
+		log_err("Cannot show display (err=%dE)\n", ret);
 		return log_msg_ret("bds", ret);
 	}
 
