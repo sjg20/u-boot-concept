@@ -725,4 +725,12 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
  */
 int bootflow_menu_poll(struct expo *exp, int *seqp);
 
+/**
+ * bootflow_guess_label() - Produce a plausible label for a bootflow
+ *
+ * This uses the uclass name or EFI device-path to come up with a useful label
+ * for display to the user. Ideally it will say "mmc", "usb", nvme", etc.
+ */
+const char *bootflow_guess_label(const struct bootflow *bflow);
+
 #endif
