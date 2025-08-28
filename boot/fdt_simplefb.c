@@ -92,9 +92,9 @@ int fdt_simplefb_add_node(void *blob)
 	if (off < 0)
 		return -1;
 
-	ret = fdt_setprop(blob, off, "status", disabled, sizeof(disabled));
-	if (ret < 0)
-		return -1;
+	// ret = fdt_setprop(blob, off, "status", disabled, sizeof(disabled));
+	// if (ret < 0)
+		// return -1;
 
 	ret = fdt_setprop(blob, off, "compatible", compat, sizeof(compat));
 	if (ret < 0)

@@ -309,20 +309,21 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 {
 #ifdef CONFIG_ARM64
 	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
+#if 0
 	loff_t actread;
 	char *dev, *other, *use_dev;
 	char dev_part[10], *fname;
 	int ret, part;
-
+#endif
 	printf("## Transferring control to Linux (at address %lx)...\n",
 	       images->ep);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 	print_buffer(images->ep, (void *)images->ep, 1, 64, 0);
-
+#if 0
 	dev = env_get("dev");
 	other = !strcmp(dev, "1") ? "2" : "1";
 
-	bool boot_same = true;
+	bool boot_same = false;
 
 	if (boot_same) {
 		use_dev = other;
@@ -352,12 +353,12 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 	}
 #endif
 	print_buffer(images->ep, (void *)images->ep, 1, 64, 0);
+#endif
 
 	show_dt(images->ft_addr);
 	// printf("booti %lx - %lx\n", images->os.load, (ulong)working_fdt);
 	// printf("not booting\n");
 	// return;
-
 	bootm_final(fake ? BOOTM_FINAL_FAKE : 0);
 	printf("still here\n");
 
