@@ -5,6 +5,8 @@
  * Access to the EFI information table
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <efi.h>
 #include <efi_loader.h>
 #include <efi_stub.h>

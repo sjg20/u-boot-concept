@@ -9,6 +9,7 @@
  * Call ExitBootServices() and launch U-Boot from an EFI environment.
  */
 
+#define LOG_CATEGORY	LOGC_EFI
 #include <debug_uart.h>
 #include <efi.h>
 #include <efi_api.h>
