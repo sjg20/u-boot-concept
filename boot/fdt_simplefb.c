@@ -78,10 +78,10 @@ int fdt_simplefb_add_node(void *blob)
 
 	if (chosen < 0)
 		return -1;
-	ret = fdt_setprop_u64(blob, chosen, "#address-cells", 2);
+	ret = fdt_setprop_u32(blob, chosen, "#address-cells", 2);
 	if (ret < 0)
 		return -1;
-	ret = fdt_setprop_u64(blob, chosen, "#size-cells", 2);
+	ret = fdt_setprop_u32(blob, chosen, "#size-cells", 2);
 	if (ret < 0)
 		return -1;
 	ret = fdt_setprop(blob, chosen, "ranges", NULL, 0);

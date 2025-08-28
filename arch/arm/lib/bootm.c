@@ -275,10 +275,11 @@ static void show_dt(void *fdt)
 	printf("chosen %d\n", chosen);
 	// printf("bootargs: %s\n",
 	       // (char *)fdt_getprop(fdt, chosen, "bootargs", &size));
-	// fdt_delprop(fdt, chosen, "linux,initrd-start");
-	// fdt_delprop(fdt, chosen, "linux,initrd-end");
+	printf("deleting initrd\n");
+	fdt_delprop(fdt, chosen, "linux,initrd-start");
+	fdt_delprop(fdt, chosen, "linux,initrd-end");
 	fdt_print(fdt, chosen, 3);
-#if 1
+#if 0
 	// fdt_for_each_subnode(node, fdt, 0) {
 	for (node = 0; node >= 0;
 	     node = fdt_next_node(fdt, node, NULL)) {

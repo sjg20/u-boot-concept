@@ -617,7 +617,7 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 	}
 
 	ram_start = 0x80000000;
-	ram_end = ram_start + 2 * SZ_4G;
+	ram_end = ram_start + 3 * SZ_4G;
 	// ram_end = ram_start + 1 * SZ_4G;
 	// ram_start = SZ_4G;
 	// ram_end = 4 * SZ_4G;
