@@ -13,6 +13,11 @@ Synopsis
 
 ::
 
+    efidebug boot add -b <bootid> <label> <interface> <devnum>[:<part>] <file>
+    efidebug boot rm <bootid> [<bootid> ...]
+    efidebug boot dump
+    efidebug boot next <bootid>
+    efidebug boot order [<bootid> ...]
     efidebug log
     efidebug media
     efidebug memmap [-s]
@@ -20,10 +25,44 @@ Synopsis
 Description
 -----------
 
-The *efidebug* command provides access to debugging features for the EFI-loader
-subsystem.
+The *efidebug* command provides access some EFI-loader features, including boot
+management, memory mapping, and system information.
 
-Only three of the subcommands are documented at present.
+efidebug boot
+~~~~~~~~~~~~~
+
+The boot subcommands manage UEFI boot options (BootXXXX variables) and boot
+order.
+
+**efidebug boot add**
+  Create or modify a UEFI boot option. The basic syntax is:
+  ``efidebug boot add -b <bootid> <label> <interface> <devnum>[:<part>] <file>``
+
+  Where:
+
+  - ``<bootid>`` is a hexadecimal boot option ID (e.g., 0001, 000A)
+  - ``<label>`` is a descriptive name for the boot option
+  - ``<interface>`` is the storage interface (e.g., mmc, usb, virtio)
+  - ``<devnum>[:<part>]`` specifies device and optionally partition number
+  - ``<file>`` is the path to the EFI executable
+
+  Additional options include ``-i`` for initrd, ``-s`` for optional data,
+  and ``-d`` for device tree files.
+
+**efidebug boot rm**
+  Remove one or more UEFI boot options by their boot IDs.
+
+**efidebug boot dump**
+  List all defined UEFI boot options with their details including boot ID,
+  label, and file path.
+
+**efidebug boot next**
+  Set the BootNext variable to specify which boot option should be used for
+  the next boot only.
+
+**efidebug boot order**
+  Show the current boot order when called without arguments, or sets a new
+  boot order when given a list of boot IDs.
 
 efidebug log
 ~~~~~~~~~~~~
@@ -57,12 +96,38 @@ address, making it easier to visualize the memory layout in ascending order.
 Example
 -------
 
+This shows managing UEFI boot options::
+
+    => efidebug boot add -b 1 "Ubuntu" mmc 0:2 /EFI/ubuntu/grubx64.efi
+    => efidebug boot add -b 2 "Windows" mmc 0:1 /EFI/Microsoft/Boot/bootmgfw.efi
+    => efidebug boot dump
+    Boot0001:
+    attributes: A-- (0x00000001)
+    label: Ubuntu
+    file_path: /VenHw(e61d73b9-a384-4acc-aeab-82e828f3628b)/SD(0)/
+               HD(2,GPT,dfae5a37-e8d5-4a2e-aab6-6b6e8c8cb8a3,0x100800,
+               0x5dc1800)/\EFI\ubuntu\grubx64.efi
+    data: 
+    Boot0002:
+    attributes: A-- (0x00000001)
+    label: Windows
+    file_path: /VenHw(e61d73b9-a384-4acc-aeab-82e828f3628b)/SD(0)/
+               HD(1,GPT,c8a9e8e7-2d2a-4b8e-9b4f-7b7b3b7b7b7b,0x800,
+               0x100000)/\EFI\Microsoft\Boot\bootmgfw.efi
+    data:
+    => efidebug boot order 1 2
+    => efidebug boot order
+    BootOrder: 0001 0002
+    => efidebug boot next 2
+    => efidebug boot rm 1
+
 This shows checking the EFI media devices::
 
     => efidebug media
     Device               Media type       Device Path
     -------------------  ---------------  -----------
-    efi_media_1          ahci             PciRoot(0x0)/Pci(0x3,0x0)/Sata(0x0,0xFFFF,0x0)
+    efi_media_1          ahci             PciRoot(0x0)/Pci(0x3,0x0)/
+                                          Sata(0x0,0xFFFF,0x0)
     efi_media_2          pci              PciRoot(0x0)/Pci(0x5,0x0)
 
 This shows checking the UEFI memory map, first unsorted and then sorted by
@@ -160,9 +225,12 @@ EFI-loader subsystem, then checking the log again::
     6 records
     => efidebug tables
     efi_var_to_file() Cannot persist EFI variables without system partition
-    0000000017bfc010  36122546-f7ef-4c8f-bd9b-eb8525b50c0b  EFI Conformance Profiles Table
-    0000000017bd4010  b122a263-3661-4f68-9929-78f8b0d62180  EFI System Resource Table
-    0000000017bd8010  1e2ed096-30e2-4254-bd89-863bbef82325  TCG2 Final Events Table
+    0000000017bfc010  36122546-f7ef-4c8f-bd9b-eb8525b50c0b  \
+                    EFI Conformance Profiles Table
+    0000000017bd4010  b122a263-3661-4f68-9929-78f8b0d62180  \
+                    EFI System Resource Table
+    0000000017bd8010  1e2ed096-30e2-4254-bd89-863bbef82325  \
+                    TCG2 Final Events Table
     0000000017bd6010  eb66918a-7eef-402a-842e-931d21c38ae9  Runtime properties
     0000000008c49000  8868e871-e4f1-11d3-bc22-0080c73c8881  ACPI table
     0000000018c5b000  f2fd1544-9794-4a2c-992e-e5bbcf20e394  SMBIOS3 table
@@ -174,7 +242,8 @@ EFI-loader subsystem, then checking the log again::
     3  alloc_pages any-pages bt-data pgs 1 mem 7fffd8448a60 *mem 7c1f000 ret OK
     4   alloc_pool bt-data size 60/96 buf 7fffd8448ac0 *buf 7c1e010 ret OK
     5  alloc_pages any-pages bt-data pgs 1 mem 7fffd8448a60 *mem 7c1e000 ret OK
-    6  alloc_pages any-pages rt-data pgs 20/32 mem 7fffd8448838 *mem 7bfe000 ret OK
+    6  alloc_pages any-pages rt-data pgs 20/32 mem 7fffd8448838 \
+       *mem 7bfe000 ret OK
     7   alloc_pool rt-data size 60/96 buf 7fffd84487e0 *buf 7bfd010 ret OK
     8  alloc_pages any-pages rt-data pgs 1 mem 7fffd8448780 *mem 7bfd000 ret OK
     9   alloc_pool rt-data size 180/384 buf 56f190ffd890 *buf 7bfc010 ret OK
@@ -185,10 +254,14 @@ EFI-loader subsystem, then checking the log again::
     14  alloc_pages any-pages bt-data pgs 1 mem 7fffd84486d0 *mem 7bfa000 ret OK
     15   alloc_pool bt-data size 60/96 buf 7fffd84487e0 *buf 7bf9010 ret OK
     16  alloc_pages any-pages bt-data pgs 1 mem 7fffd8448780 *mem 7bf9000 ret OK
-    17   alloc_pool bt-data size 10000/65536 buf 56f19100fae0 *buf 7be8010 ret OK
-    18  alloc_pages any-pages bt-data pgs 11/17 mem 7fffd84487d0 *mem 7be8000 ret OK
-    19   alloc_pool acpi-nvs size 10000/65536 buf 56f19100fae8 *buf 7bd7010 ret OK
-    20  alloc_pages any-pages acpi-nvs pgs 11/17 mem 7fffd84487d0 *mem 7bd7000 ret OK
+    17   alloc_pool bt-data size 10000/65536 buf 56f19100fae0 \
+         *buf 7be8010 ret OK
+    18  alloc_pages any-pages bt-data pgs 11/17 mem 7fffd84487d0 \
+        *mem 7be8000 ret OK
+    19   alloc_pool acpi-nvs size 10000/65536 buf 56f19100fae8 \
+         *buf 7bd7010 ret OK
+    20  alloc_pages any-pages acpi-nvs pgs 11/17 mem 7fffd84487d0 \
+        *mem 7bd7000 ret OK
     21   alloc_pool bt-data size 60/96 buf 7fffd84487d0 *buf 7bd6010 ret OK
     22  alloc_pages any-pages bt-data pgs 1 mem 7fffd8448770 *mem 7bd6000 ret OK
     23   alloc_pool rt-data size 8 buf 7fffd8448818 *buf 7bd5010 ret OK
