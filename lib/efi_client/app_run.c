@@ -6,6 +6,8 @@
  * Copyright 2024 Canonical Ltd
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <bootm.h>
 #include <dm.h>
 #include <efi.h>

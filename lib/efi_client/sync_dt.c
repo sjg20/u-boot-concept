@@ -5,6 +5,8 @@
  * Copyright 2025 Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <efi.h>
 #include <efi_api.h>
 #include <fdt_support.h>

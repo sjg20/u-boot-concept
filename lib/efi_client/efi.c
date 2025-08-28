@@ -10,6 +10,8 @@
  * Common EFI functions
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <debug_uart.h>
 #include <errno.h>
 #include <malloc.h>
