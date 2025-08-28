@@ -302,8 +302,6 @@ extern const struct efi_hii_config_access_protocol efi_hii_config_access;
 extern const struct efi_hii_database_protocol efi_hii_database;
 extern const struct efi_hii_string_protocol efi_hii_string;
 
-uint16_t *efi_dp_str(struct efi_device_path *dp);
-
 /* GUID for the auto generated boot menu entry */
 extern const efi_guid_t efi_guid_bootmenu_auto_generated;
 
