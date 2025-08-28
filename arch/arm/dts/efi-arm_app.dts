@@ -29,6 +29,10 @@
 		bootph-some-ram;
 	};
 
+	keyboard {
+		compatible = "efi-keyboard";
+	};
+
 	mouse {
 		compatible = "efi,mouse";
 	};
