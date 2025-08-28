@@ -242,3 +242,22 @@ static int lib_test_membuf_readline(struct unit_test_state *uts)
 	return 0;
 }
 LIB_TEST(lib_test_membuf_readline, 0);
+
+/* test membuf_readline() with generated data */
+static int lib_test_membuf_init(struct unit_test_state *uts)
+{
+	struct membuf mb;
+	char buf[10], out[10];
+	int len;
+
+	strcpy(buf, "hello");
+	len = strlen(buf);
+	membuf_init_with_data(&mb, buf, len);
+	ut_asserteq_ptr(buf, mb.start);
+	ut_asserteq(len, membuf_avail(&mb));
+	ut_asserteq(len, membuf_readline(&mb, out, sizeof(out), 0, false));
+	ut_asserteq_str("hello", out);
+
+	return 0;
+}
+LIB_TEST(lib_test_membuf_init, 0);
