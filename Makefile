@@ -1043,6 +1043,8 @@ INPUTS-$(CONFIG_X86) += u-boot-x86-start16.bin u-boot-x86-reset16.bin \
 	$(if $(CONFIG_SPL_X86_16BIT_INIT),spl/u-boot-spl.bin) \
 	$(if $(CONFIG_TPL_X86_16BIT_INIT),tpl/u-boot-tpl.bin)
 
+INPUTS-$(CONFIG_ULIB) += libu-boot.so
+
 LDFLAGS_u-boot += $(LDFLAGS_FINAL)
 
 # Avoid 'Not enough room for program headers' error on binutils 2.28 onwards.
@@ -1843,10 +1845,23 @@ ifeq ($(CONFIG_KALLSYMS),y)
 	$(call cmd,u-boot__) common/system_map.o
 endif
 	$(call cmd,llcheck,u-boot)
-
 ifeq ($(CONFIG_RISCV),y)
 	@tools/prelink-riscv $@
 endif
+
+# Build U-Boot as a shared library
+quiet_cmd_libu-boot.so = LD      $@
+      cmd_libu-boot.so = $(CC) -shared -o $@ -Wl,--build-id=none \
+	$(u-boot-init) \
+	$(KBUILD_LDFLAGS:%=-Wl,%) $(SANITIZERS) $(LTO_FINAL_LDFLAGS) \
+	-Wl,--whole-archive \
+		$(filter-out %/main.o,$(u-boot-main)) \
+		$(u-boot-keep-syms-lto) \
+	-Wl,--no-whole-archive \
+	$(PLATFORM_LIBS) -Wl,-Map -Wl,libu-boot.map
+
+libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
+	$(call if_changed,libu-boot.so)
 
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@
