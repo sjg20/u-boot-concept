@@ -1166,9 +1166,12 @@ static int do_efi_boot_rm(struct cmd_tbl *cmdtp, int flag,
 
 	guid = efi_global_variable_guid;
 	for (i = 1; i < argc; i++, argv++) {
-		id = (int)hextoul(argv[1], &endp);
-		if (*endp != '\0' || id > 0xffff)
+		id = (int)hextoul(argv[i], &endp);
+		if (*endp != '\0' || id > 0xffff) {
+			printf("Invalid ID '%s', use '0001' for example\n",
+			       argv[i]);
 			return CMD_RET_FAILURE;
+		}
 
 		efi_create_indexed_name(var_name16, sizeof(var_name16),
 					"Boot", id);
