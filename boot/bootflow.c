@@ -11,6 +11,7 @@
 #include <bootmeth.h>
 #include <bootstd.h>
 #include <dm.h>
+#include <efi_device_path.h>
 #include <env_internal.h>
 #include <malloc.h>
 #include <serial.h>
@@ -1023,4 +1024,30 @@ int bootflow_get_seq(const struct bootflow *bflow)
 		return ret;
 
 	return alist_calc_index(&std->bootflows, bflow);
+}
+
+const char *bootflow_guess_label(const struct bootflow *bflow)
+{
+	const char *name = NULL;
+
+	if (IS_ENABLED(CONFIG_EFI_APP)) {
+		struct efi_device_path *dp;
+		enum uclass_id id;
+		int ret;
+
+		ret = efi_dp_from_bootflow(bflow, &dp, NULL);
+		if (!ret)
+			name = efi_dp_guess_uclass(dp, &id);
+	} else if (bflow->dev) {
+		struct udevice *media = dev_get_parent(bflow->dev);
+
+		if (device_get_uclass_id(media) == UCLASS_MASS_STORAGE)
+			name = "usb";
+		else
+			name = dev_get_uclass_name(media);
+	}
+	if (!name)
+		name = "(none)";
+
+	return name;
 }
