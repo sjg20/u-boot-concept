@@ -9,6 +9,8 @@
  * EFI application. It can be built either in 32-bit or 64-bit mode.
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <debug_uart.h>
 #include <efi.h>
 #include <efi_api.h>
