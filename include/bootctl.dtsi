@@ -78,6 +78,7 @@
 		};
 	};
 
+#ifndef CONFIG_EFI_APP
 	oslist-extlinux {
 		compatible = "bootctl,extlinux-oslist";
 
@@ -91,6 +92,7 @@
 			};
 		};
 	};
+#endif
 
 	oslist-efi {
 		compatible = "bootctl,efifile-oslist";
