@@ -15,6 +15,7 @@ Synopsis
 
     efidebug log
     efidebug media
+    efidebug memmap [-s]
 
 Description
 -----------
@@ -22,7 +23,7 @@ Description
 The *efidebug* command provides access to debugging features for the EFI-loader
 subsystem.
 
-Only two of the subcommands are documented at present.
+Only three of the subcommands are documented at present.
 
 efidebug log
 ~~~~~~~~~~~~
@@ -43,6 +44,15 @@ driver subsystem would likely handle the device (e.g., "ahci" for SATA drives,
 device, which can be useful for debugging boot issues or understanding the
 system topology.
 
+efidebug memmap
+~~~~~~~~~~~~~~~
+
+This shows the UEFI memory map, which displays all memory regions and their
+types as known to the EFI loader subsystem. This includes information about
+memory allocation, reserved regions, and available memory.
+
+The command supports an optional '-s' flag to sort the memory map entries by
+address, making it easier to visualize the memory layout in ascending order.
 
 Example
 -------
@@ -55,6 +65,86 @@ This shows checking the EFI media devices::
     efi_media_1          ahci             PciRoot(0x0)/Pci(0x3,0x0)/Sata(0x0,0xFFFF,0x0)
     efi_media_2          pci              PciRoot(0x0)/Pci(0x5,0x0)
 
+This shows checking the UEFI memory map, first unsorted and then sorted by
+address::
+
+    => efidebug mem
+    Type             Start            End              Attributes
+    ================ ================ ================ ==========
+    CONVENTIONAL     0000000040000000-0000000044000000 WB
+    BOOT DATA        0000000044000000-0000000044020000 WB
+    CONVENTIONAL     0000000044020000-00000000475ee000 WB
+    BOOT DATA        00000000475ee000-0000000047610000 WB
+    BOOT CODE        0000000047610000-0000000047647000 WB
+    BOOT DATA        0000000047647000-0000000047ef2000 WB
+    BOOT CODE        0000000047ef2000-0000000047ef6000 WB
+    BOOT DATA        0000000047ef6000-0000000047ff7000 WB
+    BOOT CODE        0000000047ff7000-0000000047ffa000 WB
+    BOOT DATA        0000000047ffa000-0000000048000000 WB
+    CONVENTIONAL     0000000048000000-00000000e0000000 WB
+    LOADER DATA      00000000e0000000-0000000100000000 WB
+    CONVENTIONAL     0000000100000000-000000013c278000 WB
+    LOADER DATA      000000013c278000-000000013c27c000 WB
+    LOADER CODE      000000013c27c000-000000013c3e0000 WB
+    ACPI RECLAIM MEM 000000013c3e0000-000000013c3f0000 WB
+    RUNTIME CODE     000000013c3f0000-000000013c470000 WB|RT
+    RUNTIME DATA     000000013c470000-000000013c630000 WB|RT
+    RUNTIME CODE     000000013c630000-000000013c730000 WB|RT
+    CONVENTIONAL     000000013c730000-000000013dc2a000 WB
+    BOOT DATA        000000013dc2a000-000000013e9f1000 WB
+    CONVENTIONAL     000000013e9f1000-000000013e9fe000 WB
+    BOOT DATA        000000013e9fe000-000000013ea1c000 WB
+    CONVENTIONAL     000000013ea1c000-000000013ea1e000 WB
+    BOOT DATA        000000013ea1e000-000000013ea47000 WB
+    CONVENTIONAL     000000013ea47000-000000013ea48000 WB
+    BOOT DATA        000000013ea48000-000000013f624000 WB
+    CONVENTIONAL     000000013f624000-000000013f731000 WB
+    BOOT CODE        000000013f731000-000000013fc00000 WB
+    RUNTIME CODE     000000013fc00000-000000013fd90000 WB|RT
+    RUNTIME DATA     000000013fd90000-000000013ffe0000 WB|RT
+    CONVENTIONAL     000000013ffe0000-000000013ffff000 WB
+    BOOT DATA        000000013ffff000-0000000140000000 WB
+    IO               0000000004000000-0000000008000000 UC|RT
+    IO               0000000009010000-0000000009011000 UC|RT
+    => efidebug mem -s
+    Type             Start            End              Attributes
+    ================ ================ ================ ==========
+    IO               0000000004000000-0000000008000000 UC|RT
+    IO               0000000009010000-0000000009011000 UC|RT
+    CONVENTIONAL     0000000040000000-0000000044000000 WB
+    BOOT DATA        0000000044000000-0000000044020000 WB
+    CONVENTIONAL     0000000044020000-00000000475ee000 WB
+    BOOT DATA        00000000475ee000-0000000047610000 WB
+    BOOT CODE        0000000047610000-0000000047647000 WB
+    BOOT DATA        0000000047647000-0000000047ef2000 WB
+    BOOT CODE        0000000047ef2000-0000000047ef6000 WB
+    BOOT DATA        0000000047ef6000-0000000047ff7000 WB
+    BOOT CODE        0000000047ff7000-0000000047ffa000 WB
+    BOOT DATA        0000000047ffa000-0000000048000000 WB
+    CONVENTIONAL     0000000048000000-00000000e0000000 WB
+    LOADER DATA      00000000e0000000-0000000100000000 WB
+    CONVENTIONAL     0000000100000000-000000013c278000 WB
+    LOADER DATA      000000013c278000-000000013c27c000 WB
+    LOADER CODE      000000013c27c000-000000013c3e0000 WB
+    ACPI RECLAIM MEM 000000013c3e0000-000000013c3f0000 WB
+    RUNTIME CODE     000000013c3f0000-000000013c470000 WB|RT
+    RUNTIME DATA     000000013c470000-000000013c630000 WB|RT
+    RUNTIME CODE     000000013c630000-000000013c730000 WB|RT
+    CONVENTIONAL     000000013c730000-000000013dc2a000 WB
+    BOOT DATA        000000013dc2a000-000000013e9f1000 WB
+    CONVENTIONAL     000000013e9f1000-000000013e9fe000 WB
+    BOOT DATA        000000013e9fe000-000000013ea1c000 WB
+    CONVENTIONAL     000000013ea1c000-000000013ea1e000 WB
+    BOOT DATA        000000013ea1e000-000000013ea47000 WB
+    CONVENTIONAL     000000013ea47000-000000013ea48000 WB
+    BOOT DATA        000000013ea48000-000000013f624000 WB
+    CONVENTIONAL     000000013f624000-000000013f731000 WB
+    BOOT CODE        000000013f731000-000000013fc00000 WB
+    RUNTIME CODE     000000013fc00000-000000013fd90000 WB|RT
+    RUNTIME DATA     000000013fd90000-000000013ffe0000 WB|RT
+    CONVENTIONAL     000000013ffe0000-000000013ffff000 WB
+    BOOT DATA        000000013ffff000-0000000140000000 WB
+    =>
 
 This shows checking the log, then using 'efidebug tables' to fully set up the
 EFI-loader subsystem, then checking the log again::
