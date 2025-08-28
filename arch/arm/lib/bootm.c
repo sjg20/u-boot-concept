@@ -372,7 +372,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 		printf("%d  ", __LINE__);
 		do_nonsec_virt_switch();
 		printf("%d  ", __LINE__);
-
+//try these
 		update_os_arch_secondary_cores(images->os.arch);
 		printf("%d  ", __LINE__);
 
