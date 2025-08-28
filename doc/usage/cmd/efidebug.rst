@@ -49,11 +49,11 @@ Example
 
 This shows checking the EFI media devices::
 
-   => efidebug media
-  Device               Media type       Device Path
-  -------------------  ---------------  -----------
-    efi_media_1        ahci             PciRoot(0x0)/Pci(0x3,0x0)/Sata(0x0,0xFFFF,0x0)
-    efi_media_2        pci              PciRoot(0x0)/Pci(0x5,0x0)
+    => efidebug media
+    Device               Media type       Device Path
+    -------------------  ---------------  -----------
+    efi_media_1          ahci             PciRoot(0x0)/Pci(0x3,0x0)/Sata(0x0,0xFFFF,0x0)
+    efi_media_2          pci              PciRoot(0x0)/Pci(0x5,0x0)
 
 
 This shows checking the log, then using 'efidebug tables' to fully set up the
