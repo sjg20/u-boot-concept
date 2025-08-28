@@ -23,7 +23,6 @@ endif
 
 PLATFORM_RELFLAGS += -fno-common $(FIXED_REG)
 PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
-		     $(call cc-option,-mgeneral-regs-only) \
       $(call cc-option,-mshort-load-bytes,$(call cc-option,-malignment-traps,))
 
 # LLVM support
