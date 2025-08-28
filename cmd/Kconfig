@@ -495,6 +495,16 @@ config CMD_FDT
 	help
 	  Do FDT related setup before booting into the Operating System.
 
+config CMD_FDT_RESERVED
+	bool "fdt subcommand to show reserved memory"
+	depends on CMD_FDT
+	default y if SANDBOX || EFI_APP
+	help
+	  Provides an 'fdt reserved' command which shows a list of the
+	  reserved-memory regions in the devicetree, before booting into the
+	  Operating System. Note that this is differen from 'fdt rsvmem'
+	  which shows the reserve entries after the FDT header.
+
 config SUPPORT_EXTENSION_SCAN
 	bool
 
@@ -546,6 +556,15 @@ config SYS_XIMG_LEN
 	  used by imxtract for extracting pieces of FIT image.
 	  It should be large enough to fit uncompressed size of
 	  FIT piece we are extracting.
+
+config CMD_SHIM
+	bool "shim"
+	depends on CMD_NVEDIT_EFI
+	default y if SANDBOX || EFI_APP
+	help
+	  Provides a few commands for dealing with Shim being in the boot
+	  chain. This can be useful when debugging booting, particularly on
+	  x86 machines.
 
 config CMD_SPL
 	bool "spl export - Export boot information for Falcon boot"

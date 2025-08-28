@@ -2259,3 +2259,57 @@ int fdt_fixup_pmem_region(void *fdt, u64 pmem_start, u64 pmem_size)
 
 	return 0;
 }
+
+void fdt_print_reserved(void *fdt)
+{
+	int node, reserved, id;
+	int addr_cells, size_cells;
+
+	printf("%-4s %-20s %-16s %-16s\n", "ID", "Name", "Start", "Size");
+	printf("--------------------------------------------------------"
+	       "--------\n");
+
+	reserved = fdt_path_offset(fdt, "/reserved-memory");
+	if (reserved < 0) {
+		printf("No /reserved-memory node found in device tree\n");
+		return;
+	}
+
+	/* Get #address-cells and #size-cells from reserved-memory node */
+	fdt_support_default_count_cells(fdt, reserved, &addr_cells,
+					&size_cells);
+
+	id = 0;
+	fdt_for_each_subnode(node, fdt, reserved) {
+		const char *name = fdt_get_name(fdt, node, NULL);
+		const fdt32_t *reg;
+		u64 rsv_start = 0, rsv_size = 0;
+		int len;
+
+		reg = fdt_getprop(fdt, node, "reg", &len);
+		if (reg && len >= (addr_cells + size_cells) * sizeof(fdt32_t)) {
+			int cells = 0;
+
+			/* Parse address */
+			for (int i = 0; i < addr_cells; i++)
+				rsv_start = (rsv_start << 32) |
+					    fdt32_to_cpu(reg[cells++]);
+
+			/* Parse size */
+			for (int i = 0; i < size_cells; i++)
+				rsv_size = (rsv_size << 32) |
+					   fdt32_to_cpu(reg[cells++]);
+
+			printf("%-4d %-20s %-16llx %-16llx\n",
+			       id++, name ? name : "(unnamed)", rsv_start,
+			       rsv_size);
+		} else {
+			printf("%-4d %-20s %-18s %-18s\n",
+			       id++, name ? name : "(unnamed)", "(no reg)",
+			       "(no reg)");
+		}
+	}
+
+	if (!id)
+		printf("No reserved-memory regions found\n");
+}

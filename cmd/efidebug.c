@@ -8,6 +8,8 @@
 #include <charset.h>
 #include <command.h>
 #include <dm/device.h>
+#include <dm/uclass.h>
+#include <efi.h>
 #include <efi_device_path.h>
 #include <efi_dt_fixup.h>
 #include <efi_load_initrd.h>
@@ -25,16 +27,6 @@
 #include <search.h>
 #include <linux/ctype.h>
 #include <linux/err.h>
-
-static bool app_not_supported(const char *cmd)
-{
-	if (!IS_ENABLED(CONFIG_EFI_APP))
-		return false;
-
-	printf("Command '%s' is not yet supported in the app\n", cmd);
-
-	return true;
-}
 
 #ifdef CONFIG_EFI_HAVE_CAPSULE_SUPPORT
 /**
@@ -370,7 +362,7 @@ static const char sep[] = "================";
 static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
 				      u16 **image_path)
 {
-	struct efi_handler *handler;
+	struct efi_boot_services *boot = efi_get_boot();
 	struct efi_loaded_image *image;
 	efi_status_t ret;
 
@@ -381,13 +373,13 @@ static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
 	*driver_name = NULL;
 
 	/* image name */
-	ret = efi_search_protocol(handle, &efi_guid_loaded_image, &handler);
+	ret = boot->handle_protocol(handle, &efi_guid_loaded_image,
+				   (void **)&image);
 	if (ret != EFI_SUCCESS) {
 		*image_path = NULL;
 		return 0;
 	}
 
-	image = handler->protocol_interface;
 	*image_path = efi_dp_str(image->file_path);
 
 	return 0;
@@ -408,17 +400,15 @@ static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
 static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
 			       int argc, char *const argv[])
 {
+	struct efi_boot_services *boot = efi_get_boot();
 	efi_handle_t *handles;
 	efi_uintn_t num, i;
 	u16 *driver_name, *image_path_text;
 	efi_status_t ret;
 
-	if (app_not_supported("show_drivers"))
-		return CMD_RET_FAILURE;
-
-	ret = EFI_CALL(efi_locate_handle_buffer(
-				BY_PROTOCOL, &efi_guid_driver_binding_protocol,
-				NULL, &num, &handles));
+	ret = boot->locate_handle_buffer(BY_PROTOCOL,
+					&efi_guid_driver_binding_protocol,
+					NULL, &num, &handles);
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
 
@@ -1604,6 +1594,47 @@ static int do_efi_test(struct cmd_tbl *cmdtp, int flag,
 	return cp->cmd(cmdtp, flag, argc, argv);
 }
 
+
+/**
+ * do_efi_show_media() - show EFI media devices
+ *
+ * @cmdtp:	Command table
+ * @flag:	Command flag
+ * @argc:	Number of arguments
+ * @argv:	Argument array
+ * Return:	CMD_RET_SUCCESS on success, CMD_RET_FAILURE on failure
+ *
+ * Implement efidebug "media" sub-command.
+ * Show all EFI media devices and their device paths.
+ */
+static int do_efi_show_media(struct cmd_tbl *cmdtp, int flag,
+			     int argc, char *const argv[])
+{
+	struct udevice *dev;
+	struct uclass *uc;
+	int ret;
+
+	ret = uclass_get(UCLASS_EFI_MEDIA, &uc);
+	if (ret) {
+		printf("Cannot get EFI media uclass: (err=%dE)\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	printf("Device               Media type       Device Path\n");
+	printf("-------------------  ---------------  -----------\n");
+
+	uclass_foreach_dev(dev, uc) {
+		struct efi_media_plat *plat = dev_get_plat(dev);
+		enum uclass_id id;
+		const char *name = efi_dp_guess_uclass(plat->device_path, &id);
+
+		printf("%-20s %-15s  %pD\n", dev->name, name,
+		       plat->device_path);
+	}
+
+	return CMD_RET_SUCCESS;
+}
+
 /**
  * do_efi_query_info() - QueryVariableInfo EFI service
  *
@@ -1670,6 +1701,8 @@ static struct cmd_tbl cmd_efidebug_sub[] = {
 	U_BOOT_CMD_MKENT(images, CONFIG_SYS_MAXARGS, 1, do_efi_show_images,
 			 "", ""),
 	U_BOOT_CMD_MKENT(log, CONFIG_SYS_MAXARGS, 1, do_efi_show_log, "", ""),
+	U_BOOT_CMD_MKENT(media, CONFIG_SYS_MAXARGS, 1, do_efi_show_media,
+			 "", ""),
 	U_BOOT_CMD_MKENT(memmap, CONFIG_SYS_MAXARGS, 1, do_efi_show_memmap,
 			 "", ""),
 	U_BOOT_CMD_MKENT(tables, CONFIG_SYS_MAXARGS, 1, do_efi_show_tables,
@@ -1772,6 +1805,8 @@ U_BOOT_LONGHELP(efidebug,
 	"  - show loaded images\n"
 	"efidebug log\n"
 	"  - show UEFI log\n"
+	"efidebug media\n"
+	"  - show EFI media devices\n"
 	"efidebug memmap\n"
 	"  - show UEFI memory map\n"
 	"efidebug tables\n"

@@ -17,6 +17,34 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+static bool is_app(void)
+{
+	if (!IS_ENABLED(CONFIG_EFI_APP)) {
+		printf("This command is only available in the app\n");
+		return false;
+	}
+
+	return true;
+}
+
+static int do_efi_image(struct cmd_tbl *cmdtp, int flag, int argc,
+			char *const argv[])
+{
+	struct efi_loaded_image *lim;
+	struct efi_priv *priv;
+	u16 *path;
+
+	if (!is_app())
+		return CMD_RET_FAILURE;
+
+	priv = efi_get_priv();
+	lim = priv->loaded_image;
+	path = efi_dp_str(lim->file_path);
+	printf("Loaded-image path: %ls\n", path);
+
+	return 0;
+}
+
 static int h_cmp_entry(const void *v1, const void *v2)
 {
 	const struct efi_mem_desc *desc1 = v1;
@@ -185,8 +213,32 @@ static int do_efi_tables(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_efi_memsync(struct cmd_tbl *cmdtp, int flag, int argc,
+			  char *const argv[])
+{
+	bool verbose = false;
+	int ret;
+
+	if (!is_app() || IS_ENABLED(CONFIG_X86))
+		return CMD_RET_FAILURE;
+	if (argc > 1 && !strcmp(argv[1], "-v"))
+		verbose = true;
+	if (!working_fdt) {
+		printf("No working FDT set\n");
+		return CMD_RET_FAILURE;
+	}
+
+	ret = efi_mem_reserved_sync(working_fdt, verbose);
+	if (ret < 0)
+		return CMD_RET_FAILURE;
+
+	return 0;
+}
+
 static struct cmd_tbl efi_commands[] = {
+	U_BOOT_CMD_MKENT(image, 1, 1, do_efi_image, "", ""),
 	U_BOOT_CMD_MKENT(mem, 1, 1, do_efi_mem, "", ""),
+	U_BOOT_CMD_MKENT(memsync, 2, 1, do_efi_memsync, "", ""),
 	U_BOOT_CMD_MKENT(tables, 1, 1, do_efi_tables, "", ""),
 };
 
@@ -209,8 +261,10 @@ static int do_efi(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 }
 
 U_BOOT_CMD(
-	efi,     3,      1,      do_efi,
+	efi,     4,      1,      do_efi,
 	"EFI access",
+	"image            Dump loaded-image info\n"
 	"mem [all]        Dump memory information [include boot services]\n"
-	"tables               Dump tables"
+	"memsync [-v]     Sync EFI memory map with DT reserved-memory\n"
+	"tables           Dump tables"
 );

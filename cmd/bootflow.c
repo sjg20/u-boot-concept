@@ -13,6 +13,7 @@
 #include <command.h>
 #include <console.h>
 #include <dm.h>
+#include <efi_device_path.h>
 #include <expo.h>
 #include <log.h>
 #include <mapmem.h>
@@ -69,11 +70,26 @@ static void report_bootflow_err(struct bootflow *bflow, int err)
  */
 static void show_bootflow(int index, struct bootflow *bflow, bool errors)
 {
+	const char *name = NULL;
+
+	if (IS_ENABLED(CONFIG_EFI_APP)) {
+		struct efi_device_path *dp;
+		enum uclass_id id;
+		int ret;
+
+		ret = efi_dp_from_bootflow(bflow, &dp, NULL);
+		if (!ret)
+			name = efi_dp_guess_uclass(dp, &id);
+	} else if (bflow->dev) {
+		name = dev_get_uclass_name(dev_get_parent(bflow->dev));
+	}
+	if (!name)
+		name = "(none)";
+
 	printf("%3x  %-11s  %-6s  %-9.9s %4x  %-25.25s %s\n", index,
 	       bflow->method ? bflow->method->name : "(none)",
-	       bootflow_state_get_name(bflow->state),
-	       bflow->dev ? dev_get_uclass_name(dev_get_parent(bflow->dev)) :
-	       "(none)", bflow->part, bflow->name, bflow->fname ?: "");
+	       bootflow_state_get_name(bflow->state), name, bflow->part,
+	       bflow->name, bflow->fname ?: "");
 	if (errors)
 		report_bootflow_err(bflow, bflow->err);
 }
@@ -453,6 +469,22 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf("FDT addr:  %lx\n", bflow->fdt_addr);
 	}
 	printf("Error:     %d\n", bflow->err);
+	if (IS_ENABLED(CONFIG_BOOTMETH_EFI) &&
+	    bflow->method->driver == DM_DRIVER_GET(bootmeth_4efi)) {
+		struct efi_device_path *dp;
+		bool alloced;
+
+		ret = efi_dp_from_bootflow(bflow, &dp, &alloced);
+		printf("EFI path   ");
+		if (!ret) {
+			printf("%pD\n", dp);
+			if (alloced)
+				efi_free_pool(dp);
+		} else {
+			printf("(err %dE)\n", ret);
+		}
+	}
+
 	if (dump && bflow->buf) {
 		/* Set some sort of maximum on the size */
 		int size = min(bflow->size, 10 << 10);

@@ -115,6 +115,7 @@ Shell commands
    cmd/seama
    cmd/setexpr
    cmd/sf
+   cmd/shim
    cmd/size
    cmd/sleep
    cmd/sm

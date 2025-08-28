@@ -10,7 +10,9 @@
 
 #include <efi.h>
 
+enum uclass_id;
 struct blk_desc;
+struct bootflow;
 struct efi_load_option;
 struct udevice;
 
@@ -417,5 +419,28 @@ struct efi_device_path *search_gpt_dp_node(struct efi_device_path *device_path);
  */
 struct efi_device_path *efi_dp_from_http(const char *server,
 					 struct udevice *dev);
+
+/**
+ * efi_dp_guess_uclass() - get the guessed name and uclass from EFI device path
+ *
+ * @device_path:	EFI device path
+ * @guessp:		Returns the U-Boot uclass ID
+ * Return: name string
+ */
+const char *efi_dp_guess_uclass(struct efi_device_path *device_path,
+				enum uclass_id *guessp);
+
+/**
+ * efi_dp_from_bootflow() - Get the device path for a bootflow
+ *
+ * @bflow: Bootflow to check
+ * @dpp: Returns the device path
+ * @allocedp: if NULL, no allocation is permitted, otherwise retrusn true if
+ * efi_free_pool() must be called to free the device path
+ * Return: 0 if OK, -EINVAL if @allocedp is NULL and allocation is needed,
+ * -ve on error
+ */
+int efi_dp_from_bootflow(const struct bootflow *bflow,
+			 struct efi_device_path **dpp, bool *allocedp);
 
 #endif /* EFI_DEVICE_PATH_H */

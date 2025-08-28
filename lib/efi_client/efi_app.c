@@ -245,7 +245,6 @@ static void efi_exit(void)
 	struct efi_priv *priv = efi_get_priv();
 
 	printf("U-Boot EFI exiting\n");
-	free_memory(priv);
 	priv->boot->exit(priv->parent_image, EFI_SUCCESS, 0, NULL);
 }
 
@@ -349,9 +348,16 @@ int ft_system_setup(void *fdt, struct bd_info *bd)
 		return ret;
 	}
 
-	ret = fdt_simplefb_add_node(fdt);
+	if (IS_ENABLED(CONFIG_FDT_SIMPLEFB)) {
+		ret = fdt_simplefb_add_node(fdt);
+		if (ret)
+			log_warning("failed to set up simplefb\n");
+	}
+
+	/* Compare EFI memory map with device tree reserved regions */
+	ret = efi_mem_reserved_sync(fdt, true);
 	if (ret)
-		log_warning("failed to set up simplefb\n");
+		log_warning("failed to set up reserved memory\n");
 
 	free(map);
 

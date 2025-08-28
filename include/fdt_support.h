@@ -529,4 +529,11 @@ int fdt_print(const void *fdt, int nodeoffset, int depth);
  */
 int fdt_print_path(const char *pathp, char *prop, int depth);
 
+/**
+ * fdt_print_reserved() - Print all device tree reserved-memory nodes
+ *
+ * @fdt: Device tree blob
+ */
+void fdt_print_reserved(void *fdt);
+
 #endif /* ifndef __FDT_SUPPORT_H */

@@ -12,6 +12,7 @@ Synopsis
 ::
 
     fdt addr [-cq] [addr [len]]
+    fdt reserved
 
 Description
 -----------
@@ -48,6 +49,24 @@ If the `len` argument is provided, then the device tree is expanded to that
 size. This can be used to make space for more nodes and properties. It is
 assumed that there is enough space in memory for this expansion.
 
+fdt reserved
+~~~~~~~~~~~~
+
+This command prints all reserved memory regions defined in the device tree's
+`/reserved-memory` node. The output shows a formatted table with the following
+columns:
+
+- **ID**: Sequential number for each region
+- **Name**: Node name of the reserved memory region
+- **Start**: Start address of the reserved memory region in hexadecimal
+- **Size**: Size of the reserved memory region in hexadecimal
+
+If no `/reserved-memory` node exists in the device tree, the command will
+display an appropriate message. This command is useful for debugging memory
+layout issues and verifying that reserved memory regions are properly defined.
+
+This subcommand is only present is `CONFIG_CMD_FDT_RESERVED` is enabled.
+
 Example
 -------
 
@@ -66,6 +85,15 @@ address and expand it to 0xf000 in size::
     Working FDT set to 10000
     => md 10000 4
     00010000: edfe0dd0 00f00000 78000000 7c270000  ...........x..'|
+
+Print all reserved memory regions::
+
+    => fdt reserved
+    ID   Name                 Start              Size
+    ----------------------------------------------------------------
+    0    secmon@1f000000      0x000000001f000000 0x0000000001000000
+    1    atf@40000000         0x0000000040000000 0x0000000000200000
+    2    linux,cma            0x0000000050000000 0x0000000008000000
 
 Return value
 ------------

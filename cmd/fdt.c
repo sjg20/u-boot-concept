@@ -768,8 +768,13 @@ static int do_fdt(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 			return CMD_RET_FAILURE;
 	}
 #endif
+	/* print reserved memory regions */
+	else if (IS_ENABLED(CONFIG_CMD_FDT_RESERVED) &&
+		 !strncmp(argv[1], "rese", 4)) {
+		fdt_print_reserved(working_fdt);
+
 	/* resize the fdt */
-	else if (strncmp(argv[1], "re", 2) == 0) {
+	} else if (strncmp(argv[1], "re", 2) == 0) {
 		uint extrasize;
 		if (argc > 2)
 			extrasize = hextoul(argv[2], NULL);
@@ -902,6 +907,9 @@ U_BOOT_LONGHELP(fdt,
 #endif
 	"fdt move   <fdt> <newaddr> <length> - Copy the fdt to <addr> and make it active\n"
 	"fdt resize [<extrasize>]            - Resize fdt to size + padding to 4k addr + some optional <extrasize> if needed\n"
+#ifdef CONFIG_CMD_FDT_RESERVED
+	"fdt reserved                        - Print reserved-memory regions\n"
+#endif
 	"fdt print  <path> [<prop>]          - Recursive print starting at <path>\n"
 	"fdt list   <path> [<prop>]          - Print one level starting at <path>\n"
 	"fdt get value <var> <path> <prop> [<index>] - Get <property> and store in <var>\n"

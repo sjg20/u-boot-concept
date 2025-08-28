@@ -8,6 +8,7 @@ obj-$(CONFIG_EFI_STUB) += efi_info.o
 
 ifeq ($(CONFIG_ARM64),y)
 stub_obj := stub_arm64.o
+obj-$(CONFIG_EFI_APP) += sync_dt.o
 else
 stub_obj := stub_x86.o
 

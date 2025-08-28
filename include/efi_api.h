@@ -487,6 +487,10 @@ struct efi_runtime_services {
 	EFI_GUID(0x6a7a5cff, 0xe8d9, 0x4f70, \
 		 0xba, 0xda, 0x75, 0xab, 0x30, 0x25, 0xce, 0x14)
 
+#define EFI_SHIM_LOCK_GUID \
+	EFI_GUID(0x605dab50, 0xe046, 0x4300, \
+		 0xab, 0xb6, 0x3d, 0xd8, 0x10, 0xdd, 0x8b, 0x23)
+
 /**
  * struct efi_configuration_table - EFI Configuration Table
  *
@@ -643,20 +647,34 @@ struct efi_device_path_acpi_path {
 	u32 uid;
 } __packed;
 
-#define DEVICE_PATH_TYPE_MESSAGING_DEVICE	0x03
+#  define DEVICE_PATH_TYPE_MESSAGING_DEVICE	0x03
 #  define DEVICE_PATH_SUB_TYPE_MSG_ATAPI	0x01
 #  define DEVICE_PATH_SUB_TYPE_MSG_SCSI		0x02
+#  define DEVICE_PATH_SUB_TYPE_MSG_FIREWIRE	0x03
+#  define DEVICE_PATH_SUB_TYPE_MSG_1394		0x04
 #  define DEVICE_PATH_SUB_TYPE_MSG_USB		0x05
+#  define DEVICE_PATH_SUB_TYPE_MSG_I2O		0x06
+#  define DEVICE_PATH_SUB_TYPE_MSG_INFINIBAND	0x09
+#  define DEVICE_PATH_SUB_TYPE_MSG_VENDOR	0x0a
 #  define DEVICE_PATH_SUB_TYPE_MSG_MAC_ADDR	0x0b
 #  define DEVICE_PATH_SUB_TYPE_MSG_IPV4		0x0c
+#  define DEVICE_PATH_SUB_TYPE_MSG_IPV6		0x0d
 #  define DEVICE_PATH_SUB_TYPE_MSG_UART		0x0e
 #  define DEVICE_PATH_SUB_TYPE_MSG_USB_CLASS	0x0f
 #  define DEVICE_PATH_SUB_TYPE_MSG_USB_WWI	0x10
 #  define DEVICE_PATH_SUB_TYPE_MSG_SATA		0x12
+#  define DEVICE_PATH_SUB_TYPE_MSG_ISCSI	0x13
+#  define DEVICE_PATH_SUB_TYPE_MSG_VLAN		0x14
+#  define DEVICE_PATH_SUB_TYPE_MSG_FIBRECHAN	0x15
+#  define DEVICE_PATH_SUB_TYPE_MSG_FIBRECHAN_EX	0x16
 #  define DEVICE_PATH_SUB_TYPE_MSG_NVME		0x17
 #  define DEVICE_PATH_SUB_TYPE_MSG_URI		0x18
 #  define DEVICE_PATH_SUB_TYPE_MSG_SD		0x1a
 #  define DEVICE_PATH_SUB_TYPE_MSG_MMC		0x1d
+#  define DEVICE_PATH_SUB_TYPE_MSG_SAS		0x22
+#  define DEVICE_PATH_SUB_TYPE_MSG_SAS_EX	0x23
+#  define DEVICE_PATH_SUB_TYPE_MSG_UFS		0x19
+#  define DEVICE_PATH_SUB_TYPE_MSG_EMMC		0x1c
 
 struct efi_device_path_atapi {
 	struct efi_device_path dp;
