@@ -23,7 +23,7 @@
 #include <bootstd.h>
 #include <ctype.h>
 #include <dm.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <log.h>
 #include <malloc.h>
 #include <vsprintf.h>

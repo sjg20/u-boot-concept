@@ -201,7 +201,7 @@ static int simple_ui_render(struct udevice *dev)
 		return log_msg_ret("sda", ret);
 	ret = expo_render(priv->expo);
 	if (ret)
-		return log_msg_ret("sds", ret);
+		return log_msg_ret("sdr", ret);
 
 	return 0;
 }

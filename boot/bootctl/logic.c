@@ -39,8 +39,11 @@ static int logic_prepare(struct udevice *dev)
 	if (priv->opt_measure) {
 		ret = bootctl_get_dev(UCLASS_BOOTCTL_MEASURE,
 					    &priv->meas);
-		if (ret)
+		if (ret) {
+			log_err("Measurement required but failed (err=%dE)\n",
+				ret);
 			return log_msg_ret("bgs", ret);
+		}
 	}
 
 	/* figure out at least one oslist driver to use */
@@ -80,8 +83,10 @@ static int logic_start(struct udevice *dev)
 	}
 
 	ret = bc_ui_show(priv->ui);
-	if (ret)
+	if (ret) {
+		log_error("Cannot show display (err=%dE)\n", ret);
 		return log_msg_ret("bds", ret);
+	}
 
 	priv->start_time = get_timer(0);
 	if (priv->opt_autoboot) {

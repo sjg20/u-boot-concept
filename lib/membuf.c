@@ -405,6 +405,14 @@ void membuf_init(struct membuf *mb, char *buff, int size)
 	membuf_purge(mb);
 }
 
+void membuf_init_with_data(struct membuf *mb, char *buff, int size)
+{
+	char *data;
+
+	membuf_init(mb, buff, size);
+	membuf_putraw(mb, size, true, &data);
+}
+
 int membuf_new(struct membuf *mb, int size)
 {
 	mb->start = malloc(size);

@@ -32,7 +32,7 @@
 		autoboot;
 
 		/* measure loaded images, etc. */
-#ifndef CONFIG_QEMU
+#if !defined(CONFIG_QEMU) && !defined(CONFIG_EFI_APP)
 		measure;
 #endif
 

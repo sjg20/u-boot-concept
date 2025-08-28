@@ -28,4 +28,20 @@
 		bootph-some-ram;
 	};
 
+
+	boot_ctl: bootctl {
+	};
+
+	bootstd {
+		compatible = "u-boot,boot-std";
+		theme {
+			white-on-black;
+			font-size = <30>;
+			menu-inset = <3>;
+			menuitem-gap-y = <1>;
+		};
+	};
+
 };
+
+#include "bootctl.dtsi"
