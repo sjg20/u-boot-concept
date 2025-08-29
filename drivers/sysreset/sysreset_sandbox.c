@@ -66,6 +66,7 @@ static int sandbox_sysreset_request(struct udevice *dev, enum sysreset_t type)
 		sandbox_exit();
 	case SYSRESET_POWER:
 	case SYSRESET_HOT:
+	case SYSRESET_TO_FIRMWARE_UI:
 		if (!state->sysreset_allowed[type])
 			return -EACCES;
 		sandbox_exit();

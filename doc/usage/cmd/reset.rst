@@ -11,7 +11,7 @@ Synopsis
 
 ::
 
-    reset [-w]
+    reset [-w] [-u]
 
 Description
 -----------
@@ -25,6 +25,13 @@ DDR and peripherals, on some boards also resets external PMIC.
 -h
     Do a hot reset, if supported, which returns back to the program which
     started U-Boot.
+
+-u
+    Reset to firmware UI (EFI app only). Sets the
+    EFI_OS_INDICATIONS_BOOT_TO_FW_UI bit in the OsIndications variable and
+    performs a warm reset, causing the firmware to boot directly to its
+    setup/configuration interface.
+
 
 Return value
 ------------

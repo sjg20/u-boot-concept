@@ -132,6 +132,9 @@ int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		case 'h':
 			reset_type = SYSRESET_HOT;
 			break;
+		case 'u':
+			reset_type = SYSRESET_TO_FIRMWARE_UI;
+			break;
 		case 'w':
 			reset_type = SYSRESET_WARM;
 			break;
