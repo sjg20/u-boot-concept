@@ -250,7 +250,19 @@ static void efi_exit(void)
 
 static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 {
-	efi_exit();
+	struct efi_priv *priv = efi_get_priv();
+
+	switch (type) {
+	case SYSRESET_WARM:
+		/* Perform a warm reset */
+		priv->run->reset_system(EFI_RESET_WARM, EFI_SUCCESS, 0, NULL);
+		break;
+	}
+	case SYSRESET_HOT:
+	default:
+		efi_exit();
+		break;
+	}
 
 	return -EINPROGRESS;
 }
