@@ -22,6 +22,9 @@ DDR and peripherals, on some boards also resets external PMIC.
 -w
     Do warm WARM, reset CPU but keep peripheral/DDR/PMIC active.
 
+-h
+    Do a hot reset, if supported, which returns back to the program which
+    started U-Boot.
 
 Return value
 ------------

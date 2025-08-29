@@ -76,10 +76,12 @@ static int dm_test_sysreset_walk(struct unit_test_state *uts)
 	state->sysreset_allowed[SYSRESET_COLD] = false;
 	state->sysreset_allowed[SYSRESET_POWER] = false;
 	state->sysreset_allowed[SYSRESET_POWER_OFF] = false;
+	state->sysreset_allowed[SYSRESET_HOT] = false;
 	ut_asserteq(-EACCES, sysreset_walk(SYSRESET_WARM));
 	ut_asserteq(-EACCES, sysreset_walk(SYSRESET_COLD));
 	ut_asserteq(-EACCES, sysreset_walk(SYSRESET_POWER));
 	ut_asserteq(-EACCES, sysreset_walk(SYSRESET_POWER_OFF));
+	ut_asserteq(-EACCES, sysreset_walk(SYSRESET_HOT));
 
 	/*
 	 * Enable cold system reset - this should make cold system reset work,
