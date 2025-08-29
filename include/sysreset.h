@@ -21,6 +21,9 @@ enum sysreset_t {
 	SYSRESET_POWER,
 	/** @SYSRESET_POWER_OFF: turn off power */
 	SYSRESET_POWER_OFF,
+	/** @SYSRESET_HOT: exit out of U-Boot (e.g. from EFI app) */
+	SYSRESET_HOT,
+
 	/** @SYSRESET_COUNT: number of available reset types */
 	SYSRESET_COUNT,
 };
