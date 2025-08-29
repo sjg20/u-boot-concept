@@ -11,7 +11,7 @@ Synopsis
 
 ::
 
-    reset [-w] [-u]
+    reset [-c] [-w] [-u]
 
 Description
 -----------
