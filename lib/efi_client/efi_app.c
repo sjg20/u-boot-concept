@@ -254,6 +254,10 @@ static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 	struct efi_priv *priv = efi_get_priv();
 
 	switch (type) {
+	case SYSRESET_COLD:
+		/* Perform a cold reset */
+		priv->run->reset_system(EFI_RESET_COLD, EFI_SUCCESS, 0, NULL);
+		break;
 	case SYSRESET_TO_FIRMWARE_UI: {
 		u64 os_indications;
 		efi_status_t ret;

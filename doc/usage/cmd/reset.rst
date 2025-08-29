@@ -11,7 +11,7 @@ Synopsis
 
 ::
 
-    reset [-w] [-u]
+    reset [-c] [-w] [-u]
 
 Description
 -----------
@@ -32,7 +32,6 @@ DDR and peripherals, on some boards also resets external PMIC.
     performs a warm reset, causing the firmware to boot directly to its
     setup/configuration interface.
 
->>>>>>> c252951528a (sysreset: Add SYSRESET_TO_FIRMWARE_UI with reset -u support)
 
 Return value
 ------------
