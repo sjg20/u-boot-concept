@@ -12,10 +12,8 @@
 #include <asm/cb_sysinfo.h>
 
 struct cb_sysinfo_priv {
-	const struct smbios_header *bios;
-	const struct smbios_header *system;
-	const struct smbios_type0 *t0;
-	const struct smbios_type1 *t1;
+	const struct smbios_type0 *bios;
+	const struct smbios_type1 *system;
 };
 
 static int cb_get_str(struct udevice *dev, int id, size_t size, char *val)
@@ -25,23 +23,24 @@ static int cb_get_str(struct udevice *dev, int id, size_t size, char *val)
 
 	switch (id) {
 	case SYSID_BOARD_MODEL:
-		if (priv->t1)
-			str = smbios_string(priv->system,
-					    priv->t1->product_name);
+		if (priv->system)
+			str = smbios_string(&priv->system->hdr,
+					    priv->system->product_name);
 		break;
 	case SYSID_BOARD_MANUFACTURER:
-		if (priv->t1)
-			str = smbios_string(priv->system,
-					    priv->t1->manufacturer);
+		if (priv->system)
+			str = smbios_string(&priv->system->hdr,
+					    priv->system->manufacturer);
 		break;
 	case SYSID_PRIOR_STAGE_VERSION:
-		if (priv->t0)
-			str = smbios_string(priv->bios, priv->t0->bios_ver);
+		if (priv->bios)
+			str = smbios_string(&priv->bios->hdr,
+					    priv->bios->bios_ver);
 		break;
 	case SYSID_PRIOR_STAGE_DATE:
-		if (priv->t0)
-			str = smbios_string(priv->bios,
-					    priv->t0->bios_release_date);
+		if (priv->bios)
+			str = smbios_string(&priv->bios->hdr,
+					    priv->bios->bios_release_date);
 		break;
 	}
 	if (!str)
@@ -64,8 +63,6 @@ static int cb_detect(struct udevice *dev)
 
 	priv->bios = smbios_get_header(&info, SMBIOS_BIOS_INFORMATION);
 	priv->system = smbios_get_header(&info, SMBIOS_SYSTEM_INFORMATION);
-	priv->t0 = (struct smbios_type0 *)priv->bios;
-	priv->t1 = (struct smbios_type1 *)priv->system;
 
 	return 0;
 }

@@ -369,12 +369,11 @@ const struct smbios_entry *smbios_entry(u64 address, u32 size);
 /**
  * smbios_get_header() - Search for an SMBIOS header type
  *
- * @entry:     pointer to the first entry
- * @type:      SMBIOS type
- * @return:    NULL or a valid pointer to a struct smbios_header
+ * @info: SMBIOS info
+ * @type: SMBIOS type
+ * @return: NULL or a valid pointer to a struct smbios_header
  */
-const struct smbios_header *smbios_get_header(const struct smbios_info *info,
-					      int type);
+const void *smbios_get_header(const struct smbios_info *info, int type);
 
 /**
  * smbios_string() - Return string from SMBIOS

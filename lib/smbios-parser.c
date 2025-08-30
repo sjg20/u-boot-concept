@@ -62,8 +62,7 @@ const struct smbios_entry *smbios_entry(u64 address, u32 size)
 	return entry;
 }
 
-const struct smbios_header *smbios_get_header(const struct smbios_info *info,
-					      int type)
+const void *smbios_get_header(const struct smbios_info *info, int type)
 {
 	struct smbios_header *header;
 
@@ -107,9 +106,8 @@ char *smbios_string(const struct smbios_header *header, int index)
 
 int smbios_update_version_full(void *smbios_tab, const char *new_version)
 {
-	const struct smbios_header *hdr;
+	const struct smbios_type0 *bios;
 	struct smbios_info info;
-	struct smbios_type0 *bios;
 	uint old_len, len;
 	char *ptr;
 	int ret;
@@ -119,11 +117,10 @@ int smbios_update_version_full(void *smbios_tab, const char *new_version)
 		return log_msg_ret("tab", -ENOENT);
 
 	log_info("Updating SMBIOS table at %p\n", smbios_tab);
-	hdr = smbios_get_header(&info, SMBIOS_BIOS_INFORMATION);
-	if (!hdr)
+	bios = smbios_get_header(&info, SMBIOS_BIOS_INFORMATION);
+	if (!bios)
 		return log_msg_ret("tab", -ENOENT);
-	bios = (struct smbios_type0 *)hdr;
-	ptr = smbios_string(hdr, bios->bios_ver);
+	ptr = smbios_string(&bios->hdr, bios->bios_ver);
 	if (!ptr)
 		return log_msg_ret("str", -ENOMEDIUM);
 
