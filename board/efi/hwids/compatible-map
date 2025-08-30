@@ -2,11 +2,11 @@
 
 # compatible map
 
-# Maps filenames in this directory to a list of compatible strings used by Linux
+# Maps filenames in this directory to a single compatible strings used by Linux
 # for devicetrees.
 
 # Format:
-# filename (without .json suffix): compatible_string[, compatible_string...]
+# filename (without .json suffix): compatible_string
 
 msm8998-lenovo-miix-630-81f1: lenovo,miix-630
 sc7180-acer-aspire1: acer,aspire1
