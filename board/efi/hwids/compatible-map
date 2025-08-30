@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: GPL-2.0+
+
+# compatible map
+
+# Maps filenames in this directory to a list of compatible strings used by Linux
+# for devicetrees.
+
+# Format:
+# filename (without .json suffix): compatible_string[, compatible_string...]
+
+msm8998-lenovo-miix-630-81f1: lenovo,miix-630
+sc7180-acer-aspire1: acer,aspire1
+sc8180x-lenovo-flex-5g-81xe: lenovo,flex-5g
+sc8180x-lenovo-flex-5g-82ak: lenovo,flex-5g
+sc8280xp-huawei-gaokun3: huawei,gaokun3
+sc8280xp-lenovo-thinkpad-x13s-21bx: lenovo,thinkpad-x13s
+sc8280xp-lenovo-thinkpad-x13s-21by: lenovo,thinkpad-x13s
+sc8280xp-microsoft-blackrock: microsoft,blackrock
+sc8280xp-microsoft-surface-pro-9-5G: microsoft,arcata
+sdm850-lenovo-yoga-c630: lenovo,yoga-c630
+x1e001de-devkit: qcom,x1e001de-devkit
+x1e78100-lenovo-thinkpad-t14s-lcd: lenovo,thinkpad-t14s-lcd
+x1e78100-lenovo-thinkpad-t14s-oled: lenovo,thinkpad-t14s-oled
+x1e78100-lenovo-thinkpad-t14s: lenovo,thinkpad-t14s-lcd
+x1e80100-asus-vivobook-s15: asus,vivobook-s15
+x1e80100-asus-zenbook-a14-oled: asus,zenbook-a14-ux3407qa-oled
+x1e80100-asus-zenbook-a14: asus,zenbook-a14-ux3407ra
+x1e80100-crd: qcom,x1e80100-crd
+x1e80100-dell-inspiron-14-plus-7441: dell,inspiron-14-plus-7441
+x1e80100-dell-latitude-7455: dell,latitude-7455
+x1e80100-dell-xps13-9345: dell,xps13-9345
+x1e80100-hp-omnibook-x14: hp,omnibook-x14
+x1e80100-lenovo-yoga-slim7x: lenovo,yoga-slim7x
+x1e80100-microsoft-denali: microsoft,denali
+x1e80100-microsoft-romulus13: microsoft,romulus13
+x1e80100-microsoft-romulus15: microsoft,romulus15
+x1p42100-asus-zenbook-a14: asus,zenbook-a14-ux3407qa-lcd
+x1p42100-hp-omnibook-x14: hp,omnibook-x14-fe1
+x1p64100-acer-swift-sf14-11: acer,swift-sf14-11
