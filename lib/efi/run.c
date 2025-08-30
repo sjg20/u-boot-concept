@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <net-common.h>
+#include <linux/delay.h>
 
 /**
  * calculate_paths() - Calculate the device and image patch from strings
@@ -46,7 +47,6 @@ efi_status_t calculate_paths(const char *dev, const char *devnr,
 	if (ret != EFI_SUCCESS)
 		return ret;
 
-	*device_pathp = device;
 	if (image) {
 		/* FIXME: image should not contain device */
 		struct efi_device_path *image_tmp = image;
@@ -54,10 +54,12 @@ efi_status_t calculate_paths(const char *dev, const char *devnr,
 		efi_dp_split_file_path(image, &device, &image);
 		efi_free_pool(image_tmp);
 	}
+	*device_pathp = device;
 	*image_pathp = image;
-	log_debug("- boot device %pD\n", device);
+	log_info("- boot device %pD\n", device);
 	if (image)
-		log_debug("- image %pD\n", image);
+		log_info("- image %pD\n", image);
+	mdelay(5000);
 
 	return EFI_SUCCESS;
 }
@@ -97,12 +99,29 @@ static const char *calc_dev_name(struct bootflow *bflow)
 	return blk_get_uclass_name(device_get_uclass_id(media_dev));
 }
 
+static efi_status_t EFIAPI my_handle_protocol(efi_handle_t handle,
+					      const efi_guid_t *protocol,
+					      void **protocol_interface)
+{
+	struct efi_priv *priv = efi_get_priv();
+	efi_status_t ret;
+
+	printf("call\n");
+	ret = priv->orig_handle_protocol(handle, protocol, protocol_interface);
+	printf("ret %lx\n\n", ret);
+
+	return ret;
+}
+
 efi_status_t efi_bootflow_run(struct bootflow *bflow)
 {
-	struct efi_device_path *device, *image;
+	struct efi_device_path *device, *image, *file_path;
+	struct efi_boot_services *boot = efi_get_boot();
+	struct efi_priv *priv = efi_get_priv();
 	const struct udevice *media_dev;
 	struct blk_desc *desc = NULL;
 	const char *dev_name;
+	efi_handle_t handle;
 	char devnum_str[9];
 	efi_status_t ret;
 	void *fdt;
@@ -122,8 +141,9 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		  dev_name, devnum_str, bflow->fname, media_dev->name);
 	if (!dev_name)
 		return EFI_UNSUPPORTED;
-	ret = calculate_paths(dev_name, devnum_str, bflow->fname, &device,
-			      &image);
+	//"/efi/boot/fakename.efi"
+	ret = calculate_paths(dev_name, devnum_str, bflow->fname,
+			      &device, &image);
 	if (ret)
 		return EFI_UNSUPPORTED;
 
@@ -135,8 +155,22 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		fdt = map_sysmem(bflow->fdt_addr, 0);
 	}
 
-	ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device,
-				image);
+	log_info("efi_bootflow_run(): device %pD\n", device);
+	// ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device,
+				// image);
+	file_path = efi_dp_concat(device, image, 0);
+
+	log_info("loading image %pD\n", file_path);
+	ret = boot->load_image(false, efi_get_parent_image(), file_path,
+			       NULL, 0, &handle);
+	if (ret) {
+		log_err("Failed to load image\n");
+		return ret;
+	}
+	priv->orig_handle_protocol = boot->handle_protocol;
+	boot->handle_protocol = my_handle_protocol;
+	ret = do_bootefi_exec(handle, NULL);
+	boot->handle_protocol = priv->orig_handle_protocol;
 
 	return ret;
 }

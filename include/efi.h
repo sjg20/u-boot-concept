@@ -171,6 +171,9 @@ extern const efi_guid_t efi_guid_image_security_database;
 /* Access to Shim variables */
 extern const efi_guid_t efi_shim_lock;
 
+extern const efi_guid_t efi_guid_loaded_image;
+extern const efi_guid_t efi_guid_loaded_image_device_path;
+
 /* Generic EFI table header */
 struct efi_table_hdr {
 	u64 signature;
@@ -514,6 +517,9 @@ struct efi_priv {
 	unsigned long ram_base;
 	unsigned int image_data_type;
 	struct efi_device_path_to_text_protocol *efi_dp_to_text;
+	efi_status_t EFIAPI (*orig_handle_protocol)(efi_handle_t handle,
+						    const efi_guid_t *protocol,
+						    void **protocol_interface);
 
 	/* stub: */
 	struct efi_info_hdr *info;

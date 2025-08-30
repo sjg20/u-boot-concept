@@ -331,8 +331,6 @@ extern const efi_guid_t efi_guid_event_group_ready_to_boot;
 extern const efi_guid_t efi_guid_event_group_reset_system;
 /* event group return to efibootmgr */
 extern const efi_guid_t efi_guid_event_group_return_to_efibootmgr;
-extern const efi_guid_t efi_guid_loaded_image;
-extern const efi_guid_t efi_guid_loaded_image_device_path;
 extern const efi_guid_t efi_guid_device_path_to_text_protocol;
 extern const efi_guid_t efi_simple_file_system_protocol_guid;
 extern const efi_guid_t efi_file_info_guid;
