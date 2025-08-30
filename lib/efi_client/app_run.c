@@ -27,7 +27,9 @@
  * @load_options:	load options
  * Return:		status code
  */
-efi_status_t do_bootefi_exec(efi_handle_t handle, void *load_options)
+efi_status_t do_bootefi_exec(efi_handle_t handle, void *load_options,
+			     efi_handle_t device_handle,
+			     struct efi_device_path *dp_dev)
 {
 	struct efi_boot_services *boot = efi_get_boot();
 	efi_uintn_t exit_data_size = 0;
@@ -53,6 +55,25 @@ efi_status_t do_bootefi_exec(efi_handle_t handle, void *load_options)
 
 	printf("loaded image path %ls\n", efi_dp_str(image->file_path));
 	printf("device_handle %p\n", image->device_handle);
+	image->device_handle = device_handle;
+	printf("device_handle now %p\n", image->device_handle);
+
+	/* Uninstall the automatically created loaded image device path */
+	ret = boot->handle_protocol(handle, &efi_guid_loaded_image_device_path,
+				   (void **)&dp);
+	if (ret == EFI_SUCCESS) {
+		boot->uninstall_protocol_interface(handle,
+						   &efi_guid_loaded_image_device_path,
+						   dp);
+	}
+
+	/* Install the correct loaded image device path (device path only) */
+	ret = boot->install_protocol_interface(&handle,
+					       &efi_guid_loaded_image_device_path,
+					       EFI_NATIVE_INTERFACE, dp_dev);
+	if (ret != EFI_SUCCESS) {
+		log_err("Failed to install loaded image device path\n");
+	}
 
 	ret = boot->handle_protocol(handle, &efi_guid_loaded_image_device_path,
 				   (void **)&dp);
@@ -112,7 +133,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 		goto cleanup;
 	}
 
-	ret = do_bootefi_exec(handle, NULL);
+	ret = do_bootefi_exec(handle, NULL, device_handle, dp_dev);
 
 cleanup:
 	printf("cleanup\n");
