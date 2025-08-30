@@ -489,12 +489,12 @@ static int do_smbios(struct cmd_tbl *cmdtp, int flag, int argc,
 	       (info.version >> 8) & 0xff, info.version & 0xff);
 
 	printf("%d structures occupying %d bytes\n", info.count, info.max_size);
-	printf("Table at 0x%llx\n",
+	printf("Table at %llx\n",
 	       (unsigned long long)map_to_sysmem(info.table));
 
 	for (struct smbios_header *pos = info.table; pos;
 	     pos = smbios_next_table(&info, pos)) {
-		printf("\nHandle 0x%04x, DMI type %d, %d bytes at 0x%llx\n",
+		printf("\nHandle 0x%04x, DMI type %d, %d bytes at %llx\n",
 		       pos->handle, pos->type, pos->length,
 		       (unsigned long long)map_to_sysmem(pos));
 		switch (pos->type) {
