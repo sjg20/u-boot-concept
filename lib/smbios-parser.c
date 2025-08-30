@@ -71,8 +71,6 @@ const struct smbios_header *smbios_get_header(const struct smbios_info *info,
 	     header = smbios_next_table(info, header)) {
 		if (header->type == type)
 			return header;
-
-		header = smbios_next_table(info, header);
 	}
 
 	return NULL;
