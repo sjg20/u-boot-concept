@@ -13,7 +13,8 @@ Synopsis
 Description
 -----------
 
-The smbios command displays information from the SMBIOS tables.
+The smbios command displays information from the SMBIOS tables. See also
+:doc:`../smbios`.
 
 Examples
 --------
