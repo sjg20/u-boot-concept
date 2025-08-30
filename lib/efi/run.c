@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <net-common.h>
+#include <linux/delay.h>
 
 /**
  * calculate_paths() - Calculate the device and image patch from strings
@@ -122,8 +123,10 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		  dev_name, devnum_str, bflow->fname, media_dev->name);
 	if (!dev_name)
 		return EFI_UNSUPPORTED;
-	ret = calculate_paths(dev_name, devnum_str, bflow->fname, &device,
-			      &image);
+
+	ret = calculate_paths(dev_name, devnum_str,
+			      USE_BUF ? "/efi/ubuntu/fakename.efi" : bflow->fname,
+			      &device, &image);
 	if (ret)
 		return EFI_UNSUPPORTED;
 
@@ -135,8 +138,32 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		fdt = map_sysmem(bflow->fdt_addr, 0);
 	}
 
-	ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device,
-				image);
+	log_info("efi_bootflow_run(): device %pD\n", device);
+#if USE_BUF /* create a loaded image from the buffer */
+	ret = efi_run_image(bflow->buf, bflow->size, device, image);
+	// ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device,
+				// image);
+#else
+	struct efi_boot_services *boot = efi_get_boot();
+	// struct efi_priv *priv = efi_get_priv();
+	struct efi_device_path *file_path;
+	efi_handle_t handle;
+
+	file_path = efi_dp_concat(device, image, 0);
+
+	log_info("loading image %pD\n", file_path);
+	ret = boot->load_image(false, efi_get_parent_image(), file_path,
+			       NULL, 0, &handle);
+	if (ret) {
+		log_err("Failed to load image\n");
+		return ret;
+	}
+	// priv->orig_handle_protocol = boot->handle_protocol;
+	// boot->handle_protocol = my_handle_protocol;
+	ret = do_bootefi_exec(handle, NULL);
+	// boot->handle_protocol = priv->orig_handle_protocol;
+#endif
+	printf("boot failed: ret=%lx\n", ret);
 
 	return ret;
 }

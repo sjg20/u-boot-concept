@@ -509,6 +509,9 @@ struct efi_priv {
 	unsigned long ram_base;
 	unsigned int image_data_type;
 	struct efi_device_path_to_text_protocol *efi_dp_to_text;
+	efi_status_t EFIAPI (*orig_handle_protocol)(efi_handle_t handle,
+						    const efi_guid_t *protocol,
+						    void **protocol_interface);
 
 	/* stub: */
 	struct efi_info_hdr *info;

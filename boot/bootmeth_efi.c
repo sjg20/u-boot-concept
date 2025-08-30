@@ -112,9 +112,12 @@ static int distro_efi_try_bootflow_files(struct udevice *dev,
 	}
 
 	strcpy(fname, EFI_DIRNAME);
-	strcat(fname, efi_get_basename());
+	// strcat(fname, efi_get_basename());
 	// strcpy(fname, "/EFI/ubuntu/grubaa64.efi");
 	// strcpy(fname, "/boot/vmlinuz-6.14.0-35-qcom-x1e");
+	strcpy(fname, "/EFI/Ubuntu/");
+	// strcat(fname, efi_get_basename());
+	strcat(fname, "shimaa64.efi");
 
 	if (bflow->blk)
 		 desc = dev_get_uclass_plat(bflow->blk);
