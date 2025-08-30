@@ -106,6 +106,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 	struct efi_boot_services *boot = efi_get_boot();
 	efi_handle_t handle, device_handle = NULL;
 	struct efi_device_path *msg_path, *file_path;
+	bool created_device_handle = false;
 	efi_status_t ret;
 
 	log_info("efi_run_image():\n");
@@ -117,13 +118,23 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 	log_info("Booting %pD\n", msg_path);
 	log_info("file_path %pD\n", file_path);
 
-	/* Create a device handle and install device path protocol */
-	ret = boot->install_protocol_interface(&device_handle,
-					       &efi_guid_device_path,
-					       EFI_NATIVE_INTERFACE, dp_dev);
+	/* Try to find existing device handle with this device path */
+	ret = boot->locate_device_path(&efi_simple_file_system_protocol_guid,
+				       &dp_dev, &device_handle);
 	if (ret != EFI_SUCCESS) {
-		log_err("Failed to install device path protocol\n");
-		goto out;
+		log_warning("Cannot find device handle with file system protocol, creating dummy\n");
+		
+		/* Create a device handle and install device path protocol */
+		ret = boot->install_protocol_interface(&device_handle,
+						       &efi_guid_device_path,
+						       EFI_NATIVE_INTERFACE, dp_dev);
+		if (ret != EFI_SUCCESS) {
+			log_err("Failed to install device path protocol\n");
+			goto out;
+		}
+		created_device_handle = true;
+	} else {
+		log_info("Found existing device handle %p with file system protocol\n", device_handle);
 	}
 
 	ret = boot->load_image(false, efi_get_parent_image(), file_path,
@@ -137,7 +148,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 
 cleanup:
 	printf("cleanup\n");
-	if (device_handle) {
+	if (created_device_handle && device_handle) {
 		boot->uninstall_protocol_interface(device_handle,
 						   &efi_guid_device_path,
 						   dp_dev);
