@@ -15,6 +15,7 @@ Use U-Boot
    partitions
    cmdline
    semihosting
+   smbios
    measured_boot
    upl
 
