@@ -84,4 +84,24 @@ struct chid_data {
  */
 int chid_from_smbios(struct chid_data *chid);
 
+/**
+ * chid_generate() - Generate a specific CHID variant
+ *
+ * @variant: Which CHID variant to generate (0-14)
+ * @data: SMBIOS data to use for generation
+ * @chid: Output buffer for the generated CHID (16 bytes)
+ *
+ * Return: 0 if OK, -ve error code on failure
+ */
+int chid_generate(int variant, const struct chid_data *data, u8 chid[16]);
+
+/**
+ * chid_generate_all() - Generate all CHID variants
+ * @data: SMBIOS data to use for generation  
+ * @chids: Output buffer for all CHIDs (15 x 16 bytes)
+ *
+ * Return: 0 if OK, -ve error code on failure
+ */
+int chid_generate_all(const struct chid_data *data, u8 chids[15][16]);
+
 #endif
