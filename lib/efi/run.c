@@ -146,7 +146,7 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 	//"/efi/boot/fakename.efi"
 	//bflow->fname,
 	ret = calculate_paths(dev_name, devnum_str,
-			      USE_BUF ? "/efi/boot/fakename.efi" : bflow->fname,
+			      USE_BUF ? "/efi/ubuntu/fakename.efi" : bflow->fname,
 			      &device, &image);
 	if (ret)
 		return EFI_UNSUPPORTED;
