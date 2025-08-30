@@ -59,7 +59,7 @@ efi_status_t calculate_paths(const char *dev, const char *devnr,
 	log_info("- boot device %pD\n", device);
 	if (image)
 		log_info("- image %pD\n", image);
-	mdelay(5000);
+	// mdelay(5000);
 
 	return EFI_SUCCESS;
 }
@@ -99,6 +99,7 @@ static const char *calc_dev_name(struct bootflow *bflow)
 	return blk_get_uclass_name(device_get_uclass_id(media_dev));
 }
 
+/*
 static efi_status_t EFIAPI my_handle_protocol(efi_handle_t handle,
 					      const efi_guid_t *protocol,
 					      void **protocol_interface)
@@ -112,6 +113,9 @@ static efi_status_t EFIAPI my_handle_protocol(efi_handle_t handle,
 
 	return ret;
 }
+*/
+
+#define USE_BUF		1
 
 efi_status_t efi_bootflow_run(struct bootflow *bflow)
 {
@@ -138,9 +142,11 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		  dev_name, devnum_str, bflow->fname, media_dev->name);
 	if (!dev_name)
 		return EFI_UNSUPPORTED;
+
 	//"/efi/boot/fakename.efi"
 	//bflow->fname,
-	ret = calculate_paths(dev_name, devnum_str, "/efi/boot/fakename.efi",
+	ret = calculate_paths(dev_name, devnum_str,
+			      USE_BUF ? "/efi/boot/fakename.efi" : bflow->fname,
 			      &device, &image);
 	if (ret)
 		return EFI_UNSUPPORTED;
@@ -154,14 +160,13 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 	}
 
 	log_info("efi_bootflow_run(): device %pD\n", device);
-#if 1 /* create a loaded image from the buffer */
-	ret = efi_run_image_fname(bflow->buf, bflow->size, fdt, NULL, 0, device,
-				  image);
+#if USE_BUF /* create a loaded image from the buffer */
+	ret = efi_run_image(bflow->buf, bflow->size, device, image);
 	// ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device,
 				// image);
 #else
 	struct efi_boot_services *boot = efi_get_boot();
-	struct efi_priv *priv = efi_get_priv();
+	// struct efi_priv *priv = efi_get_priv();
 	struct efi_device_path *file_path;
 	efi_handle_t handle;
 
@@ -179,7 +184,7 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 	ret = do_bootefi_exec(handle, NULL);
 	// boot->handle_protocol = priv->orig_handle_protocol;
 #endif
-
+	printf("boot failed: ret=%lx\n", ret);
 
 	return ret;
 }

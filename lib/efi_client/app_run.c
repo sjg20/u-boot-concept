@@ -83,7 +83,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 			   struct efi_device_path *dp_img)
 {
 	struct efi_boot_services *boot = efi_get_boot();
-	efi_handle_t handle;
+	efi_handle_t handle, device_handle = NULL;
 	struct efi_device_path *msg_path, *file_path;
 	efi_status_t ret;
 
@@ -96,16 +96,36 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 	log_info("Booting %pD\n", msg_path);
 	log_info("file_path %pD\n", file_path);
 
+	/* Create a device handle and install device path protocol */
+	ret = boot->install_protocol_interface(&device_handle,
+					       &efi_guid_device_path,
+					       EFI_NATIVE_INTERFACE, dp_dev);
+	if (ret != EFI_SUCCESS) {
+		log_err("Failed to install device path protocol\n");
+		goto out;
+	}
+
 	ret = boot->load_image(false, efi_get_parent_image(), file_path,
 			       source_buffer, source_size, &handle);
 	if (ret != EFI_SUCCESS) {
 		log_err("Loading image failed\n");
-		goto out;
+		goto cleanup;
 	}
 
 	ret = do_bootefi_exec(handle, NULL);
 
+cleanup:
+	printf("cleanup\n");
+	if (device_handle) {
+		boot->uninstall_protocol_interface(device_handle,
+						   &efi_guid_device_path,
+						   dp_dev);
+	}
 out:
+	printf("file-path\n");
+	if (file_path)
+		efi_free_pool(file_path);
+	printf("returning\n");
 
 	return ret;
 }

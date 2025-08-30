@@ -316,7 +316,6 @@ extern const efi_guid_t efi_block_io_guid;
 /* GUID of the EFI_SIMPLE_NETWORK_PROTOCOL */
 extern const efi_guid_t efi_net_guid;
 extern const efi_guid_t efi_guid_console_control;
-extern const efi_guid_t efi_guid_device_path;
 /* GUID of the EFI system partition */
 extern const efi_guid_t efi_system_partition_guid;
 /* event group ExitBootServices() invoked */
