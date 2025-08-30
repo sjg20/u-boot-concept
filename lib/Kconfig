@@ -1187,6 +1187,15 @@ config SMBIOS_PARSER
 	help
 	  A simple parser for SMBIOS data.
 
+config CHID
+	bool "Support Microsoft Computer Hardware IDs (CHIDs)"
+	depends on SMBIOS_PARSER
+	default y if EFI_APP || SANDBOX
+	help
+	  Provides support for Microsoft Computer Hardware IDs (CHIDs) which
+	  can be used to identify a board so that the correct devicetree is
+	  used with it.
+
 source "lib/optee/Kconfig"
 
 config TEST_FDTDEC

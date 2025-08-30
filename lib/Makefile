@@ -29,6 +29,8 @@ obj-y += charset.o
 endif
 endif
 
+obj-$(CONFIG_CHID) += chid.o
+
 ifdef CONFIG_USB_TTY
 obj-y += circbuf.o
 else
