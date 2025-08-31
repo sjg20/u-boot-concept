@@ -432,7 +432,7 @@ static void configure_uuid(struct uuid *uuid, unsigned char version)
 	uuid->clock_seq_hi_and_reserved |= (UUID_VARIANT << UUID_VARIANT_SHIFT);
 }
 
-void gen_v5_guid(const struct uuid *namespace, struct efi_guid *guid, ...)
+void gen_v5_guid_le(const struct uuid *namespace, struct efi_guid *guid, ...)
 {
 	sha1_context ctx;
 	va_list args;

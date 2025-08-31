@@ -947,10 +947,9 @@ static int genguid(int argc, char **argv)
 		for (int i = 0; i < namelen; i++)
 			fw_image[i] = (uint16_t)argv[idx][i];
 
-		gen_v5_guid((struct uuid *)&namespace, &image_type_id,
-			    compatible, strlen(compatible),
-			    fw_image, namelen * sizeof(uint16_t),
-			    NULL);
+		gen_v5_guid_le((struct uuid *)&namespace, &image_type_id,
+			       compatible, strlen(compatible), fw_image,
+			       namelen * sizeof(uint16_t), NULL);
 
 		printf("%s: ", argv[idx]);
 		print_guid(&image_type_id);
