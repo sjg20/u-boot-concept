@@ -49,6 +49,7 @@ Shell commands
    cmd/cbcmos
    cmd/cbsysinfo
    cmd/cedit
+   cmd/chid
    cmd/cli
    cmd/cls
    cmd/cmp
