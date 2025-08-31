@@ -157,4 +157,13 @@ const char *chid_get_field_name(enum chid_field_t field);
  */
 u32 chid_get_variant_fields(int variant);
 
+/**
+ * chid_get_variant_name() - Get the name of a CHID variant
+ *
+ * @variant: Which CHID variant (0-14)
+ *
+ * Return: String containing the variant name (e.g., "HardwareID-00")
+ */
+const char *chid_get_variant_name(int variant);
+
 #endif

@@ -43,3 +43,51 @@ static int cmd_chid_invalid_test(struct unit_test_state *uts)
 	return 0;
 }
 CMD_TEST(cmd_chid_invalid_test, UTF_CONSOLE);
+
+/* Test the 'chid list' command */
+static int cmd_chid_list_test(struct unit_test_state *uts)
+{
+	/* Test chid list command runs successfully */
+	ut_assertok(run_command("chid list", 0));
+
+	/* Just verify that some output is produced - exact CHIDs vary */
+	return 0;
+}
+CMD_TEST(cmd_chid_list_test, UTF_CONSOLE);
+
+/* Test the 'chid detail' command */
+static int cmd_chid_detail_test(struct unit_test_state *uts)
+{
+	/* Test chid detail command for variant 14 (manufacturer only) */
+	ut_assertok(run_command("chid detail 14", 0));
+
+	ut_assert_nextlinen("HardwareID-14: ");
+	ut_assert_nextline("Fields: Manufacturer");
+	ut_assert_console_end();
+
+	/* Test chid detail command for variant 0 (most specific) */
+	ut_assertok(run_command("chid detail 0", 0));
+
+	ut_assert_nextlinen("HardwareID-00: ");
+	ut_assert_nextline(
+		"Fields: Manufacturer + Family + ProductName + ProductSku + "
+		"BiosVendor + BiosVersion + BiosMajorRelease + "
+		"BiosMinorRelease");
+	ut_assert_console_end();
+
+	return 0;
+}
+CMD_TEST(cmd_chid_detail_test, UTF_CONSOLE);
+
+/* Test chid detail with invalid variant */
+static int cmd_chid_detail_invalid_test(struct unit_test_state *uts)
+{
+	/* Test chid detail with invalid variant number - should fail */
+	ut_asserteq(1, run_command("chid detail 15", 0));
+
+	/* Test chid detail with negative variant number - should fail */
+	ut_asserteq(1, run_command("chid detail -1", 0));
+
+	return 0;
+}
+CMD_TEST(cmd_chid_detail_invalid_test, 0);

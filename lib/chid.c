@@ -22,6 +22,7 @@
 #include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/utf.h>
+#include <linux/kernel.h>
 #include <u-boot/uuid.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -295,4 +296,12 @@ u32 chid_get_variant_fields(int variant)
 		return 0;
 
 	return variants[variant].fields;
+}
+
+const char *chid_get_variant_name(int variant)
+{
+	if (variant < 0 || variant >= CHID_VARIANT_COUNT)
+		return "Invalid";
+
+	return variants[variant].name;
 }
