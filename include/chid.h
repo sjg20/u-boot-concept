@@ -50,6 +50,31 @@ enum chid_field_t {
 	CHID_COUNT,
 };
 
+/*
+ * enum chid_variant_id - Microsoft CHID hardware ID variants
+ *
+ * This covers HardwareID-00 through HardwareID-14
+ */
+enum chid_variant_id {
+	CHID_00,	/* Most specific */
+	CHID_01,
+	CHID_02,
+	CHID_03,
+	CHID_04,
+	CHID_05,
+	CHID_06,
+	CHID_07,
+	CHID_08,
+	CHID_09,
+	CHID_10,
+	CHID_11,
+	CHID_12,
+	CHID_13,
+	CHID_14,	/* Least specific */
+	
+	CHID_VARIANT_COUNT
+};
+
 /**
  * struct chid_variant - defines which fields are used in each CHID variant
  *
@@ -102,5 +127,34 @@ struct chid_data {
  * smbios_locate())
  */
 int chid_from_smbios(struct chid_data *chid);
+
+/**
+ * chid_generate() - Generate a specific CHID variant
+ *
+ * @variant: Which CHID variant to generate (0-14)
+ * @data: SMBIOS data to use for generation
+ * @chid: Output buffer for the generated CHID (16 bytes)
+ *
+ * Return: 0 if OK, -ve error code on failure
+ */
+int chid_generate(int variant, const struct chid_data *data, u8 chid[16]);
+
+/**
+ * chid_get_field_name() - Get display name of a specific CHID field
+ *
+ * @field: Which CHID field
+ *
+ * Return: String containing the field name
+ */
+const char *chid_get_field_name(enum chid_field_t field);
+
+/**
+ * chid_get_variant_fields() - Get the fields mask for a CHID variant
+ *
+ * @variant: Which CHID variant (0-14)
+ *
+ * Return: Bitmask of fields used by this variant
+ */
+u32 chid_get_variant_fields(int variant);
 
 #endif

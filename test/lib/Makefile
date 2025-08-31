@@ -31,6 +31,7 @@ obj-$(CONFIG_UT_LIB_CRYPT) += test_crypt.o
 obj-$(CONFIG_UT_TIME) += time.o
 obj-$(CONFIG_$(PHASE_)UT_UNICODE) += unicode.o
 obj-$(CONFIG_LIB_UUID) += uuid.o
+obj-$(CONFIG_CHID) += chid.o
 else
 obj-$(CONFIG_SANDBOX) += kconfig_spl.o
 endif
