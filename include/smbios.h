@@ -130,6 +130,16 @@ struct __packed smbios3_entry {
 	u64 struct_table_address;
 };
 
+/**
+ * struct smbios_header - Common header for all SMBIOS structures
+ *
+ * This header appears at the beginning of every SMBIOS structure and
+ * provides basic identification and size information for the structure.
+ *
+ * @type: SMBIOS structure type (0-127 for standard types)
+ * @length: Length of the formatted portion of the structure in bytes
+ * @handle: Unique 16-bit identifier for this structure instance
+ */
 struct __packed smbios_header {
 	u8 type;
 	u8 length;
@@ -158,6 +168,24 @@ struct __packed smbios_type0 {
 #define SMBIOS_TYPE1_LENGTH_V21		0x19
 #define SMBIOS_TYPE1_LENGTH_V24		0x1b
 
+/**
+ * struct smbios_type1 - SMBIOS Type 1 (System Information) structure
+ *
+ * This structure contains information that identifies the system as a
+ * whole. It includes manufacturer, model, version, serial number, UUID,
+ * and other system-level identification information.
+ *
+ * @hdr: Common SMBIOS structure header
+ * @manufacturer: String number for manufacturer name
+ * @product_name: String number for product name
+ * @version: String number for version
+ * @serial_number: String number for serial number
+ * @uuid: Universal unique identifier for the system (16 bytes)
+ * @wakeup_type: Identifies the event that caused the system to power up
+ * @sku_number: String number for the system SKU
+ * @family: String number for the family of systems
+ * @eos: End-of-structure marker (double null bytes)
+ */
 struct __packed smbios_type1 {
 	struct smbios_header hdr;
 	u8 manufacturer;
