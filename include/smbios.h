@@ -60,6 +60,28 @@ struct str_lookup_table {
 	const char *str;
 };
 
+/**
+ * struct smbios_entry - SMBIOS 2.1 (32-bit) Entry Point structure
+ *
+ * This structure represents the SMBIOS Entry Point as defined in the
+ * SMBIOS specification version 2.1+. It serves as the starting point
+ * for locating SMBIOS tables in system memory.
+ *
+ * @anchor: Entry Point Structure anchor string "_SM_"
+ * @checksum: Checksum of the Entry Point Structure
+ * @length: Length of the Entry Point Structure, formatted area
+ * @major_ver: Major version of the SMBIOS specification implemented
+ * @minor_ver: Minor version of the SMBIOS specification implemented
+ * @max_struct_size: Size of the largest SMBIOS structure
+ * @entry_point_rev: Entry Point Structure Revision implemented
+ * @formatted_area: Reserved formatted area, set to 0
+ * @intermediate_anchor: Intermediate Entry Point Structure anchor "_DMI_"
+ * @intermediate_checksum: Checksum of intermediate Entry Point Structure
+ * @struct_table_length: Total length in bytes of SMBIOS Structure Table
+ * @struct_table_address: 32-bit physical starting address of table
+ * @struct_count: Total number of SMBIOS structures present in the table
+ * @bcd_rev: BCD revision of the SMBIOS specification (e.g. 0x21 for v2.1)
+ */
 struct __packed smbios_entry {
 	u8 anchor[4];
 	u8 checksum;
@@ -79,27 +101,32 @@ struct __packed smbios_entry {
 
 /**
  * struct smbios3_entry - SMBIOS 3.0 (64-bit) Entry Point structure
+ *
+ * This structure represents the SMBIOS 3.0+ Entry Point as defined in the
+ * SMBIOS specification version 3.0+. It provides 64-bit addressing support
+ * and serves as the starting point for locating SMBIOS tables in memory.
+ *
+ * @anchor: Entry Point Structure anchor string "_SM3_"
+ * @checksum: Checksum of the Entry Point Structure
+ * @length: Length of the Entry Point Structure
+ * @major_ver: Major version of the SMBIOS specification implemented
+ * @minor_ver: Minor version of the SMBIOS specification implemented
+ * @doc_rev: Revision of the SMBIOS specification document
+ * @entry_point_rev: Revision of the Entry Point Structure
+ * @reserved: Reserved field, must be 0
+ * @table_maximum_size: Maximum size of SMBIOS Structure Table
+ * @struct_table_address: 64-bit physical starting address of table
  */
 struct __packed smbios3_entry {
-	/** @anchor: anchor string */
 	u8 anchor[5];
-	/** @checksum: checksum of the entry point structure */
 	u8 checksum;
-	/** @length: length of the entry point structure */
 	u8 length;
-	/** @major_ver: major version of the SMBIOS specification */
 	u8 major_ver;
-	/** @minor_ver: minor version of the SMBIOS specification */
 	u8 minor_ver;
-	/** @docrev: revision of the SMBIOS specification */
 	u8 doc_rev;
-	/** @entry_point_rev: revision of the entry point structure */
 	u8 entry_point_rev;
-	/** @reserved: reserved */
 	u8 reserved;
-	/** maximum size of SMBIOS table */
 	u32 table_maximum_size;
-	/** @struct_table_address: 64-bit physical starting address */
 	u64 struct_table_address;
 };
 
