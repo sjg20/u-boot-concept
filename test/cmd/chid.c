@@ -7,6 +7,7 @@
 
 #include <command.h>
 #include <console.h>
+#include <env.h>
 #include <test/cmd.h>
 #include <test/ut.h>
 #include <version.h>
@@ -91,3 +92,34 @@ static int cmd_chid_detail_invalid_test(struct unit_test_state *uts)
 	return 0;
 }
 CMD_TEST(cmd_chid_detail_invalid_test, 0);
+
+/* Test the 'chid compat' command */
+static int cmd_chid_compat_test(struct unit_test_state *uts)
+{
+	const char *fdtcompat_val;
+	int ret;
+
+	/* Clear any existing fdtcompat environment variable */
+	env_set("fdtcompat", NULL);
+	ut_assertnull(env_get("fdtcompat"));
+
+	/* Run chid compat command - may succeed or fail depending on devicetree */
+	ret = run_command("chid compat", 0);
+
+	if (ret == 0) {
+		/* Command succeeded, check that fdtcompat was set */
+		fdtcompat_val = env_get("fdtcompat");
+		ut_assertnonnull(fdtcompat_val);
+		ut_assert(strlen(fdtcompat_val) > 0);
+		/* Command should print the compatible string it found */
+		ut_assert_nextline(fdtcompat_val);
+	} else {
+		/* Command failed, check expected failure message and no env var set */
+		ut_assert_nextline("No compatible string found");
+		ut_assertnull(env_get("fdtcompat"));
+	}
+
+	ut_assert_console_end();
+	return 0;
+}
+CMD_TEST(cmd_chid_compat_test, UTF_CONSOLE);

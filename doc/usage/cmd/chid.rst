@@ -8,6 +8,7 @@ Synopsis
 
 ::
 
+    chid compat
     chid list
     chid show
     chid detail <variant>
@@ -31,6 +32,12 @@ Subcommands
 show
     Show the relevant SMBIOS values for the current board. These are used to
     calculate CHIDs.
+
+compat
+    Find the compatible string that matches the current hardware's CHID and
+    set the fdtcompat environment variable. This examines the devicetree under
+    /chid for nodes with hardware-id child nodes containing CHID data that
+    matches the system's generated CHIDs.
 
 list
     Display all 15 CHID variants with their generated UUIDs
@@ -82,6 +89,13 @@ Show details for a specific variant::
     => chid detail 14
     HardwareID-14: 45c5e2e7-db48-556b-aae4-0a03c5a15eae
     Fields: Manufacturer
+
+Find compatible string and set environment variable::
+
+    => chid compat
+    google,veyron-speedy
+    => printenv fdtcompat
+    fdtcompat=google,veyron-speedy
 
 Configuration
 -------------

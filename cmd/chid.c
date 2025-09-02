@@ -7,6 +7,7 @@
 
 #include <chid.h>
 #include <command.h>
+#include <env.h>
 #include <vsprintf.h>
 #include <linux/bitops.h>
 #include <u-boot/uuid.h>
@@ -123,12 +124,37 @@ static int do_chid_detail(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_chid_compat(struct cmd_tbl *cmdtp, int flag, int argc,
+			  char *const argv[])
+{
+	const char *compat;
+	int ret;
+
+	ret = chid_select(&compat);
+	if (ret) {
+		printf("No compatible string found (err=%d)\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	printf("%s\n", compat);
+
+	ret = env_set("fdtcompat", compat);
+	if (ret) {
+		printf("Failed to set fdtcompat environment variable (err=%d)\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	return 0;
+}
+
 U_BOOT_LONGHELP(chid,
+	"compat - Find compatible string and set fdtcompat env var\n"
 	"list - List all CHID variants\n"
 	"show - Show CHID data extracted from SMBIOS\n"
 	"detail <variant> - Show details for a specific CHID variant (0-14)");
 
 U_BOOT_CMD_WITH_SUBCMDS(chid, "Computer Hardware ID utilities", chid_help_text,
+	U_BOOT_SUBCMD_MKENT(compat, 1, 1, do_chid_compat),
 	U_BOOT_SUBCMD_MKENT(list, 1, 1, do_chid_list),
 	U_BOOT_SUBCMD_MKENT(show, 1, 1, do_chid_show),
 	U_BOOT_SUBCMD_MKENT(detail, 2, 1, do_chid_detail));
