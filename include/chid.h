@@ -11,6 +11,7 @@
 #define __chid_h
 
 #include <linux/types.h>
+#include <stdbool.h>
 
 /**
  * enum chid_field_t - fields we pick up from SMBIOS tables
@@ -165,5 +166,65 @@ u32 chid_get_variant_fields(int variant);
  * Return: String containing the variant name (e.g., "HardwareID-00")
  */
 const char *chid_get_variant_name(int variant);
+
+/**
+ * chid_variant_allowed() - Check if a CHID variant is permitted
+ *
+ * @variant: Which CHID variant (enum chid_variant_id)
+ *
+ * Some CHID variants are considered too generic and are not permitted:
+ * - Manufacturer + EnclosureKind (CHID_12)
+ * - Manufacturer + Family (CHID_11)
+ * - Manufacturer only (CHID_14)
+ * - Manufacturer + BaseboardManufacturer + BaseboardProduct (CHID_13)
+ *
+ * Return: true if variant is permitted, false if prohibited
+ */
+bool chid_variant_allowed(enum chid_variant_id variant);
+
+/**
+ * chid_select_data() - Select compatible string using CHID data
+ * @chid_data: SMBIOS-derived CHID data to use for matching
+ * @compatp: Pointer to store the compatible string (if found)
+ *
+ * This is the core selection function that can be tested with specific
+ * CHID data without requiring SMBIOS hardware access.
+ *
+ * The selection algorithm:
+ * 1. Find all CHID nodes in the devicetree
+ * 2. Calculate match scores for each node based on:
+ *    - Exact CHID match (highest priority)
+ *    - CHID variant specificity
+ *    - Field overlap with provided CHID data
+ * 3. Return the compatible string from the highest-scoring node
+ *
+ * Expected devicetree structure:
+ *   /chid {
+ *       device-node-name {
+ *           compatible = "vendor,device-name";
+ *           variant = <0>;           // CHID variant (0-14)
+ *           fields = <0x3cf>;        // Bitmask of fields used
+ *           chid = [12 34 56 78 ...]; // UUID_LEN-byte CHID UUID
+ *       };
+ *   };
+ *
+ * Return: 0 if compatible string found, -ENOENT if no match, other -ve on error
+ */
+int chid_select_data(const struct chid_data *chid_data, const char **compatp);
+
+/**
+ * chid_select() - Select compatible string using CHID and SMBIOS
+ *
+ * This function examines CHID information in the devicetree and compares it
+ * with the current system's SMBIOS data to select the most appropriate
+ * compatible string for the hardware platform.
+ *
+ * This is a convenience wrapper around chid_select_data()
+ * that automatically extracts SMBIOS data from the current system.
+ *
+ * @compatp: Returns pointer to compatible string if found
+ * Return: 0 if OK, -ENOENT if no suitable match, other -ve on error
+ */
+int chid_select(const char **compatp);
 
 #endif
