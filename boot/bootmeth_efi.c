@@ -317,7 +317,6 @@ static int distro_efi_boot(struct udevice *dev, struct bootflow *bflow)
 		 */
 		if (bflow->flags & ~BOOTFLOWF_USE_BUILTIN_FDT)
 			fdt = bflow->fdt_addr;
-
 	}
 
 	if (efi_bootflow_run(bflow))
