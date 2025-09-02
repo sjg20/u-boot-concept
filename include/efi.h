@@ -171,6 +171,12 @@ extern const efi_guid_t efi_guid_image_security_database;
 /* Access to Shim variables */
 extern const efi_guid_t efi_shim_lock;
 
+extern const efi_guid_t efi_guid_loaded_image;
+extern const efi_guid_t efi_guid_loaded_image_device_path;
+extern const efi_guid_t efi_guid_device_path;
+
+extern const efi_guid_t efi_simple_file_system_protocol_guid;
+
 /* Generic EFI table header */
 struct efi_table_hdr {
 	u64 signature;
