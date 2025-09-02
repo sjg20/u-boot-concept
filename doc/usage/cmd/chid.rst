@@ -96,4 +96,5 @@ The return value $? is 0 (true) on success, 1 (false) on failure.
 See also
 --------
 
+* :doc:`/develop/chid` - CHID developer documentation
 * :doc:`smbios <smbios>` - SMBIOS table information
