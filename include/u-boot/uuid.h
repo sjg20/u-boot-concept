@@ -85,6 +85,8 @@ struct uuid {
 #define UUID_VARIANT_SHIFT	7
 #define UUID_VARIANT		0x1
 
+#define UUID_LEN		16
+
 int uuid_str_valid(const char *uuid);
 
 /*
