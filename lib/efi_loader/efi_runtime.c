@@ -717,6 +717,10 @@ static __efi_runtime void efi_relocate_runtime_table(ulong offset)
 /* Relocate EFI runtime to uboot_reloc_base = offset */
 void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 {
+	/* Skip EFI runtime relocation when building as a library */
+	if (IS_ENABLED(CONFIG_ULIB))
+		return;
+
 #ifdef IS_RELA
 	struct elf_rela *rel = (void *)__efi_runtime_rel_start;
 #else
