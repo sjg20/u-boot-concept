@@ -417,6 +417,9 @@ static int should_load_env(void)
 
 static int initr_env(void)
 {
+	if (gd_ulib())
+		return 0;
+
 	/* initialize environment */
 	if (should_load_env())
 		env_relocate();
