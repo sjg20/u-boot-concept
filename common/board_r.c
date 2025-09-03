@@ -458,6 +458,9 @@ static int initr_malloc_bootparams(void)
 #if CONFIG_IS_ENABLED(NET) || CONFIG_IS_ENABLED(NET_LWIP)
 static int initr_net(void)
 {
+	if (gd_ulib())
+		return 0;
+
 	puts("Net:   ");
 	eth_initialize();
 #if defined(CONFIG_RESET_PHY_R)
