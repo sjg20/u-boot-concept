@@ -9,11 +9,14 @@
 #include <display_options.h>
 #include <div64.h>
 #include <version_string.h>
-#include <linux/ctype.h>
-#include <linux/kernel.h>
-#include <asm/io.h>
 #include <stdio.h>
 #include <vsprintf.h>
+#include <asm/global_data.h>
+#include <asm/io.h>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 char *display_options_get_banner_priv(bool newlines, const char *build_tag,
 				      char *buf, int size)
@@ -47,8 +50,10 @@ int display_options(void)
 {
 	char buf[DISPLAY_OPTIONS_BANNER_LENGTH];
 
-	display_options_get_banner(true, buf, sizeof(buf));
-	printf("%s", buf);
+	if (!gd_ulib()) {
+		display_options_get_banner(true, buf, sizeof(buf));
+		printf("%s", buf);
+	}
 
 	return 0;
 }
