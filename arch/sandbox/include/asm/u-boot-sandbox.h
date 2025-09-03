@@ -16,6 +16,8 @@
 
 #include <linux/compiler_attributes.h>
 
+struct global_data;
+
 /* board/.../... */
 int board_init(void);
 
@@ -42,6 +44,22 @@ void sandbox_reset(void);
 void __noreturn sandbox_exit(void);
 
 /**
+ * sandbox_init() - init sandbox
+ *
+ * This function initialises sandbox state, parses arguments, and sets up the
+ * global data structure, but does not call board_init_f().
+ *
+ * The caller must zero @data before calling this function. This function sets
+ * gd to point to @data so it must remain valid for the life of sandbox.
+ *
+ * @argc:	the number of arguments passed to the program
+ * @argv:	array of argc pointers, plus a NULL terminator
+ * @data:	pointer to global data structure to init
+ * Return: 0 if OK, -ve on error
+ */
+int sandbox_init(int argc, char *argv[], struct global_data *data);
+
+/**
  * sandbox_main() - main entrypoint for sandbox
  *
  * @argc:	the number of arguments passed to the program
@@ -49,6 +67,9 @@ void __noreturn sandbox_exit(void);
  *
  * This calls sandbox_init(), then board_init_f/r(). It does not return unless
  * something goes wrong.
+ *
+ * @argc:	the number of arguments passed to the program
+ * @argv:	array of argc pointers, plus a NULL terminator
  *
  * Return: 1 on error
  */

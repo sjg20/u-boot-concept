@@ -601,18 +601,16 @@ static int last_stage_init(void)
 }
 EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);
 
-int sandbox_main(int argc, char *argv[])
+int sandbox_init(int argc, char *argv[], struct global_data *data)
 {
 	struct sandbox_state *state;
 	void * text_base;
-	gd_t data;
 	int size;
 	int ret;
 
 	text_base = os_find_text_base();
 
-	memset(&data, '\0', sizeof(data));
-	gd = &data;
+	gd = data;
 
 	/*
 	 * This must be the first invocation of os_malloc() to have
@@ -620,7 +618,7 @@ int sandbox_main(int argc, char *argv[])
 	 */
 	ret = state_init();
 	if (ret)
-		goto err;
+		return ret;
 
 	/*
 	 * Copy argv[] so that we can pass the arguments in the original
@@ -663,13 +661,13 @@ int sandbox_main(int argc, char *argv[])
 	if (state->read_state && state->state_fname) {
 		ret = sandbox_read_state(state, state->state_fname);
 		if (ret)
-			goto err;
+			return ret;
 	}
 
 	if (state->handle_signals) {
 		ret = os_setup_signal_handlers();
 		if (ret)
-			goto err;
+			return ret;
 	}
 
 	if (state->upl)
@@ -691,6 +689,19 @@ int sandbox_main(int argc, char *argv[])
 
 	/* sandbox test: log functions called before log_init in board_init_f */
 	log_debug("debug: %s\n", __func__);
+
+	return 0;
+}
+
+int sandbox_main(int argc, char *argv[])
+{
+	gd_t data;
+	int ret;
+
+	memset(&data, '\0', sizeof(data));
+	ret = sandbox_init(argc, argv, &data);
+	if (ret)
+		goto err;
 
 	/* Do pre- and post-relocation init */
 	board_init_f(gd->flags);
