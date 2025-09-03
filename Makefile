@@ -1046,7 +1046,7 @@ INPUTS-$(CONFIG_X86) += u-boot-x86-start16.bin u-boot-x86-reset16.bin \
 ifdef CONFIG_CMDLINE
 ifneq ($(cc-name),clang)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
-INPUTS-$(CONFIG_ULIB) += libu-boot.a
+INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static
 endif
 endif
 
@@ -1893,6 +1893,22 @@ quiet_cmd_ulib_test = HOSTCC  $@
 test/ulib/ulib_test: test/ulib/ulib_test.o libu-boot.so FORCE
 	$(call if_changed,ulib_test)
 
+# Build ulib_test_static to test linking with the static library
+# main.o is excluded from the static library since the main program is provided
+# by the user
+# Use --whole-archive to include all linker lists
+# Use a linker script to ensure proper alignment of linker-lists
+quiet_cmd_ulib_test_static = HOSTCC  $@
+      cmd_ulib_test_static = $(HOSTCC) $(HOSTCFLAGS) \
+	-I$(srctree)/arch/sandbox/include -o $@ $< \
+	-Wl,-T,$(LIB_STATIC_LDS) \
+	-Wl,--whole-archive $(obj)/libu-boot.a -Wl,--no-whole-archive \
+	-lpthread -ldl -lSDL2 -lrt -Wl,-z,noexecstack
+
+test/ulib/ulib_test_static: test/ulib/ulib_test.o libu-boot.a \
+		$(LIB_STATIC_LDS) FORCE
+	$(call if_changed,ulib_test_static)
+
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@
 u-boot.sym: u-boot FORCE
@@ -2293,7 +2309,8 @@ CLEAN_FILES += include/autoconf.mk* include/bmp_logo.h include/bmp_logo_data.h \
 	       itb.fit.fit itb.fit.itb itb.map spl.map mkimage-out.rom.mkimage \
 	       mkimage.rom.mkimage mkimage-in-simple-bin* rom.map simple-bin* \
 	       idbloader-spi.img lib/efi_loader/helloworld_efi.S *.itb \
-	       Test* capsule*.*.efi-capsule capsule*.map
+	       Test* capsule*.*.efi-capsule capsule*.map \
+	       test/ulib/ulib_test test/ulib/ulib_test_static
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl vpl \

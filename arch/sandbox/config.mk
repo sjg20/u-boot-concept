@@ -72,3 +72,4 @@ EFI_RELOC := reloc_sandbox_efi.o
 
 # U-Boot Library
 LIB_LDS := $(srctree)/arch/sandbox/cpu/u-boot-lib.lds
+LIB_STATIC_LDS := $(srctree)/arch/sandbox/cpu/ulib-test-static.lds
