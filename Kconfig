@@ -98,6 +98,15 @@ config CC_OPTIMIZE_FOR_DEBUG
 
 endchoice
 
+config ULIB
+	bool "Build U-Boot as a library"
+	default y if SANDBOX
+	help
+	  Enable this to build a library which can be linked to other programs,
+	  to extend U-Boot's functionality.
+
+	  The library is called libu-boot.so
+
 config OPTIMIZE_INLINING
 	bool "Allow compiler to uninline functions marked 'inline' in full U-Boot"
 	help
