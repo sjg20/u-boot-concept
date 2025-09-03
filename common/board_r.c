@@ -381,15 +381,6 @@ static int initr_onenand(void)
 }
 #endif
 
-#ifdef CONFIG_MMC
-static int initr_mmc(void)
-{
-	puts("MMC:   ");
-	mmc_initialize(gd->bd);
-	return 0;
-}
-#endif
-
 #ifdef CONFIG_PVBLOCK
 static int initr_pvblock(void)
 {
@@ -666,9 +657,6 @@ static void initcall_run_r(void)
 #endif
 #if CONFIG_IS_ENABLED(CMD_ONENAND)
 	INITCALL(initr_onenand);
-#endif
-#if CONFIG_IS_ENABLED(MMC)
-	INITCALL(initr_mmc);
 #endif
 #if CONFIG_IS_ENABLED(XEN)
 	INITCALL(xen_init);
