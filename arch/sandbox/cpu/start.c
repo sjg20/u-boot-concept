@@ -22,6 +22,7 @@
 #include <asm/malloc.h>
 #include <asm/sections.h>
 #include <asm/state.h>
+#include <asm/u-boot-sandbox.h>
 #include <dm/root.h>
 #include <linux/ctype.h>
 #include <linux/log2.h>

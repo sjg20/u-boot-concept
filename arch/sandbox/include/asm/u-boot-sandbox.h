@@ -46,8 +46,9 @@ void __noreturn sandbox_exit(void);
  *
  * @argc:	the number of arguments passed to the program
  * @argv:	array of argc+1 pointers, of which the last one is null
-
- * This starts sandbox. It does not return unless something goes wrong.
+ *
+ * This calls sandbox_init(), then board_init_f/r(). It does not return unless
+ * something goes wrong.
  *
  * Return: 1 on error
  */
