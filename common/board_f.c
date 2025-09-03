@@ -181,7 +181,9 @@ static int print_cpuinfo(void)
 
 static int announce_dram_init(void)
 {
-	puts("DRAM:  ");
+	if (!gd_ulib())
+		puts("DRAM:  ");
+
 	return 0;
 }
 
@@ -231,13 +233,15 @@ static int show_dram_config(void)
 	}
 	debug("\nDRAM:  ");
 
-	print_size(gd->ram_size, "");
-	if (!sizes_near(gd->ram_size, size)) {
-		printf(" (total ");
-		print_size(size, ")");
+	if (!gd_ulib()) {
+		print_size(gd->ram_size, "");
+		if (!sizes_near(gd->ram_size, size)) {
+			printf(" (total ");
+			print_size(size, ")");
+		}
+		board_add_ram_info(0);
+		putc('\n');
 	}
-	board_add_ram_info(0);
-	putc('\n');
 
 	return 0;
 }
