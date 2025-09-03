@@ -1043,7 +1043,11 @@ INPUTS-$(CONFIG_X86) += u-boot-x86-start16.bin u-boot-x86-reset16.bin \
 	$(if $(CONFIG_SPL_X86_16BIT_INIT),spl/u-boot-spl.bin) \
 	$(if $(CONFIG_TPL_X86_16BIT_INIT),tpl/u-boot-tpl.bin)
 
-INPUTS-$(CONFIG_ULIB) += libu-boot.so
+ifdef CONFIG_CMDLINE
+ifneq ($(cc-name),clang)
+INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
+endif
+endif
 
 LDFLAGS_u-boot += $(LDFLAGS_FINAL)
 
@@ -1852,6 +1856,7 @@ endif
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
       cmd_libu-boot.so = $(CC) -shared -o $@ -Wl,--build-id=none \
+	-Wl,-T,$(srctree)/arch/sandbox/cpu/u-boot-lib.lds \
 	$(u-boot-init) \
 	$(KBUILD_LDFLAGS:%=-Wl,%) $(SANITIZERS) $(LTO_FINAL_LDFLAGS) \
 	-Wl,--whole-archive \
