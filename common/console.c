@@ -1301,7 +1301,7 @@ int console_init_r(void)
 
 done:
 
-	if (!IS_ENABLED(CONFIG_SYS_CONSOLE_INFO_QUIET))
+	if (!IS_ENABLED(CONFIG_SYS_CONSOLE_INFO_QUIET) && !gd_ulib())
 		stdio_print_current_devices();
 
 #ifdef CONFIG_VIDCONSOLE_AS_LCD
