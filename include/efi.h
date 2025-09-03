@@ -58,6 +58,11 @@ struct udevice;
 #define EFI32_LOADER_SIGNATURE	"EL32"
 #define EFI64_LOADER_SIGNATURE	"EL64"
 
+#ifdef CONFIG_EFI_APP
+/* add an empty value for this so that efi_variables.h can be included */
+#define __efi_runtime
+#endif
+
 /**
  * struct efi_device_path - device path protocol
  *
@@ -165,6 +170,12 @@ extern const efi_guid_t efi_guid_image_security_database;
 
 /* Access to Shim variables */
 extern const efi_guid_t efi_shim_lock;
+
+extern const efi_guid_t efi_guid_loaded_image;
+extern const efi_guid_t efi_guid_loaded_image_device_path;
+extern const efi_guid_t efi_guid_device_path;
+
+extern const efi_guid_t efi_simple_file_system_protocol_guid;
 
 /* Generic EFI table header */
 struct efi_table_hdr {

@@ -22,6 +22,7 @@ config EFI_APP
 	depends on X86 || ARM
 	select CHARSET
 	select EVENT
+	imply CONSOLE_MUX
 	imply CONSOLE_PAGER
 	help
 	  Build U-Boot as an application which can be started from EFI. This

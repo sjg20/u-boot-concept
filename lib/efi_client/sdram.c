@@ -3,6 +3,8 @@
  * Copyright (c) 2015 Google, Inc
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #include <efi.h>
 #include <init.h>
 #include <asm/global_data.h>

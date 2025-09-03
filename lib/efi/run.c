@@ -46,7 +46,6 @@ efi_status_t calculate_paths(const char *dev, const char *devnr,
 	if (ret != EFI_SUCCESS)
 		return ret;
 
-	*device_pathp = device;
 	if (image) {
 		/* FIXME: image should not contain device */
 		struct efi_device_path *image_tmp = image;
@@ -54,6 +53,7 @@ efi_status_t calculate_paths(const char *dev, const char *devnr,
 		efi_dp_split_file_path(image, &device, &image);
 		efi_free_pool(image_tmp);
 	}
+	*device_pathp = device;
 	*image_pathp = image;
 	log_debug("- boot device %pD\n", device);
 	if (image)

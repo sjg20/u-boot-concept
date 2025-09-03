@@ -16,6 +16,7 @@
 #include <efi.h>
 #include <efi_api.h>
 #include <efi_stub.h>
+#include <efi_variable.h>
 #include <errno.h>
 #include <fdt_simplefb.h>
 #include <image.h>
@@ -250,7 +251,47 @@ static void efi_exit(void)
 
 static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 {
-	efi_exit();
+	struct efi_priv *priv = efi_get_priv();
+
+	switch (type) {
+	case SYSRESET_COLD:
+		/* Perform a cold reset */
+		priv->run->reset_system(EFI_RESET_COLD, EFI_SUCCESS, 0, NULL);
+		break;
+	case SYSRESET_TO_FIRMWARE_UI: {
+		efi_status_t ret;
+		u64 osind;
+
+		/* Read current OsIndications value */
+		osind = 0;
+		ret = efi_get_variable_int(u"OsIndications",
+					   &efi_global_variable_guid,
+					   NULL, NULL, &osind, NULL);
+		if (ret && ret != EFI_NOT_FOUND)
+			log_warning("Failed to read OsIndications: %lx\n", ret);
+
+		/* Set the boot-to-firmware-UI bit */
+		osind |= EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
+		ret = efi_set_variable_int(u"OsIndications",
+					   &efi_global_variable_guid,
+					   EFI_VARIABLE_NON_VOLATILE |
+					   EFI_VARIABLE_BOOTSERVICE_ACCESS |
+					   EFI_VARIABLE_RUNTIME_ACCESS,
+					   sizeof(osind), &osind, false);
+		if (ret) {
+			log_err("Failed to set OsIndications: %lx\n", ret);
+			return -EIO;
+		}
+		fallthrough;
+	}
+	case SYSRESET_WARM:
+		priv->run->reset_system(EFI_RESET_WARM, EFI_SUCCESS, 0, NULL);
+		break;
+	case SYSRESET_HOT:
+	default:
+		efi_exit();
+		break;
+	}
 
 	return -EINPROGRESS;
 }

@@ -4,6 +4,8 @@
  *
  */
 
+#define LOG_CATEGORY	LOGC_EFI
+
 #define __efi_runtime
 
 #include <errno.h>

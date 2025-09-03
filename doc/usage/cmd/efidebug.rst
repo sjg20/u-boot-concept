@@ -13,16 +13,56 @@ Synopsis
 
 ::
 
+    efidebug boot add -b <bootid> <label> <interface> <devnum>[:<part>] <file>
+    efidebug boot rm <bootid> [<bootid> ...]
+    efidebug boot dump
+    efidebug boot next <bootid>
+    efidebug boot order [<bootid> ...]
     efidebug log
     efidebug media
+    efidebug memmap [-s]
 
 Description
 -----------
 
-The *efidebug* command provides access to debugging features for the EFI-loader
-subsystem.
+The *efidebug* command provides access some EFI features, including boot
+management, memory mapping, and system information.
 
-Only two of the subcommands are documented at present.
+efidebug boot
+~~~~~~~~~~~~~
+
+The boot subcommands manage UEFI boot options (BootXXXX variables) and boot
+order.
+
+**efidebug boot add**
+    Create or modify a UEFI boot option. The basic syntax is:
+    ``efidebug boot add -b <bootid> <label> <interface> <devnum>[:<part>] <file>``
+
+    Where:
+
+    - ``<bootid>`` is a hexadecimal boot option ID (e.g., 0001, 000A)
+    - ``<label>`` is a descriptive name for the boot option
+    - ``<interface>`` is the storage interface (e.g., mmc, usb, virtio)
+    - ``<devnum>[:<part>]`` specifies device and optionally partition number
+    - ``<file>`` is the path to the EFI executable
+
+    Additional options include ``-i`` for initrd, ``-s`` for optional data,
+    and ``-d`` for device tree files.
+
+**efidebug boot rm**
+    Remove one or more UEFI boot options by their boot IDs.
+
+**efidebug boot dump**
+    List all defined UEFI boot options with their details including boot ID,
+    label, and file path.
+
+**efidebug boot next**
+    Set the BootNext variable to specify which boot option should be used for
+    the next boot only.
+
+**efidebug boot order**
+    Show the current boot order when called without arguments, or sets a new
+    boot order when given a list of boot IDs.
 
 efidebug log
 ~~~~~~~~~~~~
@@ -43,18 +83,133 @@ driver subsystem would likely handle the device (e.g., "ahci" for SATA drives,
 device, which can be useful for debugging boot issues or understanding the
 system topology.
 
+efidebug memmap
+~~~~~~~~~~~~~~~
+
+This shows the UEFI memory map, which displays all memory regions and their
+types as known to the EFI loader subsystem. This includes information about
+memory allocation, reserved regions, and available memory.
+
+The command supports an optional '-s' flag to sort the memory map entries by
+address, making it easier to visualize the memory layout in ascending order.
 
 Example
 -------
 
+This shows managing UEFI boot options::
+
+    => efidebug boot add -b 1 "Ubuntu" mmc 0:2 /EFI/ubuntu/grubx64.efi
+    => efidebug boot add -b 2 "Windows" mmc 0:1 /EFI/Microsoft/Boot/bootmgfw.efi
+    => efidebug boot dump
+    Boot0001:
+    attributes: A-- (0x00000001)
+    label: Ubuntu
+    file_path: /VenHw(e61d73b9-a384-4acc-aeab-82e828f3628b)/SD(0)/
+               HD(2,GPT,dfae5a37-e8d5-4a2e-aab6-6b6e8c8cb8a3,0x100800,
+               0x5dc1800)/\EFI\ubuntu\grubx64.efi
+    data: 
+    Boot0002:
+    attributes: A-- (0x00000001)
+    label: Windows
+    file_path: /VenHw(e61d73b9-a384-4acc-aeab-82e828f3628b)/SD(0)/
+               HD(1,GPT,c8a9e8e7-2d2a-4b8e-9b4f-7b7b3b7b7b7b,0x800,
+               0x100000)/\EFI\Microsoft\Boot\bootmgfw.efi
+    data:
+    => efidebug boot order 1 2
+    => efidebug boot order
+    BootOrder: 0001 0002
+    => efidebug boot next 2
+    => efidebug boot rm 1
+
 This shows checking the EFI media devices::
 
-   => efidebug media
-  Device               Media type       Device Path
-  -------------------  ---------------  -----------
-    efi_media_1        ahci             PciRoot(0x0)/Pci(0x3,0x0)/Sata(0x0,0xFFFF,0x0)
-    efi_media_2        pci              PciRoot(0x0)/Pci(0x5,0x0)
+    => efidebug media
+    Device               Media type       Device Path
+    -------------------  ---------------  -----------
+    efi_media_1          ahci             PciRoot(0x0)/Pci(0x3,0x0)/
+                                          Sata(0x0,0xFFFF,0x0)
+    efi_media_2          pci              PciRoot(0x0)/Pci(0x5,0x0)
 
+This shows checking the UEFI memory map, first unsorted and then sorted by
+address::
+
+    => efidebug mem
+    Type             Start            End              Attributes
+    ================ ================ ================ ==========
+    CONVENTIONAL     0000000040000000-0000000044000000 WB
+    BOOT DATA        0000000044000000-0000000044020000 WB
+    CONVENTIONAL     0000000044020000-00000000475ee000 WB
+    BOOT DATA        00000000475ee000-0000000047610000 WB
+    BOOT CODE        0000000047610000-0000000047647000 WB
+    BOOT DATA        0000000047647000-0000000047ef2000 WB
+    BOOT CODE        0000000047ef2000-0000000047ef6000 WB
+    BOOT DATA        0000000047ef6000-0000000047ff7000 WB
+    BOOT CODE        0000000047ff7000-0000000047ffa000 WB
+    BOOT DATA        0000000047ffa000-0000000048000000 WB
+    CONVENTIONAL     0000000048000000-00000000e0000000 WB
+    LOADER DATA      00000000e0000000-0000000100000000 WB
+    CONVENTIONAL     0000000100000000-000000013c278000 WB
+    LOADER DATA      000000013c278000-000000013c27c000 WB
+    LOADER CODE      000000013c27c000-000000013c3e0000 WB
+    ACPI RECLAIM MEM 000000013c3e0000-000000013c3f0000 WB
+    RUNTIME CODE     000000013c3f0000-000000013c470000 WB|RT
+    RUNTIME DATA     000000013c470000-000000013c630000 WB|RT
+    RUNTIME CODE     000000013c630000-000000013c730000 WB|RT
+    CONVENTIONAL     000000013c730000-000000013dc2a000 WB
+    BOOT DATA        000000013dc2a000-000000013e9f1000 WB
+    CONVENTIONAL     000000013e9f1000-000000013e9fe000 WB
+    BOOT DATA        000000013e9fe000-000000013ea1c000 WB
+    CONVENTIONAL     000000013ea1c000-000000013ea1e000 WB
+    BOOT DATA        000000013ea1e000-000000013ea47000 WB
+    CONVENTIONAL     000000013ea47000-000000013ea48000 WB
+    BOOT DATA        000000013ea48000-000000013f624000 WB
+    CONVENTIONAL     000000013f624000-000000013f731000 WB
+    BOOT CODE        000000013f731000-000000013fc00000 WB
+    RUNTIME CODE     000000013fc00000-000000013fd90000 WB|RT
+    RUNTIME DATA     000000013fd90000-000000013ffe0000 WB|RT
+    CONVENTIONAL     000000013ffe0000-000000013ffff000 WB
+    BOOT DATA        000000013ffff000-0000000140000000 WB
+    IO               0000000004000000-0000000008000000 UC|RT
+    IO               0000000009010000-0000000009011000 UC|RT
+    => efidebug mem -s
+    Type             Start            End              Attributes
+    ================ ================ ================ ==========
+    IO               0000000004000000-0000000008000000 UC|RT
+    IO               0000000009010000-0000000009011000 UC|RT
+    CONVENTIONAL     0000000040000000-0000000044000000 WB
+    BOOT DATA        0000000044000000-0000000044020000 WB
+    CONVENTIONAL     0000000044020000-00000000475ee000 WB
+    BOOT DATA        00000000475ee000-0000000047610000 WB
+    BOOT CODE        0000000047610000-0000000047647000 WB
+    BOOT DATA        0000000047647000-0000000047ef2000 WB
+    BOOT CODE        0000000047ef2000-0000000047ef6000 WB
+    BOOT DATA        0000000047ef6000-0000000047ff7000 WB
+    BOOT CODE        0000000047ff7000-0000000047ffa000 WB
+    BOOT DATA        0000000047ffa000-0000000048000000 WB
+    CONVENTIONAL     0000000048000000-00000000e0000000 WB
+    LOADER DATA      00000000e0000000-0000000100000000 WB
+    CONVENTIONAL     0000000100000000-000000013c278000 WB
+    LOADER DATA      000000013c278000-000000013c27c000 WB
+    LOADER CODE      000000013c27c000-000000013c3e0000 WB
+    ACPI RECLAIM MEM 000000013c3e0000-000000013c3f0000 WB
+    RUNTIME CODE     000000013c3f0000-000000013c470000 WB|RT
+    RUNTIME DATA     000000013c470000-000000013c630000 WB|RT
+    RUNTIME CODE     000000013c630000-000000013c730000 WB|RT
+    CONVENTIONAL     000000013c730000-000000013dc2a000 WB
+    BOOT DATA        000000013dc2a000-000000013e9f1000 WB
+    CONVENTIONAL     000000013e9f1000-000000013e9fe000 WB
+    BOOT DATA        000000013e9fe000-000000013ea1c000 WB
+    CONVENTIONAL     000000013ea1c000-000000013ea1e000 WB
+    BOOT DATA        000000013ea1e000-000000013ea47000 WB
+    CONVENTIONAL     000000013ea47000-000000013ea48000 WB
+    BOOT DATA        000000013ea48000-000000013f624000 WB
+    CONVENTIONAL     000000013f624000-000000013f731000 WB
+    BOOT CODE        000000013f731000-000000013fc00000 WB
+    RUNTIME CODE     000000013fc00000-000000013fd90000 WB|RT
+    RUNTIME DATA     000000013fd90000-000000013ffe0000 WB|RT
+    CONVENTIONAL     000000013ffe0000-000000013ffff000 WB
+    BOOT DATA        000000013ffff000-0000000140000000 WB
+    =>
 
 This shows checking the log, then using 'efidebug tables' to fully set up the
 EFI-loader subsystem, then checking the log again::

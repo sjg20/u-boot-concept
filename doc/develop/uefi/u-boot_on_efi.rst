@@ -431,6 +431,15 @@ board/efi/efi-x86_payload
 common/cmd_efi.c
 	the 'efi' command
 
+Available commands
+------------------
+
+See :doc:`/usage/cmd/efidebug` and :doc:`/usage/cmd/efi` for useful commands
+available in the EFI app. When Shim_ is in the bootflow, the
+:doc:`/usage/cmd/shim` may be useful.
+
+.. _`Shim`: https://github.com/rhboot/shim
+
 --
 Ben Stoltz, Simon Glass
 Google, Inc

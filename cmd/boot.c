@@ -60,6 +60,8 @@ U_BOOT_CMD(
 	reset, 2, 0,	do_reset,
 	"Perform RESET of the CPU",
 	"- cold boot without level specifier\n"
+	"reset -h - hotreset if implemented\n"
+	"reset -u - reset to firmware UI if implemented\n"
 	"reset -w - warm reset if implemented"
 );
 
