@@ -1046,6 +1046,7 @@ INPUTS-$(CONFIG_X86) += u-boot-x86-start16.bin u-boot-x86-reset16.bin \
 ifdef CONFIG_CMDLINE
 ifneq ($(cc-name),clang)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
+INPUTS-$(CONFIG_ULIB) += libu-boot.a
 endif
 endif
 
@@ -1867,6 +1868,21 @@ quiet_cmd_libu-boot.so = LD      $@
 
 libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
 	$(call if_changed,libu-boot.so)
+
+# Build U-Boot as a static library
+# Create a fat archive with all object files (except arch/sandbox/cpu/main.o)
+# Note: We don't use partial linking to preserve the linker list sections
+quiet_cmd_libu-boot.a = AR      $@
+      cmd_libu-boot.a = rm -f $@ $@.tmp $@.objlist; \
+	$(AR) rcT $@.tmp $(u-boot-init) \
+		$(u-boot-main) \
+		$(u-boot-keep-syms-lto); \
+	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o$$" > $@.objlist; \
+	cat $@.objlist | xargs $(AR) rcs $@; \
+	rm -f $@.tmp $@.objlist
+
+libu-boot.a: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
+	$(call if_changed,libu-boot.a)
 
 # Build ulib_test that links with shared library
 quiet_cmd_ulib_test = HOSTCC  $@
