@@ -758,7 +758,19 @@ enum gd_flags {
 	 * drivers shall not be called.
 	 */
 	GD_FLG_HAVE_CONSOLE = 0x8000000,
+	/**
+	 * @GD_FLG_ULIB: U-Boot is running as a library
+	 *
+	 * For now, this just avoids console output on startup
+	 */
+	GD_FLG_ULIB = 0x10000000,
 };
+
+#if CONFIG_IS_ENABLED(ULIB)
+#define gd_ulib()	(gd->flags & GD_FLG_ULIB)
+#else
+#define gd_ulib()	0
+#endif
 
 #endif /* __ASSEMBLY__ */
 
