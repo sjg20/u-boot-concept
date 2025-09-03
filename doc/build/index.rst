@@ -9,6 +9,7 @@ Build U-Boot
    source
    gcc
    clang
+   fuzz
    reproducible
    docker
    tools
