@@ -1863,6 +1863,15 @@ quiet_cmd_libu-boot.so = LD      $@
 libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
 	$(call if_changed,libu-boot.so)
 
+# Build ulib_test that links with shared library
+quiet_cmd_ulib_test = HOSTCC  $@
+      cmd_ulib_test = $(HOSTCC) $(HOSTCFLAGS) \
+	-I$(srctree)/arch/sandbox/include -o $@ $< -L$(obj) -lu-boot \
+	-Wl,-rpath,$(obj)
+
+test/ulib/ulib_test: test/ulib/ulib_test.o libu-boot.so FORCE
+	$(call if_changed,ulib_test)
+
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@
 u-boot.sym: u-boot FORCE
