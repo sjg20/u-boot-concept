@@ -30,9 +30,9 @@
 
 #include <asm/fuzzing_engine.h>
 #include <asm/getopt.h>
-#include <asm/main.h>
 #include <asm/sections.h>
 #include <asm/state.h>
+#include <asm/u-boot-sandbox.h>
 #include <os.h>
 #include <rtc_def.h>
 

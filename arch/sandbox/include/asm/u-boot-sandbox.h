@@ -41,4 +41,16 @@ void sandbox_reset(void);
 /* Exit sandbox (quit U-Boot) */
 void __noreturn sandbox_exit(void);
 
+/**
+ * sandbox_main() - main entrypoint for sandbox
+ *
+ * @argc:	the number of arguments passed to the program
+ * @argv:	array of argc+1 pointers, of which the last one is null
+
+ * This starts sandbox. It does not return unless something goes wrong.
+ *
+ * Return: 1 on error
+ */
+int sandbox_main(int argc, char *argv[]);
+
 #endif	/* _U_BOOT_SANDBOX_H_ */
