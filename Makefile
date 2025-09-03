@@ -1046,7 +1046,7 @@ INPUTS-$(CONFIG_X86) += u-boot-x86-start16.bin u-boot-x86-reset16.bin \
 ifdef CONFIG_CMDLINE
 ifneq ($(cc-name),clang)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
-INPUTS-$(CONFIG_ULIB) += libu-boot.a
+INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static
 endif
 endif
 
@@ -1892,6 +1892,22 @@ quiet_cmd_ulib_test = HOSTCC  $@
 
 test/ulib/ulib_test: test/ulib/ulib_test.o libu-boot.so FORCE
 	$(call if_changed,ulib_test)
+
+# Build ulib_test_static that links with static library
+# Note: main.o is excluded from the static library to avoid conflicts
+# Use --whole-archive to include all linker lists
+# Use linker script to ensure proper alignment of sections
+quiet_cmd_ulib_test_static = HOSTCC  $@
+      cmd_ulib_test_static = $(HOSTCC) $(HOSTCFLAGS) \
+	-I$(srctree)/arch/sandbox/include -o $@ $< \
+	-Wl,-T,$(srctree)/arch/sandbox/cpu/ulib-test-static.lds \
+	-Wl,--defsym=__stack_chk_guard=0 \
+	-Wl,--defsym=sandbox_sdl_sync=0 \
+	-Wl,--whole-archive $(obj)/libu-boot.a -Wl,--no-whole-archive \
+	-lpthread -ldl -lSDL2 -lrt -Wl,-z,noexecstack
+
+test/ulib/ulib_test_static: test/ulib/ulib_test.o libu-boot.a FORCE
+	$(call if_changed,ulib_test_static)
 
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@
