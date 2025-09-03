@@ -460,7 +460,11 @@ static int reserve_uboot(void)
 		 * reserve memory for U-Boot code, data & bss
 		 * round down to next 4 kB limit
 		 */
-		gd->relocaddr -= gd->mon_len;
+		if (IS_ENABLED(CONFIG_SANDBOX) && gd->mon_len > gd->relocaddr)
+			log_debug("Cannot reserve space for U-Boot\n");
+		else
+			gd->relocaddr -= gd->mon_len;
+
 		gd->relocaddr &= ~(4096 - 1);
 	#if defined(CONFIG_E500) || defined(CONFIG_MIPS)
 		/* round down to next 64 kB limit so that IVPR stays aligned */
