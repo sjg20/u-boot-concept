@@ -7,9 +7,10 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <log.h>
-#include <linux/libfdt.h>
 #include <pci.h>
+#include <asm/sandbox_pci.h>
 #include <dm/lists.h>
+#include <linux/libfdt.h>
 
 struct sandbox_pci_emul_priv {
 	int dev_count;
