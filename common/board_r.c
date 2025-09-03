@@ -539,6 +539,9 @@ static int dm_announce(void)
 
 static int run_main_loop(void)
 {
+	if (gd_ulib())
+		return 0;
+
 #ifdef CONFIG_SANDBOX
 	sandbox_main_loop_init();
 #endif
@@ -767,6 +770,11 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	gd->flags &= ~GD_FLG_LOG_READY;
 
 	initcall_run_r();
+
+#ifdef CONFIG_ULIB
+	if (gd_ulib())
+		return;
+#endif
 
 	/* NOTREACHED - run_main_loop() does not return */
 	hang();
