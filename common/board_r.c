@@ -504,7 +504,7 @@ static int dm_announce(void)
 	int device_count;
 	int uclass_count;
 
-	if (IS_ENABLED(CONFIG_DM)) {
+	if (IS_ENABLED(CONFIG_DM) && !gd_ulib()) {
 		dm_get_stats(&device_count, &uclass_count);
 		printf("Core:  %d devices, %d uclasses", device_count,
 		       uclass_count);
