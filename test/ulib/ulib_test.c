@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
 
 	/* init global data */
 	memset(&data, '\0', sizeof(data));
+	data.flags = GD_FLG_ULIB;
 
 	ret = sandbox_init(argc, argv, &data);
 
