@@ -106,6 +106,20 @@ int os_isatty(int fd);
  */
 int os_unlink(const char *pathname);
 
+/**
+ * os_fgets() - read a string from a file stream
+ *
+ * Reads at most @size - 1 characters from the stream and stores them in str.
+ * Reading stops after an EOF or a newline. If a newline is read, it is
+ * stored in str. A terminating nul byte is appended.
+ *
+ * @str:	Buffer to store the string
+ * @size:	Maximum number of characters to read (including null terminator)
+ * @fd:		File descriptor to read from
+ * Return:	str on success, NULL on error, or EOF with no characters read
+ */
+char *os_fgets(char *str, int size, int fd);
+
 /** os_persistent_fname() - Find the path to a test file
  *
  * @buf: Buffer to hold path
