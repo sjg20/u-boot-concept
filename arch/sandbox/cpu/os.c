@@ -150,6 +150,38 @@ int os_unlink(const char *pathname)
 	return unlink(pathname);
 }
 
+char *os_fgets(char *str, int size, int fd)
+{
+	char *s = str;
+	int n = size - 1;
+	int i;
+
+	if (n <= 0 || !str)
+		return NULL;
+
+	for (i = 0; i < n; i++) {
+		ssize_t ret;
+		char c;
+
+		ret  = read(fd, &c, 1);
+		if (ret <= 0) {
+			/* EOF or error */
+			if (!i)
+				return NULL;
+			break;
+		}
+
+		*s++ = c;
+
+		if (c == '\n')
+			break;
+	}
+
+	*s = '\0';
+
+	return str;
+}
+
 void os_exit(int exit_code)
 {
 	exit(exit_code);
