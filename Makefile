@@ -1048,6 +1048,9 @@ ifneq ($(cc-name),clang)
 ifeq ($(NO_LIBS),)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
 INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static
+ifdef CONFIG_EXAMPLES
+INPUTS-$(CONFIG_ULIB) += examples_ulib
+endif
 endif
 endif
 endif
@@ -1911,6 +1914,18 @@ test/ulib/ulib_test_static: test/ulib/ulib_test.o libu-boot.a \
 		$(LIB_STATIC_LDS) FORCE
 	$(call if_changed,ulib_test_static)
 
+PHONY += examples_ulib
+examples_ulib: libu-boot.a libu-boot.so FORCE
+	$(Q)$(MAKE) -C $(srctree)/examples/ulib \
+		UBOOT_BUILD=$(abspath $(obj)) \
+		EXAMPLE_DIR=. \
+		OUTDIR=$(abspath $(obj)/examples/ulib) \
+		srctree="$(srctree)" \
+		CC="$(CC)" \
+		CFLAGS="$(CFLAGS)" \
+		PLATFORM_LIBS="$(PLATFORM_LIBS)" \
+		LIB_STATIC_LDS="$(LIB_STATIC_LDS)"
+
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@
 u-boot.sym: u-boot FORCE
@@ -2339,6 +2354,8 @@ $(clean-dirs):
 clean: $(clean-dirs)
 	$(call cmd,rmdirs)
 	$(call cmd,rmfiles)
+	@$(MAKE) -C $(srctree)/examples/ulib clean \
+		OUTDIR=$(abspath $(obj)/examples/ulib)
 	@find $(if $(KBUILD_EXTMOD), $(KBUILD_EXTMOD), .) $(RCS_FIND_IGNORE) \
 		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
 		-o -name '*.ko.*' -o -name '*.su' -o -name '*.pyc' \
