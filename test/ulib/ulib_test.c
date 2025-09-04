@@ -11,19 +11,15 @@
 /* Use system headers, not U-Boot headers */
 #include <stdio.h>
 #include <string.h>
-#include <init.h>
-#include <asm/global_data.h>
-
-DECLARE_GLOBAL_DATA_PTR;
+#include <u-boot-lib.h>
 
 int main(int argc, char *argv[])
 {
-	struct global_data data;
 	int ret;
 
 	printf("Calling U-Boot initialization via shared library...\n");
 
-	ret = ulib_init_with_data(argv[0], &data);
+	ret = ulib_init(argv[0]);
 	if (ret)
 		return 1;
 

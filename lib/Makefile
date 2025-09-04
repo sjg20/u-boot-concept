@@ -166,6 +166,8 @@ obj-$(CONFIG_LIB_ELF) += elf.o
 
 obj-$(CONFIG_$(PHASE_)SEMIHOSTING) += semihosting.o
 
+obj-$(CONFIG_ULIB) += ulib.o
+
 #
 # Build a fast OID lookup registry from include/linux/oid_registry.h
 #
