@@ -75,4 +75,13 @@ int sandbox_init(int argc, char *argv[], struct global_data *data);
  */
 int sandbox_main(int argc, char *argv[]);
 
+/**
+ * ulib_init_with_data() - set up the U-Boot library
+ *
+ * @progname: Program name to use, typically argv[0]
+ * @data: Global data (must remain valid until the program exits)
+ * Return: 0 if OK, -ve error code on error
+ */
+int ulib_init_with_data(char *progname, struct global_data *data);
+
 #endif	/* _U_BOOT_SANDBOX_H_ */

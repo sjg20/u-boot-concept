@@ -23,15 +23,9 @@ int main(int argc, char *argv[])
 
 	printf("Calling U-Boot initialization via shared library...\n");
 
-	/* init global data */
-	memset(&data, '\0', sizeof(data));
-	data.flags = GD_FLG_ULIB;
-
-	ret = sandbox_init(argc, argv, &data);
-
-	/* Do pre- and post-relocation init */
-	board_init_f(gd->flags);
-	board_init_r(data.new_gd, 0);
+	ret = ulib_init_with_data(argv[0], &data);
+	if (ret)
+		return 1;
 
 	return ret;
 }
