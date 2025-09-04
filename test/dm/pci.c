@@ -5,6 +5,7 @@
 
 #include <dm.h>
 #include <asm/io.h>
+#include <asm/sandbox_pci.h>
 #include <asm/test.h>
 #include <dm/test.h>
 #include <test/test.h>

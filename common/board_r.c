@@ -364,6 +364,9 @@ static int initr_flash(void)
 /* go init the NAND */
 static int initr_nand(void)
 {
+	if (gd_ulib())
+		return 0;
+
 	puts("NAND:  ");
 	nand_init();
 	printf("%lu MiB\n", nand_size() / 1024);
@@ -377,15 +380,6 @@ static int initr_onenand(void)
 {
 	puts("NAND:  ");
 	onenand_init();
-	return 0;
-}
-#endif
-
-#ifdef CONFIG_MMC
-static int initr_mmc(void)
-{
-	puts("MMC:   ");
-	mmc_initialize(gd->bd);
 	return 0;
 }
 #endif
@@ -510,7 +504,7 @@ static int dm_announce(void)
 	int device_count;
 	int uclass_count;
 
-	if (IS_ENABLED(CONFIG_DM)) {
+	if (IS_ENABLED(CONFIG_DM) && !gd_ulib()) {
 		dm_get_stats(&device_count, &uclass_count);
 		printf("Core:  %d devices, %d uclasses", device_count,
 		       uclass_count);
@@ -666,9 +660,6 @@ static void initcall_run_r(void)
 #endif
 #if CONFIG_IS_ENABLED(CMD_ONENAND)
 	INITCALL(initr_onenand);
-#endif
-#if CONFIG_IS_ENABLED(MMC)
-	INITCALL(initr_mmc);
 #endif
 #if CONFIG_IS_ENABLED(XEN)
 	INITCALL(xen_init);

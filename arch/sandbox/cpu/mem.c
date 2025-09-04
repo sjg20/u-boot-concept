@@ -13,6 +13,7 @@
 #include <os.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
+#include <asm/sandbox_pci.h>
 #include <asm/state.h>
 #include <linux/list.h>
 

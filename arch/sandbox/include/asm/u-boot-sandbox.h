@@ -14,6 +14,10 @@
 #ifndef _U_BOOT_SANDBOX_H_
 #define _U_BOOT_SANDBOX_H_
 
+#include <linux/compiler_attributes.h>
+
+struct global_data;
+
 /* board/.../... */
 int board_init(void);
 
@@ -27,54 +31,6 @@ int sandbox_lcd_sdl_early_init(void);
 struct udevice;
 
 /**
- * pci_map_physmem() - map a PCI device into memory
- *
- * This is used on sandbox to map a device into memory so that it can be
- * used with normal memory access. After this call, some part of the device's
- * internal structure becomes visible.
- *
- * This function is normally called from sandbox's map_sysmem() automatically.
- *
- * @paddr:	Physical memory address, normally corresponding to a PCI BAR
- * @lenp:	On entry, the size of the area to map, On exit it is updated
- *		to the size actually mapped, which may be less if the device
- *		has less space
- * @devp:	Returns the device which mapped into this space
- * @ptrp:	Returns a pointer to the mapped address. The device's space
- *		can be accessed as @lenp bytes starting here
- * Return: 0 if OK, -ve on error
- */
-int pci_map_physmem(phys_addr_t paddr, unsigned long *lenp,
-		    struct udevice **devp, void **ptrp);
-
-/**
- * pci_unmap_physmem() - undo a memory mapping
- *
- * This must be called after pci_map_physmem() to undo the mapping.
- *
- * @paddr:	Physical memory address, as passed to pci_map_physmem()
- * @len:	Size of area mapped, as returned by pci_map_physmem()
- * @dev:	Device to unmap, as returned by pci_map_physmem()
- * Return: 0 if OK, -ve on error
- */
-int pci_unmap_physmem(const void *addr, unsigned long len,
-		      struct udevice *dev);
-
-/**
- * sandbox_set_enable_pci_map() - Enable / disable PCI address mapping
- *
- * Since address mapping involves calling every driver, provide a way to
- * enable and disable this. It can be handled automatically by the emulator
- * uclass, which knows if any emulators are currently active.
- *
- * If this is disabled, pci_map_physmem() will not be called from
- * map_sysmem().
- *
- * @enable: 0 to disable, 1 to enable
- */
-void sandbox_set_enable_pci_map(int enable);
-
-/**
  * sandbox_reset() - reset sandbox
  *
  * This functions implements the cold reboot of the sandbox. It relaunches the
@@ -86,5 +42,37 @@ void sandbox_reset(void);
 
 /* Exit sandbox (quit U-Boot) */
 void __noreturn sandbox_exit(void);
+
+/**
+ * sandbox_init() - init sandbox
+ *
+ * This function initialises sandbox state, parses arguments, and sets up the
+ * global data structure, but does not call board_init_f().
+ *
+ * The caller must zero @data before calling this function. This function sets
+ * gd to point to @data so it must remain valid for the life of sandbox.
+ *
+ * @argc:	the number of arguments passed to the program
+ * @argv:	array of argc pointers, plus a NULL terminator
+ * @data:	pointer to global data structure to init
+ * Return: 0 if OK, -ve on error
+ */
+int sandbox_init(int argc, char *argv[], struct global_data *data);
+
+/**
+ * sandbox_main() - main entrypoint for sandbox
+ *
+ * @argc:	the number of arguments passed to the program
+ * @argv:	array of argc+1 pointers, of which the last one is null
+ *
+ * This calls sandbox_init(), then board_init_f/r(). It does not return unless
+ * something goes wrong.
+ *
+ * @argc:	the number of arguments passed to the program
+ * @argv:	array of argc pointers, plus a NULL terminator
+ *
+ * Return: 1 on error
+ */
+int sandbox_main(int argc, char *argv[]);
 
 #endif	/* _U_BOOT_SANDBOX_H_ */
