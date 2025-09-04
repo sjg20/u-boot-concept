@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: GPL-2.0+
+
+# compatible map for sandbox testing
+
+# Maps filenames in this directory to compatible strings used by Linux
+# for devicetrees.
+
+# Format:
+# filename (without .json suffix): compatible_string
+
+test-device-1: sandbox,test-device-1
+test-device-2: sandbox,test-device-2

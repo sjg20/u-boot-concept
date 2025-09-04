@@ -1938,6 +1938,30 @@
 
 	sysinfo {
 		compatible = "sandbox,sysinfo-sandbox";
+
+		smbios {
+			/* Type 1 table */
+			system {
+				manufacturer = "Sandbox Corp";
+				product = "Sandbox Computer";
+				version = "1.0";
+				serial = "SB12345678";
+				sku = "SANDBOX-SKU";
+				family = "Sandbox_Family";
+			};
+
+			/* Type 2 table */
+			baseboard {
+				manufacturer = "Sandbox Boards";
+				product = "Sandbox Motherboard";
+				asset-tag = "SB-ASSET-001";
+			};
+
+			/* Type 3 table */
+			chassis {
+				manufacturer = "Sandbox Chassis Inc";
+			};
+		};
 	};
 
 	sysinfo-gpio {

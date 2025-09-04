@@ -32,6 +32,7 @@ Implementation
    directories
    bloblist
    bootstd/index
+   chid
    ci_testing
    commands
    config_binding

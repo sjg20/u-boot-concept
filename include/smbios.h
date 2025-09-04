@@ -60,6 +60,28 @@ struct str_lookup_table {
 	const char *str;
 };
 
+/**
+ * struct smbios_entry - SMBIOS 2.1 (32-bit) Entry Point structure
+ *
+ * This structure represents the SMBIOS Entry Point as defined in the
+ * SMBIOS specification version 2.1+. It serves as the starting point
+ * for locating SMBIOS tables in system memory.
+ *
+ * @anchor: Entry Point Structure anchor string "_SM_"
+ * @checksum: Checksum of the Entry Point Structure
+ * @length: Length of the Entry Point Structure, formatted area
+ * @major_ver: Major version of the SMBIOS specification implemented
+ * @minor_ver: Minor version of the SMBIOS specification implemented
+ * @max_struct_size: Size of the largest SMBIOS structure
+ * @entry_point_rev: Entry Point Structure Revision implemented
+ * @formatted_area: Reserved formatted area, set to 0
+ * @intermediate_anchor: Intermediate Entry Point Structure anchor "_DMI_"
+ * @intermediate_checksum: Checksum of intermediate Entry Point Structure
+ * @struct_table_length: Total length in bytes of SMBIOS Structure Table
+ * @struct_table_address: 32-bit physical starting address of table
+ * @struct_count: Total number of SMBIOS structures present in the table
+ * @bcd_rev: BCD revision of the SMBIOS specification (e.g. 0x21 for v2.1)
+ */
 struct __packed smbios_entry {
 	u8 anchor[4];
 	u8 checksum;
@@ -79,36 +101,74 @@ struct __packed smbios_entry {
 
 /**
  * struct smbios3_entry - SMBIOS 3.0 (64-bit) Entry Point structure
+ *
+ * This structure represents the SMBIOS 3.0+ Entry Point as defined in the
+ * SMBIOS specification version 3.0+. It provides 64-bit addressing support
+ * and serves as the starting point for locating SMBIOS tables in memory.
+ *
+ * @anchor: Entry Point Structure anchor string "_SM3_"
+ * @checksum: Checksum of the Entry Point Structure
+ * @length: Length of the Entry Point Structure
+ * @major_ver: Major version of the SMBIOS specification implemented
+ * @minor_ver: Minor version of the SMBIOS specification implemented
+ * @doc_rev: Revision of the SMBIOS specification document
+ * @entry_point_rev: Revision of the Entry Point Structure
+ * @reserved: Reserved field, must be 0
+ * @table_maximum_size: Maximum size of SMBIOS Structure Table
+ * @struct_table_address: 64-bit physical starting address of table
  */
 struct __packed smbios3_entry {
-	/** @anchor: anchor string */
 	u8 anchor[5];
-	/** @checksum: checksum of the entry point structure */
 	u8 checksum;
-	/** @length: length of the entry point structure */
 	u8 length;
-	/** @major_ver: major version of the SMBIOS specification */
 	u8 major_ver;
-	/** @minor_ver: minor version of the SMBIOS specification */
 	u8 minor_ver;
-	/** @docrev: revision of the SMBIOS specification */
 	u8 doc_rev;
-	/** @entry_point_rev: revision of the entry point structure */
 	u8 entry_point_rev;
-	/** @reserved: reserved */
 	u8 reserved;
-	/** maximum size of SMBIOS table */
 	u32 table_maximum_size;
-	/** @struct_table_address: 64-bit physical starting address */
 	u64 struct_table_address;
 };
 
+/**
+ * struct smbios_header - Common header for all SMBIOS structures
+ *
+ * This header appears at the beginning of every SMBIOS structure and
+ * provides basic identification and size information for the structure.
+ *
+ * @type: SMBIOS structure type (0-127 for standard types)
+ * @length: Length of the formatted portion of the structure in bytes
+ * @handle: Unique 16-bit identifier for this structure instance
+ */
 struct __packed smbios_header {
 	u8 type;
 	u8 length;
 	u16 handle;
 };
 
+/**
+ * struct smbios_type0 - SMBIOS Type 0 (BIOS Information) structure
+ *
+ * This structure contains information about the BIOS/UEFI firmware
+ * including vendor, version, release date, size, characteristics,
+ * and version information for both BIOS and embedded controller.
+ *
+ * @hdr: Common SMBIOS structure header
+ * @vendor: String number for BIOS vendor name
+ * @bios_ver: String number for BIOS version
+ * @bios_start_segment: Segment location of BIOS starting address
+ * @bios_release_date: String number for BIOS release date
+ * @bios_rom_size: Size of BIOS image
+ * @bios_characteristics: BIOS characteristics bit field
+ * @bios_characteristics_ext1: BIOS characteristics extension byte 1
+ * @bios_characteristics_ext2: BIOS characteristics extension byte 2
+ * @bios_major_release: Major release number of system BIOS
+ * @bios_minor_release: Minor release number of system BIOS
+ * @ec_major_release: Major release number of embedded controller
+ * @ec_minor_release: Minor release number of embedded controller
+ * @extended_bios_rom_size: Extended size of BIOS image
+ * @eos: End-of-structure marker (double null bytes)
+ */
 struct __packed smbios_type0 {
 	struct smbios_header hdr;
 	u8 vendor;
@@ -131,6 +191,24 @@ struct __packed smbios_type0 {
 #define SMBIOS_TYPE1_LENGTH_V21		0x19
 #define SMBIOS_TYPE1_LENGTH_V24		0x1b
 
+/**
+ * struct smbios_type1 - SMBIOS Type 1 (System Information) structure
+ *
+ * This structure contains information that identifies the system as a
+ * whole. It includes manufacturer, model, version, serial number, UUID,
+ * and other system-level identification information.
+ *
+ * @hdr: Common SMBIOS structure header
+ * @manufacturer: String number for manufacturer name
+ * @product_name: String number for product name
+ * @version: String number for version
+ * @serial_number: String number for serial number
+ * @uuid: Universal unique identifier for the system (16 bytes)
+ * @wakeup_type: Identifies the event that caused the system to power up
+ * @sku_number: String number for the system SKU
+ * @family: String number for the family of systems
+ * @eos: End-of-structure marker (double null bytes)
+ */
 struct __packed smbios_type1 {
 	struct smbios_header hdr;
 	u8 manufacturer;
@@ -146,6 +224,28 @@ struct __packed smbios_type1 {
 
 #define SMBIOS_TYPE2_CON_OBJ_HANDLE_SIZE sizeof(u16)
 
+/**
+ * struct smbios_type2 - SMBIOS Type 2 (Baseboard Information) structure
+ *
+ * This structure contains information about the motherboard or system
+ * baseboard including manufacturer, model, serial number, asset tag,
+ * feature flags, and information about contained objects.
+ *
+ * @hdr: Common SMBIOS structure header
+ * @manufacturer: String number for baseboard manufacturer name
+ * @product_name: String number for baseboard product name
+ * @version: String number for baseboard version
+ * @serial_number: String number for baseboard serial number
+ * @asset_tag_number: String number for asset tag
+ * @feature_flags: Collection of flags identifying baseboard features
+ * @chassis_location: String number describing baseboard location in chassis
+ * @chassis_handle: Handle of chassis containing this baseboard
+ * @board_type: Type of board (motherboard, processor card, etc.)
+ * @number_contained_objects: Number of contained object handles
+ * @eos: End-of-structure marker (double null bytes)
+ *
+ * Note: Dynamic bytes for contained object handles are inserted before @eos
+ */
 struct __packed smbios_type2 {
 	struct smbios_header hdr;
 	u8 manufacturer;
@@ -165,6 +265,79 @@ struct __packed smbios_type2 {
 	char eos[SMBIOS_STRUCT_EOS_BYTES];
 };
 
+/**
+ * enum smbios_chassis_type - SMBIOS System Enclosure Chassis Types
+ *
+ * Defines the standard chassis types as specified in the SMBIOS specification.
+ * The chassis type indicates the physical characteristics and form factor
+ * of the system enclosure.
+ */
+enum smbios_chassis_type {
+	SMBIOSCH_OTHER = 0x01,
+	SMBIOSCH_UNKNOWN = 0x02,
+	SMBIOSCH_DESKTOP = 0x03,
+	SMBIOSCH_LOW_PROFILE_DESKTOP = 0x04,
+	SMBIOSCH_PIZZA_BOX = 0x05,
+	SMBIOSCH_MINI_TOWER = 0x06,
+	SMBIOSCH_TOWER = 0x07,
+	SMBIOSCH_PORTABLE = 0x08,
+	SMBIOSCH_LAPTOP = 0x09,
+	SMBIOSCH_NOTEBOOK = 0x0a,
+	SMBIOSCH_HAND_HELD = 0x0b,
+	SMBIOSCH_DOCKING_STATION = 0x0c,
+	SMBIOSCH_ALL_IN_ONE = 0x0d,
+	SMBIOSCH_SUB_NOTEBOOK = 0x0e,
+	SMBIOSCH_SPACE_SAVING = 0x0f,
+	SMBIOSCH_LUNCH_BOX = 0x10,
+	SMBIOSCH_MAIN_SERVER = 0x11,
+	SMBIOSCH_EXPANSION = 0x12,
+	SMBIOSCH_SUB_CHASSIS = 0x13,
+	SMBIOSCH_BUS_EXPANSION = 0x14,
+	SMBIOSCH_PERIPHERAL = 0x15,
+	SMBIOSCH_RAID = 0x16,
+	SMBIOSCH_RACK_MOUNT = 0x17,
+	SMBIOSCH_SEALED_CASE_PC = 0x18,
+	SMBIOSCH_MULTI_SYSTEM = 0x19,
+	SMBIOSCH_COMPACT_PCI = 0x1a,
+	SMBIOSCH_ADVANCED_TCA = 0x1b,
+	SMBIOSCH_BLADE = 0x1c,
+	SMBIOSCH_BLADE_ENCLOSURE = 0x1d,
+	SMBIOSCH_TABLET = 0x1e,
+	SMBIOSCH_CONVERTIBLE = 0x1f,
+	SMBIOSCH_DETACHABLE = 0x20,
+	SMBIOSCH_IOT_GATEWAY = 0x21,
+	SMBIOSCH_EMBEDDED_PC = 0x22,
+	SMBIOSCH_MINI_PC = 0x23,
+	SMBIOSCH_STICK_PC = 0x24,
+};
+
+/**
+ * struct smbios_type3 - SMBIOS Type 3 (System Enclosure) structure
+ *
+ * This structure contains information about the system enclosure or chassis
+ * including manufacturer, type, version, serial number, asset tag, power
+ * states, thermal state, security status, and physical characteristics.
+ *
+ * @hdr: Common SMBIOS structure header
+ * @manufacturer: String number for chassis manufacturer name
+ * @chassis_type: Type of chassis (desktop, laptop, server, etc.)
+ * @version: String number for chassis version
+ * @serial_number: String number for chassis serial number
+ * @asset_tag_number: String number for asset tag
+ * @bootup_state: State of enclosure when last booted
+ * @power_supply_state: State of enclosure's power supply
+ * @thermal_state: Thermal state of the enclosure
+ * @security_status: Physical security status of the enclosure
+ * @oem_defined: OEM or BIOS vendor-specific information
+ * @height: Height of enclosure in 'U's (rack units)
+ * @number_of_power_cords: Number of power cords associated with enclosure
+ * @element_count: Number of contained element records
+ * @element_record_length: Length of each contained element record
+ * @sku_number: String number for chassis or enclosure SKU number
+ * @eos: End-of-structure marker (double null bytes)
+ *
+ * Note: Dynamic bytes for contained elements are inserted before @sku_number
+ */
 struct __packed smbios_type3 {
 	struct smbios_header hdr;
 	u8 manufacturer;
@@ -189,6 +362,43 @@ struct __packed smbios_type3 {
 	char eos[SMBIOS_STRUCT_EOS_BYTES];
 };
 
+/**
+ * struct smbios_type4 - SMBIOS Type 4 (Processor Information) structure
+ *
+ * This structure contains information about installed processors including
+ * manufacturer, family, model, speed, cache handles, core/thread counts,
+ * and other processor-specific characteristics and capabilities.
+ *
+ * @hdr: Common SMBIOS structure header
+ * @socket_design: String number for socket designation
+ * @processor_type: Type of processor (CPU, math processor, DSP, etc.)
+ * @processor_family: Processor family information
+ * @processor_manufacturer: String number for processor manufacturer
+ * @processor_id: Processor identification information (2 DWORDs)
+ * @processor_version: String number for processor version
+ * @voltage: Voltage of the processor
+ * @external_clock: External clock frequency in MHz
+ * @max_speed: Maximum processor speed in MHz
+ * @current_speed: Current processor speed in MHz
+ * @status: Processor status information
+ * @processor_upgrade: Processor socket type
+ * @l1_cache_handle: Handle of L1 cache information
+ * @l2_cache_handle: Handle of L2 cache information
+ * @l3_cache_handle: Handle of L3 cache information
+ * @serial_number: String number for processor serial number
+ * @asset_tag: String number for asset tag
+ * @part_number: String number for processor part number
+ * @core_count: Number of cores per processor socket
+ * @core_enabled: Number of enabled cores per processor socket
+ * @thread_count: Number of threads per processor socket
+ * @processor_characteristics: Processor characteristics
+ * @processor_family2: Extended processor family information
+ * @core_count2: Extended number of cores per processor socket
+ * @core_enabled2: Extended number of enabled cores per processor socket
+ * @thread_count2: Extended number of threads per processor socket
+ * @thread_enabled: Number of enabled threads per processor socket
+ * @eos: End-of-structure marker (double null bytes)
+ */
 struct __packed smbios_type4 {
 	struct smbios_header hdr;
 	u8 socket_design;
@@ -369,12 +579,11 @@ const struct smbios_entry *smbios_entry(u64 address, u32 size);
 /**
  * smbios_get_header() - Search for an SMBIOS header type
  *
- * @entry:     pointer to the first entry
- * @type:      SMBIOS type
- * @return:    NULL or a valid pointer to a struct smbios_header
+ * @info: SMBIOS info
+ * @type: SMBIOS type
+ * @return: NULL or a valid pointer to a struct smbios_header
  */
-const struct smbios_header *smbios_get_header(const struct smbios_info *info,
-					      int type);
+const void *smbios_get_header(const struct smbios_info *info, int type);
 
 /**
  * smbios_string() - Return string from SMBIOS

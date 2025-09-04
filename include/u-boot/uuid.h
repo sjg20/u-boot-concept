@@ -85,6 +85,8 @@ struct uuid {
 #define UUID_VARIANT_SHIFT	7
 #define UUID_VARIANT		0x1
 
+#define UUID_LEN		16
+
 int uuid_str_valid(const char *uuid);
 
 /*
@@ -147,14 +149,24 @@ void gen_rand_uuid_str(char *uuid_str, int str_format);
 struct efi_guid;
 
 /**
- * gen_v5_guid() - generate little endian v5 GUID from namespace and other seed data.
+ * gen_v5_guid_be() - generate big-endian v5 GUID from namespace and data
  *
  * @namespace:   pointer to UUID namespace salt
  * @guid:        pointer to allocated GUID output
  * @...:         NULL terminated list of seed data as pairs of pointers
  *               to data and their lengths
  */
-void gen_v5_guid(const struct uuid *namespace, struct efi_guid *guid, ...);
+void gen_v5_guid_be(const struct uuid *namespace, struct efi_guid *guid, ...);
+
+/**
+ * gen_v5_guid_le() - generate little-endian v5 GUID from namespace and data
+ *
+ * @namespace:   pointer to UUID namespace salt
+ * @guid:        pointer to allocated GUID output
+ * @...:         NULL terminated list of seed data as pairs of pointers
+ *               to data and their lengths
+ */
+void gen_v5_guid_le(const struct uuid *namespace, struct efi_guid *guid, ...);
 
 /**
  * uuid_str_to_le_bin() - Convert string UUID to little endian binary data.

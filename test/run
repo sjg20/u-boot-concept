@@ -102,6 +102,7 @@ run_test "u_boot_pylib" ./tools/u_boot_pylib/u_boot_pylib
 run_test "buildman" ./tools/buildman/buildman -t ${skip}
 run_test "fdt" ./tools/dtoc/test_fdt -t
 run_test "dtoc" ./tools/dtoc/dtoc -t
+run_test "hwids_to_dtsi" python3 ./test/scripts/test_hwids_to_dtsi.py
 
 # This needs you to set up Python test coverage tools.
 # To enable Python test coverage on Debian-type distributions (e.g. Ubuntu):

@@ -204,6 +204,21 @@ ifdef DEVICE_TREE_DEBUG
 u_boot_dtsi_options_debug = $(warning $(u_boot_dtsi_options_raw))
 endif
 
+# Computer Hardware Identification (CHID)
+# Convert files mentioned in the compatible.hwidmap file into .dtsi includes for
+# addition to the board's devicetree.
+ifdef CONFIG_CHID
+chid_hwids_dtsi=hwids.dtsi
+
+quiet_cmd_chid_dtsi_gen = CHID_DTSI_GEN $@
+cmd_chid_dtsi_gen = $(srctree)/scripts/hwids_to_dtsi.py \
+	-m $(srctree)/board/$(BOARDDIR)/hwids/compatible.hwidmap -o $@
+
+$(obj)/$(chid_hwids_dtsi): $(srctree)/board/$(BOARDDIR)/hwids/compatible.hwidmap \
+		$(wildcard $(srctree)/board/$(BOARDDIR)/hwids/*.txt) FORCE
+	$(call cmd,chid_dtsi_gen)
+endif
+
 # We use the first match to be included
 dtsi_include_list = $(strip $(u_boot_dtsi_options_debug) \
 	$(notdir $(firstword $(u_boot_dtsi_options))))
@@ -427,6 +442,12 @@ quiet_cmd_dtb = DTC_CHK $@
 else
 quiet_cmd_dtb = $(quiet_cmd_dtc)
       cmd_dtb = $(cmd_dtc)
+endif
+
+# Add CHID dependency to dtsi_include_list
+ifdef CONFIG_CHID
+dtsi_include_list += $(chid_hwids_dtsi)
+dtsi_include_list_deps += $(obj)/$(chid_hwids_dtsi)
 endif
 
 $(obj)/%.dtb: $(src)/%.dts $(DTC) $(dtsi_include_list_deps) $(DT_TMP_SCHEMA) FORCE

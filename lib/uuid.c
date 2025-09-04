@@ -432,19 +432,16 @@ static void configure_uuid(struct uuid *uuid, unsigned char version)
 	uuid->clock_seq_hi_and_reserved |= (UUID_VARIANT << UUID_VARIANT_SHIFT);
 }
 
-void gen_v5_guid(const struct uuid *namespace, struct efi_guid *guid, ...)
+static void gen_v5_guid_common(const struct uuid *namespace,
+			       struct efi_guid *guid, va_list args)
 {
 	sha1_context ctx;
-	va_list args;
 	const uint8_t *data;
-	uint32_t *tmp32;
-	uint16_t *tmp16;
 	uint8_t hash[SHA1_SUM_LEN];
 
 	sha1_starts(&ctx);
 	/* Hash the namespace UUID as salt */
 	sha1_update(&ctx, (unsigned char *)namespace, UUID_BIN_LEN);
-	va_start(args, guid);
 
 	while ((data = va_arg(args, const uint8_t *))) {
 		unsigned int len = va_arg(args, size_t);
@@ -452,13 +449,34 @@ void gen_v5_guid(const struct uuid *namespace, struct efi_guid *guid, ...)
 		sha1_update(&ctx, data, len);
 	}
 
-	va_end(args);
 	sha1_finish(&ctx, hash);
 
 	/* Truncate the hash into output UUID, it is already big endian */
 	memcpy(guid, hash, sizeof(*guid));
 
 	configure_uuid((struct uuid *)guid, 5);
+}
+
+void gen_v5_guid_be(const struct uuid *namespace, struct efi_guid *guid, ...)
+{
+	va_list args;
+
+	va_start(args, guid);
+	gen_v5_guid_common(namespace, guid, args);
+	va_end(args);
+
+	/* Keep big endian - no conversion needed */
+}
+
+void gen_v5_guid_le(const struct uuid *namespace, struct efi_guid *guid, ...)
+{
+	va_list args;
+	uint32_t *tmp32;
+	uint16_t *tmp16;
+
+	va_start(args, guid);
+	gen_v5_guid_common(namespace, guid, args);
+	va_end(args);
 
 	/* Make little endian */
 	tmp32 = (uint32_t *)&guid->b[0];

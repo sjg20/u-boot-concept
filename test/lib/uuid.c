@@ -67,8 +67,7 @@ static int lib_test_uuid_bits(struct unit_test_state *uts)
 		ut_assert((uuid[8] & UUID_VARIANT_MASK) == (UUID_VARIANT << UUID_VARIANT_SHIFT));
 
 		/* Test v5, use the v4 UUID as the namespace */
-		gen_v5_guid((struct uuid *)uuid,
-			    &guid, "test", 4, NULL);
+		gen_v5_guid_le((struct uuid *)uuid, &guid, "test", 4, NULL);
 
 		printf("v5 GUID: %pUl\n", (efi_guid_t *)uuid);
 
@@ -105,10 +104,9 @@ static int lib_test_dynamic_uuid_case(struct unit_test_state *uts,
 		efi_guid_t uuid;
 		char uuid_str[37];
 
-		gen_v5_guid(&namespace, &uuid,
-			    data->compatible, strlen(data->compatible),
-			    image, u16_strlen(image) * sizeof(uint16_t),
-			    NULL);
+		gen_v5_guid_le(&namespace, &uuid, data->compatible,
+			       strlen(data->compatible), image,
+			       u16_strlen(image) * sizeof(u16), NULL);
 		uuid_bin_to_str((unsigned char *)&uuid, uuid_str, UUID_STR_FORMAT_GUID);
 
 		ut_asserteq_str(expected_uuid, uuid_str);

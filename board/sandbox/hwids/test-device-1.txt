@@ -1,0 +1,22 @@
+Computer Information
+--------------------
+BiosVendor: U-Boot
+BiosVersion: 2025.09
+BiosMajorRelease: 25
+BiosMinorRelease: 9
+FirmwareMajorRelease: ff
+FirmwareMinorRelease: ff
+Manufacturer: Sandbox Corp
+Family: Sandbox_Family
+ProductName: Sandbox Computer
+ProductSku: SANDBOX-SKU
+EnclosureKind: 2
+BaseboardManufacturer: Sandbox Boards
+BaseboardProduct: Sandbox Motherboard
+Hardware IDs
+------------
+{753cbd77-c567-521e-8931-e615613198f1}   <- Manufacturer + Family + ProductName + ProductSku + BiosVendor + BiosVersion + BiosMajorRelease + BiosMinorRelease
+{479402d0-272b-5214-9300-e59e3b4d606e}   <- Manufacturer + Family + ProductName + BiosVendor + BiosVersion + BiosMajorRelease + BiosMinorRelease
+{3148892e-ac5e-5277-9abf-366a685445c2}   <- Manufacturer + ProductName + BiosVendor + BiosVersion + BiosMajorRelease + BiosMinorRelease
+{48aede6f-65db-51a5-8905-fdabdbc0685e}   <- Manufacturer + Family + ProductName
+{c0185db1-6111-5432-955a-e5ecdac0d351}   <- Manufacturer + ProductName

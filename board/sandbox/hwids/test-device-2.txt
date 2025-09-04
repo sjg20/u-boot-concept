@@ -1,0 +1,19 @@
+Computer Information
+--------------------
+BiosVendor: Another Corp
+BiosVersion: V2.1
+BiosMajorRelease: 2
+BiosMinorRelease: 1
+FirmwareMajorRelease: 02
+FirmwareMinorRelease: 01
+Manufacturer: Another Corp
+Family: Another Family
+ProductName: Test Device 2
+ProductSku: TEST-SKU-002
+EnclosureKind: b
+BaseboardManufacturer: Another
+BaseboardProduct: TestBoard2
+Hardware IDs
+------------
+{87654321-8765-4321-1234-987654321098}   <- Manufacturer + Family + ProductName + ProductSku + BiosVendor + BiosVersion + BiosMajorRelease + BiosMinorRelease
+{98765432-9876-5432-2345-098765432109}   <- Manufacturer + Family + ProductName + BiosVendor + BiosVersion + BiosMajorRelease + BiosMinorRelease

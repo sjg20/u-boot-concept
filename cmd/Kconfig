@@ -280,6 +280,16 @@ config CMD_SMBIOS
 	help
 	  Display the SMBIOS information.
 
+config CMD_CHID
+	bool "chid"
+	depends on CHID
+	default y
+	help
+	  Computer Hardware ID (CHID) utilities. This provides commands to
+	  extract hardware identification data from SMBIOS tables according
+	  to the Microsoft CHID specification. This is used by Windows Update
+	  and fwupd for hardware identification and firmware updates.
+
 endmenu
 
 menu "Boot commands"

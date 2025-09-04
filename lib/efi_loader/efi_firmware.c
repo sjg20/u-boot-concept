@@ -287,10 +287,10 @@ static efi_status_t efi_gen_capsule_guids(void)
 			log_err("fw_name is not defined. Not generating capsule GUIDs\n");
 			return EFI_INVALID_PARAMETER;
 		}
-		gen_v5_guid(&namespace,
-			    &fw_array[i].image_type_id,
-			    compatible, strlen(compatible),
-			    fw_array[i].fw_name, u16_strlen(fw_array[i].fw_name) * sizeof(uint16_t),
+		gen_v5_guid_le(&namespace, &fw_array[i].image_type_id,
+			       compatible, strlen(compatible),
+			       fw_array[i].fw_name,
+			       u16_strlen(fw_array[i].fw_name) * sizeof(u16),
 			    NULL);
 
 		log_debug("Image %ls UUID %pUl\n", fw_array[i].fw_name,

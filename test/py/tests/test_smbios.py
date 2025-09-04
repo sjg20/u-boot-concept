@@ -34,7 +34,7 @@ def test_cmd_smbios_sandbox(ubman):
     assert 'DMI type 0,' in output
     assert 'Vendor: U-Boot' in output
     assert 'DMI type 1,' in output
-    assert 'Manufacturer: sandbox' in output
+    assert 'Manufacturer: Sandbox Corp' in output
     assert 'DMI type 2,' in output
     assert 'DMI type 3,' in output
     assert 'DMI type 4,' in output
