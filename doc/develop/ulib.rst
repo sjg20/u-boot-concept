@@ -80,6 +80,55 @@ driver registration and other U-Boot subsystems. When using the static
 library, use a linker script and ``--whole-archive`` to ensure all linker lists
 are included.
 
+Simplified API
+--------------
+
+For simple programs that don't need full access to U-Boot internals, a simplified
+API is provided through ``<ulib.h>``. This hides the complexity of global data
+management and initialization.
+
+Simple Example
+~~~~~~~~~~~~~~
+
+.. code-block:: c
+
+    #include <stdio.h>
+    #include <ulib.h>
+
+    int main(int argc, char *argv[])
+    {
+        /* Simple one-line initialization */
+        if (ulib_simple_init(argv[0]) < 0) {
+            fprintf(stderr, "Failed to initialize U-Boot library\n");
+            return 1;
+        }
+
+        printf("Hello from U-Boot library!\n");
+        printf("Library version: %s\n", ulib_get_version());
+
+        ulib_cleanup();
+        return 0;
+    }
+
+Building with the Simplified API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using the provided build script::
+
+    cd examples/ulib
+    ./build.sh simple.c
+    LD_LIBRARY_PATH=/tmp/b/sandbox ./simple
+
+Or manually with gcc (simple approach)::
+
+    gcc -o myapp myapp.c -L/tmp/b/sandbox -lu-boot -Wl,-rpath,/tmp/b/sandbox
+    LD_LIBRARY_PATH=/tmp/b/sandbox ./myapp
+
+The key is to:
+1. Avoid including U-Boot headers that conflict with system headers
+2. Forward declare only the functions you need
+3. Link against libu-boot.so and set the library path
+
 Example Usage
 -------------
 

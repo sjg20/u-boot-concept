@@ -1895,6 +1895,8 @@ quiet_cmd_ulib_test = HOSTCC  $@
 
 test/ulib/ulib_test: test/ulib/ulib_test.o libu-boot.so FORCE
 	$(call if_changed,ulib_test)
+	@echo "  EXAMPLES examples/ulib"
+	$(Q)$(MAKE) -C $(srctree)/examples/ulib UBOOT_BUILD=$(abspath $(obj))
 
 # Build ulib_test_static that links with static library
 # Note: main.o is excluded from the static library to avoid conflicts

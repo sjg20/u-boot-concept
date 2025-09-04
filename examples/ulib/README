@@ -1,0 +1,73 @@
+U-Boot Library Example
+======================
+
+This directory contains example programs showing how to use the U-Boot library
+(libu-boot.so) in external C programs.
+
+Building U-Boot Library
+-----------------------
+
+First, build U-Boot with library support:
+
+    make O=/tmp/b/sandbox -j$(nproc) sandbox_defconfig all
+
+This creates:
+- /tmp/b/sandbox/libu-boot.so (shared library)
+- /tmp/b/sandbox/libu-boot.a (static library)
+
+Example Programs
+----------------
+
+The examples are built automatically as part of the U-Boot build. So far there
+is only one.
+
+**demo.c** - Demonstrates using U-Boot library functions
+
+- Shows how to init the library with ulib_init()
+- Uses U-Boot's OS functions (os_open(), os_fgets(), os_close())
+- Reads and displays system information
+
+Building Examples
+-----------------
+
+The examples are built automatically when building U-Boot with CONFIG_ULIB=y.
+
+To build manually:
+
+    # From this directory examples/ulib
+    make
+
+    # Or specify the build directory
+    make UBOOT_BUILD=/tmp/b/sandbox
+
+    # Build and run
+    make run-demo
+
+Running Examples
+----------------
+
+    # Run the demo
+    LD_LIBRARY_PATH=/tmp/b/sandbox ./demo
+
+Key Points
+----------
+
+- Avoid including U-Boot headers that conflict with system headers
+- Forward declare only the functions you need
+- Use ulib_init() to init the library
+- Use ulib_uninit() to clean up
+- Set LD_LIBRARY_PATH when running dynamically linked programs
+
+Copying for External Use
+-------------------------
+
+This directory can be copied elsewhere and used independently:
+
+    cp -r examples/ulib ~/my-project/
+    cd ~/my-project/ulib
+    make UBOOT_BUILD=/path/to/u-boot/build
+
+License
+-------
+
+All examples are licensed under GPL-2.0+
