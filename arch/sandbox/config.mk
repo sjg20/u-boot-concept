@@ -69,3 +69,6 @@ EFI_LDS := ${SRCDIR}/../../../arch/riscv/lib/elf_riscv64_efi.lds
 endif
 EFI_CRT0 := crt0_sandbox_efi.o
 EFI_RELOC := reloc_sandbox_efi.o
+
+# U-Boot Library
+LIB_LDS := $(srctree)/arch/sandbox/cpu/u-boot-lib.lds
