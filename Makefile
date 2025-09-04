@@ -1045,8 +1045,10 @@ INPUTS-$(CONFIG_X86) += u-boot-x86-start16.bin u-boot-x86-reset16.bin \
 
 ifdef CONFIG_CMDLINE
 ifneq ($(cc-name),clang)
+ifeq ($(NO_LIBS),)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
 INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static
+endif
 endif
 endif
 
