@@ -693,13 +693,14 @@ int sandbox_init(int argc, char *argv[], struct global_data *data)
 	return 0;
 }
 
-int sandbox_main(int argc, char *argv[])
+static int sandbox_flow(int argc, char *argv[], struct global_data *data,
+			uint flags)
 {
-	gd_t data;
 	int ret;
 
-	memset(&data, '\0', sizeof(data));
-	ret = sandbox_init(argc, argv, &data);
+	memset(data, '\0', sizeof(struct global_data));
+	data->flags = flags;
+	ret = sandbox_init(argc, argv, data);
 	if (ret)
 		goto err;
 
@@ -708,10 +709,29 @@ int sandbox_main(int argc, char *argv[])
 
 	board_init_r(gd->new_gd, 0);
 
-	/* NOTREACHED - board_init_r() does not return */
 	return 0;
 
 err:
 	printf("Error %d\n", ret);
 	return 1;
+}
+
+int sandbox_main(int argc, char *argv[])
+{
+	gd_t data;
+
+	sandbox_flow(argc, argv, &data, 0);
+
+	/* NOTREACHED - board_init_r() does not return */
+	return 1;
+}
+
+int ulib_init_with_data(char *progname, struct global_data *data)
+{
+	char *argv[] = {progname, NULL};
+	int ret;
+
+	ret = sandbox_flow(1, argv, data, GD_FLG_ULIB);
+
+	return ret;
 }
