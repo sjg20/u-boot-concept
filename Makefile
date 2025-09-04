@@ -1856,7 +1856,7 @@ endif
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
       cmd_libu-boot.so = $(CC) -shared -o $@ -Wl,--build-id=none \
-	-Wl,-T,$(srctree)/arch/sandbox/cpu/u-boot-lib.lds \
+	-Wl,-T,$(LIB_LDS) \
 	$(u-boot-init) \
 	$(KBUILD_LDFLAGS:%=-Wl,%) $(SANITIZERS) $(LTO_FINAL_LDFLAGS) \
 	-Wl,--whole-archive \
@@ -1865,7 +1865,8 @@ quiet_cmd_libu-boot.so = LD      $@
 	-Wl,--no-whole-archive \
 	$(PLATFORM_LIBS) -Wl,-Map -Wl,libu-boot.map
 
-libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
+libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
+		$(LIB_LDS) FORCE
 	$(call if_changed,libu-boot.so)
 
 # Build ulib_test that links with shared library
