@@ -154,6 +154,13 @@ obj-$(CONFIG_$(PHASE_)STRTO) += strto.o
 else
 # Main U-Boot always uses the full printf support
 obj-y += vsprintf.o strto.o
+
+# For ULIB builds, rename printf to ub_printf in vsprintf.o after compilation
+ifdef CONFIG_ULIB
+$(obj)/vsprintf.o: $(src)/vsprintf.c FORCE
+	$(call if_changed_dep,cc_o_c)
+	$(Q)$(OBJCOPY) --redefine-sym printf=ub_printf $@ 2>/dev/null || true
+endif
 obj-$(CONFIG_SSCANF) += sscanf.o
 endif
 obj-$(CONFIG_$(PHASE_)OID_REGISTRY) += oid_registry.o

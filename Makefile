@@ -1858,7 +1858,13 @@ endif
 
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
-      cmd_libu-boot.so = $(CC) -shared -o $@ -Wl,--build-id=none \
+      cmd_libu-boot.so = \
+	for obj in $(u-boot-init) $(filter-out %/main.o,$(u-boot-main)) $(u-boot-keep-syms-lto); do \
+		if [ -f "$$obj" ]; then \
+			$(OBJCOPY) --redefine-sym printf=ub_printf $$obj 2>/dev/null || true; \
+		fi; \
+	done; \
+	$(CC) -shared -o $@ -Wl,--build-id=none \
 	-Wl,-T,$(LIB_LDS) \
 	$(u-boot-init) \
 	$(KBUILD_LDFLAGS:%=-Wl,%) $(SANITIZERS) $(LTO_FINAL_LDFLAGS) \
@@ -1876,7 +1882,13 @@ libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
 # Create a fat archive with all object files (except arch/sandbox/cpu/main.o)
 # Note: We don't use partial linking to preserve the linker list sections
 quiet_cmd_libu-boot.a = AR      $@
-      cmd_libu-boot.a = rm -f $@ $@.tmp $@.objlist; \
+      cmd_libu-boot.a = \
+	for obj in $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto); do \
+		if [ -f "$$obj" ]; then \
+			$(OBJCOPY) --redefine-sym printf=ub_printf $$obj 2>/dev/null || true; \
+		fi; \
+	done; \
+	rm -f $@ $@.tmp $@.objlist; \
 	$(AR) rcT $@.tmp $(u-boot-init) \
 		$(u-boot-main) \
 		$(u-boot-keep-syms-lto); \
