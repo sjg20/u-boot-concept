@@ -10,7 +10,7 @@
  */
 
 #include <config.h>
-#include <api.h>
+#include <legacy_api.h>
 #include <bootstage.h>
 #include <cpu_func.h>
 #include <cyclic.h>
@@ -686,8 +686,8 @@ static void initcall_run_r(void)
 #endif
 	INITCALL(stdio_add_devices);
 	INITCALL(jumptable_init);
-#if CONFIG_IS_ENABLED(API)
-	INITCALL(api_init);
+#if CONFIG_IS_ENABLED(LEGACY_API)
+	INITCALL(legacy_api_init);
 #endif
 	INITCALL(console_init_r);	/* fully init console as a device */
 #if CONFIG_IS_ENABLED(DISPLAY_BOARDINFO_LATE)

@@ -100,7 +100,7 @@ static int unicode_test_u16_strcpy(struct unit_test_state *uts)
 LIB_TEST(unicode_test_u16_strcpy, 0);
 
 /* U-Boot uses UTF-16 strings in the EFI context only. */
-#if CONFIG_IS_ENABLED(EFI_LOADER) && !defined(API_BUILD)
+#if CONFIG_IS_ENABLED(EFI_LOADER) && !defined(LEGACY_API_BUILD)
 static int unicode_test_string16(struct unit_test_state *uts)
 {
 	char buf[20];

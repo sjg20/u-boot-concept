@@ -118,3 +118,15 @@ Deadline: 2023.04
 The serial subsystem has supported the driver model since late 2014.
 Maintainers should submit patches switching over to using CONFIG_DM_SERIAL and
 other base driver model options in time for inclusion in the 2022.10 release.
+
+CONFIG_LEGACY_API
+-----------------
+Deadline: 2028.01
+
+U-Boot has long supported an API which allows external programs to call entry
+points in U-Boot. This API does not support driver model and is not widely used.
+It is being replaced by a library approach (libu-boot.a/so) which is more
+flexible and could potentially support an automatically generated stub with
+those entry points.
+
+The API will be removed for the 2028.01 release.

@@ -18,7 +18,7 @@
 /* xx:xx:xx:xx:xx:xx\0 */
 #define MAC_ADDR_STRLEN 18
 
-#if defined(CONFIG_API) || defined(CONFIG_EFI_LOADER)
+#if defined(CONFIG_LEGACY_API) || defined(CONFIG_EFI_LOADER)
 void (*push_packet)(void *, int len) = 0;
 #endif
 static int net_try_count;
@@ -303,7 +303,7 @@ int net_lwip_rx(struct udevice *udev, struct netif *netif)
 
 void net_process_received_packet(uchar *in_packet, int len)
 {
-#if defined(CONFIG_API) || defined(CONFIG_EFI_LOADER)
+#if defined(CONFIG_LEGACY_API) || defined(CONFIG_EFI_LOADER)
 	if (push_packet)
 		(*push_packet)(in_packet, len);
 #endif

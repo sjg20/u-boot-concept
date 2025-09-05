@@ -8,7 +8,7 @@
 #include <config.h>
 #include <net.h>
 #include <linux/types.h>
-#include <api_public.h>
+#include <legacy_api_public.h>
 
 #define DEBUG
 #undef DEBUG
