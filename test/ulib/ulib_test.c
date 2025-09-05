@@ -13,7 +13,8 @@
 #include <string.h>
 
 #include <os.h>
-#include <u-boot.h>
+#include <u-boot-lib.h>
+#include <api.h>
 
 /* Runtime detection of link type using /proc/self/maps */
 static const char *detect_link_type(void)
@@ -44,9 +45,6 @@ static const char *detect_link_type(void)
 		return "statically linked (uses libu-boot.a)";
 }
 
-/* Forward declaration for U-Boot printf function */
-extern int ub_printf(const char *fmt, ...);
-
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -59,6 +57,7 @@ int main(int argc, char *argv[])
 
 	ub_printf("Hello, world from ub_printf\n");
 	ub_printf("\n- U-Boot\n");
+	printf("another printf()\n");
 	ub_printf("\nPS: This program is %s\n", detect_link_type());
 
 	return ret;
