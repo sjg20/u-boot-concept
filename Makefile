@@ -1856,20 +1856,11 @@ ifeq ($(CONFIG_RISCV),y)
 	@tools/prelink-riscv $@
 endif
 
-# Process symbols in object files for U-Boot library
-quiet_cmd_process_symbols = SYMBOLS $@
-      cmd_process_symbols = \
-	$(PYTHON3) $(srctree)/scripts/process_symbols.py $(srctree)/api/symbols.def \
-		$(u-boot-init) $(filter-out %/main.o,$(u-boot-main)) $(u-boot-keep-syms-lto) && \
-	touch $@
-
-.libu-boot-symbols-processed: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
-		$(srctree)/api/symbols.def FORCE
-	$(call if_changed,process_symbols)
-
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
       cmd_libu-boot.so = \
+	$(PYTHON3) $(srctree)/scripts/process_symbols.py $(srctree)/api/symbols.def \
+		$(u-boot-init) $(filter-out %/main.o,$(u-boot-main)) $(u-boot-keep-syms-lto); \
 	$(CC) -shared -o $@ -Wl,--build-id=none \
 	-Wl,-T,$(LIB_LDS) \
 	$(u-boot-init) \
@@ -1880,7 +1871,8 @@ quiet_cmd_libu-boot.so = LD      $@
 	-Wl,--no-whole-archive \
 	$(PLATFORM_LIBS) -Wl,-Map -Wl,libu-boot.map
 
-libu-boot.so: .libu-boot-symbols-processed $(LIB_LDS) FORCE
+libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
+		$(LIB_LDS) $(srctree)/api/symbols.def FORCE
 	$(call if_changed,libu-boot.so)
 
 # Build U-Boot as a static library
@@ -2335,7 +2327,7 @@ CLEAN_FILES += include/autoconf.mk* include/bmp_logo.h include/bmp_logo_data.h \
 	       itb.fit.fit itb.fit.itb itb.map spl.map mkimage-out.rom.mkimage \
 	       mkimage.rom.mkimage mkimage-in-simple-bin* rom.map simple-bin* \
 	       idbloader-spi.img lib/efi_loader/helloworld_efi.S *.itb \
-	       Test* capsule*.*.efi-capsule capsule*.map .libu-boot-symbols-processed
+	       Test* capsule*.*.efi-capsule capsule*.map
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl vpl \
