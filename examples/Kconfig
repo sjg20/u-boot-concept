@@ -9,3 +9,11 @@ config EXAMPLES
 	help
 	  U-Boot provides an legacy API for standalone applications. Examples
 	  are provided in directory examples/.
+
+config EXAMPLES_STANDALONE
+	bool "Compile standalone examples"
+	depends on EXAMPLES
+	default y
+	help
+	  Build the various examples in the standalone/directory for use with
+	  the legacy API.

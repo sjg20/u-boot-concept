@@ -6,6 +6,6 @@ ifdef FTRACE
 subdir-ccflags-y += -finstrument-functions -DFTRACE
 endif
 
-subdir-y += standalone
+subdir-$(EXAMPLES_STANDALONE) += standalone
 subdir-$(CONFIG_LEGACY_API) += api
 endif
