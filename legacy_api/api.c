@@ -638,7 +638,7 @@ int syscall(int call, int *retval, ...)
 	return 1;
 }
 
-int api_init(void)
+int legacy_api_init(void)
 {
 	struct api_signature *sig;
 
