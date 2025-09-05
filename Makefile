@@ -1045,7 +1045,10 @@ INPUTS-$(CONFIG_X86) += u-boot-x86-start16.bin u-boot-x86-reset16.bin \
 
 ifdef CONFIG_CMDLINE
 ifneq ($(cc-name),clang)
+ifeq ($(NO_LIBS),)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
+INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static
+endif
 endif
 endif
 
@@ -1856,7 +1859,7 @@ endif
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
       cmd_libu-boot.so = $(CC) -shared -o $@ -Wl,--build-id=none \
-	-Wl,-T,$(srctree)/arch/sandbox/cpu/u-boot-lib.lds \
+	-Wl,-T,$(LIB_LDS) \
 	$(u-boot-init) \
 	$(KBUILD_LDFLAGS:%=-Wl,%) $(SANITIZERS) $(LTO_FINAL_LDFLAGS) \
 	-Wl,--whole-archive \
@@ -1865,8 +1868,23 @@ quiet_cmd_libu-boot.so = LD      $@
 	-Wl,--no-whole-archive \
 	$(PLATFORM_LIBS) -Wl,-Map -Wl,libu-boot.map
 
-libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
+libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
+		$(LIB_LDS) FORCE
 	$(call if_changed,libu-boot.so)
+
+# Build U-Boot as a static library
+# Create a fat archive with all object files (except arch/sandbox/cpu/main.o)
+# Avoid partial linking so as to preserve the linker-list sections
+quiet_cmd_libu-boot.a = AR      $@
+      cmd_libu-boot.a = rm -f $@ $@.tmp $@.objlist; \
+	$(AR) rcT $@.tmp $(u-boot-init) $(u-boot-main) \
+		$(u-boot-keep-syms-lto); \
+	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o$$" > $@.objlist; \
+	cat $@.objlist | xargs $(AR) rcs $@; \
+	rm -f $@.tmp $@.objlist
+
+libu-boot.a: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
+	$(call if_changed,libu-boot.a)
 
 # Build ulib_test that links with shared library
 quiet_cmd_ulib_test = HOSTCC  $@
@@ -1876,6 +1894,22 @@ quiet_cmd_ulib_test = HOSTCC  $@
 
 test/ulib/ulib_test: test/ulib/ulib_test.o libu-boot.so FORCE
 	$(call if_changed,ulib_test)
+
+# Build ulib_test_static to test linking with the static library
+# main.o is excluded from the static library since the main program is provided
+# by the user
+# Use --whole-archive to include all linker lists
+# Use a linker script to ensure proper alignment of linker-lists
+quiet_cmd_ulib_test_static = HOSTCC  $@
+      cmd_ulib_test_static = $(HOSTCC) $(HOSTCFLAGS) \
+	-I$(srctree)/arch/sandbox/include -o $@ $< \
+	-Wl,-T,$(LIB_STATIC_LDS) \
+	-Wl,--whole-archive $(obj)/libu-boot.a -Wl,--no-whole-archive \
+	-lpthread -ldl -lSDL2 -lrt -Wl,-z,noexecstack
+
+test/ulib/ulib_test_static: test/ulib/ulib_test.o libu-boot.a \
+		$(LIB_STATIC_LDS) FORCE
+	$(call if_changed,ulib_test_static)
 
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@
@@ -2277,7 +2311,8 @@ CLEAN_FILES += include/autoconf.mk* include/bmp_logo.h include/bmp_logo_data.h \
 	       itb.fit.fit itb.fit.itb itb.map spl.map mkimage-out.rom.mkimage \
 	       mkimage.rom.mkimage mkimage-in-simple-bin* rom.map simple-bin* \
 	       idbloader-spi.img lib/efi_loader/helloworld_efi.S *.itb \
-	       Test* capsule*.*.efi-capsule capsule*.map
+	       Test* capsule*.*.efi-capsule capsule*.map \
+	       test/ulib/ulib_test test/ulib/ulib_test_static
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl vpl \

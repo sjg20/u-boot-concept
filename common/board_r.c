@@ -417,6 +417,9 @@ static int should_load_env(void)
 
 static int initr_env(void)
 {
+	if (gd_ulib())
+		return 0;
+
 	/* initialize environment */
 	if (should_load_env())
 		env_relocate();
@@ -455,6 +458,9 @@ static int initr_malloc_bootparams(void)
 #if CONFIG_IS_ENABLED(NET) || CONFIG_IS_ENABLED(NET_LWIP)
 static int initr_net(void)
 {
+	if (gd_ulib())
+		return 0;
+
 	puts("Net:   ");
 	eth_initialize();
 #if defined(CONFIG_RESET_PHY_R)
@@ -533,6 +539,9 @@ static int dm_announce(void)
 
 static int run_main_loop(void)
 {
+	if (gd_ulib())
+		return 0;
+
 #ifdef CONFIG_SANDBOX
 	sandbox_main_loop_init();
 #endif
@@ -761,6 +770,11 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	gd->flags &= ~GD_FLG_LOG_READY;
 
 	initcall_run_r();
+
+#ifdef CONFIG_ULIB
+	if (gd_ulib())
+		return;
+#endif
 
 	/* NOTREACHED - run_main_loop() does not return */
 	hang();
