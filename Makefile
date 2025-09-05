@@ -865,7 +865,7 @@ c_flags := $(KBUILD_CFLAGS) $(cpp_flags)
 
 HAVE_VENDOR_COMMON_LIB = $(if $(wildcard $(srctree)/board/$(VENDOR)/common/Makefile),y,n)
 
-libs-$(CONFIG_API) += api/
+libs-$(CONFIG_API) += legacy_api/
 libs-$(HAVE_VENDOR_COMMON_LIB) += board/$(VENDOR)/common/
 libs-y += boot/
 libs-$(CONFIG_CMDLINE) += cmd/
