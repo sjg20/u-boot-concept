@@ -1047,7 +1047,7 @@ ifdef CONFIG_CMDLINE
 ifneq ($(cc-name),clang)
 ifeq ($(NO_LIBS),)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
-INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static
+INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static examples/api/demo_static
 endif
 endif
 endif
@@ -1921,6 +1921,11 @@ quiet_cmd_ulib_test_static = HOSTCC  $@
 test/ulib/ulib_test_static: test/ulib/ulib_test.o libu-boot.a \
 		$(LIB_STATIC_LDS) FORCE
 	$(call if_changed,ulib_test_static)
+
+examples/api/demo_static: libu-boot.a FORCE
+	$(Q)$(MAKE) -C $(srctree)/examples/api demo_static \
+		UBOOT_BUILD=$(abspath $(obj)) \
+		LIB_STATIC_LDS=$(LIB_STATIC_LDS)
 
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@

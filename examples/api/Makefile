@@ -21,11 +21,22 @@ all: $(PROGS)
 demo: demo.c
 	gcc -o $@ $< -L$(UBOOT_BUILD) -lu-boot -Wl,-rpath,$(UBOOT_BUILD)
 
+# Build demo_static with linker script for proper linker list handling
+demo_static: demo.c
+	@mkdir -p $(UBOOT_BUILD)/examples/api
+	gcc -o $(UBOOT_BUILD)/examples/api/$@ $< \
+		-Wl,-T,$(LIB_STATIC_LDS) \
+		-Wl,--whole-archive $(UBOOT_BUILD)/libu-boot.a -Wl,--no-whole-archive \
+		-lSDL2 -lpthread -lm -ldl -static-libgcc
+
 # Run targets
 run-demo: demo
 	LD_LIBRARY_PATH=$(UBOOT_BUILD) ./demo
 
-clean:
-	rm -f $(PROGS) *.o
+run-demo-static: demo_static
+	$(UBOOT_BUILD)/examples/api/demo_static
 
-.PHONY: all clean run-demo
+clean:
+	rm -f $(PROGS) *.o $(UBOOT_BUILD)/examples/api/demo_static
+
+.PHONY: all clean run-demo run-demo-static demo_static
