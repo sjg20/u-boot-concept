@@ -14,6 +14,8 @@ PROGS = demo
 
 # Default target
 all: $(PROGS)
+	@mkdir -p $(UBOOT_BUILD)/examples/api
+	@cp $(PROGS) $(UBOOT_BUILD)/examples/api/
 
 # Build rules for each program
 demo: demo.c

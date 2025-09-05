@@ -12,16 +12,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "uboot_api.h"
 
-/* Forward declarations for U-Boot functions we want to use */
-int ulib_init(char *progname);
-void ulib_uninit(void);
-
-/* OS functions from U-Boot */
-int os_open(const char *pathname, int flags);
-int os_close(int fd);
-ssize_t os_read(int fd, void *buf, size_t count);
-char *os_fgets(char *str, int size, int fd);
 
 int main(int argc, char *argv[])
 {
