@@ -2,11 +2,9 @@
 #
 # Copyright 2025 Simon Glass <sjg@chromium.org>
 
-obj-y += ulib_test.o
+# We don't need anything here as the files in this directory are directly built
+# by the main Makefile
+#
+# We cannot use 'obj-y += ulib/' in test/Makefile since we won't want these
+# files included in the main build.
 
-# Link with the shared library
-HOSTCFLAGS_ulib_test.o += -I$(srctree)/arch/sandbox/include
-HOSTLDLIBS_ulib_test += -L$(obj)/../.. -lu-boot -Wl,-rpath,$(obj)/../..
-
-# Ensure shared library is built first
-$(obj)/ulib_test: $(obj)/../../libu-boot.so
