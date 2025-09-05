@@ -15,14 +15,6 @@ config SYS_MMC_MAX_DEVICE
 	int  "Maximum number of MMC devices exposed via the legacy API"
 	default 1
 
-config EXAMPLES
-	bool "Compile legacy API examples"
-	depends on !SANDBOX
-	default y if ARCH_QEMU_ARM
-	help
-	  U-Boot provides an legacy API for standalone applications. Examples
-	  are provided in directory examples/.
-
 config STANDALONE_LOAD_ADDR
 	depends on EXAMPLES
 	hex "Address in memory to link standalone applications to"
