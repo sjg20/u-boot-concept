@@ -291,7 +291,7 @@ struct os_dirent_node {
 	/**
 	 * @size:	size of file in bytes
 	 */
-	ulong size;
+	unsigned long size;
 	/**
 	 * @type:	type of entry
 	 */

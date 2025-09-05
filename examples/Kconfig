@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: GPL-2.0+
+#
+# Copyright 2017 Emmanuel Vadot <manu@bidouilliste.com>
+
+config EXAMPLES
+	bool "Compile legacy API examples"
+	default y if ARCH_QEMU_ARM
+	help
+	  U-Boot provides an legacy API for standalone applications. Examples
+	  are provided in directory examples/.
+
+config EXAMPLES_STANDALONE
+	bool "Compile standalone examples"
+	depends on !SANDBOX
+	depends on EXAMPLES
+	default y
+	help
+	  Build the various examples in the standalone/directory for use with
+	  the legacy API.

@@ -337,13 +337,37 @@ Check packing of Python tools:
   script:
     - make pip
 
+Examples:
+  extends: .test_suites
+  script:
+    - git config --global user.name "GitLab CI Runner";
+      git config --global user.email trini@konsulko.com;
+      git config --global --add safe.directory "${CI_PROJECT_DIR}";
+      export USER=gitlab;
+      export UBOOT_TRAVIS_BUILD_DIR=/tmp/sandbox;
+      set +e;
+      ./tools/buildman/buildman -T0 -o ${UBOOT_TRAVIS_BUILD_DIR} -w
+        --board sandbox;
+      set -e;
+    - echo "Building examples";
+      cd examples/ulib;
+      make UBOOT_BUILD=${UBOOT_TRAVIS_BUILD_DIR} srctree=../..
+    - echo "Running static";
+      ./demo_static
+    - echo "Running dynamic";
+      LD_LIBRARY_PATH=${UBOOT_TRAVIS_BUILD_DIR} ./demo
+
 # Template for running the 'make check' tools
 .python_check_template:
   stage: test.py
   rules:
     - if: $LAB_ONLY == "1"
       when: never
-    - if: $TEST_SUITES == "1"
+    - if: $TEST_PY == "1"
+      when: always
+    - if: $TEST_PY == $CI_JOB_NAME
+      when: always
+    - if: $TEST_PY == $TEST_PY_BD
       when: always
     - when: never
   before_script:

@@ -1048,6 +1048,9 @@ ifneq ($(cc-name),clang)
 ifeq ($(NO_LIBS),)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
 INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static
+ifdef CONFIG_EXAMPLES
+INPUTS-$(CONFIG_ULIB) += examples_ulib
+endif
 endif
 endif
 endif
@@ -1905,11 +1908,24 @@ quiet_cmd_ulib_test_static = HOSTCC  $@
 	-I$(srctree)/arch/sandbox/include -o $@ $< \
 	-Wl,-T,$(LIB_STATIC_LDS) \
 	-Wl,--whole-archive $(obj)/libu-boot.a -Wl,--no-whole-archive \
-	-lpthread -ldl -lSDL2 -lrt -Wl,-z,noexecstack
+	-ldl $(PLATFORM_LIBS) -Wl,-z,noexecstack
 
 test/ulib/ulib_test_static: test/ulib/ulib_test.o libu-boot.a \
 		$(LIB_STATIC_LDS) FORCE
 	$(call if_changed,ulib_test_static)
+
+# abspath is used since many paths are relative
+PHONY += examples_ulib
+examples_ulib: libu-boot.a libu-boot.so FORCE
+	$(Q)$(MAKE) -C $(srctree)/examples/ulib \
+		UBOOT_BUILD=$(abspath $(obj)) \
+		EXAMPLE_DIR=. \
+		OUTDIR=$(abspath $(obj)/examples/ulib) \
+		srctree="$(abspath $(srctree))" \
+		CC="$(CC)" \
+		CFLAGS="$(CFLAGS)" \
+		PLATFORM_LIBS="$(PLATFORM_LIBS)" \
+		LIB_STATIC_LDS="$(abspath $(LIB_STATIC_LDS))"
 
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@
@@ -2339,6 +2355,8 @@ $(clean-dirs):
 clean: $(clean-dirs)
 	$(call cmd,rmdirs)
 	$(call cmd,rmfiles)
+	@$(MAKE) -C $(srctree)/examples/ulib clean \
+		OUTDIR=$(abspath $(obj)/examples/ulib)
 	@find $(if $(KBUILD_EXTMOD), $(KBUILD_EXTMOD), .) $(RCS_FIND_IGNORE) \
 		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
 		-o -name '*.ko.*' -o -name '*.su' -o -name '*.pyc' \
