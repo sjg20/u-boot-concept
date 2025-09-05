@@ -11,6 +11,8 @@ snprintf
 vprintf
 vsprintf
 vsnprintf
+putc
+puts
 
 # Example of explicit mapping for custom naming
 # scnprintf=ub_scnprintf_custom
