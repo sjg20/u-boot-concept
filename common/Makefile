@@ -102,9 +102,3 @@ obj-$(CONFIG_$(PHASE_)AVB_VERIFY) += avb_verify.o
 obj-$(CONFIG_$(PHASE_)STACKPROTECTOR) += stackprot.o
 obj-$(CONFIG_SCP03) += scp03.o
 
-# For ULIB builds, apply symbol redefinitions from api/symbols.def
-ifdef CONFIG_ULIB
-$(obj)/console.o: $(src)/console.c $(srctree)/api/symbols.def FORCE
-	$(call if_changed_dep,cc_o_c)
-	$(Q)$(PYTHON3) $(srctree)/scripts/process_symbols.py $(srctree)/api/symbols.def $@
-endif

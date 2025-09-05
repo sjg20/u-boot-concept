@@ -1880,13 +1880,13 @@ libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
 # Note: We don't use partial linking to preserve the linker list sections
 quiet_cmd_libu-boot.a = AR      $@
       cmd_libu-boot.a = \
-	$(PYTHON3) $(srctree)/scripts/process_symbols.py $(srctree)/api/symbols.def \
-		$(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto); \
 	rm -f $@ $@.tmp $@.objlist; \
 	$(AR) rcT $@.tmp $(u-boot-init) \
 		$(u-boot-main) \
 		$(u-boot-keep-syms-lto); \
 	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o\$$" > $@.objlist; \
+	$(PYTHON3) $(srctree)/scripts/process_symbols.py $(srctree)/api/symbols.def \
+		$$(cat $@.objlist); \
 	cat $@.objlist | xargs $(AR) rcs $@; \
 	rm -f $@.tmp $@.objlist
 

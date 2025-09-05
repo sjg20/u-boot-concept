@@ -155,12 +155,6 @@ else
 # Main U-Boot always uses the full printf support
 obj-y += vsprintf.o strto.o
 
-# For ULIB builds, apply symbol redefinitions from api/symbols.def
-ifdef CONFIG_ULIB
-$(obj)/vsprintf.o: $(src)/vsprintf.c $(srctree)/api/symbols.def FORCE
-	$(call if_changed_dep,cc_o_c)
-	$(Q)$(PYTHON3) $(srctree)/scripts/process_symbols.py $(srctree)/api/symbols.def $@
-endif
 obj-$(CONFIG_SSCANF) += sscanf.o
 endif
 obj-$(CONFIG_$(PHASE_)OID_REGISTRY) += oid_registry.o
