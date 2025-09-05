@@ -10,7 +10,7 @@
 
 #include <config.h>
 #include <linux/types.h>
-#include <api_public.h>
+#include <legacy_api_public.h>
 
 #include <asm/global_data.h>
 

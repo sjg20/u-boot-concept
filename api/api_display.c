@@ -3,7 +3,7 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  */
 
-#include <api_public.h>
+#include <legacy_api_public.h>
 #include <log.h>
 #include <linux/types.h>
 

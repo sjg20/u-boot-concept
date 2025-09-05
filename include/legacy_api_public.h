@@ -5,8 +5,8 @@
  * Written by: Rafal Jaworowski <raj@semihalf.com>
  */
 
-#ifndef _API_PUBLIC_H_
-#define _API_PUBLIC_H_
+#ifndef _LEGACY_API_PUBLIC_H_
+#define _LEGACY_API_PUBLIC_H_
 
 #include <linux/types.h>
 
@@ -139,4 +139,4 @@ struct display_info {
 	int screen_cols;
 };
 
-#endif /* _API_PUBLIC_H_ */
+#endif /* _LEGACY_API_PUBLIC_H_ */

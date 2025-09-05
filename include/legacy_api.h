@@ -4,8 +4,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#ifndef __API_H
-#define __API_H
+#ifndef __LEGACY_API_H
+#define __LEGACY_API_H
 
 /**
  * api_init() - Initialize API for external applications

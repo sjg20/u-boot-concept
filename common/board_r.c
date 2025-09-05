@@ -10,7 +10,7 @@
  */
 
 #include <config.h>
-#include <api.h>
+#include <legacy_api.h>
 #include <bootstage.h>
 #include <cpu_func.h>
 #include <cyclic.h>

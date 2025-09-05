@@ -23,7 +23,7 @@ obj-$(CONFIG_AES) += aes.o
 obj-$(CONFIG_AES) += aes/
 obj-$(CONFIG_$(PHASE_)BINMAN_FDT) += binman.o
 
-ifndef API_BUILD
+ifndef LEGACY_API_BUILD
 ifneq ($(CONFIG_CHARSET),)
 obj-y += charset.o
 endif

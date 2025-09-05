@@ -2,8 +2,8 @@
 #
 # (C) Copyright 2007 Semihalf
 
-# Provide symbol API_BUILD to signal that the API example is being built.
-KBUILD_CPPFLAGS += -DAPI_BUILD
+# Provide symbol LEGACY_API_BUILD to signal that the legacy API example is being built.
+KBUILD_CPPFLAGS += -DLEGACY_API_BUILD
 
 ifeq ($(ARCH),powerpc)
 LOAD_ADDR = 0x40000
@@ -26,13 +26,13 @@ endif
 # Resulting ELF and binary exectuables will be named demo and demo.bin
 extra-y = demo
 
-# Source files located in the examples/api directory
+# Source files located in the examples/legacy_api directory
 OBJ-y += crt0.o
 OBJ-y += demo.o
 OBJ-y += glue.o
 OBJ-y += libgenwrap.o
 
-# Source files which exist outside the examples/api directory
+# Source files which exist outside the examples/legacy_api directory
 EXT_COBJ-y += lib/crc32.o
 EXT_COBJ-y += lib/ctype.o
 EXT_COBJ-y += lib/div64.o
