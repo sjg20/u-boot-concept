@@ -4,7 +4,6 @@
 
 config EXAMPLES
 	bool "Compile legacy API examples"
-	depends on !SANDBOX
 	default y if ARCH_QEMU_ARM
 	help
 	  U-Boot provides an legacy API for standalone applications. Examples
@@ -12,6 +11,7 @@ config EXAMPLES
 
 config EXAMPLES_STANDALONE
 	bool "Compile standalone examples"
+	depends on !SANDBOX
 	depends on EXAMPLES
 	default y
 	help
