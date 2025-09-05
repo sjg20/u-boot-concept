@@ -24,7 +24,7 @@ U-Boot machine/arch independent API for external apps
     for example it doesn't keep states, but relies on hints from the app and
     so on
 
-  - optional (CONFIG_API)
+  - optional (CONFIG_LEGACY_API)
 
 
 2. Calls
