@@ -343,7 +343,11 @@ Check packing of Python tools:
   rules:
     - if: $LAB_ONLY == "1"
       when: never
-    - if: $TEST_SUITES == "1"
+    - if: $TEST_PY == "1"
+      when: always
+    - if: $TEST_PY == $CI_JOB_NAME
+      when: always
+    - if: $TEST_PY == $TEST_PY_BD
       when: always
     - when: never
   before_script:
