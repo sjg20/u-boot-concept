@@ -88,6 +88,9 @@ u-boot-lib.h you will have problems, as described in the following sections.
 
 This will be addressed with future work.
 
+With that caveat, see example/ulib/README for instructions on how to use the
+provided example.
+
 Including U-Boot header files from outside
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
