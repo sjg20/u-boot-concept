@@ -8,13 +8,15 @@
 #define __LEGACY_API_H
 
 /**
- * api_init() - Initialize API for external applications
+ * legacy_api_init() - Initialize legacy API for external applications
  *
  * Initialize API for external (standalone) applications running on top of
  * U-Boot. It is called during the generic post-relocation init sequence.
  *
+ * Note that this is deprecated.
+ *
  * Return: 0 if OK
  */
-int api_init(void);
+int legacy_api_init(void);
 
 #endif
