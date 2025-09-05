@@ -10,8 +10,8 @@
  * Written by Simon Glass <simon.glass@canonical.com>
  */
 
-#ifndef __UBAPI_H
-#define __UBAPI_H
+#ifndef __API_H
+#define __API_H
 
 /**
  * ub_printf() - U-Boot printf function
@@ -26,4 +26,4 @@
  */
 int ub_printf(const char *fmt, ...);
 
-#endif /* __UBAPI_H */
+#endif /* __API_H */
