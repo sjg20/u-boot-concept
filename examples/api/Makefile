@@ -27,7 +27,7 @@ demo_static: demo.c
 	gcc -o $(UBOOT_BUILD)/examples/api/$@ $< \
 		-Wl,-T,$(LIB_STATIC_LDS) \
 		-Wl,--whole-archive $(UBOOT_BUILD)/libu-boot.a -Wl,--no-whole-archive \
-		-lSDL2 -lpthread -lm -ldl -static-libgcc
+		-lSDL2
 
 # Run targets
 run-demo: demo
