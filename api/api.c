@@ -15,7 +15,7 @@
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/types.h>
-#include <api_public.h>
+#include <legacy_api_public.h>
 #include <u-boot/crc.h>
 
 #include "api_private.h"

@@ -13,7 +13,7 @@
 #include <hang.h>
 #include <linux/delay.h>
 #include <linux/types.h>
-#include <api_public.h>
+#include <legacy_api_public.h>
 
 #include "glue.h"
 

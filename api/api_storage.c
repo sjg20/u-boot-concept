@@ -6,7 +6,7 @@
  */
 
 #include <config.h>
-#include <api_public.h>
+#include <legacy_api_public.h>
 #include <part.h>
 #include <scsi.h>
 #include <linux/types.h>
