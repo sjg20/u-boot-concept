@@ -733,6 +733,8 @@ config LDR_CPU
 
 source "legacy_api/Kconfig"
 
+source "examples/Kconfig"
+
 endmenu		# General setup
 
 source "boot/Kconfig"
