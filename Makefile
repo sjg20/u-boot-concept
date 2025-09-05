@@ -1859,11 +1859,8 @@ endif
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
       cmd_libu-boot.so = \
-	for obj in $(u-boot-init) $(filter-out %/main.o,$(u-boot-main)) $(u-boot-keep-syms-lto); do \
-		if [ -f "$$obj" ]; then \
-			$(OBJCOPY) --redefine-sym printf=ub_printf $$obj 2>/dev/null || true; \
-		fi; \
-	done; \
+	$(PYTHON3) $(srctree)/scripts/process_symbols.py $(srctree)/api/symbols.def \
+		$(u-boot-init) $(filter-out %/main.o,$(u-boot-main)) $(u-boot-keep-syms-lto); \
 	$(CC) -shared -o $@ -Wl,--build-id=none \
 	-Wl,-T,$(LIB_LDS) \
 	$(u-boot-init) \
@@ -1875,7 +1872,7 @@ quiet_cmd_libu-boot.so = LD      $@
 	$(PLATFORM_LIBS) -Wl,-Map -Wl,libu-boot.map
 
 libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
-		$(LIB_LDS) FORCE
+		$(LIB_LDS) $(srctree)/api/symbols.def FORCE
 	$(call if_changed,libu-boot.so)
 
 # Build U-Boot as a static library
@@ -1883,20 +1880,18 @@ libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
 # Note: We don't use partial linking to preserve the linker list sections
 quiet_cmd_libu-boot.a = AR      $@
       cmd_libu-boot.a = \
-	for obj in $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto); do \
-		if [ -f "$$obj" ]; then \
-			$(OBJCOPY) --redefine-sym printf=ub_printf $$obj 2>/dev/null || true; \
-		fi; \
-	done; \
+	$(PYTHON3) $(srctree)/scripts/process_symbols.py $(srctree)/api/symbols.def \
+		$(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto); \
 	rm -f $@ $@.tmp $@.objlist; \
 	$(AR) rcT $@.tmp $(u-boot-init) \
 		$(u-boot-main) \
 		$(u-boot-keep-syms-lto); \
-	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o$$" > $@.objlist; \
+	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o\$$" > $@.objlist; \
 	cat $@.objlist | xargs $(AR) rcs $@; \
 	rm -f $@.tmp $@.objlist
 
-libu-boot.a: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
+libu-boot.a: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
+		$(srctree)/api/symbols.def FORCE
 	$(call if_changed,libu-boot.a)
 
 # Build ulib_test that links with shared library

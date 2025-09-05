@@ -1,0 +1,16 @@
+# Symbol redefinition list for U-Boot library
+# Formats:
+#   symbol_name           - Automatically prefixed with 'ub_' (e.g., printf → ub_printf)
+#   original=new          - Explicit mapping (e.g., foo=bar)
+# Lines starting with # are comments
+
+# Standard library functions (using simple format - will get ub_ prefix)
+printf
+sprintf
+snprintf
+vprintf
+vsprintf
+vsnprintf
+
+# Example of explicit mapping for custom naming
+# scnprintf=ub_scnprintf_custom

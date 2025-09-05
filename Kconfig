@@ -129,7 +129,7 @@ config ARCH_SUPPORTS_LTO
 
 config LTO
 	bool "Enable Link Time Optimizations"
-	depends on ARCH_SUPPORTS_LTO
+	depends on ARCH_SUPPORTS_LTO && !ULIB
 	help
 	  This option enables Link Time Optimization (LTO), a mechanism which
 	  allows the compiler to optimize between different compilation units.
@@ -731,7 +731,7 @@ config LDR_CPU
 	  generally used on processors from Analog Devices, but may be also
 	  be useful for other vendors.
 
-source "api/Kconfig"
+source "legacy_api/Kconfig"
 
 endmenu		# General setup
 
