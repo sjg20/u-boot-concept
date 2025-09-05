@@ -1905,7 +1905,7 @@ quiet_cmd_ulib_test_static = HOSTCC  $@
 	-I$(srctree)/arch/sandbox/include -o $@ $< \
 	-Wl,-T,$(LIB_STATIC_LDS) \
 	-Wl,--whole-archive $(obj)/libu-boot.a -Wl,--no-whole-archive \
-	-lpthread -ldl -lSDL2 -lrt -Wl,-z,noexecstack
+	-ldl $(PLATFORM_LIBS) -Wl,-z,noexecstack
 
 test/ulib/ulib_test_static: test/ulib/ulib_test.o libu-boot.a \
 		$(LIB_STATIC_LDS) FORCE
