@@ -115,7 +115,7 @@ Building with the Simplified API
 
 Using the provided build script::
 
-    cd examples/ulib
+    cd examples/api
     ./build.sh simple.c
     LD_LIBRARY_PATH=/tmp/b/sandbox ./simple
 

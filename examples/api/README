@@ -34,7 +34,7 @@ The examples are built automatically when building U-Boot with CONFIG_ULIB=y.
 
 To build manually:
 
-    # From this directory examples/ulib
+    # From this directory examples/api
     make
 
     # Or specify the build directory
@@ -63,8 +63,8 @@ Copying for External Use
 
 This directory can be copied elsewhere and used independently:
 
-    cp -r examples/ulib ~/my-project/
-    cd ~/my-project/ulib
+    cp -r examples/api ~/my-project/
+    cd ~/my-project/api
     make UBOOT_BUILD=/path/to/u-boot/build
 
 License
