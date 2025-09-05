@@ -731,7 +731,7 @@ config LDR_CPU
 	  generally used on processors from Analog Devices, but may be also
 	  be useful for other vendors.
 
-source "api/Kconfig"
+source "legacy_api/Kconfig"
 
 endmenu		# General setup
 
