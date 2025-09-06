@@ -1861,32 +1861,50 @@ endif
 
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
-      cmd_libu-boot.so = $(CC) -shared -o $@ -Wl,--build-id=none \
+      cmd_libu-boot.so = \
+	rm -f $@.tmp $@.objlist $@.modified; \
+	$(AR) rcT $@.tmp $(u-boot-init) \
+		$(filter-out %/main.o,$(u-boot-main)) \
+		$(u-boot-keep-syms-lto); \
+	$(AR) t $@.tmp > $@.objlist; \
+	mkdir -p $@.objdir; \
+	$(PYTHON3) $(srctree)/scripts/build_api.py \
+		$(srctree)/lib/ulib/rename.syms \
+		--redefine $$(cat $@.objlist) --output-dir $@.objdir \
+		> $@.modified; \
+	$(CC) -shared -o $@ -Wl,--build-id=none \
 	-Wl,-T,$(LIB_LDS) \
-	$(u-boot-init) \
 	$(KBUILD_LDFLAGS:%=-Wl,%) $(SANITIZERS) $(LTO_FINAL_LDFLAGS) \
 	-Wl,--whole-archive \
-		$(filter-out %/main.o,$(u-boot-main)) \
-		$(u-boot-keep-syms-lto) \
+		$$(cat $@.modified) \
 	-Wl,--no-whole-archive \
-	$(PLATFORM_LIBS) -Wl,-Map -Wl,libu-boot.map
+	$(PLATFORM_LIBS) -Wl,-Map -Wl,libu-boot.map; \
+	rm -f $@.tmp $@.objlist $@.modified; \
+	rm -rf $@.objdir
 
 libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
-		$(LIB_LDS) FORCE
+		$(LIB_LDS) $(srctree)/lib/ulib/rename.syms include/u-boot-api.h FORCE
 	$(call if_changed,libu-boot.so)
 
 # Build U-Boot as a static library
 # Create a fat archive with all object files (except arch/sandbox/cpu/main.o)
 # Avoid partial linking so as to preserve the linker-list sections
 quiet_cmd_libu-boot.a = AR      $@
-      cmd_libu-boot.a = rm -f $@ $@.tmp $@.objlist; \
+      cmd_libu-boot.a = rm -f $@ $@.tmp $@.objlist $@.modified; \
 	$(AR) rcT $@.tmp $(u-boot-init) $(u-boot-main) \
 		$(u-boot-keep-syms-lto); \
-	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o$$" > $@.objlist; \
-	cat $@.objlist | xargs $(AR) rcs $@; \
-	rm -f $@.tmp $@.objlist
+	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o\$$" > $@.objlist; \
+	mkdir -p $@.objdir; \
+	$(PYTHON3) $(srctree)/scripts/build_api.py \
+		$(srctree)/lib/ulib/rename.syms \
+		--redefine $$(cat $@.objlist) --output-dir $@.objdir \
+		> $@.modified; \
+	cat $@.modified | xargs $(AR) rcs $@; \
+	rm -f $@.tmp $@.objlist $@.modified; \
+	rm -rf $@.objdir
 
-libu-boot.a: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
+libu-boot.a: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
+		$(srctree)/lib/ulib/rename.syms FORCE
 	$(call if_changed,libu-boot.a)
 
 # Build ulib_test that links with shared library
