@@ -1883,7 +1883,8 @@ quiet_cmd_libu-boot.so = LD      $@
 	rm -rf $@.objdir
 
 libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
-		$(LIB_LDS) $(srctree)/lib/ulib/rename.syms include/u-boot-api.h FORCE
+		$(LIB_LDS) $(srctree)/lib/ulib/rename.syms \
+		include/u-boot-api.h FORCE
 	$(call if_changed,libu-boot.so)
 
 # Build U-Boot as a static library
@@ -1904,8 +1905,18 @@ quiet_cmd_libu-boot.a = AR      $@
 	rm -rf $@.objdir
 
 libu-boot.a: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
-		$(srctree)/lib/ulib/rename.syms FORCE
+		$(srctree)/lib/ulib/rename.syms include/u-boot-api.h FORCE
 	$(call if_changed,libu-boot.a)
+
+# Generate API header with renamed function declarations
+quiet_cmd_u-boot-api.h = APIH    $@
+      cmd_u-boot-api.h = $(PYTHON3) $(srctree)/scripts/build_api.py \
+		$(srctree)/lib/ulib/rename.syms --api $@ \
+		--include-dir $(srctree)/include
+
+include/u-boot-api.h: $(srctree)/lib/ulib/rename.syms \
+		$(srctree)/scripts/build_api.py FORCE
+	$(call if_changed,u-boot-api.h)
 
 # Build ulib_test that links with shared library
 quiet_cmd_ulib_test = HOSTCC  $@
