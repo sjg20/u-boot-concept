@@ -80,16 +80,25 @@ main entry point while still using U-Boot functionality.
 The libraries preserve U-Boot's linker lists, which are essential for
 driver registration and other U-Boot subsystems.
 
+**Link Time Optimization (LTO) Compatibility**
+
+When building with ``CONFIG_ULIB=y``, Link Time Optimization (LTO) is
+automatically disabled. This is because the symbol renaming process uses
+``objcopy --redefine-sym``, which is incompatible with LTO-compiled object
+files. The build system handles this automatically.
+
 Building outside the U-Boot tree
 --------------------------------
 
-This is possible, but as soon as you want to call a function that is not in
-u-boot-lib.h you will have problems, as described in the following sections.
+This is possible using the provided examples as a template. The ``examples/ulib``
+directory contains a standalone Makefile that can build programs against a
+pre-built U-Boot library.
 
-This will be addressed with future work.
+The examples works as expected, but note that as soon as you want to call
+functions that are not in the main API headers, you may have problems with
+missing dependencies and header files. See below.
 
-With that caveat, see example/ulib/README for instructions on how to use the
-provided example.
+See the **Example Programs** section above for build instructions.
 
 Including U-Boot header files from outside
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,10 +123,13 @@ CONFIG settings would need to be exported from the build and packaged with the
 library.
 
 
-Test Programs
--------------
+Test Programs and Examples
+--------------------------
 
-U-Boot includes test programs that demonstrate library usage:
+U-Boot includes several test programs and examples that demonstrate library
+usage:
+
+**Test Programs**
 
 * ``test/ulib/ulib_test`` - Uses the shared library
 * ``test/ulib/ulib_test_static`` - Uses the static library
@@ -131,6 +143,42 @@ Run the shared library version::
 Run the static library version::
 
     ./test/ulib/ulib_test_static
+
+**Example Programs**
+
+The ``examples/ulib`` directory contains more complete examples:
+
+* ``demo`` - Dynamically linked demo program showing U-Boot functionality
+* ``demo_static`` - Statically linked version of the demo program
+
+These examples demonstrate:
+
+* Proper library initialization with ``ulib_init()``
+* Using U-Boot OS functions like ``os_open()``, ``os_fgets()``, ``os_close()``
+* Using renamed U-Boot library functions via ``u-boot-api.h``
+  (e.g., ``ub_printf()``)
+* Multi-file program structure (``demo.c`` + ``demo_helper.c``)
+* Proper cleanup with ``ulib_uninit()``
+
+To build and run the examples::
+
+    # Make sure U-Boot itself is built
+    make O=/tmp/b/sandbox sandbox_defconfig all
+
+    cd examples/ulib
+    make UBOOT_BUILD=/tmp/b/sandbox srctree=../..
+    ./demo_static
+
+**Building Examples Outside U-Boot Tree**
+
+The examples can be built independently if you have a pre-built U-Boot library::
+
+    cd examples/ulib
+    make UBOOT_BUILD=/path/to/uboot/build srctree=/path/to/uboot/source
+
+The Makefile supports both single-file and multi-object programs through the
+``demo-objs`` variable. Set this to build from multiple object files, or leave
+empty to build directly from source.
 
 Linking and the Linker Script
 -----------------------------
@@ -246,6 +294,120 @@ Limitations
   program
 * EFI runtime-services and relocation are disabled
 
+Symbol Renaming and API Generation
+-----------------------------------
+
+U-Boot includes a build script (``scripts/build_api.py``) that supports symbol
+renaming and API-header generation for library functions. This allows creating
+namespaced versions of standard library functions to avoid conflicts.
+
+For example, when linking with the library, printf() refers to the stdio
+printf() function, while ub_printf() refers to U-Boot's version.
+
+Build System Integration
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The symbol renaming system is automatically integrated into the U-Boot build
+process:
+
+* The symbol definitions are stored in ``lib/ulib/rename.syms``
+* During the sandbox build, the build system automatically:
+
+  - Renames symbols in object files using ``--redefine`` when building the
+    U-Boot libraries (``libu-boot.so`` and ``libu-boot.a``)
+  - Generates ``include/u-boot-api.h`` with renamed function declarations
+    using ``--api``
+
+* The API header provides clean interfaces for external programs linking
+  against the U-Boot library
+* Symbol renaming ensures no conflicts between U-Boot functions and system
+  library functions
+
+Symbol Definition File Format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The script uses a symbol definition file (``rename.syms``) with this format::
+
+    # Comment lines start with #
+    file: stdio.h
+     printf
+     sprintf=ub_sprintf_custom
+
+    file: string.h
+     strlen
+     strcpy
+
+The format rules are:
+
+* Lines starting with ``file:`` specify a header file
+* Indented lines (space or tab) define symbols from that header
+* Use ``symbol=new_name`` for custom renaming, otherwise ``ub_`` a prefix is
+  added by default. No space around ``=``
+* Use ``#`` at the beginning of a line for a comment
+* Empty lines are allowed
+
+Script Usage
+~~~~~~~~~~~~
+
+The build script provides several functions:
+
+**Parse and display symbols**::
+
+    python scripts/build_api.py rename.syms --dump
+
+**Apply symbol renaming to object files**::
+
+    python scripts/build_api.py rename.syms \
+        --redefine file1.o file2.o \
+        --output-dir /tmp/renamed_objects
+
+**Generate API header with renamed functions**::
+
+    python scripts/build_api.py rename.syms \
+        --api ulib_api.h \
+        --include-dir /path/to/headers \
+        --output-dir /tmp/objects
+
+Script Architecture
+~~~~~~~~~~~~~~~~~~~
+
+The build script consists mostly of these classes:
+
+* **RenameSymsParser**: Parse the symbol definition file format and validate
+  syntax
+* **DeclExtractor**: Extract function declarations with comments from headers
+* **SymbolRedefiner**: Apply symbol renaming to object files using ``objcopy``
+* **ApiGenerator**: Create unified API headers with renamed function
+  declarations
+
+Symbol renaming operations copy files to an output directory rather than
+modifying them in-place, to avoid race conditions.
+
+Object File Processing
+~~~~~~~~~~~~~~~~~~~~~~
+
+When processing object files, the script:
+
+1. Uses ``nm`` to check which files contain target symbols
+2. Copies unchanged files that don't contain target symbols
+3. Applies ``objcopy --redefine-sym`` for files needing renaming
+4. Creates unique output filenames by replacing path separators with
+   underscores
+
+API Header Generation
+~~~~~~~~~~~~~~~~~~~~~
+
+The API header generation process:
+
+1. Groups symbols by their source header files
+2. Searches for original header files in the specified include directory
+3. Extracts function declarations (including comments) from source headers
+4. Applies symbol renaming to the extracted declarations
+5. Combines everything into a single API header file
+
+If any required headers or function declarations are missing, the script fails
+with detailed error messages listing exactly what couldn't be found.
+
 Future Work
 -----------
 
@@ -254,3 +416,4 @@ Future Work
 * API versioning and stability guarantees
 * pkg-config support for easier integration
 * Support for calling functions in any U-Boot header
+* Improved symbol renaming with namespace support
