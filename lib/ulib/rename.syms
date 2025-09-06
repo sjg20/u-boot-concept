@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: GPL-2.0+
+#
+# Symbol redefinition list for U-Boot library
+#
+# Copyright 2025 Canonical Ltd.
+# Written by Simon Glass <simon.glass@canonical.com>
+#
+
+# Format:
+# file:filename    - indicates the header file which contains the following symbols
+#
+# Symbols renames are indented at least one position:
+#   symbol_name    - Prefix the symbol with 'ub_' (e.g., printf → ub_printf)
+#   original=new   - Explicit mapping, so 'original' becomes 'new'
+#
+# Lines starting with # are comments
+
+# Standard library functions
+file: stdio.h
+ printf
+ snprintf
+ vprintf
+
+file: vsprintf.h
+ sprintf
+ vsprintf
+ vsnprintf
+
+# Example of explicit mapping for custom naming
+# scnprintf=ub_scnprintf_custom
