@@ -246,6 +246,124 @@ Limitations
   program
 * EFI runtime-services and relocation are disabled
 
+Symbol Renaming and API Generation
+-----------------------------------
+
+U-Boot includes a build script (``scripts/build_api.py``) that supports symbol
+renaming and API header generation for library functions. This allows creating
+namespaced versions of standard library functions to avoid conflicts.
+
+For example, when linking with the library, printf() refers to the stdio
+printf() function, while ub_printf() refers to U-Boot's version.
+
+Build System Integration
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The symbol renaming system is automatically integrated into the U-Boot build
+process:
+
+* The symbol definitions are stored in ``lib/ulib/rename.syms``
+* During the sandbox build, the build system automatically:
+
+  - Renames symbols in object files using ``--redefine`` when building the
+    U-Boot libraries (``libu-boot.so`` and ``libu-boot.a``)
+  - Generates ``include/u-boot-api.h`` with renamed function declarations
+    using ``--api``
+
+* The API header provides clean interfaces for external programs linking
+  against the U-Boot library
+* Symbol renaming ensures no conflicts between U-Boot functions and system
+  library functions
+
+Symbol Definition File Format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The script uses a symbol definition file (``rename.syms``) with this format::
+
+    # Comment lines start with #
+    file: stdio.h
+     printf
+     sprintf=ub_sprintf_custom
+     
+    file: string.h
+     strlen
+     strcpy
+
+The format rules are:
+
+* Lines starting with ``file:`` specify a header file
+* Indented lines (space or tab) define symbols from that header
+* Use ``symbol=new_name`` for custom renaming, otherwise ``ub_`` prefix is
+  added
+* Comments start with ``#`` at the beginning of lines
+* Empty lines are allowed
+* No space around ``=``
+
+Script Usage
+~~~~~~~~~~~~
+
+The build script provides several functions:
+
+**Parse and display symbols**::
+
+    python scripts/build_api.py rename.syms --dump
+
+**Apply symbol renaming to object files**::
+
+    python scripts/build_api.py rename.syms \
+        --redefine file1.o file2.o \
+        --output-dir /tmp/renamed_objects
+
+**Generate API header with renamed functions**::
+
+    python scripts/build_api.py rename.syms \
+        --api ulib_api.h \
+        --include-dir /path/to/headers \
+        --output-dir /tmp/objects
+
+Script Architecture
+~~~~~~~~~~~~~~~~~~~
+
+The build script consists of several key classes:
+
+* **RenameSymsParser**: Parses the symbol definition file format and validates
+  syntax
+* **DeclExtractor**: Extracts function declarations with comments from header
+  files
+* **SymbolRedefiner**: Applies symbol renaming to object files using
+  ``objcopy``
+* **ApiGenerator**: Creates unified API headers with renamed function
+  declarations
+
+The script follows a 'fail fast' approach - it stops immediately on errors
+rather than trying to recover. All symbol renaming operations copy files to an
+output directory rather than modifying them in-place.
+
+Object File Processing
+~~~~~~~~~~~~~~~~~~~~~~
+
+When processing object files, the script:
+
+1. Uses ``nm`` to check which files contain target symbols
+2. Copies unchanged files that don't contain target symbols
+3. Applies ``objcopy --redefine-sym`` for files needing renaming
+4. Creates unique output filenames by replacing path separators with
+   underscores
+
+API Header Generation  
+~~~~~~~~~~~~~~~~~~~~~
+
+The API header generation process:
+
+1. Groups symbols by their source header files
+2. Searches for original header files in the specified include directory
+3. Extracts function declarations (including comments) from source headers
+4. Applies symbol renaming to the extracted declarations
+5. Combines everything into a single API header file
+
+If any required headers or function declarations are missing, the script fails
+with detailed error messages listing exactly what couldn't be found.
+
 Future Work
 -----------
 
@@ -254,3 +372,4 @@ Future Work
 * API versioning and stability guarantees
 * pkg-config support for easier integration
 * Support for calling functions in any U-Boot header
+* Improved symbol renaming with namespace support

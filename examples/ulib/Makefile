@@ -2,7 +2,7 @@
 #
 # Standalone Makefile for U-Boot library examples
 #
-# Copyright 2025 Canonical
+# Copyright 2025 Canonical Ltd.
 # Written by Simon Glass <simon.glass@canonical.com>
 
 # This Makefile can be used to build the examples. See doc/develop/ulib.rst
@@ -35,38 +35,83 @@ LIB_STATIC_LDS ?= static.lds
 # The main Makefile passes in Q=@ for quiet output
 Q ?=
 
+# Common compiler flags for programs using system headers first
+SYSTEM_CFLAGS := -I$(UBOOT_BUILD)/include -idirafter$(srctree)/include \
+		-include $(srctree)/include/linux/compiler_attributes.h
+# Common compiler flags for programs using U-Boot headers first (like U-Boot internal build)
+UBOOT_CFLAGS := -nostdinc -isystem $(shell $(CC) -print-file-name=include) \
+		-I$(UBOOT_BUILD)/include \
+		-I$(srctree)/include \
+		-I$(srctree)/arch/sandbox/include \
+		-include $(UBOOT_BUILD)/include/config.h \
+		-include $(srctree)/include/linux/kconfig.h \
+		-I$(srctree)/dts/upstream/include \
+		-I$(srctree)/lib/mbedtls \
+		-I$(srctree)/lib/mbedtls/port \
+		-I$(srctree)/lib/mbedtls/external/mbedtls \
+		-I$(srctree)/lib/mbedtls/external/mbedtls/include \
+		-D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0
+SHARED_LDFLAGS := -L$(UBOOT_BUILD) -lu-boot -Wl,-rpath,$(UBOOT_BUILD)
+STATIC_LDFLAGS := -Wl,-T,$(LIB_STATIC_LDS) \
+		-Wl,--whole-archive $(UBOOT_BUILD)/libu-boot.a -Wl,--no-whole-archive \
+		-lpthread -ldl $(PLATFORM_LIBS) -Wl,-z,noexecstack
+
+# Program definitions - can be single file or multi-object
 DEMO_SRC := $(EXAMPLE_DIR)/demo.c
+demo-objs :=
+BOOT_SRC := $(EXAMPLE_DIR)/boot.c
+# Objects compiled with system headers first (for programs using system APIs)
+boot-system-objs := boot.o
+# Objects compiled with U-Boot headers first (for programs using U-Boot internals)
+boot-uboot-objs := bootflow.o
+
 DEMO_BINS := $(OUTDIR)/demo $(OUTDIR)/demo_static
+BOOT_BINS := $(OUTDIR)/boot $(OUTDIR)/boot_static
+ALL_BINS := $(DEMO_BINS) $(BOOT_BINS)
 
 # Default target builds both programs
-all: $(DEMO_BINS)
+all: $(ALL_BINS)
 
 # Create the output directory if it doesn't exist
 $(OUTDIR):
 	@mkdir -p $@
 
+# Pattern rule for building object files with system headers first (default)
+$(OUTDIR)/%.o: $(EXAMPLE_DIR)/%.c | $(OUTDIR)
+	$(CC) $(CFLAGS) $(SYSTEM_CFLAGS) -c -o $@ $<
+
+# Pattern rule for building object files with U-Boot headers first
+$(OUTDIR)/%_uboot.o: $(EXAMPLE_DIR)/%.c | $(OUTDIR)
+	$(CC) $(CFLAGS) $(UBOOT_CFLAGS) -c -o $@ $<
+
 # The U-Boot library must be built before we can link against it. This is
 # signalled by the presence of the $(UBOOT_BUILD)/examples/ulib directory.
 # This is an order-only prerequisite, so it does not trigger a rebuild if the
 # timestamp of the directory changes.
-$(DEMO_BINS): | $(UBOOT_BUILD)/examples/ulib $(OUTDIR)
+$(ALL_BINS): | $(UBOOT_BUILD)/examples/ulib $(OUTDIR)
+
+# Helper function to get all object files for a program
+define get_program_objs
+$(addprefix $(OUTDIR)/,$($(1)-system-objs)) $(addprefix $(OUTDIR)/,$(addsuffix _uboot.o,$(basename $($(1)-uboot-objs))))
+endef
 
 # Build demo (dynamically linked with libu-boot.so)
-$(OUTDIR)/demo: $(DEMO_SRC)
-	$(CC) $(CFLAGS) \
-		-idirafter$(srctree)/include -o $@ $< \
-		-L$(UBOOT_BUILD) -lu-boot \
-		-Wl,-rpath,$(UBOOT_BUILD)
+$(OUTDIR)/demo: $(if $(demo-objs),$(addprefix $(OUTDIR)/,$(demo-objs)),$(DEMO_SRC))
+	$(if $(demo-objs),$(CC) $(CFLAGS) -o $@ $^ $(SHARED_LDFLAGS),$(CC) $(CFLAGS) $(SYSTEM_CFLAGS) -o $@ $< $(SHARED_LDFLAGS))
 
 # Build demo_static (statically linked with libu-boot.a)
-$(OUTDIR)/demo_static: $(DEMO_SRC)
-	$(CC) $(CFLAGS) \
-		-idirafter$(srctree)/include -o $@ $< \
-		-Wl,-T,$(LIB_STATIC_LDS) \
-		-Wl,--whole-archive $(UBOOT_BUILD)/libu-boot.a -Wl,--no-whole-archive \
-		-lpthread -ldl $(PLATFORM_LIBS) -Wl,-z,noexecstack
+$(OUTDIR)/demo_static: $(if $(demo-objs),$(addprefix $(OUTDIR)/,$(demo-objs)),$(DEMO_SRC))
+	$(if $(demo-objs),$(CC) $(CFLAGS) -o $@ $^ $(STATIC_LDFLAGS),$(CC) $(CFLAGS) $(SYSTEM_CFLAGS) -o $@ $< $(STATIC_LDFLAGS))
+
+# Build boot (dynamically linked with libu-boot.so)
+$(OUTDIR)/boot: $(if $(or $(boot-system-objs),$(boot-uboot-objs)),$(call get_program_objs,boot),$(BOOT_SRC))
+	$(if $(or $(boot-system-objs),$(boot-uboot-objs)),$(CC) $(CFLAGS) -o $@ $^ $(SHARED_LDFLAGS),$(CC) $(CFLAGS) $(SYSTEM_CFLAGS) -o $@ $< $(SHARED_LDFLAGS))
+
+# Build boot_static (statically linked with libu-boot.a)
+$(OUTDIR)/boot_static: $(if $(or $(boot-system-objs),$(boot-uboot-objs)),$(call get_program_objs,boot),$(BOOT_SRC))
+	$(if $(or $(boot-system-objs),$(boot-uboot-objs)),$(CC) $(CFLAGS) -o $@ $^ $(STATIC_LDFLAGS),$(CC) $(CFLAGS) $(SYSTEM_CFLAGS) -o $@ $< $(STATIC_LDFLAGS))
 
 clean:
-	$(Q)rm -f $(DEMO_BINS)
+	$(Q)rm -f $(ALL_BINS) $(OUTDIR)/*.o
 
 .PHONY: all clean
