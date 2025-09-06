@@ -18,6 +18,14 @@ quiet=-q
 # Clean up things the Makefile created
 unset MAKE MAKEFLAGS MAKELEVEL MAKEOVERRIDES MAKE_TERMERR MAKE_TERMOUT
 
+# Unset this since this script is generally run from 'make qcheck' et al, which
+# targets are in no-dot-config-targets and thus dot-config is 0 and thus
+# config.mk was not included in the main Makefile, thus PLATFORM_LIBS does not
+# have the arch-specific settings (e.g. SDL libraries on sandbox). Better to
+# leave it empty than have it be wrong. This particularly affects
+# example/ulib/Makefile when called from 'make qcheck'
+unset PLATFORM_LIBS
+
 # Select test attributes
 ut_mark_expr=test_ut
 if [ "$1" = "quick" ]; then
