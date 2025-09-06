@@ -2370,7 +2370,10 @@ CLEAN_FILES += include/autoconf.mk* include/bmp_logo.h include/bmp_logo_data.h \
 	       mkimage.rom.mkimage mkimage-in-simple-bin* rom.map simple-bin* \
 	       idbloader-spi.img lib/efi_loader/helloworld_efi.S *.itb \
 	       Test* capsule*.*.efi-capsule capsule*.map \
-	       test/ulib/ulib_test test/ulib/ulib_test_static
+	       test/ulib/ulib_test test/ulib/ulib_test_static \
+	       libu-boot.so.tmp libu-boot.so.objlist \
+	       libu-boot.a.tmp libu-boot.a.objlist \
+	       include/u-boot-api.h
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl vpl \
