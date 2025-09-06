@@ -2,7 +2,7 @@
 #
 # Standalone Makefile for U-Boot library examples
 #
-# Copyright 2025 Canonical
+# Copyright 2025 Canonical Ltd.
 # Written by Simon Glass <simon.glass@canonical.com>
 
 # This Makefile can be used to build the examples. See doc/develop/ulib.rst

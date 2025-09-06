@@ -6,7 +6,7 @@
  *
  * Library functions must be individually accessed via their respective headers.
  *
- * Copyright 2025 Canonical
+ * Copyright 2025 Canonical Ltd.
  * Written by Simon Glass <simon.glass@canonical.com>
  */
 

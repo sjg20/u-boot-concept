@@ -5,7 +5,7 @@
  * This demonstrates using U-Boot library functions in sandbox like os_*
  * from external programs.
  *
- * Copyright 2025 Canonical
+ * Copyright 2025 Canonical Ltd.
  * Written by Simon Glass <simon.glass@canonical.com>
  */
 
