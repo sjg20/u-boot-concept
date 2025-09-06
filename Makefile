@@ -1902,6 +1902,16 @@ quiet_cmd_libu-boot.a = AR      $@
 libu-boot.a: .ulib-objs include/u-boot-api.h FORCE
 	$(call if_changed,libu-boot.a)
 
+# Generate API header with renamed function declarations
+quiet_cmd_u-boot-api.h = APIH    $@
+      cmd_u-boot-api.h = $(PYTHON3) $(srctree)/scripts/build_api.py \
+		$(srctree)/lib/ulib/rename.syms --api $@ \
+		--include-dir $(srctree)/include
+
+include/u-boot-api.h: $(srctree)/lib/ulib/rename.syms \
+		$(srctree)/scripts/build_api.py FORCE
+	$(call if_changed,u-boot-api.h)
+
 # Build ulib_test that links with shared library
 quiet_cmd_ulib_test = HOSTCC  $@
       cmd_ulib_test = $(HOSTCC) $(HOSTCFLAGS) \
@@ -2343,7 +2353,8 @@ CLEAN_FILES += include/autoconf.mk* include/bmp_logo.h include/bmp_logo_data.h \
 	       Test* capsule*.*.efi-capsule capsule*.map \
 	       test/ulib/ulib_test test/ulib/ulib_test_static \
 	       libu-boot.so.tmp libu-boot.so.objlist \
-	       libu-boot.a.tmp libu-boot.a.objlist
+	       libu-boot.a.tmp libu-boot.a.objlist \
+	       include/u-boot-api.h
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl vpl \
