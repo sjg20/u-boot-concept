@@ -1918,30 +1918,43 @@ include/u-boot-api.h: $(srctree)/lib/ulib/rename.syms \
 		$(srctree)/scripts/build_api.py FORCE
 	$(call if_changed,u-boot-api.h)
 
-# Build ulib_test that links with shared library
-quiet_cmd_ulib_test = HOSTCC  $@
-      cmd_ulib_test = $(HOSTCC) $(HOSTCFLAGS) \
-	-I$(srctree)/arch/sandbox/include -o $@ $< -L$(obj) -lu-boot \
+# Build ulib object files with system headers prioritized
+# NOTE: Only affects test/ulib/*.c files, not other compilation
+quiet_cmd_ulib_obj = HOSTCC  $@
+      cmd_ulib_obj = $(HOSTCC) $(HOSTCFLAGS) \
+	-include $(srctree)/include/linux/compiler_attributes.h \
+	-isystem /usr/include \
+	-I$(obj)/include -idirafter $(srctree)/include \
+	-idirafter $(srctree)/arch/sandbox/include \
+	-c -o $@ $<
+
+test/ulib/%.o: $(srctree)/test/ulib/%.c FORCE
+	$(call if_changed,ulib_obj)
+
+# Build ulib test programs that link with shared library
+quiet_cmd_ulib_prog = HOSTCC  $@
+      cmd_ulib_prog = $(HOSTCC) $(HOSTCFLAGS) \
+	-idirafter $(srctree)/arch/sandbox/include -o $@ $< -L$(obj) -lu-boot \
 	-Wl,-rpath,$(obj)
 
-test/ulib/ulib_test: test/ulib/ulib_test.o libu-boot.so FORCE
-	$(call if_changed,ulib_test)
+test/ulib/%: test/ulib/%.o libu-boot.so FORCE
+	$(call if_changed,ulib_prog)
 
-# Build ulib_test_static to test linking with the static library
+# Build ulib test programs that link with static library
 # main.o is excluded from the static library since the main program is provided
 # by the user
 # Use --whole-archive to include all linker lists
 # Use a linker script to ensure proper alignment of linker-lists
-quiet_cmd_ulib_test_static = HOSTCC  $@
-      cmd_ulib_test_static = $(HOSTCC) $(HOSTCFLAGS) \
-	-I$(srctree)/arch/sandbox/include -o $@ $< \
+quiet_cmd_ulib_prog_static = HOSTCC  $@
+      cmd_ulib_prog_static = $(HOSTCC) $(HOSTCFLAGS) \
+	-idirafter $(srctree)/arch/sandbox/include -o $@ $< \
 	-Wl,-T,$(LIB_STATIC_LDS) \
 	-Wl,--whole-archive $(obj)/libu-boot.a -Wl,--no-whole-archive \
 	-ldl $(PLATFORM_LIBS) -Wl,-z,noexecstack
 
-test/ulib/ulib_test_static: test/ulib/ulib_test.o libu-boot.a \
+test/ulib/%_static: test/ulib/%.o libu-boot.a \
 		$(LIB_STATIC_LDS) FORCE
-	$(call if_changed,ulib_test_static)
+	$(call if_changed,ulib_prog_static)
 
 # abspath is used since many paths are relative
 PHONY += examples_ulib
