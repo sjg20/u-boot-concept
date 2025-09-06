@@ -4,7 +4,7 @@
  *
  * This demonstrates linking against libu-boot.so and libu-boot.a
  *
- * Copyright 2025 Canonical
+ * Copyright 2025 Canonical Ltd.
  * Written by Simon Glass <simon.glass@canonical.com>
  */
 
