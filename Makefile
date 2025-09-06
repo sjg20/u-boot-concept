@@ -1859,6 +1859,25 @@ ifeq ($(CONFIG_RISCV),y)
 	@tools/prelink-riscv $@
 endif
 
+# Common step: create archive and prepare modified object files
+quiet_cmd_ulib-objs = OBJS    $@
+      cmd_ulib-objs = \
+	rm -f $@.tmp $@.objlist $@; \
+	$(AR) rcT $@.tmp $(u-boot-init) $(u-boot-main) \
+		$(u-boot-keep-syms-lto); \
+	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o$$" > $@.objlist; \
+	mkdir -p $@.objdir; \
+	$(PYTHON3) $(srctree)/scripts/build_api.py \
+		$(srctree)/lib/ulib/rename.syms \
+		--redefine $$(cat $@.objlist) --output-dir $@.objdir \
+		$(if $(filter -j%,$(MAKEFLAGS)),--jobs $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS)))) \
+		> $@; \
+	rm -f $@.tmp $@.objlist
+
+.ulib-objs: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
+		$(srctree)/lib/ulib/rename.syms FORCE
+	$(call if_changed,ulib-objs)
+
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
       cmd_libu-boot.so = $(CC) -shared -o $@ -Wl,--build-id=none \
