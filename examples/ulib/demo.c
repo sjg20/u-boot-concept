@@ -17,10 +17,11 @@
 #include <os.h>
 #include <u-boot-lib.h>
 #include <version_string.h>
+#include "demo_helper.h"
 
 int main(int argc, char *argv[])
 {
-	int fd, lines = 0;
+	int fd, result, lines = 0;
 	char line[256];
 
 	/* Init U-Boot library */
@@ -29,8 +30,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	printf("1U-Boot Library Demo\n");
-	printf("================================\n");
+	demo_show_banner();
 	printf("U-Boot version: %s\n", version_string);
 	printf("\n");
 
@@ -53,6 +53,12 @@ int main(int argc, char *argv[])
 	os_close(fd);
 
 	printf("\nRead %d line(s) using U-Boot library functions.\n", lines);
+
+	/* Test the helper function */
+	result = demo_add_numbers(42, 13);
+	printf("Helper function result: %d\n", result);
+
+	demo_show_footer();
 
 	/* Clean up */
 	ulib_uninit();
