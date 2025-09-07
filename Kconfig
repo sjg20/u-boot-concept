@@ -100,7 +100,6 @@ endchoice
 
 config ULIB
 	bool "Build U-Boot as a library"
-	default y if SANDBOX
 	help
 	  Enable this to build a library which can be linked to other programs,
 	  to extend U-Boot's functionality.
