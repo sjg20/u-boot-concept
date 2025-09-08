@@ -409,7 +409,7 @@ capsule_esl_dtsi=.capsule_esl.dtsi
 quiet_cmd_capsule_esl_gen = ESL     $@
 cmd_capsule_esl_gen = cert-to-efi-sig-list $< $@
 
-$(obj)/capsule_esl_file: $(capsule_crt_file) FORCE
+$(obj)/capsule_esl_file: $(capsule_crt_file)
 ifeq ($(CONFIG_EFI_CAPSULE_CRT_FILE),"")
 	$(error "CONFIG_EFI_CAPSULE_CRT_FILE is empty, EFI capsule authentication \
 	public key must be specified when CONFIG_EFI_CAPSULE_AUTHENTICATE is enabled")
@@ -421,7 +421,7 @@ quiet_cmd_capsule_dtsi_gen = CAPSULE $@
 cmd_capsule_dtsi_gen = \
 	$(shell sed "s:ESL_BIN_FILE:$(abspath $<):" $(capsule_esl_input_file) > $@)
 
-$(obj)/$(capsule_esl_dtsi): $(obj)/capsule_esl_file FORCE
+$(obj)/$(capsule_esl_dtsi): $(obj)/capsule_esl_file
 	$(call cmd,capsule_dtsi_gen)
 
 dtsi_include_list_deps := $(addprefix $(u_boot_dtsi_loc),$(subst $(quote),,$(dtsi_include_list)))
