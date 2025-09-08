@@ -215,7 +215,7 @@ cmd_chid_dtsi_gen = $(srctree)/scripts/hwids_to_dtsi.py \
 	-m $(srctree)/board/$(BOARDDIR)/hwids/compatible.hwidmap -o $@
 
 $(obj)/$(chid_hwids_dtsi): $(srctree)/board/$(BOARDDIR)/hwids/compatible.hwidmap \
-		$(wildcard $(srctree)/board/$(BOARDDIR)/hwids/*.txt) FORCE
+		$(wildcard $(srctree)/board/$(BOARDDIR)/hwids/*.txt)
 	$(call cmd,chid_dtsi_gen)
 endif
 
