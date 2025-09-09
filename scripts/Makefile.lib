@@ -210,12 +210,12 @@ endif
 ifdef CONFIG_CHID
 chid_hwids_dtsi=hwids.dtsi
 
-quiet_cmd_chid_dtsi_gen = CHID_DTSI_GEN $@
+quiet_cmd_chid_dtsi_gen = CHID    $@
 cmd_chid_dtsi_gen = $(srctree)/scripts/hwids_to_dtsi.py \
 	-m $(srctree)/board/$(BOARDDIR)/hwids/compatible.hwidmap -o $@
 
 $(obj)/$(chid_hwids_dtsi): $(srctree)/board/$(BOARDDIR)/hwids/compatible.hwidmap \
-		$(wildcard $(srctree)/board/$(BOARDDIR)/hwids/*.txt) FORCE
+		$(wildcard $(srctree)/board/$(BOARDDIR)/hwids/*.txt)
 	$(call cmd,chid_dtsi_gen)
 endif
 
@@ -406,10 +406,10 @@ capsule_esl_input_file=$(srctree)/lib/efi_loader/capsule_esl.dtsi.in
 capsule_crt_file=$(subst $(quote),,$(CONFIG_EFI_CAPSULE_CRT_FILE))
 capsule_esl_dtsi=.capsule_esl.dtsi
 
-quiet_cmd_capsule_esl_gen = CAPSULE_ESL_GEN $@
+quiet_cmd_capsule_esl_gen = ESL     $@
 cmd_capsule_esl_gen = cert-to-efi-sig-list $< $@
 
-$(obj)/capsule_esl_file: $(capsule_crt_file) FORCE
+$(obj)/capsule_esl_file: $(capsule_crt_file)
 ifeq ($(CONFIG_EFI_CAPSULE_CRT_FILE),"")
 	$(error "CONFIG_EFI_CAPSULE_CRT_FILE is empty, EFI capsule authentication \
 	public key must be specified when CONFIG_EFI_CAPSULE_AUTHENTICATE is enabled")
@@ -417,11 +417,11 @@ else
 	$(call cmd,capsule_esl_gen)
 endif
 
-quiet_cmd_capsule_dtsi_gen = CAPSULE_DTSI_GEN $@
+quiet_cmd_capsule_dtsi_gen = CAPSULE $@
 cmd_capsule_dtsi_gen = \
 	$(shell sed "s:ESL_BIN_FILE:$(abspath $<):" $(capsule_esl_input_file) > $@)
 
-$(obj)/$(capsule_esl_dtsi): $(obj)/capsule_esl_file FORCE
+$(obj)/$(capsule_esl_dtsi): $(obj)/capsule_esl_file
 	$(call cmd,capsule_dtsi_gen)
 
 dtsi_include_list_deps := $(addprefix $(u_boot_dtsi_loc),$(subst $(quote),,$(dtsi_include_list)))
@@ -470,7 +470,7 @@ cmd_dtco = mkdir -p $(dir ${dtc-tmp}) ; \
 		-d $(depfile).dtc.tmp $(dtc-tmp) ; \
 	cat $(depfile).pre.tmp $(depfile).dtc.tmp > $(depfile)
 
-$(obj)/%.dtbo: $(src)/%.dtso $(DTC) FORCE
+$(obj)/%.dtbo: $(src)/%.dtso $(DTC)
 	$(call if_changed_dep,dtco)
 
 quiet_cmd_fdtoverlay = DTOVL   $@
