@@ -210,7 +210,7 @@ endif
 ifdef CONFIG_CHID
 chid_hwids_dtsi=hwids.dtsi
 
-quiet_cmd_chid_dtsi_gen = CHID_DTSI_GEN $@
+quiet_cmd_chid_dtsi_gen = CHID    $@
 cmd_chid_dtsi_gen = $(srctree)/scripts/hwids_to_dtsi.py \
 	-m $(srctree)/board/$(BOARDDIR)/hwids/compatible.hwidmap -o $@
 
@@ -406,7 +406,7 @@ capsule_esl_input_file=$(srctree)/lib/efi_loader/capsule_esl.dtsi.in
 capsule_crt_file=$(subst $(quote),,$(CONFIG_EFI_CAPSULE_CRT_FILE))
 capsule_esl_dtsi=.capsule_esl.dtsi
 
-quiet_cmd_capsule_esl_gen = CAPSULE_ESL_GEN $@
+quiet_cmd_capsule_esl_gen = ESL     $@
 cmd_capsule_esl_gen = cert-to-efi-sig-list $< $@
 
 $(obj)/capsule_esl_file: $(capsule_crt_file) FORCE
@@ -417,7 +417,7 @@ else
 	$(call cmd,capsule_esl_gen)
 endif
 
-quiet_cmd_capsule_dtsi_gen = CAPSULE_DTSI_GEN $@
+quiet_cmd_capsule_dtsi_gen = CAPSULE $@
 cmd_capsule_dtsi_gen = \
 	$(shell sed "s:ESL_BIN_FILE:$(abspath $<):" $(capsule_esl_input_file) > $@)
 
