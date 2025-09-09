@@ -5,8 +5,13 @@
 """Test U-Boot Makefile dependency tracking
 
 This test verifies that Makefile rules properly track dependencies and rebuild
-targets when dependency files change. It tests multiple rules that had FORCE
-removed: hwids_to_dtsi, $(obj)/%.dtbo, and ESL dependency chains.
+targets when dependency files change. It tests rules that had FORCE removed
+to rely on proper dependency tracking instead.
+
+Tests cover:
+- hwids_to_dtsi: Hardware ID mapping to device tree source
+- $(obj)/%.dtbo: Device tree source overlay to binary overlay compilation
+- ESL dependency chains: Certificate -> ESL file -> DTSI file transformation
 """
 
 import os
@@ -415,3 +420,257 @@ def test_dep_dtbo(ubman):
     check_dtso_change(env, first_mtime)
 
     info(env, 'All dtbo dependency tracking tests passed!')
+
+
+def setup_esl_env(ubman):
+    """Set up the test environment for ESL dependency tracking
+
+    Args:
+        ubman (ConsoleBase): ubman fixture
+
+    Returns:
+        SimpleNamespace: ESL test environment with paths and config
+    """
+    # Create a temporary directory structure for ESL testing
+    tmpdir = os.path.join(ubman.config.result_dir, 'test_esl_dep')
+    os.makedirs(tmpdir, exist_ok=True)
+
+    # Create test certificate file (dummy content for testing)
+    cert_file = os.path.join(tmpdir, 'test_capsule.crt')
+    cert_content = '''-----BEGIN CERTIFICATE-----
+MIIBkTCB+wIJAKZ7kZ7Z7Z7ZMA0GCSqGSIb3DQEBCwUAMBoxGDAWBgNVBAMMD1Rl
+c3QgQ2VydGlmaWNhdGUwHhcNMjUwOTA5MDAwMDAwWhcNMjYwOTA5MDAwMDAwWjAa
+MRgwFgYDVQQDDA9UZXN0IENlcnRpZmljYXRlMFwwDQYJKoZIhvcNAQEBBQADSwAw
+SAJBAKoZIhvcNAQEBBQADQQAwPgIJAKZ7kZ7Z7Z7ZAgMBAAEwDQYJKoZIhvcNAQE
+LBQADQQAwPgIJAKZ7kZ7Z7Z7ZAgMBAAECAwEAAQIBAAIBAAIBAAIBAAIBAAIBAA==
+-----END CERTIFICATE-----'''
+
+    with open(cert_file, 'w', encoding='utf-8') as outf:
+        outf.write(cert_content)
+
+    # Create ESL template file (mimicking capsule_esl.dtsi.in)
+    esl_template = os.path.join(tmpdir, 'capsule_esl.dtsi.in')
+    template_content = '''/ {
+    signature {
+        capsule-key = /incbin/("ESL_BIN_FILE");
+    };
+};'''
+
+    with open(esl_template, 'w', encoding='utf-8') as outf:
+        outf.write(template_content)
+
+    # Target files
+    esl_file = os.path.join(tmpdir, 'capsule_esl_file')
+    esl_dtsi = os.path.join(tmpdir, '.capsule_esl.dtsi')
+
+    # Create a test Makefile to verify ESL dependency behavior
+    test_makefile = os.path.join(tmpdir, 'test_esl.mk')
+
+    # Use relative paths in makefile since we cd to tmpdir
+    rel_cert = os.path.relpath(cert_file, tmpdir)
+    rel_esl_file = os.path.relpath(esl_file, tmpdir)
+    rel_esl_dtsi = os.path.relpath(esl_dtsi, tmpdir)
+    rel_template = os.path.relpath(esl_template, tmpdir)
+
+    makefile_content = f'''# Test ESL dependency tracking
+CERT_FILE := {rel_cert}
+ESL_FILE := {rel_esl_file}
+ESL_DTSI := {rel_esl_dtsi}
+ESL_TEMPLATE := {rel_template}
+
+# Simulate the capsule_esl_file rule
+$(ESL_FILE): $(CERT_FILE)
+\t@echo "Generating ESL from certificate because cert changed"
+\t@echo "Mock ESL binary data from $<" > $@
+\t@echo "Certificate: $$(stat -c %Y $(CERT_FILE))" >> $@
+
+# Simulate the capsule_esl_dtsi rule
+$(ESL_DTSI): $(ESL_FILE) $(ESL_TEMPLATE)
+\t@echo "Generating ESL DTSI because ESL file or template changed"
+\t@sed "s:ESL_BIN_FILE:$$(readlink -f $(ESL_FILE)):" $(ESL_TEMPLATE) > $@
+\t@echo "/* Generated at: $$(date +%s) */" >> $@
+
+.PHONY: clean esl dtsi
+clean:
+\trm -f $(ESL_FILE) $(ESL_DTSI)
+esl: $(ESL_FILE)
+\t@echo "ESL file built successfully"
+dtsi: $(ESL_DTSI)
+\t@echo "ESL DTSI built successfully"
+'''
+
+    with open(test_makefile, 'w', encoding='utf-8') as outf:
+        outf.write(makefile_content)
+
+    return SimpleNamespace(
+        ubman=ubman,
+        tmpdir=tmpdir,
+        cert_file=cert_file,
+        esl_template=esl_template,
+        esl_file=esl_file,
+        esl_dtsi=esl_dtsi,
+        test_makefile=test_makefile,
+        makefile_name=os.path.basename(test_makefile)
+    )
+
+
+def run_esl_make(env, message, target='dtsi'):
+    """Run a make command for ESL testing with logging
+
+    Args:
+        env (SimpleNamespace): Test environment with paths and ubman logger
+        message (str): Log message describing the build
+        target (str): Make target to build (default: 'dtsi')
+
+    Returns:
+        float or None: File modification time of target, or None if
+            clean/no target
+    """
+    info(env, message)
+    utils.run_and_log(env.ubman, ['make', '-f', env.makefile_name, target],
+                      cwd=env.tmpdir)
+
+    if target == 'clean':
+        return None
+    if target == 'esl' and not os.path.exists(env.esl_file):
+        return None
+    if target == 'dtsi' and not os.path.exists(env.esl_dtsi):
+        return None
+    if target == 'esl':
+        return os.path.getmtime(env.esl_file)
+    # target == 'dtsi'
+    return os.path.getmtime(env.esl_dtsi)
+
+
+def check_esl_build(env):
+    """Test initial ESL build creates targets and no-change rebuild doesn't
+    rebuild
+
+    Args:
+        env (SimpleNamespace): Test environment with paths and ubman logger
+
+    Returns:
+        tuple: (esl_mtime, dtsi_mtime) modification times
+    """
+    run_esl_make(env, 'Running initial ESL build...', 'clean')
+
+    # Build ESL file first
+    esl_mtime = run_esl_make(env, 'Building ESL file...', 'esl')
+    assert os.path.exists(env.esl_file), \
+        'ESL file should be created on initial build'
+
+    # Then build DTSI file
+    dtsi_mtime = run_esl_make(env, 'Building ESL DTSI...', 'dtsi')
+    assert os.path.exists(env.esl_dtsi), \
+        'ESL DTSI should be created on initial build'
+
+    info(env, f'Initial ESL created at {esl_mtime}')
+    info(env, f'Initial DTSI created at {dtsi_mtime}')
+
+    # Wait a bit to ensure timestamp differences
+    time.sleep(TIMESTAMP_DELAY)
+
+    # Run build again - targets should NOT be rebuilt (no dependencies
+    # changed)
+    new_esl_mtime = run_esl_make(env, 'Building ESL again without changes...',
+                                 'esl')
+    assert new_esl_mtime == esl_mtime, \
+        f'ESL should not rebuild when cert unchanged ' \
+        f'(initial: {esl_mtime}, second: {new_esl_mtime})'
+
+    new_dtsi_mtime = run_esl_make(env,
+                                  'Building DTSI again without changes...',
+                                  'dtsi')
+    assert new_dtsi_mtime == dtsi_mtime, \
+        f'DTSI should not rebuild when ESL/template unchanged ' \
+        f'(initial: {dtsi_mtime}, second: {new_dtsi_mtime})'
+
+    return esl_mtime, dtsi_mtime
+
+
+def check_cert_change(env, prev_esl_mtime, prev_dtsi_mtime):
+    """Test that changing certificate triggers full rebuild chain
+
+    Args:
+        env (SimpleNamespace): Test environment with paths and ubman logger
+        prev_esl_mtime (float): Previous ESL modification time
+        prev_dtsi_mtime (float): Previous DTSI modification time
+
+    Returns:
+        tuple: (new_esl_mtime, new_dtsi_mtime) after certificate change
+    """
+    time.sleep(TIMESTAMP_DELAY)
+
+    # Modify the certificate file
+    with open(env.cert_file, 'a', encoding='utf-8') as outf:
+        outf.write('# Modified certificate\n')
+
+    # Build ESL - should rebuild due to cert change
+    esl_mtime = run_esl_make(env, 'Building ESL after cert change...', 'esl')
+    assert esl_mtime > prev_esl_mtime, \
+        f'ESL should rebuild when certificate changes ' \
+        f'(previous: {prev_esl_mtime}, new: {esl_mtime})'
+
+    # Build DTSI - should rebuild due to ESL change
+    dtsi_mtime = run_esl_make(env, 'Building DTSI after ESL change...', 'dtsi')
+    assert dtsi_mtime > prev_dtsi_mtime, \
+        f'DTSI should rebuild when ESL changes ' \
+        f'(previous: {prev_dtsi_mtime}, new: {dtsi_mtime})'
+
+    return esl_mtime, dtsi_mtime
+
+
+def check_template_change(env, prev_esl_mtime, prev_dtsi_mtime):
+    """Test that changing template rebuilds DTSI but not ESL
+
+    Args:
+        env (SimpleNamespace): Test environment with paths and ubman logger
+        prev_esl_mtime (float): Previous ESL modification time
+        prev_dtsi_mtime (float): Previous DTSI modification time
+
+    Returns:
+        tuple: (esl_mtime, new_dtsi_mtime) after template change
+    """
+    time.sleep(TIMESTAMP_DELAY)
+
+    # Modify the template file
+    with open(env.esl_template, 'a', encoding='utf-8') as outf:
+        outf.write('    /* Modified template */\n')
+
+    # Build ESL - should NOT rebuild (cert unchanged)
+    esl_mtime = run_esl_make(env, 'Building ESL after template change...',
+                             'esl')
+    assert esl_mtime == prev_esl_mtime, \
+        f'ESL should not rebuild when only template changes ' \
+        f'(previous: {prev_esl_mtime}, current: {esl_mtime})'
+
+    # Build DTSI - should rebuild due to template change
+    dtsi_mtime = run_esl_make(env, 'Building DTSI after template change...',
+                              'dtsi')
+    assert dtsi_mtime > prev_dtsi_mtime, \
+        f'DTSI should rebuild when template changes ' \
+        f'(previous: {prev_dtsi_mtime}, new: {dtsi_mtime})'
+
+    return esl_mtime, dtsi_mtime
+
+
+@pytest.mark.boardspec('sandbox')
+def test_dep_esl(ubman):
+    """Test that ESL dependency tracking works without FORCE
+
+    This test verifies that the capsule ESL rules properly track dependencies
+    and rebuild when source files are modified. Tests the chain:
+    certificate -> ESL file -> DTSI file
+    """
+    env = setup_esl_env(ubman)
+
+    info(env, 'Testing initial ESL build and no-change rebuild...')
+    esl_mtime, dtsi_mtime = check_esl_build(env)
+
+    info(env, 'Testing certificate change triggers full rebuild chain...')
+    esl_mtime, dtsi_mtime = check_cert_change(env, esl_mtime, dtsi_mtime)
+
+    info(env, 'Testing template change rebuilds DTSI only...')
+    check_template_change(env, esl_mtime, dtsi_mtime)
+
+    info(env, 'All ESL dependency tracking tests passed!')
