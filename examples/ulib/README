@@ -18,8 +18,8 @@ This creates:
 Example Programs
 ----------------
 
-The examples are built automatically as part of the U-Boot build. So far there
-is only one.
+The examples are built automatically as part of the U-Boot build. Each program
+demonstrates different aspects of the U-Boot library.
 
 **demo.c** - Demonstrates using U-Boot library functions
 
@@ -27,6 +27,14 @@ is only one.
 - Uses U-Boot's OS functions (os_open(), os_fgets(), os_close())
 - Reads and displays system information
 - Shows the U-Boot version
+
+**boot.c** - Demonstrates booting an OS using U-Boot bootflow
+
+- Shows bootflow scanning and booting functionality
+- Uses system headers for main program logic (boot.c)
+- Uses U-Boot headers for bootflow internals (bootflow.c)
+- Demonstrates attaching disk images and scanning for bootable OS
+- Attempts to boot the first discovered bootflow
 
 Building Examples
 -----------------
@@ -50,14 +58,21 @@ Running Examples
     # Run the demo (static version)
     ./demo_static
 
+    # Run the boot example (requires disk image at /home/sglass/u/mmc1.img)
+    LD_LIBRARY_PATH=/tmp/b/sandbox ./boot
+
+    # Run the boot example (static version)
+    ./boot_static
+
 Key Points
 ----------
 
-- Avoid including U-Boot headers that conflict with system headers. This
-  Makefile gives priority to the system headers
+- Files are compiled with U-Boot headers by default, except those listed in
+  sys-objs which use system headers
 - Use ulib_init() to init the library
 - Use ulib_uninit() to clean up
 - Set LD_LIBRARY_PATH when running dynamically linked programs
+- Each program automatically gets both dynamic and static versions built
 
 Copying for External Use
 -------------------------

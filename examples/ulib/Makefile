@@ -29,13 +29,14 @@
 include config.mk
 
 # Programs to build
-progs := demo
+progs := demo boot
 
 # Program definitions - list of object files for each program
 demo_objs := demo.o demo_helper.o
+boot_objs := boot.o bootflow.o
 
 # Objects that need system headers (default is U-Boot headers)
-sys-objs := demo_helper.o
+sys-objs := boot.o demo_helper.o
 
 # Include build rules (must come after variable definitions)
 include rules.mk
