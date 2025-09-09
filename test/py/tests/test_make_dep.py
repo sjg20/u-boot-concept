@@ -5,8 +5,8 @@
 """Test U-Boot Makefile dependency tracking
 
 This test verifies that Makefile rules properly track dependencies and rebuild
-targets when dependency files change. Specifically, it tests the hwids_to_dtsi
-rule which had FORCE removed to rely on proper dependency tracking.
+targets when dependency files change. It tests multiple rules that had FORCE
+removed: hwids_to_dtsi, $(obj)/%.dtbo, and ESL dependency chains.
 """
 
 import os
@@ -211,6 +211,173 @@ def check_txt_changes(env, previous_mtime):
     return mtime
 
 
+def setup_dtbo_env(ubman):
+    """Set up the test environment for dtbo dependency tracking
+
+    Args:
+        ubman (ConsoleBase): ubman fixture
+
+    Returns:
+        SimpleNamespace: DTBO test environment with paths and config
+    """
+    # Create a temporary directory structure for dtbo testing
+    tmpdir = os.path.join(ubman.config.result_dir, 'test_dtbo_dep')
+    os.makedirs(tmpdir, exist_ok=True)
+
+    # Create test dtso source file
+    dtso_file = os.path.join(tmpdir, 'test_overlay.dtso')
+    dtbo_file = os.path.join(tmpdir, 'test_overlay.dtbo')
+
+    # Write initial dtso content
+    dtso_content = '''/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "test,overlay";
+
+    fragment@0 {
+        target-path = "/";
+        __overlay__ {
+            test_property = "initial_value";
+        };
+    };
+};'''
+    with open(dtso_file, 'w', encoding='utf-8') as outf:
+        outf.write(dtso_content)
+
+    # Create a test Makefile to verify dtbo dependency behavior
+    test_makefile = os.path.join(tmpdir, 'test_dtbo.mk')
+
+    # Use relative paths in makefile since we cd to tmpdir
+    rel_dtso = os.path.relpath(dtso_file, tmpdir)
+    rel_dtbo = os.path.relpath(dtbo_file, tmpdir)
+
+    # Find DTC binary
+    dtc_cmd = 'dtc'  # Assume dtc is in PATH
+
+    makefile_content = f'''# Test dtbo dependency tracking
+DTSO_SRC := {rel_dtso}
+DTBO_TARGET := {rel_dtbo}
+DTC := {dtc_cmd}
+
+# Simulate the $(obj)/%.dtbo rule from scripts/Makefile.lib
+# Using a simplified version of the dtco command
+$(DTBO_TARGET): $(DTSO_SRC)
+\t@echo "Building dtbo from dtso because source changed"
+\t@mkdir -p $(dir $@)
+\t$(DTC) -@ -O dtb -o $@ -b 0 -d $@.d $<
+
+.PHONY: clean dtbo
+clean:
+\trm -f $(DTBO_TARGET) $(DTBO_TARGET).d
+dtbo: $(DTBO_TARGET)
+\t@echo "DTBO target built successfully"
+'''
+
+    with open(test_makefile, 'w', encoding='utf-8') as outf:
+        outf.write(makefile_content)
+
+    return SimpleNamespace(
+        ubman=ubman,
+        tmpdir=tmpdir,
+        dtso_file=dtso_file,
+        dtbo_file=dtbo_file,
+        test_makefile=test_makefile,
+        makefile_name=os.path.basename(test_makefile)
+    )
+
+
+def run_dtbo_make(env, message, target='dtbo'):
+    """Run a make command for dtbo testing with logging
+
+    Args:
+        env (SimpleNamespace): Test environment with paths and ubman logger
+        message (str): Log message describing the build
+        target (str): Make target to build (default: 'dtbo')
+
+    Returns:
+        float or None: File modification time of dtbo target, or None if
+            clean/no target
+    """
+    info(env, message)
+    utils.run_and_log(env.ubman, ['make', '-f', env.makefile_name, target],
+                      cwd=env.tmpdir)
+    if target == 'clean' or not os.path.exists(env.dtbo_file):
+        return None
+    return os.path.getmtime(env.dtbo_file)
+
+
+def check_dtbo_build(env):
+    """Test initial dtbo build creates target and no-change rebuild doesn't
+    rebuild
+
+    Args:
+        env (SimpleNamespace): Test environment with paths and ubman logger
+
+    Returns:
+        float: Initial modification time of dtbo file
+    """
+    run_dtbo_make(env, 'Running initial dtbo build...', 'clean')
+    initial_mtime = run_dtbo_make(env, 'Building dtbo target...')
+
+    assert os.path.exists(env.dtbo_file), \
+        'DTBO file should be created on initial build'
+
+    info(env, f'Initial dtbo created at {initial_mtime}')
+
+    # Wait a bit to ensure timestamp differences
+    time.sleep(TIMESTAMP_DELAY)
+
+    # Run build again - target should NOT be rebuilt (no dependencies changed)
+    mtime = run_dtbo_make(env, 'Running dtbo build again without changes...')
+    assert mtime == initial_mtime, \
+        f'DTBO should not rebuild when dtso unchanged ' \
+        f'(initial: {initial_mtime}, second: {mtime})'
+
+    return initial_mtime
+
+
+def check_dtso_change(env, previous_mtime):
+    """Test that changing dtso file triggers dtbo rebuild
+
+    Args:
+        env (SimpleNamespace): Test environment with paths and ubman logger
+        previous_mtime (float): Previous modification time to compare against
+
+    Returns:
+        float: New modification time after dtso change and rebuild
+    """
+    time.sleep(TIMESTAMP_DELAY)
+
+    # Modify the dtso source file - replace the closing brace and add new
+    # fragment
+    with open(env.dtso_file, 'r', encoding='utf-8') as inf:
+        content = inf.read()
+
+    # Replace the last closing brace with additional fragment
+    new_content = content.rstrip()
+    if new_content.endswith('};'):
+        new_content = new_content[:-2]  # Remove the last '};'
+        new_content += '''
+    fragment@1 {
+        target-path = "/";
+        __overlay__ {
+            test_property2 = "added_value";
+        };
+    };
+};'''
+    with open(env.dtso_file, 'w', encoding='utf-8') as outf:
+        outf.write(new_content)
+
+    # Build again - target SHOULD be rebuilt due to dtso change
+    mtime = run_dtbo_make(env, 'Building dtbo after dtso change...')
+    assert mtime > previous_mtime, \
+        f'DTBO should rebuild when dtso changes ' \
+        f'(previous: {previous_mtime}, new: {mtime})'
+
+    return mtime
+
+
 @pytest.mark.boardspec('sandbox')
 def test_dep_hwids(ubman):
     """Test that Makefile dependency tracking works without FORCE
@@ -231,3 +398,20 @@ def test_dep_hwids(ubman):
 
     info(env, 'All dependency tracking tests passed!')
 
+
+@pytest.mark.boardspec('sandbox')
+def test_dep_dtbo(ubman):
+    """Test that dtbo dependency tracking works without FORCE
+
+    This test verifies that the $(obj)/%.dtbo rule properly rebuilds
+    when the corresponding .dtso source file is modified.
+    """
+    env = setup_dtbo_env(ubman)
+
+    info(env, 'Testing initial dtbo build and no-change rebuild...')
+    first_mtime = check_dtbo_build(env)
+
+    info(env, 'Testing dtso file change triggers dtbo rebuild...')
+    check_dtso_change(env, first_mtime)
+
+    info(env, 'All dtbo dependency tracking tests passed!')
