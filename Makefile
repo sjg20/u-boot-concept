@@ -1859,35 +1859,58 @@ ifeq ($(CONFIG_RISCV),y)
 	@tools/prelink-riscv $@
 endif
 
+# Common step: create archive and prepare modified object files
+quiet_cmd_ulib-objs = OBJS    $@
+      cmd_ulib-objs = \
+	rm -f $@.tmp $@.objlist $@; \
+	$(AR) rcT $@.tmp $(u-boot-init) $(u-boot-main) \
+		$(u-boot-keep-syms-lto); \
+	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o$$" > $@.objlist; \
+	mkdir -p $@.objdir; \
+	$(PYTHON3) $(srctree)/scripts/build_api.py \
+		$(srctree)/lib/ulib/rename.syms \
+		--redefine $$(cat $@.objlist) --output-dir $@.objdir \
+		$(if $(filter -j%,$(MAKEFLAGS)),--jobs $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS)))) \
+		> $@; \
+	rm -f $@.tmp $@.objlist
+
+.ulib-objs: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
+		$(srctree)/lib/ulib/rename.syms FORCE
+	$(call if_changed,ulib-objs)
+
 # Build U-Boot as a shared library
 quiet_cmd_libu-boot.so = LD      $@
-      cmd_libu-boot.so = $(CC) -shared -o $@ -Wl,--build-id=none \
+      cmd_libu-boot.so = \
+	$(CC) -shared -o $@ -Wl,--build-id=none \
 	-Wl,-T,$(LIB_LDS) \
-	$(u-boot-init) \
 	$(KBUILD_LDFLAGS:%=-Wl,%) $(SANITIZERS) $(LTO_FINAL_LDFLAGS) \
 	-Wl,--whole-archive \
-		$(filter-out %/main.o,$(u-boot-main)) \
-		$(u-boot-keep-syms-lto) \
+		$$(cat .ulib-objs) \
 	-Wl,--no-whole-archive \
 	$(PLATFORM_LIBS) -Wl,-Map -Wl,libu-boot.map
 
-libu-boot.so: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) \
-		$(LIB_LDS) FORCE
+libu-boot.so: .ulib-objs $(LIB_LDS) include/u-boot-api.h FORCE
 	$(call if_changed,libu-boot.so)
 
 # Build U-Boot as a static library
 # Create a fat archive with all object files (except arch/sandbox/cpu/main.o)
 # Avoid partial linking so as to preserve the linker-list sections
 quiet_cmd_libu-boot.a = AR      $@
-      cmd_libu-boot.a = rm -f $@ $@.tmp $@.objlist; \
-	$(AR) rcT $@.tmp $(u-boot-init) $(u-boot-main) \
-		$(u-boot-keep-syms-lto); \
-	$(AR) t $@.tmp | grep -v "arch/sandbox/cpu/main\.o$$" > $@.objlist; \
-	cat $@.objlist | xargs $(AR) rcs $@; \
-	rm -f $@.tmp $@.objlist
+      cmd_libu-boot.a = rm -f $@; \
+	cat .ulib-objs | xargs $(AR) rcs $@
 
-libu-boot.a: $(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) FORCE
+libu-boot.a: .ulib-objs include/u-boot-api.h FORCE
 	$(call if_changed,libu-boot.a)
+
+# Generate API header with renamed function declarations
+quiet_cmd_u-boot-api.h = APIH    $@
+      cmd_u-boot-api.h = $(PYTHON3) $(srctree)/scripts/build_api.py \
+		$(srctree)/lib/ulib/rename.syms --api $@ \
+		--include-dir $(srctree)/include
+
+include/u-boot-api.h: $(srctree)/lib/ulib/rename.syms \
+		$(srctree)/scripts/build_api.py FORCE
+	$(call if_changed,u-boot-api.h)
 
 # Build ulib_test that links with shared library
 quiet_cmd_ulib_test = HOSTCC  $@
@@ -2328,7 +2351,10 @@ CLEAN_FILES += include/autoconf.mk* include/bmp_logo.h include/bmp_logo_data.h \
 	       mkimage.rom.mkimage mkimage-in-simple-bin* rom.map simple-bin* \
 	       idbloader-spi.img lib/efi_loader/helloworld_efi.S *.itb \
 	       Test* capsule*.*.efi-capsule capsule*.map \
-	       test/ulib/ulib_test test/ulib/ulib_test_static
+	       test/ulib/ulib_test test/ulib/ulib_test_static \
+	       libu-boot.so.tmp libu-boot.so.objlist \
+	       libu-boot.a.tmp libu-boot.a.objlist \
+	       include/u-boot-api.h
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl vpl \

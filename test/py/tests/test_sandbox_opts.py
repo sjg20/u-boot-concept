@@ -19,10 +19,10 @@ def test_sandbox_cmdline(ubman):
                '-a', '~CMDLINE', '-o', TMPDIR])
 
 @pytest.mark.slow
-@pytest.mark.boardspec('sandbox')
+@pytest.mark.boardspec('sandbox_flattree')
 def test_sandbox_lto(ubman):
-    """Test building sandbox without CONFIG_LTO"""
+    """Test building sandbox_flattree without CONFIG_LTO"""
 
     utils.run_and_log(
-        ubman, ['./tools/buildman/buildman', '-m', '--board', 'sandbox',
-               '-a', '~LTO', '-o', TMPDIR])
+        ubman, ['./tools/buildman/buildman', '-m', '--board',
+                'sandbox_flattree', '-a', '~LTO', '-o', TMPDIR])

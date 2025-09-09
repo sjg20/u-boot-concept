@@ -100,7 +100,6 @@ endchoice
 
 config ULIB
 	bool "Build U-Boot as a library"
-	default y if SANDBOX
 	help
 	  Enable this to build a library which can be linked to other programs,
 	  to extend U-Boot's functionality.
@@ -129,7 +128,7 @@ config ARCH_SUPPORTS_LTO
 
 config LTO
 	bool "Enable Link Time Optimizations"
-	depends on ARCH_SUPPORTS_LTO
+	depends on ARCH_SUPPORTS_LTO && !ULIB
 	help
 	  This option enables Link Time Optimization (LTO), a mechanism which
 	  allows the compiler to optimize between different compilation units.

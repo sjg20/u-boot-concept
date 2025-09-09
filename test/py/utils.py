@@ -157,7 +157,8 @@ def wait_until_file_open_fails(fn, ignore_errors):
         return
     raise Exception('File can still be opened')
 
-def run_and_log_no_ubman(log, cmd, ignore_errors=False, stdin=None, env=None):
+def run_and_log_no_ubman(log, cmd, ignore_errors=False, stdin=None, env=None,
+                cwd=None):
     """Run a command and log its output.
 
     This is useful when you don't want to use a ubman fixture
@@ -173,6 +174,7 @@ def run_and_log_no_ubman(log, cmd, ignore_errors=False, stdin=None, env=None):
             such problems occur.
         stdin (str): Input string to pass to the command as stdin (or None)
         env (dict): Environment to use, or None to use the current one
+        cwd (str): directory to run the command in, or None for current dir
 
     Returns:
         The output as a string.
@@ -180,11 +182,13 @@ def run_and_log_no_ubman(log, cmd, ignore_errors=False, stdin=None, env=None):
     if isinstance(cmd, str):
         cmd = cmd.split()
     runner = log.get_runner(cmd[0], sys.stdout)
-    output = runner.run(cmd, ignore_errors=ignore_errors, stdin=stdin, env=env)
+    output = runner.run(cmd, ignore_errors=ignore_errors, stdin=stdin, env=env,
+                        cwd=cwd)
     runner.close()
     return output
 
-def run_and_log(ubman, cmd, ignore_errors=False, stdin=None, env=None):
+def run_and_log(ubman, cmd, ignore_errors=False, stdin=None, env=None,
+                cwd=None):
     """Run a command and log its output.
 
     Args:
@@ -198,11 +202,12 @@ def run_and_log(ubman, cmd, ignore_errors=False, stdin=None, env=None):
             such problems occur.
         stdin (str): Input string to pass to the command as stdin (or None)
         env (dict): Environment to use, or None to use the current one
+        cwd (str): directory to run the command in, or None for current dir
 
     Returns:
         The output as a string.
     """
-    return run_and_log_no_ubman(ubman.log, cmd, ignore_errors, stdin, env)
+    return run_and_log_no_ubman(ubman.log, cmd, ignore_errors, stdin, env, cwd)
 
 def run_and_log_expect_exception(ubman, cmd, retcode, msg):
     """Run a command that is expected to fail.

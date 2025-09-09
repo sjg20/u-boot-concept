@@ -36,7 +36,7 @@ def run_test_coverage(prog, filter_fname, exclude_list, build_dir,
         exclude_list: List of file patterns to exclude from the coverage
             calculation
         build_dir: Build directory, used to locate libfdt.py
-        required: List of modules which must be in the coverage report
+        required: Set of modules which must be in the coverage report
         extra_args (str): Extra arguments to pass to the tool before the -t/test
             arg
         single_thread (str): Argument string to make the tests run
