@@ -36,7 +36,8 @@ def run_test_coverage(prog, filter_fname, exclude_list, build_dir,
         exclude_list: List of file patterns to exclude from the coverage
             calculation
         build_dir: Build directory, used to locate libfdt.py
-        required: Set of modules which must be in the coverage report
+        required (set of str): Set of modules which must be in the coverage
+            report. If None, then missing tests are not reported
         extra_args (str): Extra arguments to pass to the tool before the -t/test
             arg
         single_thread (str): Argument string to make the tests run
@@ -78,11 +79,11 @@ def run_test_coverage(prog, filter_fname, exclude_list, build_dir,
         # Convert '/path/to/name.py' just the module name 'name'
         test_set = set([os.path.splitext(os.path.basename(line.split()[0]))[0]
                         for line in lines if '/etype/' in line])
-        missing_list = required
-        missing_list.discard('__init__')
-        missing_list.difference_update(test_set)
-        if missing_list:
-            print('Missing tests for %s' % (', '.join(missing_list)))
+        missing = required
+        missing.discard('__init__')
+        missing.difference_update(test_set)
+        if missing:
+            print('Missing tests for %s' % (', '.join(missing)))
             print(stdout)
             ok = False
 
