@@ -9,6 +9,7 @@
 #include <string.h>
 #include <version.h>
 #include <asm/global_data.h>
+#include <version_string.h>
 #include <u-boot-lib.h>
 
 /* Static storage for global data when using simplified API */
@@ -32,5 +33,5 @@ void ulib_uninit(void)
 
 const char *ulib_get_version(void)
 {
-	return PLAIN_VERSION;
+	return version_string;
 }
