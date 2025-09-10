@@ -1,0 +1,5 @@
+build-dynamic/
+build-static/
+demo
+demo_static
+target/
