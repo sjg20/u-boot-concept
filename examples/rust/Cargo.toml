@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: GPL-2.0+
+[package]
+name = "uboot-rust-demo"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0+"
+description = "Rust demo program for U-Boot library"
+authors = ["Simon Glass <simon.glass@canonical.com>"]
+
+[dependencies]
+u-boot-sys = { path = "../../lib/rust" }
+
+[[bin]]
+name = "demo"
+path = "src/demo.rs"
+
+[build-dependencies]
