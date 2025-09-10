@@ -415,5 +415,6 @@ Future Work
 * Selective inclusion of U-Boot subsystems
 * API versioning and stability guarantees
 * pkg-config support for easier integration
-* Support for calling functions in any U-Boot header
+* Support for calling functions in any U-Boot header, without needing the source
+  tree
 * Improved symbol renaming with namespace support
