@@ -6,7 +6,7 @@ U-Boot Library (ulib)
 The U-Boot Library (ulib) allows U-Boot to be built as a shared or static
 library that can be used by external programs. This enables reuse of U-Boot
 functionality in test programs and other applications without needing to
-build that functionality directly into U-Boot image.
+build that functionality directly into a U-Boot image.
 
 Please read `License Implications`_ below.
 
@@ -94,7 +94,7 @@ This is possible using the provided examples as a template. The ``examples/ulib`
 directory contains a standalone Makefile that can build programs against a
 pre-built U-Boot library.
 
-The examples works as expected, but note that as soon as you want to call
+The examples work as expected, but note that as soon as you want to call
 functions that are not in the main API headers, you may have problems with
 missing dependencies and header files. See below.
 
@@ -104,11 +104,11 @@ Including U-Boot header files from outside
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 U-Boot has many header files, some of which are arch-specific. These are
-typically including via::
+typically included via::
 
     #include <asm/...>
 
-and are located in the ```arch/<arch>/include/asm/...`` directory within the
+and are located in the ``arch/<arch>/include/asm/...`` directory within the
 U-Boot source tree. You will need to ensure that this directory is present in
 the include path.
 
@@ -204,7 +204,7 @@ out of memory or simple crashes during library init.
 Dependencies
 ------------
 
-When linking with the U-Boot library for sanbod, you may need these system
+When linking with the U-Boot library for sandbox, you may need these system
 libraries:
 
 * ``pthread`` - POSIX threads
@@ -341,7 +341,7 @@ The format rules are:
 
 * Lines starting with ``file:`` specify a header file
 * Indented lines (space or tab) define symbols from that header
-* Use ``symbol=new_name`` for custom renaming, otherwise ``ub_`` a prefix is
+* Use ``symbol=new_name`` for custom renaming, otherwise a ``ub_`` prefix is
   added by default. No space around ``=``
 * Use ``#`` at the beginning of a line for a comment
 * Empty lines are allowed
