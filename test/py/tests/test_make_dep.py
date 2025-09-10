@@ -25,7 +25,7 @@ import utils
 TIMESTAMP_DELAY = 2
 
 
-def info(env, message):
+def _info(env, message):
     """Log an informational message
 
     Args:
@@ -34,28 +34,34 @@ def info(env, message):
     """
     env.ubman.log.info(message)
 
-def run_make(env, message, target='test'):
-    """Run a make command with logging
+def _run_make(env, message, mtime_file=None):
+    """Run a real U-Boot build command with logging
 
     Args:
         env (SimpleNamespace): Test environment with ubman logger and paths
         message (str): Log message describing the build
-        target (str): Make target to build (default: 'test')
+        mtime_file (str, optional): File path to get mtime from. If None,
+            returns None.
 
     Returns:
-        float or None: File modification time of target, or None if
-            clean/no target
+        float or None: File modification time of mtime_file, or None if
+            mtime_file not provided
     """
-    info(env, message)
-    utils.run_and_log(env.ubman, ['make', '-f', env.makefile_name, target],
-                      cwd=env.tmpdir)
-    if target == 'clean' or not os.path.exists(env.test_target):
-        return None
-    return os.path.getmtime(env.test_target)
+    _info(env, message)
+
+    # Build all targets using real U-Boot makefile
+    utils.run_and_log(env.ubman, ['make', '-j30', 'all'], cwd=env.build_dir)
+
+    # Return modification time if mtime_file is specified
+    if mtime_file:
+        return os.path.getmtime(mtime_file)
+    return None
 
 
-def setup_hwids_env(ubman):
-    """Set up the test environment with hwids files and Makefile
+def _setup_hwids_env(ubman):
+    """Set up test environment for hwids dependency tracking
+
+    Uses real U-Boot build
 
     Args:
         ubman (ConsoleBase): ubman fixture
@@ -63,75 +69,35 @@ def setup_hwids_env(ubman):
     Returns:
         SimpleNamespace: Test environment with paths and config
     """
-    # Create a temporary board directory structure for testing
-    tmpdir = os.path.join(ubman.config.result_dir, 'test_make_dep')
-    temp_board_dir = os.path.join(tmpdir, 'board', 'test_vendor',
-                                  'test_board')
-    hwids_dir = os.path.join(temp_board_dir, 'hwids')
-    os.makedirs(tmpdir, exist_ok=True)
-    os.makedirs(hwids_dir, exist_ok=True)
+    # CHID is enabled in sandbox config
 
-    # Create test hwids files
+    # Use the real sandbox hwids directory
+    hwids_dir = os.path.join(ubman.config.source_dir, 'board/sandbox/hwids')
     hwidmap_file = os.path.join(hwids_dir, 'compatible.hwidmap')
-    hwid_txt_file = os.path.join(hwids_dir, 'test_hwid.txt')
 
-    # Write initial hwidmap content
-    with open(hwidmap_file, 'w', encoding='utf-8') as outf:
-        outf.write('# Test hardware ID mapping\n')
-        outf.write('TEST_DEVICE_1=test,device1\n')
+    # The hwids DTSI file gets created in test/fdt_overlay/ directory
+    # when building test DTBs that include hwids
+    test_target = os.path.join(ubman.config.build_dir,
+                               'test/fdt_overlay/hwids.dtsi')
 
-    # Write initial hwid txt content
-    with open(hwid_txt_file, 'w', encoding='utf-8') as outf:
-        outf.write('TEST_DEVICE_1\n')
-        outf.write('Some initial hardware info\n')
-
-    # Assume hwids_to_dtsi rule exists in Makefile.lib
-
-    # Create a simple test Makefile to verify dependency behavior
-    test_makefile = os.path.join(tmpdir, 'test_deps.mk')
-    test_target = os.path.join(tmpdir, 'test_output.dtsi')
-
-    # Use relative paths in makefile since we cd to tmpdir
-    rel_hwids_dir = os.path.relpath(hwids_dir, tmpdir)
-    rel_target = os.path.relpath(test_target, tmpdir)
-
-    makefile_content = f'''# Test dependency tracking
-HWIDS_DIR := {rel_hwids_dir}
-TARGET := {rel_target}
-
-# Simulate the hwids_to_dtsi rule without FORCE
-$(TARGET): $(HWIDS_DIR)/compatible.hwidmap $(wildcard $(HWIDS_DIR)/*.txt)
-\t@echo "Building target because dependencies changed"
-\t@echo "/* Generated from hwids */" > $@
-\t@echo "// hwidmap: $$(stat -c %Y $(HWIDS_DIR)/compatible.hwidmap)" >> $@
-\t@echo "// txt files: $$(find $(HWIDS_DIR) -name '*.txt' " \\
-            "-exec stat -c %Y {{}} \\; | sort -n | tail -1)" >> $@
-\t@echo "// Generated at: $$(date +%s)" >> $@
-
-.PHONY: clean test
-clean:
-\trm -f $(TARGET)
-test: $(TARGET)
-\t@echo "Target built successfully"
-'''
-
-    with open(test_makefile, 'w', encoding='utf-8') as outf:
-        outf.write(makefile_content)
+    # Use the known hwid txt files for testing
+    hwid_txt_file = os.path.join(hwids_dir, 'test-device-1.txt')
+    second_test_target = os.path.join(hwids_dir, 'test-device-2.txt')
 
     return SimpleNamespace(
         ubman=ubman,
-        tmpdir=tmpdir,
+        build_dir=ubman.config.build_dir,
+        source_dir=ubman.config.source_dir,
         hwids_dir=hwids_dir,
         hwidmap_file=hwidmap_file,
         hwid_txt_file=hwid_txt_file,
-        test_makefile=test_makefile,
-        test_target=test_target,
-        makefile_name=os.path.basename(test_makefile)
+        second_test_target=second_test_target,
+        test_target=test_target
     )
 
 
-def check_initial_build(env):
-    """Test initial build creates target and no-change rebuild doesn't rebuild
+def _check_initial_build(env):
+    """Test initial build and no-change rebuild behavior
 
     Args:
         env (SimpleNamespace): Test environment with paths and ubman logger
@@ -139,19 +105,18 @@ def check_initial_build(env):
     Returns:
         tuple: (initial_mtime, second_mtime) modification times
     """
-    run_make(env, 'Running initial build...', 'clean')
-    initial_mtime = run_make(env, 'Building test target...', 'test')
+    # Clean the test target
+    if os.path.exists(env.test_target):
+        os.remove(env.test_target)
+    initial_mtime = _run_make(env, 'build hwids target', env.test_target)
 
-    assert os.path.exists(env.test_target), \
-        'Target file should be created on initial build'
-
-    info(env, f'Initial target created at {initial_mtime}')
+    _info(env, f'Initial target created at {initial_mtime}')
 
     # Wait a bit to ensure timestamp differences
     time.sleep(TIMESTAMP_DELAY)
 
     # Run build again - target should NOT be rebuilt (no dependencies changed)
-    mtime = run_make(env, 'Running build again without changes...')
+    mtime = _run_make(env, 'build again without changes', env.test_target)
     assert mtime == initial_mtime, \
         f'Target should not rebuild when dependencies unchanged ' \
         f'(initial: {initial_mtime}, second: {mtime})'
@@ -159,7 +124,7 @@ def check_initial_build(env):
     return initial_mtime, mtime
 
 
-def check_hwidmap_change(env, previous_mtime):
+def _check_hwidmap_change(env, previous_mtime):
     """Test that changing hwidmap file triggers rebuild
 
     Args:
@@ -170,11 +135,12 @@ def check_hwidmap_change(env, previous_mtime):
         float: New modification time after rebuild
     """
     time.sleep(TIMESTAMP_DELAY)
-    with open(env.hwidmap_file, 'a', encoding='utf-8') as outf:
-        outf.write('TEST_DEVICE_2=test,device2\n')
+
+    # Touch the hwidmap file to update its timestamp
+    os.utime(env.hwidmap_file)
 
     # Build again - target SHOULD be rebuilt due to hwidmap change
-    mtime = run_make(env, 'Building after hwidmap change...')
+    mtime = _run_make(env, 'build after hwidmap change', env.test_target)
     assert mtime > previous_mtime, \
         f'Target should rebuild when hwidmap changes ' \
         f'(previous: {previous_mtime}, new: {mtime})'
@@ -182,7 +148,7 @@ def check_hwidmap_change(env, previous_mtime):
     return mtime
 
 
-def check_txt_changes(env, previous_mtime):
+def _check_txt_changes(env, previous_mtime):
     """Test that changing txt files triggers rebuild
 
     Args:
@@ -194,30 +160,34 @@ def check_txt_changes(env, previous_mtime):
     """
     # Test existing txt file modification
     time.sleep(TIMESTAMP_DELAY)
-    with open(env.hwid_txt_file, 'a', encoding='utf-8') as outf:
-        outf.write('Additional hardware info\n')
 
-    modified_mtime = run_make(env, 'Building after txt file change...')
+    # Touch the txt file to update its timestamp
+    os.utime(env.hwid_txt_file)
+
+    modified_mtime = _run_make(env, 'build after txt change', env.test_target)
     assert modified_mtime > previous_mtime, \
         f'Target should rebuild when txt file changes ' \
         f'(previous: {previous_mtime}, modified: {modified_mtime})'
 
-    # Test new txt file addition
+    # Test modification of a second txt file to verify dependency tracking
+    # across multiple files
     time.sleep(TIMESTAMP_DELAY)
-    new_txt_file = os.path.join(env.hwids_dir, 'new_hwid.txt')
-    with open(new_txt_file, 'w', encoding='utf-8') as outf:
-        outf.write('NEW_DEVICE\nNew hardware information\n')
 
-    mtime = run_make(env, 'Building after adding new txt file...')
+    # Touch second txt file to update its timestamp
+    os.utime(env.second_test_target)
+
+    mtime = _run_make(env, 'build after second txt change', env.test_target)
     assert mtime > modified_mtime, \
-        f'Target should rebuild when new txt file added ' \
+        f'Target should rebuild when second txt file changes ' \
         f'(modified: {modified_mtime}, final: {mtime})'
 
     return mtime
 
 
-def setup_dtbo_env(ubman):
-    """Set up the test environment for dtbo dependency tracking
+def _setup_dtbo_env(ubman):
+    """Set up test environment for dtbo dependency tracking
+
+    Uses real U-Boot build
 
     Args:
         ubman (ConsoleBase): ubman fixture
@@ -225,96 +195,27 @@ def setup_dtbo_env(ubman):
     Returns:
         SimpleNamespace: DTBO test environment with paths and config
     """
-    # Create a temporary directory structure for dtbo testing
-    tmpdir = os.path.join(ubman.config.result_dir, 'test_dtbo_dep')
-    os.makedirs(tmpdir, exist_ok=True)
+    # Use the existing test overlay files from U-Boot source
+    dtso_file = os.path.join(ubman.config.source_dir,
+                             'test/fdt_overlay/test-fdt-overlay.dtso')
 
-    # Create test dtso source file
-    dtso_file = os.path.join(tmpdir, 'test_overlay.dtso')
-    dtbo_file = os.path.join(tmpdir, 'test_overlay.dtbo')
-
-    # Write initial dtso content
-    dtso_content = '''/dts-v1/;
-/plugin/;
-
-/ {
-    compatible = "test,overlay";
-
-    fragment@0 {
-        target-path = "/";
-        __overlay__ {
-            test_property = "initial_value";
-        };
-    };
-};'''
-    with open(dtso_file, 'w', encoding='utf-8') as outf:
-        outf.write(dtso_content)
-
-    # Create a test Makefile to verify dtbo dependency behavior
-    test_makefile = os.path.join(tmpdir, 'test_dtbo.mk')
-
-    # Use relative paths in makefile since we cd to tmpdir
-    rel_dtso = os.path.relpath(dtso_file, tmpdir)
-    rel_dtbo = os.path.relpath(dtbo_file, tmpdir)
-
-    # Find DTC binary
-    dtc_cmd = 'dtc'  # Assume dtc is in PATH
-
-    makefile_content = f'''# Test dtbo dependency tracking
-DTSO_SRC := {rel_dtso}
-DTBO_TARGET := {rel_dtbo}
-DTC := {dtc_cmd}
-
-# Simulate the $(obj)/%.dtbo rule from scripts/Makefile.lib
-# Using a simplified version of the dtco command
-$(DTBO_TARGET): $(DTSO_SRC)
-\t@echo "Building dtbo from dtso because source changed"
-\t@mkdir -p $(dir $@)
-\t$(DTC) -@ -O dtb -o $@ -b 0 -d $@.d $<
-
-.PHONY: clean dtbo
-clean:
-\trm -f $(DTBO_TARGET) $(DTBO_TARGET).d
-dtbo: $(DTBO_TARGET)
-\t@echo "DTBO target built successfully"
-'''
-
-    with open(test_makefile, 'w', encoding='utf-8') as outf:
-        outf.write(makefile_content)
+    # The DTBO gets built and compiled into .o file during test build
+    # We track the .o file since the .dtbo is an intermediate file
+    dtbo_file = os.path.join(ubman.config.build_dir,
+                             'test/fdt_overlay/test-fdt-overlay.dtbo.o')
 
     return SimpleNamespace(
         ubman=ubman,
-        tmpdir=tmpdir,
+        build_dir=ubman.config.build_dir,
+        source_dir=ubman.config.source_dir,
         dtso_file=dtso_file,
-        dtbo_file=dtbo_file,
-        test_makefile=test_makefile,
-        makefile_name=os.path.basename(test_makefile)
+        dtbo_target=dtbo_file
     )
 
 
-def run_dtbo_make(env, message, target='dtbo'):
-    """Run a make command for dtbo testing with logging
 
-    Args:
-        env (SimpleNamespace): Test environment with paths and ubman logger
-        message (str): Log message describing the build
-        target (str): Make target to build (default: 'dtbo')
-
-    Returns:
-        float or None: File modification time of dtbo target, or None if
-            clean/no target
-    """
-    info(env, message)
-    utils.run_and_log(env.ubman, ['make', '-f', env.makefile_name, target],
-                      cwd=env.tmpdir)
-    if target == 'clean' or not os.path.exists(env.dtbo_file):
-        return None
-    return os.path.getmtime(env.dtbo_file)
-
-
-def check_dtbo_build(env):
-    """Test initial dtbo build creates target and no-change rebuild doesn't
-    rebuild
+def _check_dtbo_build(env):
+    """Test initial dtbo build and no-change rebuild behavior
 
     Args:
         env (SimpleNamespace): Test environment with paths and ubman logger
@@ -322,19 +223,20 @@ def check_dtbo_build(env):
     Returns:
         float: Initial modification time of dtbo file
     """
-    run_dtbo_make(env, 'Running initial dtbo build...', 'clean')
-    initial_mtime = run_dtbo_make(env, 'Building dtbo target...')
+    # Clean the DTBO target and related files
+    dtbo_base = env.dtbo_target.replace('.dtbo.o', '.dtbo')
+    for f in [env.dtbo_target, dtbo_base, dtbo_base + '.S']:
+        if os.path.exists(f):
+            os.remove(f)
+    initial_mtime = _run_make(env, 'build dtbo target', env.dtbo_target)
 
-    assert os.path.exists(env.dtbo_file), \
-        'DTBO file should be created on initial build'
-
-    info(env, f'Initial dtbo created at {initial_mtime}')
+    _info(env, f'Initial dtbo created at {initial_mtime}')
 
     # Wait a bit to ensure timestamp differences
     time.sleep(TIMESTAMP_DELAY)
 
     # Run build again - target should NOT be rebuilt (no dependencies changed)
-    mtime = run_dtbo_make(env, 'Running dtbo build again without changes...')
+    mtime = _run_make(env, 'build dtbo again', env.dtbo_target)
     assert mtime == initial_mtime, \
         f'DTBO should not rebuild when dtso unchanged ' \
         f'(initial: {initial_mtime}, second: {mtime})'
@@ -342,7 +244,7 @@ def check_dtbo_build(env):
     return initial_mtime
 
 
-def check_dtso_change(env, previous_mtime):
+def _check_dtso_change(env, previous_mtime):
     """Test that changing dtso file triggers dtbo rebuild
 
     Args:
@@ -354,28 +256,11 @@ def check_dtso_change(env, previous_mtime):
     """
     time.sleep(TIMESTAMP_DELAY)
 
-    # Modify the dtso source file - replace the closing brace and add new
-    # fragment
-    with open(env.dtso_file, 'r', encoding='utf-8') as inf:
-        content = inf.read()
-
-    # Replace the last closing brace with additional fragment
-    new_content = content.rstrip()
-    if new_content.endswith('};'):
-        new_content = new_content[:-2]  # Remove the last '};'
-        new_content += '''
-    fragment@1 {
-        target-path = "/";
-        __overlay__ {
-            test_property2 = "added_value";
-        };
-    };
-};'''
-    with open(env.dtso_file, 'w', encoding='utf-8') as outf:
-        outf.write(new_content)
+    # Touch the dtso file to update its timestamp
+    os.utime(env.dtso_file)
 
     # Build again - target SHOULD be rebuilt due to dtso change
-    mtime = run_dtbo_make(env, 'Building dtbo after dtso change...')
+    mtime = _run_make(env, 'build dtbo after dtso change', env.dtbo_target)
     assert mtime > previous_mtime, \
         f'DTBO should rebuild when dtso changes ' \
         f'(previous: {previous_mtime}, new: {mtime})'
@@ -383,47 +268,10 @@ def check_dtso_change(env, previous_mtime):
     return mtime
 
 
-@pytest.mark.boardspec('sandbox')
-def test_dep_hwids(ubman):
-    """Test that Makefile dependency tracking works without FORCE
+def _setup_esl_env(ubman):
+    """Set up test environment for ESL dependency tracking
 
-    This test verifies that the hwids_to_dtsi rule (which had FORCE removed)
-    still properly rebuilds when dependency files are modified.
-    """
-    env = setup_hwids_env(ubman)
-
-    info(env, 'Testing initial build and no-change rebuild...')
-    _, second_mtime = check_initial_build(env)
-
-    info(env, 'Testing hwidmap file change triggers rebuild...')
-    third_mtime = check_hwidmap_change(env, second_mtime)
-
-    info(env, 'Testing txt file changes trigger rebuild...')
-    check_txt_changes(env, third_mtime)
-
-    info(env, 'All dependency tracking tests passed!')
-
-
-@pytest.mark.boardspec('sandbox')
-def test_dep_dtbo(ubman):
-    """Test that dtbo dependency tracking works without FORCE
-
-    This test verifies that the $(obj)/%.dtbo rule properly rebuilds
-    when the corresponding .dtso source file is modified.
-    """
-    env = setup_dtbo_env(ubman)
-
-    info(env, 'Testing initial dtbo build and no-change rebuild...')
-    first_mtime = check_dtbo_build(env)
-
-    info(env, 'Testing dtso file change triggers dtbo rebuild...')
-    check_dtso_change(env, first_mtime)
-
-    info(env, 'All dtbo dependency tracking tests passed!')
-
-
-def setup_esl_env(ubman):
-    """Set up the test environment for ESL dependency tracking
+    Uses real U-Boot Makefile
 
     Args:
         ubman (ConsoleBase): ubman fixture
@@ -431,120 +279,35 @@ def setup_esl_env(ubman):
     Returns:
         SimpleNamespace: ESL test environment with paths and config
     """
-    # Create a temporary directory structure for ESL testing
-    tmpdir = os.path.join(ubman.config.result_dir, 'test_esl_dep')
-    os.makedirs(tmpdir, exist_ok=True)
+    # Capsule authentication is enabled in sandbox config
 
-    # Create test certificate file (dummy content for testing)
-    cert_file = os.path.join(tmpdir, 'test_capsule.crt')
-    cert_content = '''-----BEGIN CERTIFICATE-----
-MIIBkTCB+wIJAKZ7kZ7Z7Z7ZMA0GCSqGSIb3DQEBCwUAMBoxGDAWBgNVBAMMD1Rl
-c3QgQ2VydGlmaWNhdGUwHhcNMjUwOTA5MDAwMDAwWhcNMjYwOTA5MDAwMDAwWjAa
-MRgwFgYDVQQDDA9UZXN0IENlcnRpZmljYXRlMFwwDQYJKoZIhvcNAQEBBQADSwAw
-SAJBAKoZIhvcNAQEBBQADQQAwPgIJAKZ7kZ7Z7Z7ZAgMBAAEwDQYJKoZIhvcNAQE
-LBQADQQAwPgIJAKZ7kZ7Z7Z7ZAgMBAAECAwEAAQIBAAIBAAIBAAIBAAIBAAIBAA==
------END CERTIFICATE-----'''
+    # Use the real U-Boot template and certificate files
+    template_file = os.path.join(ubman.config.source_dir,
+                                 'lib/efi_loader/capsule_esl.dtsi.in')
+    cert_file = os.path.join(ubman.config.source_dir,
+                             'board/sandbox/capsule_pub_key_good.crt')
 
-    with open(cert_file, 'w', encoding='utf-8') as outf:
-        outf.write(cert_content)
-
-    # Create ESL template file (mimicking capsule_esl.dtsi.in)
-    esl_template = os.path.join(tmpdir, 'capsule_esl.dtsi.in')
-    template_content = '''/ {
-    signature {
-        capsule-key = /incbin/("ESL_BIN_FILE");
-    };
-};'''
-
-    with open(esl_template, 'w', encoding='utf-8') as outf:
-        outf.write(template_content)
-
-    # Target files
-    esl_file = os.path.join(tmpdir, 'capsule_esl_file')
-    esl_dtsi = os.path.join(tmpdir, '.capsule_esl.dtsi')
-
-    # Create a test Makefile to verify ESL dependency behavior
-    test_makefile = os.path.join(tmpdir, 'test_esl.mk')
-
-    # Use relative paths in makefile since we cd to tmpdir
-    rel_cert = os.path.relpath(cert_file, tmpdir)
-    rel_esl_file = os.path.relpath(esl_file, tmpdir)
-    rel_esl_dtsi = os.path.relpath(esl_dtsi, tmpdir)
-    rel_template = os.path.relpath(esl_template, tmpdir)
-
-    makefile_content = f'''# Test ESL dependency tracking
-CERT_FILE := {rel_cert}
-ESL_FILE := {rel_esl_file}
-ESL_DTSI := {rel_esl_dtsi}
-ESL_TEMPLATE := {rel_template}
-
-# Simulate the capsule_esl_file rule
-$(ESL_FILE): $(CERT_FILE)
-\t@echo "Generating ESL from certificate because cert changed"
-\t@echo "Mock ESL binary data from $<" > $@
-\t@echo "Certificate: $$(stat -c %Y $(CERT_FILE))" >> $@
-
-# Simulate the capsule_esl_dtsi rule
-$(ESL_DTSI): $(ESL_FILE) $(ESL_TEMPLATE)
-\t@echo "Generating ESL DTSI because ESL file or template changed"
-\t@sed "s:ESL_BIN_FILE:$$(readlink -f $(ESL_FILE)):" $(ESL_TEMPLATE) > $@
-\t@echo "/* Generated at: $$(date +%s) */" >> $@
-
-.PHONY: clean esl dtsi
-clean:
-\trm -f $(ESL_FILE) $(ESL_DTSI)
-esl: $(ESL_FILE)
-\t@echo "ESL file built successfully"
-dtsi: $(ESL_DTSI)
-\t@echo "ESL DTSI built successfully"
-'''
-
-    with open(test_makefile, 'w', encoding='utf-8') as outf:
-        outf.write(makefile_content)
+    # Build directory paths for the real ESL files
+    # ESL files are created in each directory where DTBs are built
+    esl_file = os.path.join(ubman.config.build_dir,
+                            'test/fdt_overlay/capsule_esl_file')
+    esl_dtsi = os.path.join(ubman.config.build_dir,
+                            'test/fdt_overlay/.capsule_esl.dtsi')
 
     return SimpleNamespace(
         ubman=ubman,
-        tmpdir=tmpdir,
+        build_dir=ubman.config.build_dir,
+        source_dir=ubman.config.source_dir,
         cert_file=cert_file,
-        esl_template=esl_template,
+        esl_template=template_file,
         esl_file=esl_file,
-        esl_dtsi=esl_dtsi,
-        test_makefile=test_makefile,
-        makefile_name=os.path.basename(test_makefile)
+        esl_dtsi=esl_dtsi
     )
 
 
-def run_esl_make(env, message, target='dtsi'):
-    """Run a make command for ESL testing with logging
 
-    Args:
-        env (SimpleNamespace): Test environment with paths and ubman logger
-        message (str): Log message describing the build
-        target (str): Make target to build (default: 'dtsi')
-
-    Returns:
-        float or None: File modification time of target, or None if
-            clean/no target
-    """
-    info(env, message)
-    utils.run_and_log(env.ubman, ['make', '-f', env.makefile_name, target],
-                      cwd=env.tmpdir)
-
-    if target == 'clean':
-        return None
-    if target == 'esl' and not os.path.exists(env.esl_file):
-        return None
-    if target == 'dtsi' and not os.path.exists(env.esl_dtsi):
-        return None
-    if target == 'esl':
-        return os.path.getmtime(env.esl_file)
-    # target == 'dtsi'
-    return os.path.getmtime(env.esl_dtsi)
-
-
-def check_esl_build(env):
-    """Test initial ESL build creates targets and no-change rebuild doesn't
-    rebuild
+def _check_esl_build(env):
+    """Test initial ESL build and no-change rebuild behavior
 
     Args:
         env (SimpleNamespace): Test environment with paths and ubman logger
@@ -552,35 +315,30 @@ def check_esl_build(env):
     Returns:
         tuple: (esl_mtime, dtsi_mtime) modification times
     """
-    run_esl_make(env, 'Running initial ESL build...', 'clean')
+    # Clean the ESL files and test DTB files that depend on them
+    for f in [env.esl_file, env.esl_dtsi,
+              os.path.join(env.build_dir,
+                           'test/fdt_overlay/test-fdt-base.dtb')]:
+        if os.path.exists(f):
+            os.remove(f)
 
-    # Build ESL file first
-    esl_mtime = run_esl_make(env, 'Building ESL file...', 'esl')
-    assert os.path.exists(env.esl_file), \
-        'ESL file should be created on initial build'
+    # Build test target that should trigger ESL creation
+    esl_mtime = _run_make(env, 'should create ESL', env.esl_file)
+    dtsi_mtime = _run_make(env, 'should create ESL DTSI', env.esl_dtsi)
 
-    # Then build DTSI file
-    dtsi_mtime = run_esl_make(env, 'Building ESL DTSI...', 'dtsi')
-    assert os.path.exists(env.esl_dtsi), \
-        'ESL DTSI should be created on initial build'
-
-    info(env, f'Initial ESL created at {esl_mtime}')
-    info(env, f'Initial DTSI created at {dtsi_mtime}')
+    _info(env, f'Initial ESL created at {esl_mtime}')
+    _info(env, f'Initial DTSI created at {dtsi_mtime}')
 
     # Wait a bit to ensure timestamp differences
     time.sleep(TIMESTAMP_DELAY)
 
-    # Run build again - targets should NOT be rebuilt (no dependencies
-    # changed)
-    new_esl_mtime = run_esl_make(env, 'Building ESL again without changes...',
-                                 'esl')
+    # Run build again - targets should NOT be rebuilt (no dependencies changed)
+    new_esl_mtime = _run_make(env, 'build ESL again', env.esl_file)
     assert new_esl_mtime == esl_mtime, \
         f'ESL should not rebuild when cert unchanged ' \
         f'(initial: {esl_mtime}, second: {new_esl_mtime})'
 
-    new_dtsi_mtime = run_esl_make(env,
-                                  'Building DTSI again without changes...',
-                                  'dtsi')
+    new_dtsi_mtime = _run_make(env, 'build DTSI again', env.esl_dtsi)
     assert new_dtsi_mtime == dtsi_mtime, \
         f'DTSI should not rebuild when ESL/template unchanged ' \
         f'(initial: {dtsi_mtime}, second: {new_dtsi_mtime})'
@@ -588,8 +346,8 @@ def check_esl_build(env):
     return esl_mtime, dtsi_mtime
 
 
-def check_cert_change(env, prev_esl_mtime, prev_dtsi_mtime):
-    """Test that changing certificate triggers full rebuild chain
+def _check_cert_change(env, prev_esl_mtime, prev_dtsi_mtime):
+    """Test certificate change triggers full rebuild chain
 
     Args:
         env (SimpleNamespace): Test environment with paths and ubman logger
@@ -601,18 +359,17 @@ def check_cert_change(env, prev_esl_mtime, prev_dtsi_mtime):
     """
     time.sleep(TIMESTAMP_DELAY)
 
-    # Modify the certificate file
-    with open(env.cert_file, 'a', encoding='utf-8') as outf:
-        outf.write('# Modified certificate\n')
+    # Touch the certificate file to update its timestamp
+    os.utime(env.cert_file)
 
     # Build ESL - should rebuild due to cert change
-    esl_mtime = run_esl_make(env, 'Building ESL after cert change...', 'esl')
+    esl_mtime = _run_make(env, 'build ESL after cert change', env.esl_file)
     assert esl_mtime > prev_esl_mtime, \
         f'ESL should rebuild when certificate changes ' \
         f'(previous: {prev_esl_mtime}, new: {esl_mtime})'
 
     # Build DTSI - should rebuild due to ESL change
-    dtsi_mtime = run_esl_make(env, 'Building DTSI after ESL change...', 'dtsi')
+    dtsi_mtime = _run_make(env, 'build DTSI after ESL change', env.esl_dtsi)
     assert dtsi_mtime > prev_dtsi_mtime, \
         f'DTSI should rebuild when ESL changes ' \
         f'(previous: {prev_dtsi_mtime}, new: {dtsi_mtime})'
@@ -620,8 +377,8 @@ def check_cert_change(env, prev_esl_mtime, prev_dtsi_mtime):
     return esl_mtime, dtsi_mtime
 
 
-def check_template_change(env, prev_esl_mtime, prev_dtsi_mtime):
-    """Test that changing template rebuilds DTSI but not ESL
+def _check_template_change(env, prev_esl_mtime, prev_dtsi_mtime):
+    """Test template change rebuilds DTSI but not ESL
 
     Args:
         env (SimpleNamespace): Test environment with paths and ubman logger
@@ -633,25 +390,63 @@ def check_template_change(env, prev_esl_mtime, prev_dtsi_mtime):
     """
     time.sleep(TIMESTAMP_DELAY)
 
-    # Modify the template file
-    with open(env.esl_template, 'a', encoding='utf-8') as outf:
-        outf.write('    /* Modified template */\n')
+    # Touch the template file to update its timestamp
+    os.utime(env.esl_template)
 
     # Build ESL - should NOT rebuild (cert unchanged)
-    esl_mtime = run_esl_make(env, 'Building ESL after template change...',
-                             'esl')
+    esl_mtime = _run_make(env, 'build ESL after template change',
+                         env.esl_file)
     assert esl_mtime == prev_esl_mtime, \
         f'ESL should not rebuild when only template changes ' \
         f'(previous: {prev_esl_mtime}, current: {esl_mtime})'
 
     # Build DTSI - should rebuild due to template change
-    dtsi_mtime = run_esl_make(env, 'Building DTSI after template change...',
-                              'dtsi')
+    dtsi_mtime = _run_make(env, 'build DTSI after template change',
+                          env.esl_dtsi)
     assert dtsi_mtime > prev_dtsi_mtime, \
         f'DTSI should rebuild when template changes ' \
         f'(previous: {prev_dtsi_mtime}, new: {dtsi_mtime})'
 
     return esl_mtime, dtsi_mtime
+
+
+@pytest.mark.boardspec('sandbox')
+def test_dep_hwids(ubman):
+    """Test that Makefile dependency tracking works without FORCE
+
+    This test verifies that the hwids_to_dtsi rule (which had FORCE removed)
+    still properly rebuilds when dependency files are modified.
+    """
+    env = _setup_hwids_env(ubman)
+
+    _info(env, 'initial build and no-change rebuild')
+    _, second_mtime = _check_initial_build(env)
+
+    # Initial build should have created hwids files
+
+    _info(env, 'hwidmap file change triggers rebuild')
+    third_mtime = _check_hwidmap_change(env, second_mtime)
+
+    _info(env, 'txt file changes trigger rebuild')
+    _check_txt_changes(env, third_mtime)
+
+
+@pytest.mark.boardspec('sandbox')
+def test_dep_dtbo(ubman):
+    """Test that dtbo dependency tracking works without FORCE
+
+    This test verifies that the $(obj)/%.dtbo rule properly rebuilds
+    when the corresponding .dtso source file is modified.
+    """
+    env = _setup_dtbo_env(ubman)
+
+    _info(env, 'initial dtbo build and no-change rebuild')
+    first_mtime = _check_dtbo_build(env)
+
+    # Initial build should have created DTBO files
+
+    _info(env, 'dtso file change triggers dtbo rebuild')
+    _check_dtso_change(env, first_mtime)
 
 
 @pytest.mark.boardspec('sandbox')
@@ -661,16 +456,16 @@ def test_dep_esl(ubman):
     This test verifies that the capsule ESL rules properly track dependencies
     and rebuild when source files are modified. Tests the chain:
     certificate -> ESL file -> DTSI file
+
+    If ESL files are not created due to missing dependencies in Makefile,
+    the test focuses on demonstrating the template dependency requirement.
     """
-    env = setup_esl_env(ubman)
+    env = _setup_esl_env(ubman)
 
-    info(env, 'Testing initial ESL build and no-change rebuild...')
-    esl_mtime, dtsi_mtime = check_esl_build(env)
+    _info(env, 'initial ESL build and no-change rebuild')
+    esl_mtime, dtsi_mtime = _check_esl_build(env)
+    _info(env, 'certificate change triggers full rebuild chain')
+    esl_mtime, dtsi_mtime = _check_cert_change(env, esl_mtime, dtsi_mtime)
 
-    info(env, 'Testing certificate change triggers full rebuild chain...')
-    esl_mtime, dtsi_mtime = check_cert_change(env, esl_mtime, dtsi_mtime)
-
-    info(env, 'Testing template change rebuilds DTSI only...')
-    check_template_change(env, esl_mtime, dtsi_mtime)
-
-    info(env, 'All ESL dependency tracking tests passed!')
+    _info(env, 'template change rebuilds DTSI only')
+    _check_template_change(env, esl_mtime, dtsi_mtime)
