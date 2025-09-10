@@ -19,11 +19,11 @@ $(foreach obj,$(sys-objs),$(eval $(OUTDIR)/$(obj): \
 
 # Automatic build rules for all programs
 $(foreach prog,$(progs),$(eval $(OUTDIR)/$(prog): \
-	$$(addprefix $(OUTDIR)/,$$($(prog)_objs)) ; \
-	$$(CC) $$(CFLAGS) -o $$@ $$^ $$(SHARED_LDFLAGS)))
+	$$(addprefix $(OUTDIR)/,$$($(prog)_objs)) $(UBOOT_BUILD)/libu-boot.so ; \
+	$$(CC) $$(CFLAGS) -o $$@ $$(filter-out %.so,$$^) $$(SHARED_LDFLAGS)))
 $(foreach prog,$(progs),$(eval $(OUTDIR)/$(prog)_static: \
-	$$(addprefix $(OUTDIR)/,$$($(prog)_objs)) ; \
-	$$(CC) $$(CFLAGS) -o $$@ $$^ $$(STATIC_LDFLAGS)))
+	$$(addprefix $(OUTDIR)/,$$($(prog)_objs)) $(UBOOT_BUILD)/libu-boot.a ; \
+	$$(CC) $$(CFLAGS) -o $$@ $$(filter-out %.a,$$^) $$(STATIC_LDFLAGS)))
 
 # Create the output directory if it doesn't exist
 $(OUTDIR):
@@ -32,8 +32,3 @@ $(OUTDIR):
 # Default rule: compile with U-Boot headers
 $(OUTDIR)/%.o: $(EXAMPLE_DIR)/%.c | $(OUTDIR)
 	$(CC) $(CFLAGS) $(UBOOT_CFLAGS) -c -o $@ $<
-
-# The U-Boot library must be built before we can link against it
-# Order-only prerequisites ensure libraries exist before linking
-$(all_bins): | $(UBOOT_BUILD)/libu-boot.a $(UBOOT_BUILD)/libu-boot.so \
-	$(OUTDIR)
