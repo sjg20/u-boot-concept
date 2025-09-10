@@ -25,10 +25,17 @@ struct global_data;
 int ulib_init(char *progname);
 
 /**
- * ulib_uninit() shut down the U-Boot librrary
+ * ulib_uninit() - shut down the U-Boot library
  *
  * Call this when your program has finished using the library, before it exits
  */
 void ulib_uninit(void);
+
+/**
+ * ulib_get_version() - Get the version string
+ *
+ * Return: Full U-Boot version string
+ */
+const char *ulib_get_version(void);
 
 #endif
