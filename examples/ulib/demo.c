@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 	}
 
 	demo_show_banner();
-	printf("U-Boot version: %s\n", version_string);
+	printf("U-Boot version: %s\n", ulib_get_version());
 	printf("\n");
 
 	/* Use U-Boot's os_open to open a file */
