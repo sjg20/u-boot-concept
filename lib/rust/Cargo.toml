@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: GPL-2.0+
+[package]
+name = "u-boot-sys"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0+"
+description = "Rust FFI bindings for U-Boot library functions"
+authors = ["Simon Glass <simon.glass@canonical.com>"]
+repository = "https://concept.u-boot.org/u-boot/u-boot"
+keywords = ["u-boot", "ffi", "bindings", "embedded"]
+categories = ["external-ffi-bindings", "embedded"]
+
+[lib]
+name = "u_boot_sys"
+path = "src/lib.rs"
+
+[dependencies]
