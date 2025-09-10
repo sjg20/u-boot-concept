@@ -180,6 +180,66 @@ The Makefile supports both single-file and multi-object programs through the
 ``demo-objs`` variable. Set this to build from multiple object files, or leave
 empty to build directly from source.
 
+Rust Examples
+-------------
+
+U-Boot also includes Rust examples that demonstrate the same functionality using
+the ``u-boot-sys`` crate:
+
+**Rust Demo Program**
+
+The ``examples/rust`` directory contains Rust examples:
+
+* ``demo`` - Dynamically linked Rust demo program
+* ``demo_static`` - Statically linked Rust version
+
+These Rust examples demonstrate:
+
+* Using the ``u-boot-sys`` crate for FFI bindings
+* Proper library initialization with ``ulib_init()``
+* Using U-Boot OS functions like ``os_open()``, ``os_fgets()``, ``os_close()``
+* Using renamed U-Boot library functions (e.g., ``ub_printf()``)
+* Modular program structure with helper functions in ``rust_helper.rs``
+* Proper cleanup with ``ulib_uninit()``
+
+**Building Rust Examples**
+
+To build and run the Rust examples::
+
+    # Make sure U-Boot itself is built
+    make O=/tmp/b/sandbox sandbox_defconfig all
+
+    cd examples/rust
+    make UBOOT_BUILD=/tmp/b/sandbox srctree=../..
+    ./demo_static
+
+Or using Cargo directly::
+
+    cd examples/rust
+    env UBOOT_BUILD=/tmp/b/sandbox cargo build --release --bin demo
+    LD_LIBRARY_PATH=/tmp/b/sandbox ./target/release/demo
+
+**Rust Crate Structure**
+
+The Rust examples use the ``u-boot-sys`` crate located in ``lib/rust/``, which provides:
+
+* FFI bindings for U-Boot library functions (``ulib_*``)
+* FFI bindings for U-Boot API functions (``ub_*``)  
+* FFI bindings for OS abstraction functions (``os_*``)
+* Proper Rust documentation and module organization
+
+The crate follows Rust ``*-sys`` naming conventions for low-level FFI bindings.
+
+**Building Rust Examples Outside U-Boot Tree**
+
+The Rust examples can be built independently using the ``u-boot-sys`` crate::
+
+    cd examples/rust
+    env UBOOT_BUILD=/path/to/uboot/build cargo build --release
+
+The examples demonstrate both static and dynamic linking approaches compatible
+with the Rust toolchain.
+
 Linking and the Linker Script
 -----------------------------
 
@@ -418,3 +478,4 @@ Future Work
 * Support for calling functions in any U-Boot header, without needing the source
   tree
 * Improved symbol renaming with namespace support
+* Expanded features in the lib/rust library
