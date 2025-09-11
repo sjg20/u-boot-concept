@@ -1049,7 +1049,7 @@ ifeq ($(NO_LIBS),)
 INPUTS-$(CONFIG_ULIB) += libu-boot.so test/ulib/ulib_test
 INPUTS-$(CONFIG_ULIB) += libu-boot.a test/ulib/ulib_test_static
 ifdef CONFIG_EXAMPLES
-INPUTS-$(CONFIG_ULIB) += examples_ulib
+INPUTS-$(CONFIG_ULIB) += examples_ulib examples_rust
 endif
 endif
 endif
@@ -1950,6 +1950,18 @@ examples_ulib: libu-boot.a libu-boot.so FORCE
 		PLATFORM_LIBS="$(PLATFORM_LIBS)" \
 		LIB_STATIC_LDS="$(abspath $(LIB_STATIC_LDS))"
 
+PHONY += examples_rust
+examples_rust: libu-boot.a libu-boot.so FORCE
+	@if command -v cargo >/dev/null 2>&1; then \
+		$(MAKE) -C $(srctree)/examples/rust \
+			UBOOT_BUILD=$(abspath $(obj)) \
+			OUTDIR=$(abspath $(obj)/examples/rust) \
+			srctree="$(abspath $(srctree))"; \
+	else \
+		echo "Skipping Rust examples (cargo not found)"; \
+		echo "Install from https://rustup.rs/"; \
+	fi
+
 quiet_cmd_sym ?= SYM     $@
       cmd_sym ?= $(OBJDUMP) -t $< > $@
 u-boot.sym: u-boot FORCE
@@ -2383,6 +2395,10 @@ clean: $(clean-dirs)
 	$(call cmd,rmfiles)
 	@$(MAKE) -C $(srctree)/examples/ulib clean \
 		OUTDIR=$(abspath $(obj)/examples/ulib)
+	@if command -v cargo >/dev/null 2>&1 && [ -d $(srctree)/examples/rust ]; then \
+		$(MAKE) -C $(srctree)/examples/rust clean \
+			OUTDIR=$(abspath $(obj)/examples/rust); \
+	fi
 	@find $(if $(KBUILD_EXTMOD), $(KBUILD_EXTMOD), .) $(RCS_FIND_IGNORE) \
 		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
 		-o -name '*.ko.*' -o -name '*.su' -o -name '*.pyc' \

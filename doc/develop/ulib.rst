@@ -6,9 +6,47 @@ U-Boot Library (ulib)
 The U-Boot Library (ulib) allows U-Boot to be built as a shared or static
 library that can be used by external programs. This enables reuse of U-Boot
 functionality in test programs and other applications without needing to
-build that functionality directly into U-Boot image.
+build that functionality directly into a U-Boot image.
 
 Please read `License Implications`_ below.
+
+Motivation
+----------
+
+U-Boot contains a vast arrange of functionality. It supports standard boot,
+native execution (sandbox) for development and testing, filesystems, networking,
+all sorts of boot protocols, drivers and support for about 1300 boards, a full
+command line interface, a configuration editor / graphical menu, good Linux
+compatibility for porting drivers, a powerful but efficient driver model which
+uses Linux devicetree and many other features. The code base is fairly modern,
+albeit with some dark spaces. Unusually for firmware, U-Boot provides a vast
+array of tests. It can boot EFI apps or as an EFI app. It supports most relevant
+architectures and modern SoCs.
+
+But of course time marches on and innovation must continue. U-Boot will clearly
+be part of the picture in the future, but what is next?
+
+Ulib is an attempt to make U-Boot's functionality more easily available to other
+projects, so they can build on it improve it or even replace parts of it. Ulib
+aims to open up the capabilities of U-Boot to new use cases.
+
+Ulib also provides the ability to write the main program in another language.
+For now C and Rust are supported, but Python should also be possible, albeit
+with a significant amount of work.
+
+Few can predict where boot firmware will be in 10 years. The author of this file
+rashly believes that we may have moved on from U-Boot, EFI and many other things
+considered essential today. Perhaps firmware will be written in Rust or Zig or
+Carbon or some other new language. Our AI overlords may be capable of writing
+firmware based on a specification, if we can feed them enough electricity. Or it
+could be that the complexity of SoCs grows at such a rate that we just carry on
+as we are, content to just be able to make something boot.
+
+Ulib aims to provide a bridge from the best (more or less) of what we have today
+to whatever it is that will replace it. Ulib is not an end itself, just a
+platform for further innovation in booting, to new languages, new boot protocols
+and new development methods.
+
 
 Building the Libraries
 ----------------------
@@ -94,7 +132,7 @@ This is possible using the provided examples as a template. The ``examples/ulib`
 directory contains a standalone Makefile that can build programs against a
 pre-built U-Boot library.
 
-The examples works as expected, but note that as soon as you want to call
+The examples work as expected, but note that as soon as you want to call
 functions that are not in the main API headers, you may have problems with
 missing dependencies and header files. See below.
 
@@ -104,11 +142,11 @@ Including U-Boot header files from outside
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 U-Boot has many header files, some of which are arch-specific. These are
-typically including via::
+typically included via::
 
     #include <asm/...>
 
-and are located in the ```arch/<arch>/include/asm/...`` directory within the
+and are located in the ``arch/<arch>/include/asm/...`` directory within the
 U-Boot source tree. You will need to ensure that this directory is present in
 the include path.
 
@@ -180,6 +218,66 @@ The Makefile supports both single-file and multi-object programs through the
 ``demo-objs`` variable. Set this to build from multiple object files, or leave
 empty to build directly from source.
 
+Rust Examples
+-------------
+
+U-Boot also includes Rust examples that demonstrate the same functionality using
+the ``u-boot-sys`` crate:
+
+**Rust Demo Program**
+
+The ``examples/rust`` directory contains Rust examples:
+
+* ``demo`` - Dynamically linked Rust demo program
+* ``demo_static`` - Statically linked Rust version
+
+These Rust examples demonstrate:
+
+* Using the ``u-boot-sys`` crate for FFI bindings
+* Proper library initialization with ``ulib_init()``
+* Using U-Boot OS functions like ``os_open()``, ``os_fgets()``, ``os_close()``
+* Using renamed U-Boot library functions (e.g., ``ub_printf()``)
+* Modular program structure with helper functions in ``rust_helper.rs``
+* Proper cleanup with ``ulib_uninit()``
+
+**Building Rust Examples**
+
+To build and run the Rust examples::
+
+    # Make sure U-Boot itself is built
+    make O=/tmp/b/sandbox sandbox_defconfig all
+
+    cd examples/rust
+    make UBOOT_BUILD=/tmp/b/sandbox srctree=../..
+    ./demo_static
+
+Or using Cargo directly::
+
+    cd examples/rust
+    env UBOOT_BUILD=/tmp/b/sandbox cargo build --release --bin demo
+    LD_LIBRARY_PATH=/tmp/b/sandbox ./target/release/demo
+
+**Rust Crate Structure**
+
+The Rust examples use the ``u-boot-sys`` crate located in ``lib/rust/``, which provides:
+
+* FFI bindings for U-Boot library functions (``ulib_*``)
+* FFI bindings for U-Boot API functions (``ub_*``)  
+* FFI bindings for OS abstraction functions (``os_*``)
+* Proper Rust documentation and module organization
+
+The crate follows Rust ``*-sys`` naming conventions for low-level FFI bindings.
+
+**Building Rust Examples Outside U-Boot Tree**
+
+The Rust examples can be built independently using the ``u-boot-sys`` crate::
+
+    cd examples/rust
+    env UBOOT_BUILD=/path/to/uboot/build cargo build --release
+
+The examples demonstrate both static and dynamic linking approaches compatible
+with the Rust toolchain.
+
 Linking and the Linker Script
 -----------------------------
 
@@ -204,7 +302,7 @@ out of memory or simple crashes during library init.
 Dependencies
 ------------
 
-When linking with the U-Boot library for sanbod, you may need these system
+When linking with the U-Boot library for sandbox, you may need these system
 libraries:
 
 * ``pthread`` - POSIX threads
@@ -341,7 +439,7 @@ The format rules are:
 
 * Lines starting with ``file:`` specify a header file
 * Indented lines (space or tab) define symbols from that header
-* Use ``symbol=new_name`` for custom renaming, otherwise ``ub_`` a prefix is
+* Use ``symbol=new_name`` for custom renaming, otherwise a ``ub_`` prefix is
   added by default. No space around ``=``
 * Use ``#`` at the beginning of a line for a comment
 * Empty lines are allowed
@@ -415,5 +513,7 @@ Future Work
 * Selective inclusion of U-Boot subsystems
 * API versioning and stability guarantees
 * pkg-config support for easier integration
-* Support for calling functions in any U-Boot header
+* Support for calling functions in any U-Boot header, without needing the source
+  tree
 * Improved symbol renaming with namespace support
+* Expanded features in the lib/rust library

@@ -20,7 +20,7 @@ default:
     - ${DEFAULT_TAG}
   # Grab our configured image.  The source for this is found
   # in the u-boot tree at tools/docker/Dockerfile
-  image: ${MIRROR_DOCKER}/trini/u-boot-gitlab-ci-runner:jammy-20250404-29Apr2025
+  image: ${MIRROR_DOCKER}/sjg20/u-boot-gitlab-ci-runner:jammy-20250714-10Sep2025p2
   services:
     - name: container-$(CI_JOB_ID)
       command: ["--rm"]
@@ -349,12 +349,19 @@ Examples:
       ./tools/buildman/buildman -T0 -o ${UBOOT_TRAVIS_BUILD_DIR} -w
         --board sandbox;
       set -e;
-    - echo "Building examples";
+    - echo "Building C examples";
       cd examples/ulib;
       make UBOOT_BUILD=${UBOOT_TRAVIS_BUILD_DIR} srctree=../..
-    - echo "Running static";
+    - echo "Running C static";
       ./demo_static
-    - echo "Running dynamic";
+    - echo "Running C dynamic";
+      LD_LIBRARY_PATH=${UBOOT_TRAVIS_BUILD_DIR} ./demo
+    - echo "Building Rust examples";
+      cd ../rust;
+      make UBOOT_BUILD=${UBOOT_TRAVIS_BUILD_DIR} srctree=../..
+    - echo "Running Rust static";
+      ./demo_static
+    - echo "Running Rust dynamic";
       LD_LIBRARY_PATH=${UBOOT_TRAVIS_BUILD_DIR} ./demo
 
 # Template for running the 'make check' tools
