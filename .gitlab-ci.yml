@@ -951,3 +951,31 @@ efi-aarch64:
     ROLE: efi-aarch64
     TEST_PY_TEST_SPEC: "and not sleep"
   <<: *lab_dfn
+
+trigger_snap_builds:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
+    - mkdir -p ~/.ssh
+    - echo "$LAUNCHPAD_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan git.launchpad.net >> ~/.ssh/known_hosts
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "admin@u-boot.org"
+  script:
+    - |
+      echo "Triggering snap builds for latest U-Boot changes..."
+      git clone --depth=1 git+ssh://git.launchpad.net/~sjg1/u-boot/+git/u-boot-concept-qemu /tmp/qemu-snap
+      cd /tmp/qemu-snap
+      git commit --allow-empty -m "Trigger build: U-Boot updated to $CI_COMMIT_SHORT_SHA"
+      git push origin master
+      cd /tmp
+      git clone --depth=1 git+ssh://git.launchpad.net/~sjg1/u-boot/+git/u-boot-concept-efi /tmp/efi-snap
+      cd /tmp/efi-snap
+      git commit --allow-empty -m "Trigger build: U-Boot updated to $CI_COMMIT_SHORT_SHA"
+      git push origin master
+      echo "Snap build triggers completed"
