@@ -10,6 +10,44 @@ build that functionality directly into a U-Boot image.
 
 Please read `License Implications`_ below.
 
+Motivation
+----------
+
+U-Boot contains a vast arrange of functionality. It supports standard boot,
+native execution (sandbox) for development and testing, filesystems, networking,
+all sorts of boot protocols, drivers and support for about 1300 boards, a full
+command line interface, a configuration editor / graphical menu, good Linux
+compatibility for porting drivers, a powerful but efficient driver model which
+uses Linux devicetree and many other features. The code base is fairly modern,
+albeit with some dark spaces. Unusually for firmware, U-Boot provides a vast
+array of tests. It can boot EFI apps or as an EFI app. It supports most relevant
+architectures and modern SoCs.
+
+But of course time marches on and innovation must continue. U-Boot will clearly
+be part of the picture in the future, but what is next?
+
+Ulib is an attempt to make U-Boot's functionality more easily available to other
+projects, so they can build on it improve it or even replace parts of it. Ulib
+aims to open up the capabilities of U-Boot to new use cases.
+
+Ulib also provides the ability to write the main program in another language.
+For now C and Rust are supported, but Python should also be possible, albeit
+with a significant amount of work.
+
+Few can predict where boot firmware will be in 10 years. The author of this file
+rashly believes that we may have moved on from U-Boot, EFI and many other things
+considered essential today. Perhaps firmware will be written in Rust or Zig or
+Carbon or some other new language. Our AI overlords may be capable of writing
+firmware based on a specification, if we can feed them enough electricity. Or it
+could be that the complexity of SoCs grows at such a rate that we just carry on
+as we are, content to just be able to make something boot.
+
+Ulib aims to provide a bridge from the best (more or less) of what we have today
+to whatever it is that will replace it. Ulib is not an end itself, just a
+platform for further innovation in booting, to new languages, new boot protocols
+and new development methods.
+
+
 Building the Libraries
 ----------------------
 
