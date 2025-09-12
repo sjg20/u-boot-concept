@@ -591,6 +591,10 @@
 		test5-gpios = <&gpio_a 19>;
 	};
 
+	mouse {
+		compatible = "sandbox,mouse";
+	};
+
 	mmio-bus@0 {
 		#address-cells = <1>;
 		#size-cells = <1>;
