@@ -360,22 +360,22 @@ def update_makefile(info: ReleaseInfo, makefile_path: str = 'Makefile') -> bool:
     changes_made = False
 
     for i, line in enumerate(lines):
-        if line.startswith('VERSION = '):
+        if line.startswith('VERSION ='):
             new_line = f'VERSION = {info.year}'
             if lines[i] != new_line:
                 lines[i] = new_line
                 changes_made = True
-        elif line.startswith('PATCHLEVEL = '):
+        elif line.startswith('PATCHLEVEL ='):
             new_line = f'PATCHLEVEL = {info.month:02d}'
             if lines[i] != new_line:
                 lines[i] = new_line
                 changes_made = True
-        elif line.startswith('SUBLEVEL = '):
+        elif line.startswith('SUBLEVEL ='):
             new_line = 'SUBLEVEL ='
             if lines[i] != new_line:
                 lines[i] = new_line
                 changes_made = True
-        elif line.startswith('EXTRAVERSION = '):
+        elif line.startswith('EXTRAVERSION ='):
             if info.is_final:
                 new_line = 'EXTRAVERSION ='
             else:
