@@ -1,8 +1,8 @@
 # .gitlab-ci-release.yml
 
-version:update_and_commit:
+version:process_release:
   stage: version_bump
-  image: alpine:3.18
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
     # Run only on scheduled pipelines targeting the 'master' branch.
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_REF_NAME == "master"'
@@ -50,11 +50,11 @@ version:update_and_commit:
       echo "Pushing version bump to master branch..."
       git add Makefile
       git commit -m "$COMMIT_MESSAGE"
-      
+
       # Get the commit SHA that will be created
       COMMIT_SHA=$(git rev-parse HEAD)
       echo "Version bump commit SHA: $COMMIT_SHA"
-      
+
       git push "https://gitlab-ci-token:${GIT_WRITE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" HEAD:master
 
       # Update release documentation with the commit SHA
@@ -68,35 +68,24 @@ version:update_and_commit:
         echo "Release documentation already up-to-date or no changes needed"
       fi
 
-release:create_tag:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_COMMIT_MESSAGE =~ /^chore: Bump version for/'
-  script:
-    - |
-      echo "🚀 Release commit detected. Creating GitLab Release..."
+      # Create GitLab release and tags
+      echo "🚀 Creating GitLab Release..."
 
-      TAG_NAME=$(echo "$CI_COMMIT_MESSAGE" | awk '{print $NF}')
-      RELEASE_TITLE=$(echo "$CI_COMMIT_MESSAGE" | sed -e 's/chore: Bump version for/Release/' -e "s/$TAG_NAME//")
+      C_TAG_NAME="c${VERSION}"
 
-      echo "Extracted Tag Name: $TAG_NAME"
-      echo "Generated Release Title: $RELEASE_TITLE"
+      if [ "$IS_FINAL" = "true" ]; then
+        RELEASE_TITLE="Release final release"
+      else
+        RELEASE_TITLE="Release release candidate"
+      fi
+
+      echo "Creating release: $RELEASE_TITLE $VERSION"
+      echo "Tag name: $C_TAG_NAME"
 
       release-cli create \
-        --name "$RELEASE_TITLE" \
-        --tag-name "$TAG_NAME" \
-        --description "Automated release created by GitLab CI for commit $CI_COMMIT_SHORT_SHA." \
-        --ref "$CI_COMMIT_SHA"
+        --name "$RELEASE_TITLE $VERSION" \
+        --tag-name "$C_TAG_NAME" \
+        --description "Automated release created by GitLab CI for commit $COMMIT_SHA." \
+        --ref "$COMMIT_SHA"
 
-      echo "🔧 Creating secondary 'c'-prefixed tag..."
-      apk add --no-cache git
-      git config --global user.name "GitLab CI"
-      git config --global user.email "gitlab-ci@${CI_SERVER_HOST}"
-
-      C_TAG_NAME="c${TAG_NAME}"
-      echo "Secondary tag name is: $C_TAG_NAME"
-
-      git tag "$C_TAG_NAME" "$CI_COMMIT_SHA"
-      git push "https://gitlab-ci-token:${GIT_WRITE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "$C_TAG_NAME"
-      echo "✅ Successfully pushed secondary tag."
+      echo "✅ Successfully created release with tag $C_TAG_NAME."

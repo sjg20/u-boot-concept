@@ -88,13 +88,13 @@ class TestReleaseVersion(unittest.TestCase):
         self.assertFalse(release_info.is_final)
 
     def test_rc1_calculation(self):
-        """Test RC1 calculation (2 weeks before final release)"""
-        # 20-Jan-25 is 2 weeks before 03-Feb first Monday
-        release_info = calculate_info(datetime.date(2025, 1, 20))
+        """Test RC1 calculation (6 weeks before final release)"""
+        # 23-Dec-24 is 6 weeks before 03-Feb-25 first Monday
+        release_info = calculate_info(datetime.date(2024, 12, 23))
         self.assertFalse(release_info.is_final)
         self.assertEqual(release_info.version, '2025.02-rc1')
         self.assertEqual(release_info.rc_number, 1)
-        self.assertEqual(release_info.weeks_until_final, 2)
+        self.assertEqual(release_info.weeks_until_final, 6)
 
     def test_rc2_calculation(self):
         """Test RC2 calculation (4 weeks before final release)"""
@@ -106,13 +106,13 @@ class TestReleaseVersion(unittest.TestCase):
         self.assertEqual(release_info.weeks_until_final, 4)
 
     def test_rc3_calculation(self):
-        """Test RC3 calculation (6 weeks before final release)"""
-        # 23-Dec-24 is 6 weeks before 03-Feb-25 first Monday
-        release_info = calculate_info(datetime.date(2024, 12, 23))
+        """Test RC3 calculation (2 weeks before final release)"""
+        # 20-Jan-25 is 2 weeks before 03-Feb-25 first Monday
+        release_info = calculate_info(datetime.date(2025, 1, 20))
         self.assertFalse(release_info.is_final)
         self.assertEqual(release_info.version, '2025.02-rc3')
         self.assertEqual(release_info.rc_number, 3)
-        self.assertEqual(release_info.weeks_until_final, 6)
+        self.assertEqual(release_info.weeks_until_final, 2)
 
     def test_dead_period(self):
         """Test dead period for dates too far from release"""
@@ -137,13 +137,13 @@ class TestReleaseVersion(unittest.TestCase):
         self.assertEqual(release_info.month, 2)
         self.assertEqual(release_info.version, '')
 
-        # 23-Dec-25 should be rc3 for Feb 2026 (6 weeks)
-        release_info = calculate_info(datetime.date(2025, 12, 23))
+        # 22-Dec-25 (Monday) should be rc1 for Feb 2026 (6 weeks)
+        release_info = calculate_info(datetime.date(2025, 12, 22))
         self.assertFalse(release_info.is_final)
         self.assertFalse(release_info.is_dead_period)
         self.assertEqual(release_info.year, 2026)
         self.assertEqual(release_info.month, 2)
-        self.assertEqual(release_info.version, '2026.02-rc3')
+        self.assertEqual(release_info.version, '2026.02-rc1')
 
     def test_odd_month_targeting(self):
         """Test that odd months target the next even month"""
@@ -717,7 +717,7 @@ class TestMainFunction(unittest.TestCase):
             self.assertEqual(result, 0)
             output = json.loads(mock_stdout.getvalue())
             self.assertFalse(output['is_final'])
-            self.assertEqual(output['version'], '2025.02-rc1')
+            self.assertEqual(output['version'], '2025.02-rc3')
 
     def test_main_shell_format(self):
         """Test main function with shell output format"""
@@ -731,10 +731,10 @@ class TestMainFunction(unittest.TestCase):
 
             # Should contain shell variable assignments
             self.assertIn('IS_FINAL=false', output)
-            self.assertIn('VERSION=2025.02-rc1', output)
+            self.assertIn('VERSION=2025.02-rc3', output)
             self.assertIn('YEAR=2025', output)
             self.assertIn('MONTH=02', output)
-            self.assertIn('RC_NUMBER=1', output)
+            self.assertIn('RC_NUMBER=3', output)
             self.assertIn('WEEKS_UNTIL_FINAL=2', output)
 
     def test_main_shell_format_final_release(self):
@@ -881,18 +881,18 @@ class TestReleaseVersionScenarios(unittest.TestCase):
 
     def test_february_2025_cycle(self):
         """Test the Feb 2025 release cycle"""
-        # Mon 23-Dec-24 - should be rc3 for Feb 2025
+        # Mon 23-Dec-24 - should be rc1 for Feb 2025
         # (6 weeks before)
         info = calculate_info(datetime.date(2024, 12, 23))
-        self.assertEqual(info.version, '2025.02-rc3')
+        self.assertEqual(info.version, '2025.02-rc1')
 
         # Mon 06-Jan-25 - should be rc2 for Feb 2025
         info = calculate_info(datetime.date(2025, 1, 6))
         self.assertEqual(info.version, '2025.02-rc2')
 
-        # Mon 20-Jan-25 - should be rc1 for Feb 2025
+        # Mon 20-Jan-25 - should be rc3 for Feb 2025
         info = calculate_info(datetime.date(2025, 1, 20))
-        self.assertEqual(info.version, '2025.02-rc1')
+        self.assertEqual(info.version, '2025.02-rc3')
 
         # Mon 03-Feb-25 - should be final 2025.02
         info = calculate_info(datetime.date(2025, 2, 3))
@@ -908,17 +908,17 @@ class TestReleaseVersionScenarios(unittest.TestCase):
 
     def test_april_2025_cycle(self):
         """Test the Apr 2025 release cycle"""
-        # 24-Feb-25 - should be rc3 for Apr 2025 (6 weeks before)
+        # 24-Feb-25 - should be rc1 for Apr 2025 (6 weeks before)
         info = calculate_info(datetime.date(2025, 2, 24))
-        self.assertEqual(info.version, '2025.04-rc3')
+        self.assertEqual(info.version, '2025.04-rc1')
 
         # 10-Mar-25 - should be rc2 for Apr 2025
         info = calculate_info(datetime.date(2025, 3, 10))
         self.assertEqual(info.version, '2025.04-rc2')
 
-        # 24-Mar-25 - should be rc1 for Apr 2025
+        # 24-Mar-25 - should be rc3 for Apr 2025
         info = calculate_info(datetime.date(2025, 3, 24))
-        self.assertEqual(info.version, '2025.04-rc1')
+        self.assertEqual(info.version, '2025.04-rc3')
 
         # Mon 07-Apr-25 - should be final 2025.04
         info = calculate_info(datetime.date(2025, 4, 7))
@@ -927,15 +927,15 @@ class TestReleaseVersionScenarios(unittest.TestCase):
 
     def test_too_early_for_rc_cycle(self):
         """Test dates too early for RC cycle (dead period)"""
-        # 01-Nov-24 (odd month) targets Dec 2024 release,
-        # ~5 weeks away -> rc3 (still valid)
-        info = calculate_info(datetime.date(2024, 11, 1))
+        # 04-Nov-24 (Monday, odd month) targets Dec 2024 release,
+        # ~4 weeks away -> rc2 (still valid)
+        info = calculate_info(datetime.date(2024, 11, 4))
         self.assertFalse(info.is_final)
         self.assertFalse(info.is_dead_period)
-        self.assertEqual(info.version, '2024.12-rc3')
-        self.assertEqual(info.rc_number, 3)
-        self.assertGreater(info.weeks_until_final, 4)  # More than 4 weeks
-                                                        # (would be rc2)
+        self.assertEqual(info.version, '2024.12-rc2')
+        self.assertEqual(info.rc_number, 2)
+        self.assertGreater(info.weeks_until_final, 2)  # More than 2 weeks
+                                                        # (would be rc1)
 
         # 01-Oct-24 (even month) targets Dec 2024 (2 months away),
         # ~9 weeks -> dead period
@@ -947,14 +947,14 @@ class TestReleaseVersionScenarios(unittest.TestCase):
         self.assertEqual(info.month, 12)
         self.assertGreater(info.weeks_until_final, 6)  # Way more than 6 weeks
 
-        # 01-Sep-24 (odd month) targets Oct 2024,
-        # ~5 weeks away -> rc3 (still valid)
-        info = calculate_info(datetime.date(2024, 9, 1))
+        # 26-Aug-24 (Monday, even month) targets Oct 2024,
+        # 6 weeks away -> rc1 (still valid)
+        info = calculate_info(datetime.date(2024, 8, 26))
         self.assertFalse(info.is_final)
         self.assertFalse(info.is_dead_period)
-        self.assertEqual(info.version, '2024.10-rc3')
-        self.assertEqual(info.rc_number, 3)
-        self.assertGreater(info.weeks_until_final, 4)
+        self.assertEqual(info.version, '2024.10-rc1')
+        self.assertEqual(info.rc_number, 1)
+        self.assertEqual(info.weeks_until_final, 6)
 
         # Test extreme case: 01-Aug-24 (even) targets Oct 2024,
         # ~9+ weeks -> dead period
@@ -965,6 +965,56 @@ class TestReleaseVersionScenarios(unittest.TestCase):
         self.assertEqual(info.year, 2024)
         self.assertEqual(info.month, 10)
         self.assertGreater(info.weeks_until_final, 8)  # Way beyond 6 weeks
+
+    def test_monday_only_releases(self):
+        """Test that releases only happen on Mondays"""
+        # Tuesday 04-Feb-25 (day after final release Monday)
+        info = calculate_info(datetime.date(2025, 2, 4))
+        self.assertTrue(info.is_dead_period)
+        self.assertEqual(info.version, '')
+
+        # Wednesday 05-Feb-25
+        info = calculate_info(datetime.date(2025, 2, 5))
+        self.assertTrue(info.is_dead_period)
+        self.assertEqual(info.version, '')
+
+        # Sunday 09-Feb-25 (day before potential RC Monday)
+        info = calculate_info(datetime.date(2025, 2, 9))
+        self.assertTrue(info.is_dead_period)
+        self.assertEqual(info.version, '')
+
+        # Monday 10-Feb-25 should be valid for next release cycle
+        info = calculate_info(datetime.date(2025, 2, 10))
+        # This should be either a valid RC or dead period, but not empty due to day
+        if not info.is_dead_period:
+            self.assertNotEqual(info.version, '')
+
+    def test_monday_rc_releases(self):
+        """Test that RC releases happen on correct Mondays"""
+        # 20-Jan-25 is Monday, should be rc3 for Feb 2025
+        info = calculate_info(datetime.date(2025, 1, 20))
+        self.assertFalse(info.is_final)
+        self.assertEqual(info.version, '2025.02-rc3')
+        self.assertFalse(info.is_dead_period)
+
+        # 21-Jan-25 is Tuesday, should be dead period
+        info = calculate_info(datetime.date(2025, 1, 21))
+        self.assertTrue(info.is_dead_period)
+        self.assertEqual(info.version, '')
+
+    def test_every_second_monday_only(self):
+        """Test that releases only happen every second Monday"""
+        # 13-Jan-25 is Monday between rc2 (6-Jan) and rc3 (20-Jan) - should be dead period
+        info = calculate_info(datetime.date(2025, 1, 13))
+        self.assertTrue(info.is_dead_period)
+        self.assertEqual(info.version, '')
+        self.assertEqual(info.weeks_until_final, 3)
+
+        # 27-Jan-25 is Monday between rc3 (20-Jan) and final (3-Feb) - should be dead period
+        info = calculate_info(datetime.date(2025, 1, 27))
+        self.assertTrue(info.is_dead_period)
+        self.assertEqual(info.version, '')
+        self.assertEqual(info.weeks_until_final, 1)
 
 
 if __name__ == '__main__':
