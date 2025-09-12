@@ -9,10 +9,10 @@ releases based on the current date and release schedule.
 Release Schedule:
 - Final releases: First Monday of even-numbered months
   (Feb, Apr, Jun, Aug, Oct, Dec)
-- Release candidates: Count backwards from next final release
-  - rc1: 2 weeks before final release
+- Release candidates: Every second Monday before final release
+  - rc1: 6 weeks before final release (first RC)
   - rc2: 4 weeks before final release
-  - rc3: 6 weeks before final release
+  - rc3: 2 weeks before final release (last RC)
 """
 
 import argparse
@@ -106,12 +106,40 @@ def calculate_info(curdate: datetime.date = None) -> ReleaseInfo:
             is_dead_period=True,
             weeks_until_final=weeks_until_release
         )
-    if weeks_until_release <= 2:
+
+    # Check if today is a Monday (releases only happen on Mondays every 2 weeks)
+    if day_of_week != 0:  # Not a Monday
+        return ReleaseInfo(
+            is_final=False,
+            version='',
+            year=next_year,
+            month=next_month,
+            is_dead_period=True,
+            weeks_until_final=weeks_until_release
+        )
+
+    # Check if this Monday is a release Monday (every 2 weeks from final)
+    # Final is on first Monday, so release Mondays are at 0, 2, 4, 6 weeks
+    if weeks_until_release not in [0, 2, 4, 6]:
+        return ReleaseInfo(
+            is_final=False,
+            version='',
+            year=next_year,
+            month=next_month,
+            is_dead_period=True,
+            weeks_until_final=weeks_until_release
+        )
+
+    # RC numbering: rc1 is furthest (6 weeks), rc2 is middle (4 weeks),
+    # rc3 is closest (2 weeks), then final (0 weeks)
+    if weeks_until_release == 6:
         rc_number = 1
-    elif weeks_until_release <= 4:
+    elif weeks_until_release == 4:
         rc_number = 2
-    else:  # weeks_until_release <= 6
+    elif weeks_until_release == 2:
         rc_number = 3
+    else:  # weeks_until_release == 0 - should not happen, finals caught earlier
+        rc_number = 1  # Fallback
 
     version = f'{next_year}.{next_month:02d}-rc{rc_number}'
 
@@ -162,7 +190,8 @@ Release candidate schedule:
 * **{target_year}.{target_month:02d}-rc3**: {rc3_date.strftime('%a %d-%b-%Y')}
 * **{target_year}.{target_month:02d}-rc2**: {rc2_date.strftime('%a %d-%b-%Y')}
 * **{target_year}.{target_month:02d}-rc1**: {rc1_date.strftime('%a %d-%b-%Y')}
-* **{target_year}.{target_month:02d}** (Final): {final_date.strftime('%a %d-%b-%Y')}
+* **{target_year}.{target_month:02d}** (Final): \\
+{final_date.strftime('%a %d-%b-%Y')}
 
 '''
     return schedule_text
