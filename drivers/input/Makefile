@@ -17,3 +17,6 @@ obj-$(CONFIG_TWL4030_INPUT) += twl4030.o
 endif
 
 obj-$(CONFIG_MOUSE) += mouse-uclass.o
+ifdef CONFIG_MOUSE
+obj-$(CONFIG_SANDBOX) += sandbox_mouse.o
+endif

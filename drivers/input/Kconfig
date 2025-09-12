@@ -103,6 +103,7 @@ config TWL4030_INPUT
 
 config MOUSE
 	bool "Support for mice and other pointing devices"
+	depends on INPUT
 	default y if SANDBOX
 	help
 	  This allows U-Boot to access mouse input, typically needed for
