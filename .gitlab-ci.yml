@@ -296,6 +296,7 @@ Run binman, buildman, dtoc, hwids_to_dtsi, Kconfig and patman test suites:
       ./tools/dtoc/dtoc -t;
       ./tools/patman/patman test;
       python3 ./test/scripts/test_hwids_to_dtsi.py;
+      python3 -m pytest ./test/scripts/test_release_version.py;
       make testconfig
 
 # Check for any pylint regressions

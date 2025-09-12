@@ -18,6 +18,8 @@ General
    patman
    process
    release_cycle
+   concept_cycle
+   concept_releases
    security
    sending_patches
    system_configuration

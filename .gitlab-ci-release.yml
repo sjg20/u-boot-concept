@@ -10,52 +10,63 @@ version:update_and_commit:
     - |
       echo "Determining release type and updating Makefile..."
 
-      apk add --no-cache git
+      apk add --no-cache git python3
       git config --global user.name "GitLab CI"
       git config --global user.email "gitlab-ci@${CI_SERVER_HOST}"
 
-      MONTH=$(date +%-m)
-      DAY_OF_WEEK=$(date +%-u)
-      DAY_OF_MONTH=$(date +%-d)
-      NEW_VERSION=$(date +%Y)
-      NEW_PATCHLEVEL=$(printf "%02d" $MONTH)
+      # Use Python script to calculate release version and set shell variables
+      # Sets: IS_FINAL, VERSION, YEAR, MONTH, RC_NUMBER (RCs only),
+      # WEEKS_UNTIL_FINAL (RCs only)
+      # Or: IS_DEAD_PERIOD, WEEKS_UNTIL_FINAL, NEXT_RELEASE_YEAR,
+      # NEXT_RELEASE_MONTH (dead period)
+      eval $(python3 scripts/release_version.py)
 
-      if [ $((MONTH % 2)) -eq 0 ] && [ "$DAY_OF_WEEK" -eq 1 ] && [ "$DAY_OF_MONTH" -le 7 ]; then
-        # This is a Final Release
-        TAG_NAME="$NEW_VERSION.$NEW_PATCHLEVEL"
-        COMMIT_MESSAGE="chore: Bump version for final release $TAG_NAME"
-        echo "✅ This is a Final Release: $TAG_NAME"
-
-        # --- Update Makefile for a FINAL release ---
-        sed -i "s/^VERSION = .*/VERSION = $NEW_VERSION/" Makefile
-        sed -i "s/^PATCHLEVEL = .*/PATCHLEVEL = $NEW_PATCHLEVEL/" Makefile
-        sed -i "s/^SUBLEVEL = .*/SUBLEVEL =/" Makefile
-        sed -i "s/^EXTRAVERSION = .*/EXTRAVERSION =/" Makefile # EXTRAVERSION is blank for final
-
-      else
-        # This is a Release Candidate
-        RC_INDEX=$(( (DAY_OF_MONTH - 1) / 14 + 1 ))
-        TAG_NAME="$NEW_VERSION.$NEW_PATCHLEVEL-rc${RC_INDEX}"
-        COMMIT_MESSAGE="chore: Bump version for release candidate $TAG_NAME"
-        echo "✅ This is a Release Candidate: $TAG_NAME"
-
-        # --- Update Makefile for an RC release ---
-        EXTRA_VERSION_VAL="-rc${RC_INDEX}"
-        sed -i "s/^VERSION = .*/VERSION = $NEW_VERSION/" Makefile
-        sed -i "s/^PATCHLEVEL = .*/PATCHLEVEL = $NEW_PATCHLEVEL/" Makefile
-        sed -i "s/^SUBLEVEL = .*/SUBLEVEL =/" Makefile
-        sed -i "s/^EXTRAVERSION = .*/EXTRAVERSION = $EXTRA_VERSION_VAL/" Makefile # Set EXTRAVERSION to -rcX
+      # Check if we're in a dead period (too early for any RC)
+      if [ "$IS_DEAD_PERIOD" = "true" ]; then
+        echo "📅 Dead period: $WEEKS_UNTIL_FINAL weeks until next release cycle begins"
+        echo "Next release will be $NEXT_RELEASE_YEAR.$NEXT_RELEASE_MONTH"
+        echo "No version bump needed - exiting"
+        exit 0
       fi
 
-      if git diff --quiet Makefile; then
-        echo "Makefile is already up-to-date for version $TAG_NAME."
+      echo "Release calculated: VERSION=$VERSION, IS_FINAL=$IS_FINAL"
+
+      if [ "$IS_FINAL" = "true" ]; then
+        COMMIT_MESSAGE="chore: Bump version for final release $VERSION"
+        echo "✅ This is a Final Release: $VERSION"
+      else
+        COMMIT_MESSAGE="chore: Bump version for release candidate $VERSION"
+        echo "✅ This is a Release Candidate: $VERSION ($WEEKS_UNTIL_FINAL weeks until release)"
+      fi
+
+      # Update Makefile using Python script
+      if python3 scripts/release_version.py --update-makefile; then
+        echo "Makefile updated for version $VERSION"
+      else
+        echo "Makefile is already up-to-date for version $VERSION."
         exit 0
       fi
 
       echo "Pushing version bump to master branch..."
       git add Makefile
       git commit -m "$COMMIT_MESSAGE"
+      
+      # Get the commit SHA that will be created
+      COMMIT_SHA=$(git rev-parse HEAD)
+      echo "Version bump commit SHA: $COMMIT_SHA"
+      
       git push "https://gitlab-ci-token:${GIT_WRITE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" HEAD:master
+
+      # Update release documentation with the commit SHA
+      echo "Updating release documentation..."
+      if python3 scripts/release_version.py --update-release-docs --commit-sha "$COMMIT_SHA"; then
+        echo "Release documentation updated for version $VERSION"
+        git add doc/develop/concept_releases.rst
+        git commit -m "docs: Add $VERSION to release history"
+        git push "https://gitlab-ci-token:${GIT_WRITE_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" HEAD:master
+      else
+        echo "Release documentation already up-to-date or no changes needed"
+      fi
 
 release:create_tag:
   stage: release
