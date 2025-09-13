@@ -8,6 +8,8 @@
 #ifndef _MOUSE_H
 #define _MOUSE_H
 
+#include <stdbool.h>
+
 struct udevice;
 
 enum mouse_ev_t {
@@ -27,6 +29,19 @@ enum mouse_state_t {
 enum mouse_press_state_t {
 	BUTTON_RELEASED		= 0,
 	BUTTON_PRESSED,
+};
+
+/**
+ * struct mouse_uc_priv - private data for mouse uclass
+ *
+ * @left_button_state: Current state of left button (BUTTON_PRESSED/BUTTON_RELEASED)
+ * @click_x: X coordinate where the click occurred
+ * @click_y: Y coordinate where the click occurred
+ */
+struct mouse_uc_priv {
+	enum mouse_press_state_t left_button_state;
+	int click_x;
+	int click_y;
 };
 
 /**
@@ -76,5 +91,15 @@ struct mouse_ops {
 #define mouse_get_ops(dev)	((struct mouse_ops *)(dev)->driver->ops)
 
 int mouse_get_event(struct udevice *dev, struct mouse_event *event);
+
+/**
+ * mouse_get_click() - Check if a left mouse button click has occurred
+ *
+ * @dev: Mouse device
+ * @xp: Returns X coordinate of click (can be NULL)
+ * @yp: Returns Y coordinate of click (can be NULL)
+ * Returns: 0 if a click has occurred, -EAGAIN if no click pending
+ */
+int mouse_get_click(struct udevice *dev, int *xp, int *py);
 
 #endif

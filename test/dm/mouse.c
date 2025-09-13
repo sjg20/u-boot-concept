@@ -94,3 +94,124 @@ static int dm_test_mouse_button(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_mouse_button, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+static int dm_test_mouse_click(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+	struct mouse_event inject;
+	int x, y;
+
+	ut_assertok(uclass_first_device_err(UCLASS_MOUSE, &dev));
+
+	/* put mouse in test mode */
+	sandbox_mouse_set_test_mode(dev, true);
+
+	/* test that no click is detected initially */
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+
+	/* inject a left button press */
+	inject.type = MOUSE_EV_BUTTON;
+	inject.button.button = BUTTON_LEFT;
+	inject.button.press_state = BUTTON_PRESSED;
+	inject.button.clicks = 1;
+	inject.button.x = 300;
+	inject.button.y = 400;
+
+	sandbox_mouse_inject(dev, &inject);
+
+	/*
+	 * calling mouse_get_click() should not detect a click yet (press
+	 * only)
+	 */
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+
+	/* inject a left button release */
+	inject.type = MOUSE_EV_BUTTON;
+	inject.button.button = BUTTON_LEFT;
+	inject.button.press_state = BUTTON_RELEASED;
+	inject.button.clicks = 1;
+	inject.button.x = 300;
+	inject.button.y = 400;
+
+	sandbox_mouse_inject(dev, &inject);
+
+	/* now mouse_get_click() should detect the click */
+	ut_assertok(mouse_get_click(dev, &x, &y));
+	ut_asserteq(300, x);
+	ut_asserteq(400, y);
+
+	/* verify no more clicks are pending */
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+
+	return 0;
+}
+DM_TEST(dm_test_mouse_click, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+static int dm_test_mouse_click_no_coordinates(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+	struct mouse_event inject;
+
+	ut_assertok(uclass_first_device_err(UCLASS_MOUSE, &dev));
+
+	/* put mouse in test mode */
+	sandbox_mouse_set_test_mode(dev, true);
+
+	/* inject press and release to create a click */
+	inject.type = MOUSE_EV_BUTTON;
+	inject.button.button = BUTTON_LEFT;
+	inject.button.press_state = BUTTON_PRESSED;
+	inject.button.clicks = 1;
+	inject.button.x = 500;
+	inject.button.y = 600;
+	sandbox_mouse_inject(dev, &inject);
+
+	/* process the press event */
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, NULL, NULL));
+
+	inject.button.press_state = BUTTON_RELEASED;
+	sandbox_mouse_inject(dev, &inject);
+
+	/*
+	 * now test that click is detected without coordinate return
+	 */
+	ut_assertok(mouse_get_click(dev, NULL, NULL));
+
+	return 0;
+}
+DM_TEST(dm_test_mouse_click_no_coordinates, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+static int dm_test_mouse_right_button(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+	struct mouse_event inject;
+	int x, y;
+
+	ut_assertok(uclass_first_device_err(UCLASS_MOUSE, &dev));
+
+	/* put mouse in test mode */
+	sandbox_mouse_set_test_mode(dev, true);
+
+	/*
+	 * right button events should not be detected as clicks by
+	 * mouse_get_click()
+	 */
+	inject.type = MOUSE_EV_BUTTON;
+	inject.button.button = BUTTON_RIGHT;
+	inject.button.press_state = BUTTON_PRESSED;
+	inject.button.clicks = 1;
+	inject.button.x = 100;
+	inject.button.y = 200;
+	sandbox_mouse_inject(dev, &inject);
+
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+
+	inject.button.press_state = BUTTON_RELEASED;
+	sandbox_mouse_inject(dev, &inject);
+
+	/* still no click detected since it was right button */
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+
+	return 0;
+}
+DM_TEST(dm_test_mouse_right_button, UTF_SCAN_PDATA | UTF_SCAN_FDT);
