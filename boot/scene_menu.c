@@ -227,6 +227,8 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	const bool stack = exp->popup;
 	const struct expo_theme *theme = &exp->theme;
 	struct scene_menitem *item;
+	int xsize = 0, ysize = 0;
+	struct udevice *dev;
 	uint sel_id;
 	int startx, x, y;
 	int ret;
@@ -237,6 +239,14 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 
 	memset(dims, '\0', sizeof(dims));
 	scene_menu_calc_dims(scn, menu, dims);
+
+	dev = scn->expo->display;
+	if (dev) {
+		struct video_priv *priv = dev_get_uclass_priv(dev);
+
+		xsize = priv->xsize;
+		ysize = priv->ysize;
+	}
 
 	startx = menu->obj.req_bbox.x0;
 	y = menu->obj.req_bbox.y0;
@@ -324,13 +334,17 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		}
 
 		if (item->preview_id) {
+			const struct scene_obj *obj;
 			bool hide;
 
 			/*
 			 * put all previews on top of each other, on the right
 			 * size of the display
 			 */
-			ret = scene_obj_set_pos(scn, item->preview_id, -4, y);
+			obj = scene_obj_find(scn, item->preview_id,
+					     SCENEOBJT_NONE);
+			ret = scene_obj_set_pos(scn, item->preview_id,
+						xsize - obj->dims.x - 4, y);
 			if (ret < 0)
 				return log_msg_ret("prev", ret);
 
