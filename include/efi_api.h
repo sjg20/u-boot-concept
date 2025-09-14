@@ -977,6 +977,35 @@ struct efi_simple_text_input_protocol {
 	struct efi_event *wait_for_key;
 };
 
+#define EFI_SIMPLE_POINTER_PROTOCOL_GUID \
+	EFI_GUID(0x31878c87, 0x0b75, 0x11d5, \
+		 0x9a, 0x4f, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d)
+
+struct efi_simple_pointer_mode {
+	u64 resolution_x;
+	u64 resolution_y;
+	u64 resolution_z;
+	bool left_button;
+	bool right_button;
+};
+
+struct efi_simple_pointer_state {
+	s32 relative_movement_x;
+	s32 relative_movement_y;
+	s32 relative_movement_z;
+	bool left_button;
+	bool right_button;
+};
+
+struct efi_simple_pointer_protocol {
+	efi_status_t (EFIAPI *reset)(struct efi_simple_pointer_protocol *this,
+				     bool extended_verification);
+	efi_status_t (EFIAPI *get_state)(struct efi_simple_pointer_protocol *this,
+					 struct efi_simple_pointer_state *state);
+	struct efi_event *wait_for_input;
+	struct efi_simple_pointer_mode *mode;
+};
+
 #define EFI_DEVICE_PATH_TO_TEXT_PROTOCOL_GUID \
 	EFI_GUID(0x8b843e20, 0x8132, 0x4852, \
 		 0x90, 0xcc, 0x55, 0x1a, 0x4e, 0x4a, 0x7f, 0x1c)
