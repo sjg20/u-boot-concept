@@ -242,6 +242,30 @@ int scene_render(struct scene *scn);
 int scene_send_key(struct scene *scn, int key, struct expo_action *event);
 
 /**
+ * scene_within() - check if a point is considered within an object ID
+ *
+ * @scn: Scene to check
+ * @id: ID of object to check
+ * @x: X coordinate of the point
+ * @y: Y coordinate of the point
+ * Return: true if the point is considered within the object, false if not
+ */
+bool scene_within(const struct scene *scn, uint id, int x, int y);
+
+/**
+ * scene_menu_within() - check if a point is considered within a menu
+ *
+ * @scn: Scene to check
+ * @menu: Menu to check
+ * @x: X coordinate of the point
+ * @y: Y coordinate of the point
+ * Return: item the point is within, or NULL if none
+ */
+struct scene_menitem *scene_menu_within(const struct scene *scn,
+					struct scene_obj_menu *menu,
+					int x, int y);
+
+/**
  * scene_render_deps() - Render an object and its dependencies
  *
  * @scn: Scene to render

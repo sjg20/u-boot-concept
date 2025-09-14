@@ -962,6 +962,55 @@ static int expo_test_build(struct unit_test_state *uts)
 }
 BOOTSTD_TEST(expo_test_build, UTF_DM);
 
+/* test scene_menu_within() function */
+static int expo_menu_within(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct scene_menitem *item;
+	struct scene_obj *obj;
+	struct udevice *dev;
+	struct scene *scn;
+	struct expo *exp;
+	ofnode node;
+
+	node = ofnode_path("/cedit");
+	ut_assert(ofnode_valid(node));
+	ut_assertok(expo_build(node, &exp));
+
+	scn = expo_lookup_scene_id(exp, ID_SCENE1);
+	ut_assertnonnull(scn);
+
+	menu = scene_obj_find(scn, ID_CPU_SPEED, SCENEOBJT_NONE);
+	ut_assertnonnull(menu);
+
+	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &dev));
+	ut_assertok(expo_set_display(exp, dev));
+
+	ut_assertok(scene_arrange(scn));
+
+	/* get first menu item and test with its coordinates */
+	item = list_first_entry(&menu->item_head, struct scene_menitem,
+				sibling);
+	ut_assertnonnull(item);
+
+	/* get the label object to find coordinates */
+	obj = scene_obj_find(scn, item->label_id, SCENEOBJT_NONE);
+	ut_assertnonnull(obj);
+	ut_asserteq_ptr(item, scene_menu_within(scn, menu, obj->bbox.x0 + 1,
+						obj->bbox.y0 + 1));
+
+	/* test point outside menu bounds */
+	ut_assertnull(scene_menu_within(scn, menu, -1, -1));
+
+	/* test point far outside menu bounds */
+	ut_assertnull(scene_menu_within(scn, menu, 9999, 9999));
+
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_menu_within, UTF_DM | UTF_SCAN_FDT);
+
 /* test expo_set_mouse_enable() */
 static int expo_mouse_enable(struct unit_test_state *uts)
 {

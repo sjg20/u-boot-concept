@@ -1028,6 +1028,23 @@ int scene_send_key(struct scene *scn, int key, struct expo_action *event)
 	return 0;
 }
 
+bool scene_within(const struct scene *scn, uint id, int x, int y)
+{
+	struct scene_obj *obj;
+
+	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
+	if (!obj) {
+		log_debug("Cannot find id %d\n", id);
+		return false;
+	}
+	log_debug("- id %d: '%s' bbox x0 %d y0 %d x1 %d y1 %d\n", id, obj->name,
+		  obj->bbox.x0, obj->bbox.y0, obj->bbox.x1, obj->bbox.x1);
+
+	/* Check if point (x, y) is within object's bounding box */
+	return (x >= obj->bbox.x0 && x <= obj->bbox.x1 &&
+		y >= obj->bbox.y0 && y <= obj->bbox.y1);
+}
+
 int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox bbox[])
 {
 	switch (obj->type) {

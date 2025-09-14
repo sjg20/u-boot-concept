@@ -497,6 +497,37 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 	return 0;
 }
 
+struct scene_menitem *scene_menu_within(const struct scene *scn,
+					struct scene_obj_menu *menu,
+					int x, int y)
+{
+	struct scene_menitem *item;
+
+	list_for_each_entry(item, &menu->item_head, sibling) {
+		log_debug("  item %d: label %d\n", item->id, item->label_id);
+		bool within;
+
+		within = scene_within(scn, item->label_id, x, y);
+		log_debug("- item %d within %d\n", item->id, within);
+		if (!within && !scn->expo->popup) {
+			log_debug("- non-popup within key %d desc %d preview %d\n",
+				  scene_within(scn, item->key_id, x, y),
+				  scene_within(scn, item->desc_id, x, y),
+				  scene_within(scn, item->preview_id, x, y));
+			within |= scene_within(scn, item->key_id, x, y) ||
+				scene_within(scn, item->desc_id, x, y) ||
+				scene_within(scn, item->preview_id, x, y);
+			log_debug("- popup within %d\n", within);
+		}
+
+		log_debug("- final within %d\n", within);
+		if (within)
+			return item;
+	}
+
+	return NULL;
+}
+
 int scene_menuitem(struct scene *scn, uint menu_id, const char *name, uint id,
 		   uint key_id, uint label_id, uint desc_id, uint preview_id,
 		   uint flags, struct scene_menitem **itemp)
