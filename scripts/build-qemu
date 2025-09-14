@@ -274,7 +274,11 @@ class BuildQemu:
         elif self.args.arch == 'arm':
             qemu_cmd.extend(['-device', 'virtio-gpu-pci'])
             qemu_cmd.extend(['-device', 'qemu-xhci', '-device', 'usb-kbd',
-                             '-device', 'usb-tablet'])
+                             '-device', 'usb-tablet', '-device', 'usb-mouse'])
+            qemu_cmd.extend(['-display', 'default,show-cursor=on'])
+        elif self.args.arch == 'x86':
+            qemu_cmd.extend(['-device', 'qemu-xhci'])
+            qemu_cmd.extend(['-device', 'usb-kbd', '-device', 'usb-tablet'])
             qemu_cmd.extend(['-display', 'default,show-cursor=on'])
         if not any(item.startswith('-serial') for item in self.qemu_extra):
             qemu_cmd.extend(['-serial', 'mon:stdio'])

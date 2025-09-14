@@ -112,6 +112,9 @@ class BuildEfi:
                 extra += ['-device', 'qemu-xhci', '-device', 'usb-kbd',
                           '-device', 'usb-tablet']
                 extra += ['-display', 'default,show-cursor=on']
+            else:  # x86
+                extra += ['-device', 'qemu-xhci', '-device', 'usb-kbd',
+                          '-device', 'usb-tablet']
             extra += ['-serial', 'mon:stdio']
             serial_msg = ''
         if self.args.kvm:
