@@ -21,3 +21,4 @@ ifdef CONFIG_MOUSE
 obj-$(CONFIG_SANDBOX) += sandbox_mouse.o
 endif
 obj-$(CONFIG_USB_MOUSE) += usb_mouse.o
+obj-$(CONFIG_EFI_MOUSE) += efi_mouse.o
