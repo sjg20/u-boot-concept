@@ -30,4 +30,8 @@
 		bootph-some-ram;
 	};
 
+	mouse {
+		compatible = "efi,mouse";
+	};
+
 };
