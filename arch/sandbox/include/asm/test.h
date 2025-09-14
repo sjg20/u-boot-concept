@@ -11,6 +11,7 @@
 #include <pci_ids.h>
 
 struct unit_test_state;
+struct mouse_event;
 
 /* The sandbox driver always permits an I2C device with this address */
 #define SANDBOX_I2C_TEST_ADDR		0x59
@@ -360,5 +361,21 @@ bool sandbox_sf_bootdev_enabled(void);
  * @enable: true to bind the SPI flash bootdevs, false to skip
  */
 void sandbox_sf_set_enable_bootdevs(bool enable);
+
+/**
+ * sandbox_mouse_set_test_mode() - Enable/disable test mode for sandbox mouse
+ *
+ * @dev: Mouse device
+ * @test_mode: true to enable test mode, false to use SDL
+ */
+void sandbox_mouse_set_test_mode(struct udevice *dev, bool test_mode);
+
+/**
+ * sandbox_mouse_inject() - Inject a mouse event for testing
+ *
+ * @dev: Mouse device (must be in test mode)
+ * @event: Event to inject
+ */
+void sandbox_mouse_inject(struct udevice *dev, struct mouse_event *event);
 
 #endif
