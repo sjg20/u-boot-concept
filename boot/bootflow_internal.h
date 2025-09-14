@@ -9,8 +9,18 @@
 #ifndef __BOOTFLOW_INTERNAL_H
 #define __BOOTFLOW_INTERNAL_H
 
-/* expo IDs for elements of the bootflow menu */
-enum {
+/**
+ * enum boomenu_id_t - expo IDs for elements of the bootflow menu
+ *
+ * The ranges below are as follows:
+ *
+ * @ITEM: Menu items
+ * @ITEM_LABEL: Short Media or other label to indicate what it is, e.g. "mmc0"
+ * @ITEM_DESC: Longer description or pretty name, e.g. "Ubuntu 2024.04 LTS"
+ * @ITEM_KEY: Keypress to select this item, e.g. "1"
+ * @ITEM_PREVIEW: Preview image for the OS
+ */
+enum boomenu_id_t {
 	START,
 
 	/* strings */
