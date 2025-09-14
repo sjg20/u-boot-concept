@@ -104,7 +104,7 @@ config TWL4030_INPUT
 config MOUSE
 	bool "Support for mice and other pointing devices"
 	depends on INPUT
-	default y if SANDBOX || EFI_APP
+	default y if SANDBOX || EFI_APP || MACH_QEMU
 	help
 	  This allows U-Boot to access mouse input, typically needed for
 	  graphics boot menus and the like. The driver can provide mouse
@@ -113,6 +113,7 @@ config MOUSE
 
 config USB_MOUSE
 	bool "USB mouse support"
+	default y if MACH_QEMU
 	help
 	  This enables using a USB mouse to control a feature in U-Boot,
 	  typically a boot menu. The driver uses the USB boot interface of
