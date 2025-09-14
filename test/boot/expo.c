@@ -962,9 +962,10 @@ static int expo_test_build(struct unit_test_state *uts)
 }
 BOOTSTD_TEST(expo_test_build, UTF_DM);
 
-/* test scene_menu_within() function */
-static int expo_menu_within(struct unit_test_state *uts)
+/* test scene object within functions */
+static int expo_within_funcs(struct unit_test_state *uts)
 {
+	struct scene_obj_textline *tline;
 	struct scene_obj_menu *menu;
 	struct scene_menitem *item;
 	struct scene_obj *obj;
@@ -980,6 +981,7 @@ static int expo_menu_within(struct unit_test_state *uts)
 	scn = expo_lookup_scene_id(exp, ID_SCENE1);
 	ut_assertnonnull(scn);
 
+	/* test scene_menu_within() */
 	menu = scene_obj_find(scn, ID_CPU_SPEED, SCENEOBJT_NONE);
 	ut_assertnonnull(menu);
 
@@ -1005,11 +1007,27 @@ static int expo_menu_within(struct unit_test_state *uts)
 	/* test point far outside menu bounds */
 	ut_assertnull(scene_menu_within(scn, menu, 9999, 9999));
 
+	/* test scene_textline_within() */
+	tline = scene_obj_find(scn, ID_MACHINE_NAME, SCENEOBJT_NONE);
+	ut_assertnonnull(tline);
+	obj = scene_obj_find(scn, tline->edit_id, SCENEOBJT_NONE);
+	ut_assertnonnull(obj);
+
+	/* positive test: point within textline bounds */
+	ut_assert(scene_textline_within(scn, tline, obj->bbox.x0 + 1,
+					obj->bbox.y0 + 1));
+
+	/* test point outside textline bounds */
+	ut_assert(!scene_textline_within(scn, tline, -1, -1));
+
+	/* test point far outside textline bounds */
+	ut_assert(!scene_textline_within(scn, tline, 9999, 9999));
+
 	expo_destroy(exp);
 
 	return 0;
 }
-BOOTSTD_TEST(expo_menu_within, UTF_DM | UTF_SCAN_FDT);
+BOOTSTD_TEST(expo_within_funcs, UTF_DM | UTF_SCAN_FDT);
 
 /* test expo_set_mouse_enable() */
 static int expo_mouse_enable(struct unit_test_state *uts)

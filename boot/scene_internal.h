@@ -266,6 +266,18 @@ struct scene_menitem *scene_menu_within(const struct scene *scn,
 					int x, int y);
 
 /**
+ * scene_textline_within() - check if a point is considered within a textline
+ *
+ * @scn: Scene to check
+ * @tline: Txtline to check
+ * @x: X coordinate of the point
+ * @y: Y coordinate of the point
+ * Return: true if the point is considered within the object, false if not
+ */
+bool scene_textline_within(const struct scene *scn,
+			   struct scene_obj_textline *tline, int x, int y);
+
+/**
  * scene_render_deps() - Render an object and its dependencies
  *
  * @scn: Scene to render

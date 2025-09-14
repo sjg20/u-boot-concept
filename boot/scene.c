@@ -1045,6 +1045,39 @@ bool scene_within(const struct scene *scn, uint id, int x, int y)
 		y >= obj->bbox.y0 && y <= obj->bbox.y1);
 }
 
+bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
+		      int y)
+{
+	bool within = false;
+
+	switch (obj->type) {
+	case SCENEOBJT_NONE:
+	case SCENEOBJT_IMAGE:
+	case SCENEOBJT_TEXT:
+	case SCENEOBJT_BOX:
+		break;
+	case SCENEOBJT_MENU: {
+		struct scene_obj_menu *menu;
+
+		menu = (struct scene_obj_menu *)obj,
+		within = scene_menu_within(scn, menu, x, y);
+		break;
+	}
+	case SCENEOBJT_TEXTLINE: {
+		struct scene_obj_textline *tline;
+
+		tline = (struct scene_obj_textline *)obj,
+		within = scene_textline_within(scn, tline, x, y);
+		break;
+	}
+	case SCENEOBJT_TEXTEDIT:
+		/* TODO(sjg@chromium.org): Implement this */
+		break;
+	}
+
+	return within;
+}
+
 int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox bbox[])
 {
 	switch (obj->type) {

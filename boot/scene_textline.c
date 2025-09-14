@@ -175,6 +175,12 @@ int scene_textline_send_key(struct scene *scn, struct scene_obj_textline *tline,
 	return 0;
 }
 
+bool scene_textline_within(const struct scene *scn,
+			   struct scene_obj_textline *tline, int x, int y)
+{
+	return scene_within(scn, tline->edit_id, x, y);
+}
+
 int scene_textline_render_deps(struct scene *scn,
 			       struct scene_obj_textline *tline)
 {
