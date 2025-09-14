@@ -231,6 +231,9 @@ int scene_render(struct scene *scn);
 /**
  * scene_send_key() - set a keypress to a scene
  *
+ * This processes the key, taking any action that is needed, such as moving
+ * between menu items or editing the text in a textline
+ *
  * @scn: Scene to receive the key
  * @key: Key to send (KEYCODE_UP)
  * @event: Returns resulting event from this keypress

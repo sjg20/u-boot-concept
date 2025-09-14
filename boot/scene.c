@@ -909,6 +909,7 @@ int scene_render(struct scene *scn)
  * send_key_obj() - Handle a keypress for moving between objects
  *
  * @scn: Scene to receive the key
+ * @obj: Object to receive the key
  * @key: Key to send (KEYCODE_UP)
  * @event: Returns resulting event from this keypress
  * Returns: 0 if OK, -ve on error
