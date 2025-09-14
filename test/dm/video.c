@@ -17,6 +17,7 @@
 #include <asm/sdl.h>
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
+#include <linux/delay.h>
 #include <test/lib.h>
 #include <test/test.h>
 #include <test/ut.h>
@@ -68,6 +69,10 @@ int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 	free(dest);
 	if (ret)
 		return ret;
+
+	/* provide a useful delay if #define LOG_DEBUG at the top of file */
+	if (_DEBUG)
+		mdelay(300);
 
 	return destlen;
 }
