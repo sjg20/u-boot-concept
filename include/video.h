@@ -277,10 +277,11 @@ int video_fill_part(struct udevice *dev, int xstart, int ystart, int xend,
  * @y1:		Y end position in pixels from the top
  * @width:	width in pixels
  * @colour:	Value to write
+ * @fill:	true to fill the box, false to draw outline only
  * Return: 0 if OK, -ENOSYS if the display depth is not supported
  */
 int video_draw_box(struct udevice *dev, int x0, int y0, int x1, int y1,
-		   int width, u32 colour);
+		   int width, u32 colour, bool fill);
 
 /**
  * video_sync() - Sync a device's frame buffer with its hardware

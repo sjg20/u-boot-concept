@@ -218,7 +218,7 @@ int video_fill_part(struct udevice *dev, int xstart, int ystart, int xend,
 }
 
 int video_draw_box(struct udevice *dev, int x0, int y0, int x1, int y1,
-		   int width, u32 colour)
+		   int width, u32 colour, bool fill)
 {
 	struct video_priv *priv = dev_get_uclass_priv(dev);
 	int pbytes = VNBYTES(priv->bpix);
@@ -233,17 +233,24 @@ int video_draw_box(struct udevice *dev, int x0, int y0, int x1, int y1,
 		void *ptr = line;
 		int i;
 
-		for (i = 0; i < width; i++)
-			fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
-		if (row < y0 + width || row >= y1 - width) {
-			for (i = 0; i < pixels - width * 2; i++)
-				fill_pixel_and_goto_next(&ptr, colour, pbytes,
-							 pbytes);
+		if (fill) {
+			/* fill the entire row */
+			for (i = 0; i < pixels; i++)
+				fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
 		} else {
-			ptr += (pixels - width * 2) * pbytes;
+			/* draw outline only */
+			for (i = 0; i < width; i++)
+				fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
+			if (row < y0 + width || row >= y1 - width) {
+				for (i = 0; i < pixels - width * 2; i++)
+					fill_pixel_and_goto_next(&ptr, colour, pbytes,
+								 pbytes);
+			} else {
+				ptr += (pixels - width * 2) * pbytes;
+			}
+			for (i = 0; i < width; i++)
+				fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
 		}
-		for (i = 0; i < width; i++)
-			fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
 		line += priv->line_length;
 	}
 	video_damage(dev, x0, y0, x1 - x0, y1 - y0);

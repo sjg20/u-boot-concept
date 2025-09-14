@@ -681,7 +681,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		struct scene_obj_box *box = (struct scene_obj_box *)obj;
 
 		video_draw_box(dev, obj->bbox.x0, obj->bbox.y0, obj->bbox.x1,
-			       obj->bbox.y1, box->width, vid_priv->colour_fg);
+			       obj->bbox.y1, box->width, vid_priv->colour_fg, false);
 		break;
 	}
 	case SCENEOBJT_TEXTEDIT: {
