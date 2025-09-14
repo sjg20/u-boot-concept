@@ -27,6 +27,9 @@
 #define ID_MACHINE_NAME		17
 #define ID_MACHINE_NAME_EDIT	18
 
-#define ID_DYNAMIC_START	19
+#define ID_TEST_BOX		19
+#define ID_TEST_BOX_FILLED	20
+
+#define ID_DYNAMIC_START	21
 
 #endif

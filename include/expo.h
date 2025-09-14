@@ -495,10 +495,12 @@ struct scene_obj_textline {
  *
  * @obj: Basic object information
  * @width: Line-width in pixels
+ * @fill: true to fill the box, false to draw outline only
  */
 struct scene_obj_box {
 	struct scene_obj obj;
 	uint width;
+	bool fill;
 };
 
 /**
@@ -809,11 +811,22 @@ int scene_textline(struct scene *scn, const char *name, uint id, uint max_chars,
  * @name: Name to use (this is allocated by this call)
  * @id: ID to use for the new object (0 to allocate one)
  * @width: Line-width in pixels
+ * @fill: true to fill the box, false to draw outline only
  * @boxp: If non-NULL, returns the new object
  * Returns: ID number for the object (typically @id), or -ve on error
  */
 int scene_box(struct scene *scn, const char *name, uint id, uint width,
-	      struct scene_obj_box **boxp);
+	      bool fill, struct scene_obj_box **boxp);
+
+/**
+ * scene_box_set_fill() - Set the fill property of a box object
+ *
+ * @scn: Scene containing the box
+ * @id: ID of the box object to update
+ * @fill: true to fill the box, false to draw outline only
+ * Returns: 0 if OK, -ENOENT if the object is not found or is not a box
+ */
+int scene_box_set_fill(struct scene *scn, uint id, bool fill);
 
 /**
  *  scene_texted() - create a text editor

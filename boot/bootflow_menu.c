@@ -55,7 +55,7 @@ int bootflow_menu_new(struct expo **expp)
 	if (ret < 0)
 		return log_msg_ret("scn", ret);
 
-	ret = scene_box(scn, "box", OBJ_BOX, 2, NULL);
+	ret = scene_box(scn, "box", OBJ_BOX, 2, false, NULL);
 	if (ret < 0)
 		return log_msg_ret("bmb", ret);
 	ret |= scene_obj_set_bbox(scn, OBJ_BOX, 30, 90, 1366 - 30, 720);

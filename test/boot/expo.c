@@ -570,11 +570,11 @@ static int expo_render_image(struct unit_test_state *uts)
 
 	ut_assertok(scene_obj_set_pos(scn, OBJ_MENU, 50, 400));
 
-	id = scene_box(scn, "box", OBJ_BOX, 3, NULL);
+	id = scene_box(scn, "box", OBJ_BOX, 3, false, NULL);
 	ut_assert(id > 0);
 	ut_assertok(scene_obj_set_bbox(scn, OBJ_BOX, 40, 390, 1000, 510));
 
-	id = scene_box(scn, "box2", OBJ_BOX2, 1, NULL);
+	id = scene_box(scn, "box2", OBJ_BOX2, 1, false, NULL);
 	ut_assert(id > 0);
 	ut_assertok(scene_obj_set_bbox(scn, OBJ_BOX, 500, 200, 1000, 350));
 
@@ -879,6 +879,39 @@ static int expo_test_build(struct unit_test_state *uts)
 
 	count = list_count_nodes(&menu->item_head);
 	ut_asserteq(3, count);
+
+	/* check the box */
+	struct scene_obj_box *box = scene_obj_find(scn, ID_TEST_BOX, SCENEOBJT_NONE);
+	ut_assertnonnull(box);
+	obj = &box->obj;
+	ut_asserteq_ptr(scn, obj->scene);
+	ut_asserteq_str("test-box", obj->name);
+	ut_asserteq(ID_TEST_BOX, obj->id);
+	ut_asserteq(SCENEOBJT_BOX, obj->type);
+	ut_asserteq(0, obj->flags);
+	ut_asserteq(5, box->width);
+	ut_asserteq(false, box->fill);
+
+	/* check the filled box */
+	struct scene_obj_box *filled_box = scene_obj_find(scn, ID_TEST_BOX_FILLED, SCENEOBJT_NONE);
+	ut_assertnonnull(filled_box);
+	obj = &filled_box->obj;
+	ut_asserteq_ptr(scn, obj->scene);
+	ut_asserteq_str("test-box-filled", obj->name);
+	ut_asserteq(ID_TEST_BOX_FILLED, obj->id);
+	ut_asserteq(SCENEOBJT_BOX, obj->type);
+	ut_asserteq(0, obj->flags);
+	ut_asserteq(3, filled_box->width);
+	ut_asserteq(true, filled_box->fill);
+
+	/* test scene_box_set_fill() function */
+	ut_assertok(scene_box_set_fill(scn, ID_TEST_BOX, true));
+	ut_asserteq(true, box->fill);
+	ut_assertok(scene_box_set_fill(scn, ID_TEST_BOX_FILLED, false));
+	ut_asserteq(false, filled_box->fill);
+
+	/* test error case */
+	ut_asserteq(-ENOENT, scene_box_set_fill(scn, 9999, true));
 
 	/* try editing some text */
 	ut_assertok(expo_edit_str(exp, txt->gen.str_id, &orig, &copy));

@@ -212,7 +212,7 @@ int scene_txt_str(struct scene *scn, const char *name, uint id, uint str_id,
 }
 
 int scene_box(struct scene *scn, const char *name, uint id, uint width,
-	      struct scene_obj_box **boxp)
+	      bool fill, struct scene_obj_box **boxp)
 {
 	struct scene_obj_box *box;
 	int ret;
@@ -224,11 +224,25 @@ int scene_box(struct scene *scn, const char *name, uint id, uint width,
 		return log_msg_ret("obj", ret);
 
 	box->width = width;
+	box->fill = fill;
 
 	if (boxp)
 		*boxp = box;
 
 	return box->obj.id;
+}
+
+int scene_box_set_fill(struct scene *scn, uint id, bool fill)
+{
+	struct scene_obj_box *box;
+
+	box = scene_obj_find(scn, id, SCENEOBJT_BOX);
+	if (!box)
+		return log_msg_ret("find", -ENOENT);
+
+	box->fill = fill;
+
+	return 0;
 }
 
 int scene_txt_set_font(struct scene *scn, uint id, const char *font_name,
@@ -681,7 +695,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		struct scene_obj_box *box = (struct scene_obj_box *)obj;
 
 		video_draw_box(dev, obj->bbox.x0, obj->bbox.y0, obj->bbox.x1,
-			       obj->bbox.y1, box->width, vid_priv->colour_fg, false);
+			       obj->bbox.y1, box->width, vid_priv->colour_fg, box->fill);
 		break;
 	}
 	case SCENEOBJT_TEXTEDIT: {

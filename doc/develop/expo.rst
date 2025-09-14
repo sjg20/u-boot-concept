@@ -366,6 +366,9 @@ type
     "textline"
         A line of text which can be edited
 
+    "box"
+        A rectangle with a given line width (not filled)
+
 id
     type: u32, required
 
@@ -442,6 +445,19 @@ max-chars:
 
     Specifies the maximum number of characters permitted to be in the textline.
     The user will be prevented from adding more.
+
+Box nodes have the following additional properties:
+
+width
+    type: u32, required
+
+    Specifies the line width of the box in pixels.
+
+fill
+    type: bool, optional
+
+    Specifies whether to fill the box (true) or draw outline only (false).
+    Defaults to false if not specified.
 
 
 Expo layout
