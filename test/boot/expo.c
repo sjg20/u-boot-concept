@@ -465,15 +465,25 @@ static int expo_object_menu(struct unit_test_state *uts)
 }
 BOOTSTD_TEST(expo_object_menu, UTF_DM | UTF_SCAN_FDT);
 
-/* Check rendering a scene */
-static int expo_render_image(struct unit_test_state *uts)
+/**
+ * create_test_expo() - Create a test expo with menu items for testing
+ *
+ * @uts: Unit test state
+ * @expp: Returns pointer to expo
+ * @scnp: Returns pointer to scene
+ * @menup: Returns pointer to menu
+ * @bufp: Returns pointer to buf (caller must uninit)
+ * @logo_copyp: Returns pointer to logo_copy (caller must uninit)
+ * Returns: 0 if OK, -ve on error
+ */
+static int create_test_expo(struct unit_test_state *uts, struct expo **expp,
+			    struct scene **scnp, struct scene_obj_menu **menup,
+			    struct abuf *bufp, struct abuf *logo_copyp)
 {
 	struct scene_obj_menu *menu;
 	struct abuf buf, logo_copy;
-	struct scene *scn, *scn2;
+	struct scene *scn;
 	struct abuf orig, *text;
-	struct expo_action act;
-	struct scene_obj *obj;
 	struct udevice *dev;
 	struct expo *exp;
 	int id, size;
@@ -585,6 +595,29 @@ static int expo_render_image(struct unit_test_state *uts)
 
 	abuf_printf(text, "This\nis the initial contents of the text editor "
 		"but it is quite likely that more will be added later");
+
+	*expp = exp;
+	*scnp = scn;
+	*menup = menu;
+	*bufp = buf;
+	*logo_copyp = logo_copy;
+
+	return 0;
+}
+
+/* Check rendering a scene */
+static int expo_render_image(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct scene *scn, *scn2;
+	struct expo_action act;
+	struct scene_obj *obj;
+	struct udevice *dev;
+	struct expo *exp;
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+	dev = exp->display;
 
 	scn2 = expo_lookup_scene_id(exp, SCENE1);
 	ut_asserteq_ptr(scn, scn2);
