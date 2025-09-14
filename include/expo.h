@@ -109,6 +109,7 @@ struct expo_theme {
  * @name: Name of the expo (allocated)
  * @display: Display to use (`UCLASS_VIDEO`), or NULL to use text mode
  * @cons: Console to use (`UCLASS_VIDEO_CONSOLE`), or NULL to use text mode
+ * @mouse: Mouse to use (`UCLASS_MOUSE`), or NULL if no mouse
  * @scene_id: Current scene ID (0 if none)
  * @next_id: Next ID number to use, for automatic allocation
  * @action: Action selected by user. At present only one is supported, with the
@@ -118,6 +119,7 @@ struct expo_theme {
  * @text_mode: true to use text mode for the menu (no vidconsole)
  * @popup: true to use popup menus, instead of showing all items
  * @show_highlight: show a highlight bar on the selected menu item
+ * @mouse_enabled: true if the mouse is enabled
  * @priv: Private data for the controller
  * @done: Indicates that a cedit session is complete and the user has quit
  * @save: Indicates that cedit data should be saved, rather than discarded
@@ -130,6 +132,7 @@ struct expo {
 	char *name;
 	struct udevice *display;
 	struct udevice *cons;
+	struct udevice *mouse;
 	uint scene_id;
 	uint next_id;
 	struct expo_action action;
@@ -138,6 +141,7 @@ struct expo {
 	bool text_mode;
 	bool popup;
 	bool show_highlight;
+	bool mouse_enabled;
 	void *priv;
 	bool done;
 	bool save;
@@ -666,6 +670,15 @@ int expo_arrange(struct expo *exp);
  * @text_mode: true to use text mode, false to use the console
  */
 void expo_set_text_mode(struct expo *exp, bool text_mode);
+
+/**
+ * expo_set_mouse_enable() - Controls whether the expo enables mouse input
+ *
+ * @exp: Expo to update
+ * @enable: true to enable mouse input, false to disable
+ * Returns: 0 if OK, or -ve error if no mouse found
+ */
+int expo_set_mouse_enable(struct expo *exp, bool enable);
 
 /**
  * scene_new() - create a new scene in a expo

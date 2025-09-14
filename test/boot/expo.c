@@ -928,3 +928,25 @@ static int expo_test_build(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(expo_test_build, UTF_DM);
+
+/* test expo_set_mouse_enable() */
+static int expo_mouse_enable(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+	struct expo *exp;
+
+	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &dev));
+	ut_assertok(expo_new(EXPO_NAME, NULL, &exp));
+	ut_assertok(expo_set_display(exp, dev));
+
+	ut_asserteq(false, exp->mouse_enabled);
+
+	ut_assertok(expo_set_mouse_enable(exp, true));
+	ut_assertnonnull(exp->mouse);
+	ut_asserteq(UCLASS_MOUSE, device_get_uclass_id(exp->mouse));
+
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_mouse_enable, UTF_DM | UTF_SCAN_FDT);

@@ -13,6 +13,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <menu.h>
+#include <mouse.h>
 #include <video.h>
 #include <watchdog.h>
 #include <linux/delay.h>
@@ -161,6 +162,24 @@ int expo_calc_dims(struct expo *exp)
 void expo_set_text_mode(struct expo *exp, bool text_mode)
 {
 	exp->text_mode = text_mode;
+}
+
+int expo_set_mouse_enable(struct expo *exp, bool enable)
+{
+	int ret;
+
+	if (!enable) {
+		exp->mouse_enabled = false;
+		return 0;
+	}
+
+	ret = uclass_first_device_err(UCLASS_MOUSE, &exp->mouse);
+	if (ret)
+		return log_msg_ret("sme", ret);
+
+	exp->mouse_enabled = true;
+
+	return 0;
 }
 
 struct scene *expo_lookup_scene_id(struct expo *exp, uint scene_id)
