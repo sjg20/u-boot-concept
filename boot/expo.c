@@ -382,9 +382,9 @@ int expo_iter_scene_objs(struct expo *exp, expo_scene_obj_iterator iter,
 	return 0;
 }
 
-int expo_poll(struct expo *exp, struct expo_action *act)
+static int poll_keys(struct expo *exp)
 {
-	int ichar, key, ret;
+	int ichar, key;
 
 	ichar = cli_ch_process(&exp->cch, 0);
 	if (!ichar) {
@@ -407,10 +407,17 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 		if (key == BKEY_NONE || key >= BKEY_FIRST_EXTRA)
 			key = ichar;
 	}
-	if (!key)
-		return -EAGAIN;
 
-	ret = expo_send_key(exp, key);
+	return key ? key : -EAGAIN;
+}
+
+int expo_poll(struct expo *exp, struct expo_action *act)
+{
+	int key, ret = -EAGAIN;
+
+	key = poll_keys(exp);
+	if (key != -EAGAIN)
+		ret = expo_send_key(exp, key);
 	if (ret)
 		return log_msg_ret("epk", ret);
 	ret = expo_action_get(exp, act);
