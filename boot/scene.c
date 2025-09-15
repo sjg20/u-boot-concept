@@ -1114,7 +1114,11 @@ int scene_calc_dims(struct scene *scn)
 				struct scene_obj_textline *tline;
 
 				tline = (struct scene_obj_textline *)obj;
-				ret = scene_textline_calc_dims(tline);
+				if (!scn->expo->cons)
+					continue;
+
+				ret = scene_textline_calc_dims(tline,
+							       scn->expo->cons);
 				if (ret)
 					return log_msg_ret("men", ret);
 

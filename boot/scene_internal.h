@@ -21,6 +21,7 @@ struct scene_obj_menu;
 struct scene_obj_textline;
 struct scene_obj_txtedit;
 struct scene_txt_generic;
+struct udevice;
 struct vidconsole_bbox;
 
 enum scene_obj_t;
@@ -380,9 +381,11 @@ int scene_dims_union(struct scene *scn, uint id, struct scene_obj_dims *dims);
  * Updates the width and height of the textline based on its contents
  *
  * @tline: Textline to update
+ * @cons: UCLASS_VIDEO_CONSOLE device (cannot be NULL)
  * Returns 0 if OK, -ENOTSUPP if there is no graphical console
  */
-int scene_textline_calc_dims(struct scene_obj_textline *tline);
+int scene_textline_calc_dims(struct scene_obj_textline *tline,
+			     struct udevice *cons);
 
 /**
  * scene_menu_calc_bbox() - Calculate bounding boxes for the menu
