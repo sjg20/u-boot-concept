@@ -51,6 +51,8 @@ int bootflow_menu_new(struct expo **expp)
 		return log_msg_ret("exp", ret);
 	expo_req_size(exp, 1366, 768);
 
+	expo_set_mouse_enable(exp, true);
+
 	ret = scene_new(exp, "main", MAIN, &scn);
 	if (ret < 0)
 		return log_msg_ret("scn", ret);

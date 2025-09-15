@@ -243,6 +243,8 @@ int cedit_run(struct expo *exp)
 		return log_msg_ret("prep", ret);
 	scene_id = ret;
 
+	expo_set_mouse_enable(exp, true);
+
 	exp->done = false;
 	exp->save = false;
 	do {
