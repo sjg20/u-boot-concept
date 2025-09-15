@@ -266,6 +266,18 @@ int scene_send_key(struct scene *scn, int key, struct expo_action *event);
 bool scene_within(const struct scene *scn, uint id, int x, int y);
 
 /**
+ * scene_obj_within() - check if a point is considered within an object
+ *
+ * @scn: Scene to check
+ * @menu: Menu to check
+ * @x: X coordinate of the point
+ * @y: Y coordinate of the point
+ * Return: true if the point is considered within the object, false if not
+ */
+bool scene_obj_within(const struct scene *scn, struct scene_obj *obj,
+		      int x, int y);
+
+/**
  * scene_menu_within() - check if a point is considered within a menu
  *
  * @scn: Scene to check
@@ -289,6 +301,17 @@ struct scene_menitem *scene_menu_within(const struct scene *scn,
  */
 bool scene_textline_within(const struct scene *scn,
 			   struct scene_obj_textline *tline, int x, int y);
+
+/**
+ * scene_send_click() - process a mouse click in a scene
+ *
+ * @scn: Scene to receive the click
+ * @x: X coordinate of the click
+ * @y: Y coordinate of the click
+ * @event: Returns resulting event from this click
+ * Returns: 0 if OK, -ve on error
+ */
+int scene_send_click(struct scene *scn, int x, int y, struct expo_action *event);
 
 /**
  * scene_render_deps() - Render an object and its dependencies
