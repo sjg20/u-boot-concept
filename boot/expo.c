@@ -292,6 +292,30 @@ int expo_send_key(struct expo *exp, int key)
 	return scn ? 0 : -ECHILD;
 }
 
+int expo_send_click(struct expo *exp, int x, int y)
+{
+	struct scene *scn = NULL;
+
+	if (exp->scene_id) {
+		int ret;
+
+		scn = expo_lookup_scene_id(exp, exp->scene_id);
+		if (!scn)
+			return log_msg_ret("scn", -ENOENT);
+
+		ret = scene_send_click(scn, x, y, &exp->action);
+		if (ret)
+			return log_msg_ret("click", ret);
+
+		/* arrange it to get any changes */
+		ret = scene_arrange(scn);
+		if (ret)
+			return log_msg_ret("arr", ret);
+	}
+
+	return scn ? 0 : -ECHILD;
+}
+
 int expo_action_get(struct expo *exp, struct expo_action *act)
 {
 	*act = exp->action;

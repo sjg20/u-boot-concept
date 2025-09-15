@@ -1064,11 +1064,24 @@ int scene_arrange(struct scene *scn);
 /**
  * expo_send_key() - set a keypress to the expo
  *
+ * This processes the key, taking any action that is needed, such as moving
+ * between menu items or editing the text in a textline
+ *
  * @exp: Expo to receive the key
  * @key: Key to send (ASCII or enum bootmenu_key)
  * Returns: 0 if OK, -ECHILD if there is no current scene
  */
 int expo_send_key(struct expo *exp, int key);
+
+/**
+ * expo_send_click() - send a mouse click to the expo
+ *
+ * @exp: Expo to receive the click
+ * @x: X coordinate of click
+ * @y: Y coordinate of click
+ * Returns: 0 if OK, -ECHILD if there is no current scene
+ */
+int expo_send_click(struct expo *exp, int x, int y);
 
 /**
  * expo_action_get() - read user input from the expo
