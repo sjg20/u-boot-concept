@@ -10,10 +10,11 @@
 #include <menu.h>
 #include <video.h>
 #include <linux/input.h>
+#include <test/cedit-test.h>
 #include <test/ut.h>
 #include <test/video.h>
 #include "bootstd_common.h"
-#include <test/cedit-test.h>
+#include "expo_common.h"
 #include "../../boot/scene_internal.h"
 
 enum {

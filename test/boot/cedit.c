@@ -10,10 +10,11 @@
 #include <expo.h>
 #include <mapmem.h>
 #include <dm/ofnode.h>
+#include <test/cedit-test.h>
 #include <test/ut.h>
 #include <test/video.h>
 #include "bootstd_common.h"
-#include <test/cedit-test.h>
+#include "expo_common.h"
 #include "../../boot/scene_internal.h"
 
 /* Check the cedit command */
