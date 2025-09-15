@@ -191,6 +191,27 @@ int cedit_do_action(struct expo *exp, struct scene *scn,
 		scene_set_open(scn, act->select.id, false);
 		cedit_arange(exp, vid_priv, scn->id);
 		break;
+	case EXPOACT_POINT_OPEN:
+		scene_set_highlight_id(scn, act->select.id);
+		scene_set_open(scn, act->select.id, true);
+		cedit_arange(exp, vid_priv, scn->id);
+		break;
+	case EXPOACT_POINT_CLOSE:
+		/* Point to the item (select it in the menu) */
+		ret = scene_menu_select_item(scn, scn->highlight_id,
+					     act->select.id);
+		if (ret)
+			return log_msg_ret("pco", ret);
+		/* Close the menu */
+		scene_set_open(scn, scn->highlight_id, false);
+		cedit_arange(exp, vid_priv, scn->id);
+		break;
+	case EXPOACT_REPOINT_OPEN:
+		scene_set_open(scn, act->select.prev_id, false);
+		scene_set_highlight_id(scn, act->select.id);
+		scene_set_open(scn, act->select.id, true);
+		cedit_arange(exp, vid_priv, scn->id);
+		break;
 	case EXPOACT_SELECT:
 		scene_set_open(scn, scn->highlight_id, false);
 		cedit_arange(exp, vid_priv, scn->id);

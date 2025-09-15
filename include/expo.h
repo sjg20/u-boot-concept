@@ -47,6 +47,12 @@ enum expo_id_t {
  * @EXPOACT_OPEN: menu was opened, so an item can be selected (@id indicates
  * which menu object)
  * @EXPOACT_CLOSE: menu was closed (@id indicates which menu object)
+ * @EXPOACT_POINT_OPEN: menu item was pointed to and menu opened (@id indicates
+ * which menu object)
+ * @EXPOACT_POINT_CLOSE: menu item was pointed to and menu closed @id indicates
+ * which menu item)
+ * @EXPOACT_REPOINT_OPEN: menu closed, another menu opened (@prev_id indicates
+ * the menu closed, @id indicates menu opened)
  * @EXPOACT_QUIT: request to exit the menu
  */
 enum expoact_type {
@@ -56,6 +62,9 @@ enum expoact_type {
 	EXPOACT_SELECT,
 	EXPOACT_OPEN,
 	EXPOACT_CLOSE,
+	EXPOACT_POINT_OPEN,
+	EXPOACT_POINT_CLOSE,
+	EXPOACT_REPOINT_OPEN,
 	EXPOACT_QUIT,
 };
 
@@ -65,6 +74,7 @@ enum expoact_type {
  * @type: Action type (EXPOACT_NONE if there is no action)
  * @select: Used for all actions except EXPOACT_NONE and EXPOACT_QUIT
  * @select.id: ID number of the object affected
+ * @select.prev_id: ID number of the old object that was highlighted
  * @select.changed: true if the selection has changed since last time (only
  * valid for EXPOACT_POINT_ITEM)
  */
@@ -73,6 +83,7 @@ struct expo_action {
 	union {
 		struct {
 			int id;
+			int prev_id;
 			bool changed;
 		} select;
 	};
