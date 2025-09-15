@@ -528,6 +528,36 @@ struct scene_menitem *scene_menu_within(const struct scene *scn,
 	return NULL;
 }
 
+int scene_menu_send_click(struct scene *scn, struct scene_obj_menu *menu, int x,
+			  int y, struct expo_action *event)
+{
+	struct scene_menitem *item;
+
+	if (scn->expo->popup)
+		assert(menu->obj.flags & SCENEOF_OPEN);
+
+	log_debug("menu %d '%s': x %d y %d\n", menu->obj.id, menu->obj.name,
+		  x, y);
+
+	item = scene_menu_within(scn, menu, x, y);
+	if (!item) {
+		log_debug("not found\n");
+		return -ENOTTY;
+	}
+
+	if (scn->expo->popup) {
+		assert(menu->obj.flags & SCENEOF_OPEN);
+		/* Menu is open - point to item and close menu */
+		event->type = EXPOACT_POINT_CLOSE;
+		log_debug("point-close item %d\n", item->id);
+	} else {
+		event->type = EXPOACT_SELECT;
+		log_debug("select item %d\n", item->id);
+	}
+	event->select.id = item->id;
+		return 0;
+}
+
 int scene_menuitem(struct scene *scn, uint menu_id, const char *name, uint id,
 		   uint key_id, uint label_id, uint desc_id, uint preview_id,
 		   uint flags, struct scene_menitem **itemp)
