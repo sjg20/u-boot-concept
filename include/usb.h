@@ -255,6 +255,7 @@ int usb_host_eth_scan(int mode);
  * Appendix B of HID Device Class Definition 1.11
  */
 #define USB_KBD_BOOT_REPORT_SIZE 8
+#define USB_MOUSE_BOOT_REPORT_SIZE 8
 
 /*
  * usb_init() - initialize the USB Controllers

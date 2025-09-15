@@ -15,3 +15,10 @@ obj-$(CONFIG_I8042_KEYB) += i8042.o
 obj-$(CONFIG_TEGRA_KEYBOARD) += input.o tegra-kbc.o
 obj-$(CONFIG_TWL4030_INPUT) += twl4030.o
 endif
+
+obj-$(CONFIG_MOUSE) += mouse-uclass.o
+ifdef CONFIG_MOUSE
+obj-$(CONFIG_SANDBOX) += sandbox_mouse.o
+endif
+obj-$(CONFIG_USB_MOUSE) += usb_mouse.o
+obj-$(CONFIG_EFI_MOUSE) += efi_mouse.o

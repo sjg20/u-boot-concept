@@ -23,9 +23,14 @@
 		compatible = "efi,reset";
 		bootph-all;
 	};
+
 	efi-fb {
 		compatible = "efi-fb";
 		bootph-some-ram;
+	};
+
+	mouse {
+		compatible = "efi,mouse";
 	};
 
 };

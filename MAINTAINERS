@@ -1251,6 +1251,13 @@ S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-i2c.git
 F:	drivers/i2c/
 
+INPUT
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+T:	git https://concept.u-boot.org/u-boot/u-boot.git
+F:	drivers/input
+F:	include/mouse.h
+
 KWBIMAGE / KWBOOT TOOLS
 M:	Pali Rohár <pali@kernel.org>
 M:	Marek Behún <kabel@kernel.org>

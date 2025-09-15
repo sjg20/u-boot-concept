@@ -222,13 +222,28 @@ int membuf_readline(struct membuf *mb, char *str, int maxlen, int minch,
 int membuf_extend_by(struct membuf *mb, int by, int max);
 
 /**
- * membuf_init() - set up a new membuff using an existing membuff
+ * membuf_init() - set up a new membuff using an existing buffer
+ *
+ * The buffer is initially empty
  *
  * @mb: membuff to set up
  * @buff: Address of buffer
  * @size: Size of buffer
  */
 void membuf_init(struct membuf *mb, char *buff, int size);
+
+/**
+ * membuf_init_with_data() - set up a new membuff using existing data
+ *
+ * The buffer is set up to contain the provided data. with its size set to
+ * @size + 1 (less MEMBUF_FULL), so that there is enough space for the head/tail
+ * differece.
+ *
+ * @mb: membuff to set up
+ * @buff: Address of buffer
+ * @size: Number of bytes to put into the membuf
+ */
+void membuf_init_with_data(struct membuf *mb, char *buff, int size);
 
 /**
  * membuf_uninit() - clear a membuff so it can no longer be used
