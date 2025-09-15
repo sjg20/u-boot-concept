@@ -227,6 +227,8 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	const bool stack = exp->popup;
 	const struct expo_theme *theme = &exp->theme;
 	struct scene_menitem *item;
+	int xsize = 0, ysize = 0;
+	struct udevice *dev;
 	uint sel_id;
 	int startx, x, y;
 	int ret;
@@ -237,6 +239,14 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 
 	memset(dims, '\0', sizeof(dims));
 	scene_menu_calc_dims(scn, menu, dims);
+
+	dev = scn->expo->display;
+	if (dev) {
+		struct video_priv *priv = dev_get_uclass_priv(dev);
+
+		xsize = priv->xsize;
+		ysize = priv->ysize;
+	}
 
 	startx = menu->obj.req_bbox.x0;
 	y = menu->obj.req_bbox.y0;
@@ -324,13 +334,17 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		}
 
 		if (item->preview_id) {
+			const struct scene_obj *obj;
 			bool hide;
 
 			/*
 			 * put all previews on top of each other, on the right
 			 * size of the display
 			 */
-			ret = scene_obj_set_pos(scn, item->preview_id, -4, y);
+			obj = scene_obj_find(scn, item->preview_id,
+					     SCENEOBJT_NONE);
+			ret = scene_obj_set_pos(scn, item->preview_id,
+						xsize - obj->dims.x - 4, y);
 			if (ret < 0)
 				return log_msg_ret("prev", ret);
 
@@ -481,6 +495,67 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 	}
 
 	return 0;
+}
+
+struct scene_menitem *scene_menu_within(const struct scene *scn,
+					struct scene_obj_menu *menu,
+					int x, int y)
+{
+	struct scene_menitem *item;
+
+	list_for_each_entry(item, &menu->item_head, sibling) {
+		log_debug("  item %d: label %d\n", item->id, item->label_id);
+		bool within;
+
+		within = scene_within(scn, item->label_id, x, y);
+		log_debug("- item %d within %d\n", item->id, within);
+		if (!within && !scn->expo->popup) {
+			log_debug("- non-popup within key %d desc %d preview %d\n",
+				  scene_within(scn, item->key_id, x, y),
+				  scene_within(scn, item->desc_id, x, y),
+				  scene_within(scn, item->preview_id, x, y));
+			within |= scene_within(scn, item->key_id, x, y) ||
+				scene_within(scn, item->desc_id, x, y) ||
+				scene_within(scn, item->preview_id, x, y);
+			log_debug("- popup within %d\n", within);
+		}
+
+		log_debug("- final within %d\n", within);
+		if (within)
+			return item;
+	}
+
+	return NULL;
+}
+
+int scene_menu_send_click(struct scene *scn, struct scene_obj_menu *menu, int x,
+			  int y, struct expo_action *event)
+{
+	struct scene_menitem *item;
+
+	if (scn->expo->popup)
+		assert(menu->obj.flags & SCENEOF_OPEN);
+
+	log_debug("menu %d '%s': x %d y %d\n", menu->obj.id, menu->obj.name,
+		  x, y);
+
+	item = scene_menu_within(scn, menu, x, y);
+	if (!item) {
+		log_debug("not found\n");
+		return -ENOTTY;
+	}
+
+	if (scn->expo->popup) {
+		assert(menu->obj.flags & SCENEOF_OPEN);
+		/* Menu is open - point to item and close menu */
+		event->type = EXPOACT_POINT_CLOSE;
+		log_debug("point-close item %d\n", item->id);
+	} else {
+		event->type = EXPOACT_SELECT;
+		log_debug("select item %d\n", item->id);
+	}
+	event->select.id = item->id;
+		return 0;
 }
 
 int scene_menuitem(struct scene *scn, uint menu_id, const char *name, uint id,

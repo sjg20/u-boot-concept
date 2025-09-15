@@ -62,6 +62,19 @@
 				title = "Machine name";
 				edit-id = <ID_MACHINE_NAME_EDIT>;
 			};
+
+			test-box {
+				type = "box";
+				id = <ID_TEST_BOX>;
+				width = <5>;
+			};
+
+			test-box-filled {
+				type = "box";
+				id = <ID_TEST_BOX_FILLED>;
+				width = <3>;
+				fill;
+			};
 		};
 	};
 

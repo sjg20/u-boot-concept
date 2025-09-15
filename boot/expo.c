@@ -13,6 +13,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <menu.h>
+#include <mouse.h>
 #include <video.h>
 #include <watchdog.h>
 #include <linux/delay.h>
@@ -163,6 +164,24 @@ void expo_set_text_mode(struct expo *exp, bool text_mode)
 	exp->text_mode = text_mode;
 }
 
+int expo_set_mouse_enable(struct expo *exp, bool enable)
+{
+	int ret;
+
+	if (!enable) {
+		exp->mouse_enabled = false;
+		return 0;
+	}
+
+	ret = uclass_first_device_err(UCLASS_MOUSE, &exp->mouse);
+	if (ret)
+		return log_msg_ret("sme", ret);
+
+	exp->mouse_enabled = true;
+
+	return 0;
+}
+
 struct scene *expo_lookup_scene_id(struct expo *exp, uint scene_id)
 {
 	struct scene *scn;
@@ -273,6 +292,30 @@ int expo_send_key(struct expo *exp, int key)
 	return scn ? 0 : -ECHILD;
 }
 
+int expo_send_click(struct expo *exp, int x, int y)
+{
+	struct scene *scn = NULL;
+
+	if (exp->scene_id) {
+		int ret;
+
+		scn = expo_lookup_scene_id(exp, exp->scene_id);
+		if (!scn)
+			return log_msg_ret("scn", -ENOENT);
+
+		ret = scene_send_click(scn, x, y, &exp->action);
+		if (ret)
+			return log_msg_ret("click", ret);
+
+		/* arrange it to get any changes */
+		ret = scene_arrange(scn);
+		if (ret)
+			return log_msg_ret("arr", ret);
+	}
+
+	return scn ? 0 : -ECHILD;
+}
+
 int expo_action_get(struct expo *exp, struct expo_action *act)
 {
 	*act = exp->action;
@@ -339,9 +382,9 @@ int expo_iter_scene_objs(struct expo *exp, expo_scene_obj_iterator iter,
 	return 0;
 }
 
-int expo_poll(struct expo *exp, struct expo_action *act)
+static int poll_keys(struct expo *exp)
 {
-	int ichar, key, ret;
+	int ichar, key;
 
 	ichar = cli_ch_process(&exp->cch, 0);
 	if (!ichar) {
@@ -364,12 +407,46 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 		if (key == BKEY_NONE || key >= BKEY_FIRST_EXTRA)
 			key = ichar;
 	}
-	if (!key)
+
+	return key ? key : -EAGAIN;
+}
+
+static int poll_mouse(struct expo *exp, int *xp, int *yp)
+{
+	int ret, x, y;
+
+	if (!exp->mouse_enabled)
 		return -EAGAIN;
 
-	ret = expo_send_key(exp, key);
+	/* First check if we have a click available */
+	ret = mouse_get_click(exp->mouse, &x, &y);
+	if (ret)
+		return log_msg_ret("epm", ret);
+
+	*xp = x;
+	*yp = y;
+
+	return 0; /* Click available */
+}
+
+int expo_poll(struct expo *exp, struct expo_action *act)
+{
+	int key, ret = -EAGAIN;
+
+	key = poll_keys(exp);
+	if (key != -EAGAIN) {
+		ret = expo_send_key(exp, key);
+	} else if (IS_ENABLED(CONFIG_MOUSE)) {
+		int x, y;
+
+		ret = poll_mouse(exp, &x, &y);
+		if (!ret)
+			ret = expo_send_click(exp, x, y);
+	}
 	if (ret)
 		return log_msg_ret("epk", ret);
+
+	/* get the action (either a key or a click) */
 	ret = expo_action_get(exp, act);
 	if (ret)
 		return log_msg_ret("eag", ret);

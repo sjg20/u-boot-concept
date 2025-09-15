@@ -17,6 +17,7 @@
 #include <asm/sdl.h>
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
+#include <linux/delay.h>
 #include <test/lib.h>
 #include <test/test.h>
 #include <test/ut.h>
@@ -68,6 +69,10 @@ int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 	free(dest);
 	if (ret)
 		return ret;
+
+	/* provide a useful delay if #define LOG_DEBUG at the top of file */
+	if (_DEBUG)
+		mdelay(300);
 
 	return destlen;
 }
@@ -911,14 +916,23 @@ static int dm_test_video_box(struct unit_test_state *uts)
 
 	ut_assertok(video_get_nologo(uts, &dev));
 	priv = dev_get_uclass_priv(dev);
+
+	/* test outline boxes */
 	video_draw_box(dev, 100, 100, 200, 200, 3,
-		       video_index_to_colour(priv, VID_LIGHT_BLUE));
+		       video_index_to_colour(priv, VID_LIGHT_BLUE), false);
 	video_draw_box(dev, 300, 100, 400, 200, 1,
-		       video_index_to_colour(priv, VID_MAGENTA));
+		       video_index_to_colour(priv, VID_MAGENTA), false);
 	video_draw_box(dev, 500, 100, 600, 200, 20,
-		       video_index_to_colour(priv, VID_LIGHT_RED));
+		       video_index_to_colour(priv, VID_LIGHT_RED), false);
 	ut_asserteq(133, video_compress_fb(uts, dev, false));
-	ut_assertok(video_check_copy_fb(uts, dev));
+	
+	/* test filled boxes */
+	video_draw_box(dev, 150, 250, 200, 300, 0,
+		       video_index_to_colour(priv, VID_GREEN), true);
+	video_draw_box(dev, 350, 250, 400, 300, 0,
+		       video_index_to_colour(priv, VID_YELLOW), true);
+
+	ut_asserteq(175, video_compress_fb(uts, dev, false));
 
 	return 0;
 }

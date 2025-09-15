@@ -282,6 +282,34 @@ static int menu_build(struct build_info *info, ofnode node, struct scene *scn,
 	return 0;
 }
 
+static int box_build(struct build_info *info, ofnode node,
+		     struct scene *scn, uint id, struct scene_obj **objp)
+{
+	struct scene_obj_box *box;
+	const char *name;
+	u32 width;
+	bool fill;
+	int ret;
+
+	name = ofnode_get_name(node);
+
+	info->err_prop = "width";
+	ret = ofnode_read_u32(node, "width", &width);
+	if (ret)
+		return log_msg_ret("wid", -ENOENT);
+
+	/* fill property is optional, defaults to false */
+	fill = ofnode_read_bool(node, "fill");
+
+	ret = scene_box(scn, name, id, width, fill, &box);
+	if (ret < 0)
+		return log_msg_ret("box", ret);
+
+	*objp = &box->obj;
+
+	return 0;
+}
+
 static int textline_build(struct build_info *info, ofnode node,
 			  struct scene *scn, uint id, struct scene_obj **objp)
 {
@@ -354,6 +382,8 @@ static int obj_build(struct build_info *info, ofnode node, struct scene *scn)
 		ret = menu_build(info, node, scn, id, &obj);
 	else if (!strcmp("textline", type))
 		ret = textline_build(info, node, scn, id, &obj);
+	else if (!strcmp("box", type))
+		ret = box_build(info, node, scn, id, &obj);
 	else
 		ret = -EOPNOTSUPP;
 	if (ret)

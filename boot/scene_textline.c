@@ -60,7 +60,8 @@ void scene_textline_calc_bbox(struct scene_obj_textline *tline,
 			 edit_bbox);
 }
 
-int scene_textline_calc_dims(struct scene_obj_textline *tline)
+int scene_textline_calc_dims(struct scene_obj_textline *tline,
+			     struct udevice *cons)
 {
 	struct scene *scn = tline->obj.scene;
 	struct vidconsole_bbox bbox;
@@ -71,8 +72,8 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline)
 	if (!txt)
 		return log_msg_ret("dim", -ENOENT);
 
-	ret = vidconsole_nominal(scn->expo->cons, txt->gen.font_name,
-				 txt->gen.font_size, tline->max_chars, &bbox);
+	ret = vidconsole_nominal(cons, txt->gen.font_name, txt->gen.font_size,
+				 tline->max_chars, &bbox);
 	if (ret)
 		return log_msg_ret("nom", ret);
 
@@ -172,6 +173,12 @@ int scene_textline_send_key(struct scene *scn, struct scene_obj_textline *tline,
 	}
 
 	return 0;
+}
+
+bool scene_textline_within(const struct scene *scn,
+			   struct scene_obj_textline *tline, int x, int y)
+{
+	return scene_within(scn, tline->edit_id, x, y);
 }
 
 int scene_textline_render_deps(struct scene *scn,

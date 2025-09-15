@@ -10,10 +10,11 @@
 #include <expo.h>
 #include <mapmem.h>
 #include <dm/ofnode.h>
+#include <test/cedit-test.h>
 #include <test/ut.h>
 #include <test/video.h>
 #include "bootstd_common.h"
-#include <test/cedit-test.h>
+#include "expo_common.h"
 #include "../../boot/scene_internal.h"
 
 /* Check the cedit command */
@@ -547,3 +548,108 @@ static int cedit_position(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(cedit_position, UTF_DM | UTF_SCAN_FDT);
+
+/* Check the cedit handles mouse clicks correctly */
+static int cedit_mouse(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *speed, *loss;
+	struct scene_obj_textline *mach;
+	struct video_priv *vid_priv;
+	extern struct expo *cur_exp;
+	struct scene_menitem *item;
+	struct udevice *dev, *con;
+	struct expo_action act;
+	struct stdio_dev *sdev;
+	struct scene *scn;
+	struct expo *exp;
+
+	ut_assertok(run_command("cedit load hostfs - cedit.dtb", 0));
+
+	exp = cur_exp;
+	sdev = stdio_get_by_name("vidconsole");
+	ut_assertnonnull(sdev);
+	con = sdev->priv;
+
+	dev = dev_get_parent(con);
+	vid_priv = dev_get_uclass_priv(dev);
+	ut_asserteq(ID_SCENE1, cedit_prepare(exp, dev, &scn));
+
+	speed = scene_obj_find(scn, ID_CPU_SPEED, SCENEOBJT_NONE);
+	ut_assertnonnull(speed);
+	ut_asserteq(ID_CPU_SPEED, scn->highlight_id);
+
+	loss = scene_obj_find(scn, ID_POWER_LOSS, SCENEOBJT_NONE);
+	ut_assertnonnull(loss);
+
+	mach = scene_obj_find(scn, ID_MACHINE_NAME, SCENEOBJT_NONE);
+	ut_assertnonnull(mach);
+
+	item = scene_menuitem_find_seq(speed, 0);
+
+	/* click on the title of the CPU speed (should do nothing) */
+	ut_assertok(click_check(uts, scn, speed->title_id, EXPOACT_NONE, &act));
+
+	/* click on CPU speed to open it */
+	ut_assertok(click_check(uts, scn, item->label_id, EXPOACT_OPEN, &act));
+	ut_asserteq(ID_CPU_SPEED, act.select.id);
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, speed->obj.flags);
+
+	/* click outside the label to close the menu */
+	ut_assertok(scene_send_click(scn, 10, 10, &act));
+	ut_asserteq(EXPOACT_CLOSE, act.type);
+	ut_asserteq(ID_CPU_SPEED, act.select.id);
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_asserteq(SCENEOF_SIZE_VALID, speed->obj.flags);
+
+	/* click on CPU speed to open it again */
+	ut_assertok(click_check(uts, scn, item->label_id, EXPOACT_OPEN, &act));
+	ut_asserteq(ID_CPU_SPEED, act.select.id);
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, speed->obj.flags);
+
+	/* click on the second item (1.5 GHz) */
+	item = scene_menuitem_find_seq(speed, 1);
+	ut_assertnonnull(item);
+	ut_asserteq(ID_CPU_SPEED_2, item->id);
+	ut_assertok(click_check(uts, scn, item->label_id,
+				EXPOACT_POINT_CLOSE, &act));
+	ut_asserteq(ID_CPU_SPEED_2, act.select.id);
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+
+	/* verify that the second item is now selected and menu is closed */
+	ut_asserteq(ID_CPU_SPEED_2, speed->cur_item_id);
+	ut_asserteq(SCENEOF_SIZE_VALID, speed->obj.flags);
+	ut_asserteq(ID_CPU_SPEED, scn->highlight_id);
+
+	/* click on the power loss menu to open it */
+	item = scene_menuitem_find_seq(loss, 0);
+	ut_assertnonnull(item);
+	ut_assertok(click_check(uts, scn, item->label_id, EXPOACT_POINT_OPEN,
+				&act));
+	ut_asserteq(ID_POWER_LOSS, act.select.id);
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, loss->obj.flags);
+
+	/* click on CPU speed to open it again */
+	item = scene_menuitem_find_seq(speed, 0);
+	ut_assertok(click_check(uts, scn, item->label_id, EXPOACT_REPOINT_OPEN,
+				&act));
+	ut_asserteq(ID_CPU_SPEED, act.select.id);
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, speed->obj.flags);
+
+	/* click on the lineedit */
+	ut_assertok(click_check(uts, scn, mach->edit_id,
+				EXPOACT_REPOINT_OPEN, &act));
+	ut_asserteq(ID_MACHINE_NAME, act.select.id);
+	ut_asserteq(ID_CPU_SPEED, act.select.prev_id);
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_asserteq(ID_CPU_SPEED_2, speed->cur_item_id);
+	ut_asserteq(ID_MACHINE_NAME, scn->highlight_id);
+	ut_asserteq(SCENEOF_SIZE_VALID, loss->obj.flags);
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, mach->obj.flags);
+
+	return 0;
+}
+BOOTSTD_TEST(cedit_mouse, UTF_DM | UTF_SCAN_FDT);

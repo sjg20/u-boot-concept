@@ -212,7 +212,7 @@ int scene_txt_str(struct scene *scn, const char *name, uint id, uint str_id,
 }
 
 int scene_box(struct scene *scn, const char *name, uint id, uint width,
-	      struct scene_obj_box **boxp)
+	      bool fill, struct scene_obj_box **boxp)
 {
 	struct scene_obj_box *box;
 	int ret;
@@ -224,11 +224,25 @@ int scene_box(struct scene *scn, const char *name, uint id, uint width,
 		return log_msg_ret("obj", ret);
 
 	box->width = width;
+	box->fill = fill;
 
 	if (boxp)
 		*boxp = box;
 
 	return box->obj.id;
+}
+
+int scene_box_set_fill(struct scene *scn, uint id, bool fill)
+{
+	struct scene_obj_box *box;
+
+	box = scene_obj_find(scn, id, SCENEOBJT_BOX);
+	if (!box)
+		return log_msg_ret("find", -ENOENT);
+
+	box->fill = fill;
+
+	return 0;
 }
 
 int scene_txt_set_font(struct scene *scn, uint id, const char *font_name,
@@ -681,7 +695,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		struct scene_obj_box *box = (struct scene_obj_box *)obj;
 
 		video_draw_box(dev, obj->bbox.x0, obj->bbox.y0, obj->bbox.x1,
-			       obj->bbox.y1, box->width, vid_priv->colour_fg);
+			       obj->bbox.y1, box->width, vid_priv->colour_fg, box->fill);
 		break;
 	}
 	case SCENEOBJT_TEXTEDIT: {
@@ -895,6 +909,7 @@ int scene_render(struct scene *scn)
  * send_key_obj() - Handle a keypress for moving between objects
  *
  * @scn: Scene to receive the key
+ * @obj: Object to receive the key
  * @key: Key to send (KEYCODE_UP)
  * @event: Returns resulting event from this keypress
  * Returns: 0 if OK, -ve on error
@@ -1013,6 +1028,229 @@ int scene_send_key(struct scene *scn, int key, struct expo_action *event)
 	return 0;
 }
 
+bool scene_within(const struct scene *scn, uint id, int x, int y)
+{
+	struct scene_obj *obj;
+
+	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
+	if (!obj) {
+		log_debug("Cannot find id %d\n", id);
+		return false;
+	}
+	log_debug("- id %d: '%s' bbox x0 %d y0 %d x1 %d y1 %d\n", id, obj->name,
+		  obj->bbox.x0, obj->bbox.y0, obj->bbox.x1, obj->bbox.x1);
+
+	/* Check if point (x, y) is within object's bounding box */
+	return (x >= obj->bbox.x0 && x <= obj->bbox.x1 &&
+		y >= obj->bbox.y0 && y <= obj->bbox.y1);
+}
+
+bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
+		      int y)
+{
+	bool within = false;
+
+	switch (obj->type) {
+	case SCENEOBJT_NONE:
+	case SCENEOBJT_IMAGE:
+	case SCENEOBJT_TEXT:
+	case SCENEOBJT_BOX:
+		break;
+	case SCENEOBJT_MENU: {
+		struct scene_obj_menu *menu;
+
+		menu = (struct scene_obj_menu *)obj,
+		within = scene_menu_within(scn, menu, x, y);
+		break;
+	}
+	case SCENEOBJT_TEXTLINE: {
+		struct scene_obj_textline *tline;
+
+		tline = (struct scene_obj_textline *)obj,
+		within = scene_textline_within(scn, tline, x, y);
+		break;
+	}
+	case SCENEOBJT_TEXTEDIT:
+		/* TODO(sjg@chromium.org): Implement this */
+		break;
+	}
+
+	return within;
+}
+
+/**
+ * scene_find_obj_within() - Find an object that is within the coords
+ *
+ * @scn: Scene to check
+ * @x: X coordinates of the click
+ * @y: Y coordinate of the click
+ * Return: object that is being clicked on, NULL if none
+ */
+static struct scene_obj *scene_find_obj_within(const struct scene *scn, int x,
+					       int y)
+{
+	struct scene_obj *obj;
+
+	log_debug("within: x %d y %d\n", x, y);
+	list_for_each_entry(obj, &scn->obj_head, sibling) {
+		log_debug(" - obj %d '%s' can_highlight %d within %d\n",
+			  obj->id, obj->name, scene_obj_can_highlight(obj),
+			  scene_obj_within(scn, obj, x, y));
+		if (scene_obj_can_highlight(obj) &&
+		    scene_obj_within(scn, obj, x, y)) {
+			log_debug("- returning obj %d '%s'\n", obj->id,
+				  obj->name);
+			return obj;
+		}
+	}
+	log_debug("- no object\n");
+
+	return NULL;
+}
+
+/**
+ * send_click_obj() - Handle a click for moving between objects
+ *
+ * On entry, scn->highlight_id is set to a menu/textline, but the object is not
+ * open.
+ *
+ * @scn: Scene to receive the click
+ * @obj: Object to receive the click
+ * @x: X coordinate of the click
+ * @y: Y coordinate of the click
+ * @event: Returns resulting event from this keypress
+ * Returns: 0 if OK, -ve on error
+ */
+static void send_click_obj(struct scene *scn, struct scene_obj *obj, int x,
+			   int y, struct expo_action *event)
+{
+	if (scene_obj_can_highlight(obj) && scene_obj_within(scn, obj, x, y)) {
+		event->type = EXPOACT_OPEN;
+		event->select.id = obj->id;
+		log_debug("open obj %d\n", event->select.id);
+		return;
+	}
+
+	log_debug("no object; finding...\n");
+	obj = scene_find_obj_within(scn, x, y);
+	if (obj) {
+		event->type = EXPOACT_POINT_OPEN;
+		event->select.id = obj->id;
+	}
+}
+
+static int scene_click_popup(struct scene *scn, int x, int y,
+			     struct expo_action *event)
+{
+	struct scene_obj *obj, *chk;
+
+	obj = NULL;
+	if (scn->highlight_id) {
+		obj = scene_obj_find(scn, scn->highlight_id,
+				     SCENEOBJT_NONE);
+	}
+	if (!obj)
+		return 0;
+
+	if (!(obj->flags & SCENEOF_OPEN)) {
+		send_click_obj(scn, obj, x, y, event);
+		return 0;
+	}
+
+	/* check that the click is within our object */
+	chk = scene_find_obj_within(scn, x, y);
+	log_debug("chk %d '%s' (obj %d '%s')\n", chk ? chk->id : -1,
+		  chk ? chk->name : "(none)", obj->id, obj->name);
+	if (!chk) {
+		/* click into space */
+		event->type = EXPOACT_CLOSE;
+		event->select.id = obj->id;
+		return 0;
+	} else if (chk != obj) {
+		send_click_obj(scn, chk, x, y, event);
+		if (event->type == EXPOACT_OPEN) {
+			event->type = EXPOACT_REPOINT_OPEN;
+			event->select.prev_id = obj->id;
+		}
+		return 0;
+	}
+
+	/* click within the open object */
+	switch (obj->type) {
+	case SCENEOBJT_NONE:
+	case SCENEOBJT_IMAGE:
+	case SCENEOBJT_TEXT:
+	case SCENEOBJT_BOX:
+		break;
+	case SCENEOBJT_MENU: {
+		struct scene_obj_menu *menu;
+
+		menu = (struct scene_obj_menu *)obj,
+		scene_menu_send_click(scn, menu, x, y, event);
+		break;
+	}
+	case SCENEOBJT_TEXTLINE: {
+		struct scene_obj_textline *tline;
+
+		tline = (struct scene_obj_textline *)obj;
+		// ret = scene_textline_send_click(scn, tline, x, y, event);
+		// if (ret)
+			// return log_msg_ret("key", ret);
+		break;
+	}
+	case SCENEOBJT_TEXTEDIT:
+		/* TODO(sjg@chromium.org): Implement this */
+		break;
+	}
+
+	return 0;
+}
+
+int scene_send_click(struct scene *scn, int x, int y, struct expo_action *event)
+{
+	struct scene_obj *obj;
+
+	event->type = EXPOACT_NONE;
+
+	if (scn->expo->popup) {
+		scene_click_popup(scn, x, y, event);
+		return 0;
+	}
+
+	obj = scene_find_obj_within(scn, x, y);
+	log_debug("non-popup obj %d '%s'\n", obj ? obj->id : -1,
+		  obj ? obj->name : "(none)");
+	if (!obj)
+		return 0;
+
+	switch (obj->type) {
+	case SCENEOBJT_NONE:
+	case SCENEOBJT_IMAGE:
+	case SCENEOBJT_TEXT:
+	case SCENEOBJT_BOX:
+		/* These objects don't handle clicks directly */
+		break;
+	case SCENEOBJT_MENU: {
+		struct scene_obj_menu *menu;
+
+		menu = (struct scene_obj_menu *)obj,
+		scene_menu_send_click(scn, menu, x, y, event);
+		break;
+	}
+	case SCENEOBJT_TEXTLINE: {
+		/* For now, just highlight the textline */
+		scn->highlight_id = obj->id;
+		break;
+	}
+	case SCENEOBJT_TEXTEDIT:
+		/* For now, just highlight the textedit */
+		scn->highlight_id = obj->id;
+		break;
+	}
+
+	return 0;
+}
+
 int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox bbox[])
 {
 	switch (obj->type) {
@@ -1114,7 +1352,11 @@ int scene_calc_dims(struct scene *scn)
 				struct scene_obj_textline *tline;
 
 				tline = (struct scene_obj_textline *)obj;
-				ret = scene_textline_calc_dims(tline);
+				if (!scn->expo->cons)
+					continue;
+
+				ret = scene_textline_calc_dims(tline,
+							       scn->expo->cons);
 				if (ret)
 					return log_msg_ret("men", ret);
 

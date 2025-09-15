@@ -41,12 +41,18 @@ enum expo_id_t {
  * enum expoact_type - types of actions reported by the expo
  *
  * @EXPOACT_NONE: no action
- * @EXPOACT_POINT_OBJ: object was highlighted (@id indicates which)
- * @EXPOACT_POINT_ITEM: menu item was highlighted (@id indicates which)
+ * @EXPOACT_POINT_OBJ: object was highlighted (@id indicates which object)
+ * @EXPOACT_POINT_ITEM: menu item was highlighted (@id indicates which item)
  * @EXPOACT_SELECT: menu item was selected (@id indicates which)
  * @EXPOACT_OPEN: menu was opened, so an item can be selected (@id indicates
  * which menu object)
  * @EXPOACT_CLOSE: menu was closed (@id indicates which menu object)
+ * @EXPOACT_POINT_OPEN: menu item was pointed to and menu opened (@id indicates
+ * which menu object)
+ * @EXPOACT_POINT_CLOSE: menu item was pointed to and menu closed @id indicates
+ * which menu item)
+ * @EXPOACT_REPOINT_OPEN: menu closed, another menu opened (@prev_id indicates
+ * the menu closed, @id indicates menu opened)
  * @EXPOACT_QUIT: request to exit the menu
  */
 enum expoact_type {
@@ -56,6 +62,9 @@ enum expoact_type {
 	EXPOACT_SELECT,
 	EXPOACT_OPEN,
 	EXPOACT_CLOSE,
+	EXPOACT_POINT_OPEN,
+	EXPOACT_POINT_CLOSE,
+	EXPOACT_REPOINT_OPEN,
 	EXPOACT_QUIT,
 };
 
@@ -63,8 +72,9 @@ enum expoact_type {
  * struct expo_action - an action report by the expo
  *
  * @type: Action type (EXPOACT_NONE if there is no action)
- * @select: Used for EXPOACT_POINT_ITEM and EXPOACT_SELECT
- * @select.id: ID number of the object affected.
+ * @select: Used for all actions except EXPOACT_NONE and EXPOACT_QUIT
+ * @select.id: ID number of the object affected
+ * @select.prev_id: ID number of the old object that was highlighted
  * @select.changed: true if the selection has changed since last time (only
  * valid for EXPOACT_POINT_ITEM)
  */
@@ -73,6 +83,7 @@ struct expo_action {
 	union {
 		struct {
 			int id;
+			int prev_id;
 			bool changed;
 		} select;
 	};
@@ -109,6 +120,7 @@ struct expo_theme {
  * @name: Name of the expo (allocated)
  * @display: Display to use (`UCLASS_VIDEO`), or NULL to use text mode
  * @cons: Console to use (`UCLASS_VIDEO_CONSOLE`), or NULL to use text mode
+ * @mouse: Mouse to use (`UCLASS_MOUSE`), or NULL if no mouse
  * @scene_id: Current scene ID (0 if none)
  * @next_id: Next ID number to use, for automatic allocation
  * @action: Action selected by user. At present only one is supported, with the
@@ -118,6 +130,7 @@ struct expo_theme {
  * @text_mode: true to use text mode for the menu (no vidconsole)
  * @popup: true to use popup menus, instead of showing all items
  * @show_highlight: show a highlight bar on the selected menu item
+ * @mouse_enabled: true if the mouse is enabled
  * @priv: Private data for the controller
  * @done: Indicates that a cedit session is complete and the user has quit
  * @save: Indicates that cedit data should be saved, rather than discarded
@@ -130,6 +143,7 @@ struct expo {
 	char *name;
 	struct udevice *display;
 	struct udevice *cons;
+	struct udevice *mouse;
 	uint scene_id;
 	uint next_id;
 	struct expo_action action;
@@ -138,6 +152,7 @@ struct expo {
 	bool text_mode;
 	bool popup;
 	bool show_highlight;
+	bool mouse_enabled;
 	void *priv;
 	bool done;
 	bool save;
@@ -495,10 +510,12 @@ struct scene_obj_textline {
  *
  * @obj: Basic object information
  * @width: Line-width in pixels
+ * @fill: true to fill the box, false to draw outline only
  */
 struct scene_obj_box {
 	struct scene_obj obj;
 	uint width;
+	bool fill;
 };
 
 /**
@@ -666,6 +683,15 @@ int expo_arrange(struct expo *exp);
 void expo_set_text_mode(struct expo *exp, bool text_mode);
 
 /**
+ * expo_set_mouse_enable() - Controls whether the expo enables mouse input
+ *
+ * @exp: Expo to update
+ * @enable: true to enable mouse input, false to disable
+ * Returns: 0 if OK, or -ve error if no mouse found
+ */
+int expo_set_mouse_enable(struct expo *exp, bool enable);
+
+/**
  * scene_new() - create a new scene in a expo
  *
  * The scene is given the ID @id which must be unique across all scenes, objects
@@ -809,11 +835,22 @@ int scene_textline(struct scene *scn, const char *name, uint id, uint max_chars,
  * @name: Name to use (this is allocated by this call)
  * @id: ID to use for the new object (0 to allocate one)
  * @width: Line-width in pixels
+ * @fill: true to fill the box, false to draw outline only
  * @boxp: If non-NULL, returns the new object
  * Returns: ID number for the object (typically @id), or -ve on error
  */
 int scene_box(struct scene *scn, const char *name, uint id, uint width,
-	      struct scene_obj_box **boxp);
+	      bool fill, struct scene_obj_box **boxp);
+
+/**
+ * scene_box_set_fill() - Set the fill property of a box object
+ *
+ * @scn: Scene containing the box
+ * @id: ID of the box object to update
+ * @fill: true to fill the box, false to draw outline only
+ * Returns: 0 if OK, -ENOENT if the object is not found or is not a box
+ */
+int scene_box_set_fill(struct scene *scn, uint id, bool fill);
 
 /**
  *  scene_texted() - create a text editor
@@ -1027,11 +1064,24 @@ int scene_arrange(struct scene *scn);
 /**
  * expo_send_key() - set a keypress to the expo
  *
+ * This processes the key, taking any action that is needed, such as moving
+ * between menu items or editing the text in a textline
+ *
  * @exp: Expo to receive the key
  * @key: Key to send (ASCII or enum bootmenu_key)
  * Returns: 0 if OK, -ECHILD if there is no current scene
  */
 int expo_send_key(struct expo *exp, int key);
+
+/**
+ * expo_send_click() - send a mouse click to the expo
+ *
+ * @exp: Expo to receive the click
+ * @x: X coordinate of click
+ * @y: Y coordinate of click
+ * Returns: 0 if OK, -ECHILD if there is no current scene
+ */
+int expo_send_click(struct expo *exp, int x, int y);
 
 /**
  * expo_action_get() - read user input from the expo

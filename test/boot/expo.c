@@ -10,10 +10,11 @@
 #include <menu.h>
 #include <video.h>
 #include <linux/input.h>
+#include <test/cedit-test.h>
 #include <test/ut.h>
 #include <test/video.h>
 #include "bootstd_common.h"
-#include <test/cedit-test.h>
+#include "expo_common.h"
 #include "../../boot/scene_internal.h"
 
 enum {
@@ -436,7 +437,7 @@ static int expo_object_menu(struct unit_test_state *uts)
 	ut_asserteq(menu->obj.bbox.x0 + 179, desc1->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, desc1->obj.bbox.y0);
 
-	ut_asserteq(-4, prev1->obj.bbox.x0);
+	ut_asserteq(-84, prev1->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, prev1->obj.bbox.y0);
 	ut_asserteq(true, prev1->obj.flags & SCENEOF_HIDE);
 
@@ -465,15 +466,25 @@ static int expo_object_menu(struct unit_test_state *uts)
 }
 BOOTSTD_TEST(expo_object_menu, UTF_DM | UTF_SCAN_FDT);
 
-/* Check rendering a scene */
-static int expo_render_image(struct unit_test_state *uts)
+/**
+ * create_test_expo() - Create a test expo with menu items for testing
+ *
+ * @uts: Unit test state
+ * @expp: Returns pointer to expo
+ * @scnp: Returns pointer to scene
+ * @menup: Returns pointer to menu
+ * @bufp: Returns pointer to buf (caller must uninit)
+ * @logo_copyp: Returns pointer to logo_copy (caller must uninit)
+ * Returns: 0 if OK, -ve on error
+ */
+static int create_test_expo(struct unit_test_state *uts, struct expo **expp,
+			    struct scene **scnp, struct scene_obj_menu **menup,
+			    struct abuf *bufp, struct abuf *logo_copyp)
 {
 	struct scene_obj_menu *menu;
 	struct abuf buf, logo_copy;
-	struct scene *scn, *scn2;
+	struct scene *scn;
 	struct abuf orig, *text;
-	struct expo_action act;
-	struct scene_obj *obj;
 	struct udevice *dev;
 	struct expo *exp;
 	int id, size;
@@ -570,11 +581,11 @@ static int expo_render_image(struct unit_test_state *uts)
 
 	ut_assertok(scene_obj_set_pos(scn, OBJ_MENU, 50, 400));
 
-	id = scene_box(scn, "box", OBJ_BOX, 3, NULL);
+	id = scene_box(scn, "box", OBJ_BOX, 3, false, NULL);
 	ut_assert(id > 0);
 	ut_assertok(scene_obj_set_bbox(scn, OBJ_BOX, 40, 390, 1000, 510));
 
-	id = scene_box(scn, "box2", OBJ_BOX2, 1, NULL);
+	id = scene_box(scn, "box2", OBJ_BOX2, 1, false, NULL);
 	ut_assert(id > 0);
 	ut_assertok(scene_obj_set_bbox(scn, OBJ_BOX, 500, 200, 1000, 350));
 
@@ -585,6 +596,29 @@ static int expo_render_image(struct unit_test_state *uts)
 
 	abuf_printf(text, "This\nis the initial contents of the text editor "
 		"but it is quite likely that more will be added later");
+
+	*expp = exp;
+	*scnp = scn;
+	*menup = menu;
+	*bufp = buf;
+	*logo_copyp = logo_copy;
+
+	return 0;
+}
+
+/* Check rendering a scene */
+static int expo_render_image(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct scene *scn, *scn2;
+	struct expo_action act;
+	struct scene_obj *obj;
+	struct udevice *dev;
+	struct expo *exp;
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+	dev = exp->display;
 
 	scn2 = expo_lookup_scene_id(exp, SCENE1);
 	ut_asserteq_ptr(scn, scn2);
@@ -690,11 +724,11 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assertok(scene_arrange(scn));
 	ut_asserteq(0, scn->highlight_id);
 	ut_assertok(expo_render(exp));
-	ut_asserteq(20366, video_compress_fb(uts, dev, false));
+	ut_asserteq(20373, video_compress_fb(uts, dev, false));
 
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(20366, video_compress_fb(uts, dev, false));
+	ut_asserteq(20373, video_compress_fb(uts, dev, false));
 
 	scene_set_highlight_id(scn, OBJ_MENU);
 	ut_asserteq(OBJ_MENU, scn->highlight_id);
@@ -706,7 +740,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assert(!(obj->flags & SCENEOF_HIDE));
 
 	ut_assertok(expo_render(exp));
-	ut_asserteq(20366, video_compress_fb(uts, dev, false));
+	ut_asserteq(20373, video_compress_fb(uts, dev, false));
 
 	/* move down */
 	ut_assertok(expo_send_key(exp, BKEY_DOWN));
@@ -719,27 +753,27 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_asserteq(ITEM2, scene_menu_get_cur_item(scn, OBJ_MENU));
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(19636, video_compress_fb(uts, dev, false));
+	ut_asserteq(19649, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
-	/* hide the text editor since the following tets don't need it */
+	/* hide the text editor since the following tests don't need it */
 	scene_obj_set_hide(scn, OBJ_TEXTED, true);
 
 	/* do some alignment checks */
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_CENTRE));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(16308, video_compress_fb(uts, dev, false));
+	ut_asserteq(16323, video_compress_fb(uts, dev, false));
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_RIGHT));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(16242, video_compress_fb(uts, dev, false));
+	ut_asserteq(16240, video_compress_fb(uts, dev, false));
 
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_LEFT));
 	ut_assertok(scene_obj_set_valign(scn, OBJ_TEXT3, SCENEOA_CENTRE));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18742, video_compress_fb(uts, dev, false));
+	ut_asserteq(18714, video_compress_fb(uts, dev, false));
 	ut_assertok(scene_obj_set_valign(scn, OBJ_TEXT3, SCENEOA_BOTTOM));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18663, video_compress_fb(uts, dev, false));
+	ut_asserteq(18670, video_compress_fb(uts, dev, false));
 
 	/* make sure only the preview for the second item is shown */
 	obj = scene_obj_find(scn, ITEM1_PREVIEW, SCENEOBJT_NONE);
@@ -765,7 +799,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	exp->show_highlight = true;
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18842, video_compress_fb(uts, dev, false));
+	ut_asserteq(18830, video_compress_fb(uts, dev, false));
 
 	/* now try in text mode */
 	expo_set_text_mode(exp, true);
@@ -880,6 +914,39 @@ static int expo_test_build(struct unit_test_state *uts)
 	count = list_count_nodes(&menu->item_head);
 	ut_asserteq(3, count);
 
+	/* check the box */
+	struct scene_obj_box *box = scene_obj_find(scn, ID_TEST_BOX, SCENEOBJT_NONE);
+	ut_assertnonnull(box);
+	obj = &box->obj;
+	ut_asserteq_ptr(scn, obj->scene);
+	ut_asserteq_str("test-box", obj->name);
+	ut_asserteq(ID_TEST_BOX, obj->id);
+	ut_asserteq(SCENEOBJT_BOX, obj->type);
+	ut_asserteq(0, obj->flags);
+	ut_asserteq(5, box->width);
+	ut_asserteq(false, box->fill);
+
+	/* check the filled box */
+	struct scene_obj_box *filled_box = scene_obj_find(scn, ID_TEST_BOX_FILLED, SCENEOBJT_NONE);
+	ut_assertnonnull(filled_box);
+	obj = &filled_box->obj;
+	ut_asserteq_ptr(scn, obj->scene);
+	ut_asserteq_str("test-box-filled", obj->name);
+	ut_asserteq(ID_TEST_BOX_FILLED, obj->id);
+	ut_asserteq(SCENEOBJT_BOX, obj->type);
+	ut_asserteq(0, obj->flags);
+	ut_asserteq(3, filled_box->width);
+	ut_asserteq(true, filled_box->fill);
+
+	/* test scene_box_set_fill() function */
+	ut_assertok(scene_box_set_fill(scn, ID_TEST_BOX, true));
+	ut_asserteq(true, box->fill);
+	ut_assertok(scene_box_set_fill(scn, ID_TEST_BOX_FILLED, false));
+	ut_asserteq(false, filled_box->fill);
+
+	/* test error case */
+	ut_asserteq(-ENOENT, scene_box_set_fill(scn, 9999, true));
+
 	/* try editing some text */
 	ut_assertok(expo_edit_str(exp, txt->gen.str_id, &orig, &copy));
 	ut_asserteq_str("2 GHz", orig.data);
@@ -895,3 +962,138 @@ static int expo_test_build(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(expo_test_build, UTF_DM);
+
+/* test scene object within functions */
+static int expo_within_funcs(struct unit_test_state *uts)
+{
+	struct scene_obj_textline *tline;
+	struct scene_obj_menu *menu;
+	struct scene_menitem *item;
+	struct scene_obj *obj;
+	struct udevice *dev;
+	struct scene *scn;
+	struct expo *exp;
+	ofnode node;
+
+	node = ofnode_path("/cedit");
+	ut_assert(ofnode_valid(node));
+	ut_assertok(expo_build(node, &exp));
+
+	scn = expo_lookup_scene_id(exp, ID_SCENE1);
+	ut_assertnonnull(scn);
+
+	/* test scene_menu_within() */
+	menu = scene_obj_find(scn, ID_CPU_SPEED, SCENEOBJT_NONE);
+	ut_assertnonnull(menu);
+
+	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &dev));
+	ut_assertok(expo_set_display(exp, dev));
+
+	ut_assertok(scene_arrange(scn));
+
+	/* get first menu item and test with its coordinates */
+	item = list_first_entry(&menu->item_head, struct scene_menitem,
+				sibling);
+	ut_assertnonnull(item);
+
+	/* get the label object to find coordinates */
+	obj = scene_obj_find(scn, item->label_id, SCENEOBJT_NONE);
+	ut_assertnonnull(obj);
+	ut_asserteq_ptr(item, scene_menu_within(scn, menu, obj->bbox.x0 + 1,
+						obj->bbox.y0 + 1));
+
+	/* test point outside menu bounds */
+	ut_assertnull(scene_menu_within(scn, menu, -1, -1));
+
+	/* test point far outside menu bounds */
+	ut_assertnull(scene_menu_within(scn, menu, 9999, 9999));
+
+	/* test scene_textline_within() */
+	tline = scene_obj_find(scn, ID_MACHINE_NAME, SCENEOBJT_NONE);
+	ut_assertnonnull(tline);
+	obj = scene_obj_find(scn, tline->edit_id, SCENEOBJT_NONE);
+	ut_assertnonnull(obj);
+
+	/* positive test: point within textline bounds */
+	ut_assert(scene_textline_within(scn, tline, obj->bbox.x0 + 1,
+					obj->bbox.y0 + 1));
+
+	/* test point outside textline bounds */
+	ut_assert(!scene_textline_within(scn, tline, -1, -1));
+
+	/* test point far outside textline bounds */
+	ut_assert(!scene_textline_within(scn, tline, 9999, 9999));
+
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_within_funcs, UTF_DM | UTF_SCAN_FDT);
+
+/* test expo_set_mouse_enable() */
+static int expo_mouse_enable(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+	struct expo *exp;
+
+	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &dev));
+	ut_assertok(expo_new(EXPO_NAME, NULL, &exp));
+	ut_assertok(expo_set_display(exp, dev));
+
+	ut_asserteq(false, exp->mouse_enabled);
+
+	ut_assertok(expo_set_mouse_enable(exp, true));
+	ut_assertnonnull(exp->mouse);
+	ut_asserteq(UCLASS_MOUSE, device_get_uclass_id(exp->mouse));
+
+	return 0;
+}
+BOOTSTD_TEST(expo_mouse_enable, UTF_DM | UTF_SCAN_FDT);
+
+/* Check mouse click functionality */
+static int expo_mouse_click(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct expo_action act;
+	struct scene *scn;
+	struct expo *exp;
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+
+	/* set the scene */
+	ut_assertok(expo_set_scene_id(exp, SCENE1));
+
+	/* arrange the scene so objects have proper bounding boxes */
+	ut_assertok(scene_arrange(scn));
+
+	/* enable mouse input */
+	ut_assertok(expo_set_mouse_enable(exp, true));
+
+	/* click on the first menu-item label */
+	ut_assertok(click_check(uts, scn, ITEM1_LABEL, EXPOACT_SELECT, &act));
+	ut_asserteq(EXPOACT_SELECT, act.type);
+	ut_asserteq(ITEM1, act.select.id);
+
+	/* click on the second menu-item label */
+	ut_assertok(click_check(uts, scn, ITEM2_LABEL, EXPOACT_SELECT, &act));
+	ut_asserteq(EXPOACT_SELECT, act.type);
+	ut_asserteq(ITEM2, act.select.id);
+
+	/* click on the second menu-item description */
+	ut_assertok(click_check(uts, scn, ITEM2_DESC, EXPOACT_SELECT, &act));
+	ut_asserteq(EXPOACT_SELECT, act.type);
+	ut_asserteq(ITEM2, act.select.id);
+
+	/* click in empty space */
+	ut_assertok(scene_send_click(scn, 10, 10, &act));
+	ut_asserteq(EXPOACT_NONE, act.type);
+
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
+
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_mouse_click, UTF_DM | UTF_SCAN_FDT);
