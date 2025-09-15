@@ -1046,8 +1046,54 @@ static int expo_mouse_enable(struct unit_test_state *uts)
 	ut_assertnonnull(exp->mouse);
 	ut_asserteq(UCLASS_MOUSE, device_get_uclass_id(exp->mouse));
 
+	return 0;
+}
+BOOTSTD_TEST(expo_mouse_enable, UTF_DM | UTF_SCAN_FDT);
+
+/* Check mouse click functionality */
+static int expo_mouse_click(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct expo_action act;
+	struct scene *scn;
+	struct expo *exp;
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+
+	/* set the scene */
+	ut_assertok(expo_set_scene_id(exp, SCENE1));
+
+	/* arrange the scene so objects have proper bounding boxes */
+	ut_assertok(scene_arrange(scn));
+
+	/* enable mouse input */
+	ut_assertok(expo_set_mouse_enable(exp, true));
+
+	/* click on the first menu-item label */
+	ut_assertok(click_check(uts, scn, ITEM1_LABEL, EXPOACT_SELECT, &act));
+	ut_asserteq(EXPOACT_SELECT, act.type);
+	ut_asserteq(ITEM1, act.select.id);
+
+	/* click on the second menu-item label */
+	ut_assertok(click_check(uts, scn, ITEM2_LABEL, EXPOACT_SELECT, &act));
+	ut_asserteq(EXPOACT_SELECT, act.type);
+	ut_asserteq(ITEM2, act.select.id);
+
+	/* click on the second menu-item description */
+	ut_assertok(click_check(uts, scn, ITEM2_DESC, EXPOACT_SELECT, &act));
+	ut_asserteq(EXPOACT_SELECT, act.type);
+	ut_asserteq(ITEM2, act.select.id);
+
+	/* click in empty space */
+	ut_assertok(scene_send_click(scn, 10, 10, &act));
+	ut_asserteq(EXPOACT_NONE, act.type);
+
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
+
 	expo_destroy(exp);
 
 	return 0;
 }
-BOOTSTD_TEST(expo_mouse_enable, UTF_DM | UTF_SCAN_FDT);
+BOOTSTD_TEST(expo_mouse_click, UTF_DM | UTF_SCAN_FDT);
