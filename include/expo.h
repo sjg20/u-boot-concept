@@ -41,8 +41,8 @@ enum expo_id_t {
  * enum expoact_type - types of actions reported by the expo
  *
  * @EXPOACT_NONE: no action
- * @EXPOACT_POINT_OBJ: object was highlighted (@id indicates which)
- * @EXPOACT_POINT_ITEM: menu item was highlighted (@id indicates which)
+ * @EXPOACT_POINT_OBJ: object was highlighted (@id indicates which object)
+ * @EXPOACT_POINT_ITEM: menu item was highlighted (@id indicates which item)
  * @EXPOACT_SELECT: menu item was selected (@id indicates which)
  * @EXPOACT_OPEN: menu was opened, so an item can be selected (@id indicates
  * which menu object)
@@ -63,8 +63,8 @@ enum expoact_type {
  * struct expo_action - an action report by the expo
  *
  * @type: Action type (EXPOACT_NONE if there is no action)
- * @select: Used for EXPOACT_POINT_ITEM and EXPOACT_SELECT
- * @select.id: ID number of the object affected.
+ * @select: Used for all actions except EXPOACT_NONE and EXPOACT_QUIT
+ * @select.id: ID number of the object affected
  * @select.changed: true if the selection has changed since last time (only
  * valid for EXPOACT_POINT_ITEM)
  */
