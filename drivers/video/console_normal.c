@@ -68,41 +68,11 @@ static int console_move_rows(struct udevice *dev, uint rowdst,
 	return 0;
 }
 
-static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
+int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
 {
-	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_simple_priv *priv = dev_get_priv(dev);
-	struct video_fontdata *fontdata = priv->fontdata;
-	int pbytes = VNBYTES(vid_priv->bpix);
-	int x, linenum, ret;
-	void *start, *line;
-	u8 ch = console_utf_to_cp437(cp);
-	uchar *pfont = fontdata->video_fontdata +
-			ch * fontdata->char_pixel_bytes;
 
-	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
-		return -EAGAIN;
-	linenum = y;
-	x = VID_TO_PIXEL(x_frac);
-	start = vid_priv->fb + linenum * vid_priv->line_length + x * pbytes;
-	line = start;
-
-	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
-		return -EAGAIN;
-
-	ret = fill_char_vertically(pfont, &line, vid_priv, fontdata, NORMAL_DIRECTION);
-	if (ret)
-		return ret;
-
-	video_damage(dev->parent,
-		     x,
-		     y,
-		     fontdata->width,
-		     fontdata->height);
-
-	return VID_TO_POS(fontdata->width);
+	return console_fixed_putc_xy(dev, x_frac, y, cp, priv->fontdata);
 }
 
 static int __maybe_unused console_set_cursor_visible(struct udevice *dev,
@@ -132,6 +102,11 @@ static int __maybe_unused console_set_cursor_visible(struct udevice *dev,
 			       NORMAL_DIRECTION);
 
 	return 0;
+}
+
+static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
+{
+	return console_normal_putc_xy(dev, x_frac, y, cp);
 }
 
 struct vidconsole_ops console_ops = {

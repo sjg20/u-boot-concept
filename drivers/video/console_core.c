@@ -228,6 +228,39 @@ int console_simple_get_font(struct udevice *dev, int seq, struct vidfont_info *i
 	return info->name ? 0 : -ENOENT;
 }
 
+int console_fixed_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp,
+			   struct video_fontdata *fontdata)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct udevice *vid = dev->parent;
+	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+	int pbytes = VNBYTES(vid_priv->bpix);
+	int x, linenum, ret;
+	void *start, *line;
+	u8 ch = console_utf_to_cp437(cp);
+	uchar *pfont = fontdata->video_fontdata +
+			ch * fontdata->char_pixel_bytes;
+
+	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
+		return -EAGAIN;
+	linenum = y;
+	x = VID_TO_PIXEL(x_frac);
+	start = vid_priv->fb + linenum * vid_priv->line_length + x * pbytes;
+	line = start;
+
+	ret = fill_char_vertically(pfont, &line, vid_priv, fontdata, NORMAL_DIRECTION);
+	if (ret)
+		return ret;
+
+	video_damage(dev->parent,
+		     x,
+		     y,
+		     fontdata->width,
+		     fontdata->height);
+
+	return VID_TO_POS(fontdata->width);
+}
+
 int console_simple_select_font(struct udevice *dev, const char *name, uint size)
 {
 	struct video_fontdata *font;
