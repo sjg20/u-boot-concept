@@ -1211,9 +1211,10 @@ static int dm_test_video_images(struct unit_test_state *uts)
 	ut_assert_nextline("Name                       Size");
 	ut_assert_nextline("-------------------- ----------");
 	ut_assert_nextline("bgrt                      43926");
+	ut_assert_nextline("riscos_arrow               3798");
 	ut_assert_nextline("u_boot                     6932");
 	ut_assert_skip_to_line("");
-	ut_assert_nextline("Total images: 2");
+	ut_assert_nextline("Total images: 3");
 	ut_assert_console_end();
 
 	return 0;
