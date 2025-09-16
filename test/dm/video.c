@@ -997,3 +997,87 @@ static int dm_test_video_font_switch(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_video_font_switch, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* cursor backspace without artifacts */
+static int check_cursor_backspace(struct unit_test_state *uts,
+				  struct udevice *dev, struct udevice *con,
+				  int exp_height)
+{
+	int with_a, with_cursor, after_backspace, after_idle, after_hide;
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(con);
+	struct vidconsole_cursor *curs = &vc_priv->curs;
+
+	/* Output chars without cursor */
+	ut_assert(!curs->visible);
+	ut_assert(!curs->enabled);
+	ut_assert(!curs->saved);
+	ut_assert(!curs->height);
+	ut_assertok(vidconsole_put_char(con, ' '));
+	ut_assertok(vidconsole_put_char(con, 'a'));
+	with_a = video_compress_fb(uts, dev, false);
+
+	/* Show cursor at current position (after 'a') */
+	ut_assertok(vidconsole_show_cursor(con));
+	ut_assert(curs->visible);
+	ut_assert(curs->saved);
+	ut_asserteq(exp_height, curs->height);
+	with_cursor = video_compress_fb(uts, dev, false);
+
+	/* Enable the cursor so that backspace will move it */
+	curs->enabled = true;
+
+	/* Do backspace - the cursor will be hidden */
+	ut_assertok(vidconsole_put_char(con, '\b'));
+	ut_assert(!curs->visible);
+	ut_assert(!curs->saved);
+	after_backspace = video_compress_fb(uts, dev, false);
+	ut_asserteq(with_a, after_backspace);
+	ut_assert(curs->enabled);
+
+	/* Run idle function - this should show the cursor */
+	vidconsole_idle(con);
+	ut_assert(curs->visible);
+	ut_assert(curs->saved);
+	after_idle = video_compress_fb(uts, dev, false);
+	ut_assert(after_idle != with_a);
+
+	/* Hide the cursor */
+	ut_assertok(vidconsole_hide_cursor(con));
+	ut_assert(curs->enabled);
+	ut_assert(!curs->visible);
+	ut_assert(!curs->saved);
+	after_hide = video_compress_fb(uts, dev, false);
+
+	ut_asserteq(with_a, after_hide);
+
+	return 0;
+}
+
+/* cursor backspace without artifacts */
+static int dm_test_video_backspace_normal(struct unit_test_state *uts)
+{
+	struct udevice *dev, *con;
+
+	ut_assertok(select_vidconsole(uts, "vidconsole0"));
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	ut_assertok(vidconsole_select_font(con, "8x16", 0));
+	ut_assertok(check_cursor_backspace(uts, dev, con, 16));
+
+	return 0;
+}
+DM_TEST(dm_test_video_backspace_normal, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* cursor backspace without artifacts on truetype */
+static int dm_test_video_backspace_truetype(struct unit_test_state *uts)
+{
+	struct udevice *dev, *con;
+
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	ut_assertok(vidconsole_select_font(con, NULL, 30));
+	ut_assertok(check_cursor_backspace(uts, dev, con, 30));
+
+	return 0;
+}
+DM_TEST(dm_test_video_backspace_truetype, UTF_SCAN_PDATA | UTF_SCAN_FDT);
