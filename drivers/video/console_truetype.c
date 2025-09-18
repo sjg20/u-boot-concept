@@ -120,10 +120,14 @@ static double tt_acos(double val)
  *
  * @xpos_frac:	Fractional X position in pixels (multiplied by VID_FRAC_DIV)
  * @ypos:	Y position (pixels from the top)
+ * @width:	Width of the character at this position in pixels (rounded up)
+ * @cp:		Unicode code point of the character
  */
 struct pos_info {
 	int xpos_frac;
 	int ypos;
+	int width;
+	int cp;
 };
 
 /*
@@ -175,6 +179,7 @@ struct console_tt_metrics {
  * @cur_fontdata:	Current fixed font data (NULL if using TrueType)
  * @pos_start:	Value of pos_ptr when the cursor is at the start of the text
  *	being entered by the user
+ * @pos_count:	Maximum value reached by pos_ptr (initially zero)
  */
 struct console_tt_priv {
 	struct console_tt_metrics *cur_met;
@@ -184,6 +189,7 @@ struct console_tt_priv {
 	int pos_ptr;
 	struct video_fontdata *cur_fontdata;
 	int pos_start;
+	int pos_count;
 };
 
 /**
@@ -354,7 +360,11 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 		pos = &priv->pos[priv->pos_ptr];
 		pos->xpos_frac = vc_priv->xcur_frac;
 		pos->ypos = vc_priv->ycur;
+		pos->width = (width_frac + VID_FRAC_DIV - 1) / VID_FRAC_DIV;
+		pos->cp = cp;
 		priv->pos_ptr++;
+		if (priv->pos_ptr > priv->pos_count)
+			priv->pos_count = priv->pos_ptr;
 	}
 
 	/*
@@ -530,6 +540,7 @@ static int console_truetype_entry_start(struct udevice *dev)
 
 	/* A new input line has start, so clear our history */
 	priv->pos_ptr = 0;
+	priv->pos_count = 0;
 	vc_priv->last_ch = 0;
 
 	return 0;
@@ -1000,6 +1011,7 @@ static int truetype_entry_restore(struct udevice *dev, struct abuf *buf)
 	vc_priv->xcur_frac = store.cur.xpos_frac;
 	vc_priv->ycur = store.cur.ypos;
 	priv->pos_ptr = store.priv.pos_ptr;
+	priv->pos_count = store.priv.pos_count;
 	memcpy(priv->pos, store.priv.pos,
 	       store.priv.pos_ptr * sizeof(struct pos_info));
 
