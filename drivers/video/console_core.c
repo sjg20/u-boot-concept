@@ -190,8 +190,9 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
 int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
 		bool direction)
 {
-	int step, line_step, pbytes, ret;
+	int step, line_step, pbytes, ret, row;
 	void *line, *dst;
+	u32 *save_ptr;
 	uint value;
 
 	ret = check_bpix_support(vid_priv->bpix);
@@ -207,20 +208,72 @@ int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
 		line_step = vid_priv->line_length;
 	}
 
+	/* we should not already have saved data */
+	if (curs->saved) {
+		debug("Trying to show cursor but data is already saved\n");
+		return -EINVAL;
+	}
+
 	/* Figure out where to write the cursor in the frame buffer */
 	line = vid_priv->fb + curs->y * vid_priv->line_length +
 		curs->x * VNBYTES(vid_priv->bpix);
 
+	/* save pixels under cursor and draw new cursor in one pass */
 	value = vid_priv->colour_fg;
-
-	for (int row = 0; row < curs->height; row++) {
+	save_ptr = curs->save_data;
+	for (row = 0; row < curs->height; row++) {
 		dst = line;
 
 		for (int col = 0; col < VIDCONSOLE_CURSOR_WIDTH; col++)
-			fill_pixel_and_goto_next(&dst, value, pbytes, step);
-
+			*save_ptr++ = swap_pixel_and_goto_next(&dst, value,
+							       pbytes, step);
 		line += line_step;
 	}
+	curs->saved = true;
+
+	return 0;
+}
+
+int cursor_hide(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
+		bool direction)
+{
+	int step, line_step, pbytes, ret;
+	void *line, *dst;
+
+	ret = check_bpix_support(vid_priv->bpix);
+	if (ret)
+		return ret;
+
+	pbytes = VNBYTES(vid_priv->bpix);
+	if (direction) {
+		step = -pbytes;
+		line_step = -vid_priv->line_length;
+	} else {
+		step = pbytes;
+		line_step = vid_priv->line_length;
+	}
+
+	/* Trying to hide cursor - we should have saved data */
+	if (!curs->saved) {
+		debug("Trying to hide cursor but no data was saved\n");
+		return -EINVAL;
+	}
+
+	/* Figure out where to write the cursor in the frame buffer */
+	line = vid_priv->fb + curs->y * vid_priv->line_length +
+		curs->x * VNBYTES(vid_priv->bpix);
+
+	/* Restore saved pixels */
+	u32 *save_ptr = curs->save_data;
+	dst = line;
+	for (int row = 0; row < curs->height; row++) {
+		void *row_dst = dst;
+		for (int col = 0; col < VIDCONSOLE_CURSOR_WIDTH; col++)
+			fill_pixel_and_goto_next(&row_dst, *save_ptr++, pbytes,
+						 step);
+		dst += line_step;
+	}
+	curs->saved = false;
 
 	return 0;
 }

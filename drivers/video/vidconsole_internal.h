@@ -112,7 +112,7 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
 			   struct video_fontdata *fontdata, bool direction);
 
 /**
- * cursor_show() - Draw a simple vertical cursor
+ * cursor_show() - Show cursor by saving and drawing pixels
  *
  * @curs: cursor information
  * @vid_priv: video-device info
@@ -130,9 +130,20 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
  *|---!!we're starting from upper left char corner|
  *|-----------------------------------------------|
  *
- * Return: 0, if success, or else error code.
+ * Return: 0 on success, -EINVAL if cursor data already saved
  */
 int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
+		bool direction);
+
+/**
+ * cursor_hide() - Hide cursor by restoring saved pixels
+ *
+ * @curs: cursor information
+ * @vid_priv: video-device info
+ * @direction: controls cursor orientation (normal or flipped)
+ * Return: 0 if success, -EINVAL if no cursor data was saved
+ */
+int cursor_hide(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
 		bool direction);
 
 /**

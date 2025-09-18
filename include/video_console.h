@@ -463,6 +463,16 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf);
 int vidconsole_show_cursor(struct udevice *dev);
 
 /**
+ * vidconsole_hide_cursor() - Hide the cursor
+ *
+ * Hides the cursor if it's currently visible
+ *
+ * @dev: Console device to use
+ * Return: 0 if OK, -ve on error
+ */
+int vidconsole_hide_cursor(struct udevice *dev);
+
+/**
  * vidconsole_readline_start() - Enable cursor for all video consoles
  *
  * Called at the start of command line input to show cursors on all
@@ -485,6 +495,11 @@ static inline int vidconsole_show_cursor(struct udevice *dev)
 	return 0;
 }
 
+static inline int vidconsole_hide_cursor(struct udevice *dev)
+{
+	return 0;
+}
+
 static inline void vidconsole_readline_start(bool indent)
 {
 }
@@ -501,7 +516,6 @@ static inline void cli_index_adjust(struct vidconsole_priv *priv, int by)
 }
 
 /**
-
  * vidconsole_push_colour() - Temporarily change the font colour
  *
  * @dev:	Device to adjust

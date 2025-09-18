@@ -71,6 +71,9 @@ static int vidconsole_back(struct udevice *dev)
 			return ret;
 	}
 
+	/* Hide cursor at old position if it's visible */
+	vidconsole_hide_cursor(dev);
+
 	priv->xcur_frac -= VID_TO_POS(priv->x_charsize);
 	if (priv->xcur_frac < priv->xstart_frac) {
 		priv->xcur_frac = (priv->cols - 1) *
@@ -127,6 +130,9 @@ static char *parsenum(char *s, int *num)
 void vidconsole_set_cursor_pos(struct udevice *dev, int x, int y)
 {
 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+
+	/* Hide cursor at old position if it's visible */
+	vidconsole_hide_cursor(dev);
 
 	priv->xcur_frac = VID_TO_POS(x);
 	priv->xstart_frac = priv->xcur_frac;
@@ -473,6 +479,9 @@ int vidconsole_put_char(struct udevice *dev, char ch)
 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
 	int cp, ret;
 
+	/* Hide cursor to avoid artifacts */
+	vidconsole_hide_cursor(dev);
+
 	if (priv->escape) {
 		vidconsole_escape_char(dev, ch);
 		return 0;
@@ -752,6 +761,33 @@ int vidconsole_show_cursor(struct udevice *dev)
 	return 0;
 }
 
+int vidconsole_hide_cursor(struct udevice *dev)
+{
+	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+	struct vidconsole_cursor *curs = &priv->curs;
+	int ret;
+
+	if (!curs->visible)
+		return 0;
+
+	/* If the driver stored cursor line and height, use them for drawing */
+	if (curs->height) {
+		struct udevice *vid = dev_get_parent(dev);
+		struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+
+		ret = cursor_hide(curs, vid_priv, NORMAL_DIRECTION);
+		if (ret)
+			return ret;
+
+		/* Update display damage for cursor area */
+		video_damage(vid, curs->x, curs->y, VIDCONSOLE_CURSOR_WIDTH,
+			     curs->height);
+	}
+
+	curs->visible = false;
+
+	return 0;
+}
 #endif /* CONFIG_CURSOR */
 
 int vidconsole_mark_start(struct udevice *dev)
