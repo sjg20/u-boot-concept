@@ -8,10 +8,17 @@
 
 #include <charset.h>
 #include <dm.h>
+#include <spl.h>
 #include <video.h>
 #include <video_console.h>
 #include <video_font.h>		/* Get font data, width and height */
 #include "vidconsole_internal.h"
+
+struct console_store {
+	int xpos_frac;
+	int ypos;
+	int cli_index;
+};
 
 static int console_set_row(struct udevice *dev, uint row, int clr)
 {
@@ -106,6 +113,45 @@ static __maybe_unused int console_get_cursor_info(struct udevice *dev,
 	return 0;
 }
 
+static __maybe_unused int normal_entry_save(struct udevice *dev,
+					    struct abuf *buf)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct console_store store;
+	const uint size = sizeof(store);
+
+	if (xpl_phase() <= PHASE_SPL)
+		return -ENOSYS;
+
+	if (!abuf_realloc(buf, size))
+		return log_msg_ret("sav", -ENOMEM);
+
+	store.xpos_frac = vc_priv->xcur_frac;
+	store.ypos  = vc_priv->ycur;
+	store.cli_index  = vc_priv->cli_index;
+	memcpy(abuf_data(buf), &store, size);
+
+	return 0;
+}
+
+static __maybe_unused int normal_entry_restore(struct udevice *dev,
+					       struct abuf *buf)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct console_store store;
+
+	if (xpl_phase() <= PHASE_SPL)
+		return -ENOSYS;
+
+	memcpy(&store, abuf_data(buf), sizeof(store));
+
+	vc_priv->xcur_frac = store.xpos_frac;
+	vc_priv->ycur = store.ypos;
+	vc_priv->cli_index = store.cli_index;
+
+	return 0;
+}
+
 static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
 {
 	return console_normal_putc_xy(dev, x_frac, y, cp);
@@ -120,6 +166,8 @@ struct vidconsole_ops console_ops = {
 	.select_font	= console_simple_select_font,
 #ifdef CONFIG_CURSOR
 	.get_cursor_info	= console_get_cursor_info,
+	.entry_save	= normal_entry_save,
+	.entry_restore	= normal_entry_restore,
 #endif
 };
 
