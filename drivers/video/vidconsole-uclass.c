@@ -751,19 +751,6 @@ int vidconsole_show_cursor(struct udevice *dev, uint x, uint y, uint index)
 	return 0;
 }
 
-int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
-				  uint x, uint y, uint index)
-{
-	if (visible) {
-		int ret;
-
-		ret = vidconsole_show_cursor(dev, x, y, index);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
 #endif /* CONFIG_CURSOR */
 
 int vidconsole_mark_start(struct udevice *dev)

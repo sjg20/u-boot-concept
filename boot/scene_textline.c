@@ -214,8 +214,8 @@ int scene_textline_render_deps(struct scene *scn,
 		if (ret)
 			return log_msg_ret("sav", ret);
 
-		vidconsole_set_cursor_visible(cons, true, txt->obj.bbox.x0,
-					      txt->obj.bbox.y0, scn->cls.num);
+		vidconsole_show_cursor(cons, txt->obj.bbox.x0,
+				       txt->obj.bbox.y0, scn->cls.num);
 	}
 
 	return 0;
