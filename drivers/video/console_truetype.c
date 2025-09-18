@@ -520,7 +520,7 @@ struct font_info {
 	extern u8 __ttf_ ## _name ## _begin[]; \
 	extern u8 __ttf_ ## _name ## _end[];
 
-#define FONT_ENTRY(_name)		{ \
+#define TT_FONT_ENTRY(_name)		{ \
 	.name = #_name, \
 	.begin = __ttf_ ## _name ## _begin, \
 	.end = __ttf_ ## _name ## _end, \
@@ -535,22 +535,22 @@ FONT_DECL(ubuntu_bold);
 
 static struct font_info font_table[] = {
 #ifdef CONFIG_CONSOLE_TRUETYPE_NIMBUS
-	FONT_ENTRY(nimbus_sans_l_regular),
+	TT_FONT_ENTRY(nimbus_sans_l_regular),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_ANKACODER
-	FONT_ENTRY(ankacoder_c75_r),
+	TT_FONT_ENTRY(ankacoder_c75_r),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_RUFSCRIPT
-	FONT_ENTRY(rufscript010),
+	TT_FONT_ENTRY(rufscript010),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_CANTORAONE
-	FONT_ENTRY(cantoraone_regular),
+	TT_FONT_ENTRY(cantoraone_regular),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_UBUNTU_LIGHT
-	FONT_ENTRY(ubuntu_light),
+	TT_FONT_ENTRY(ubuntu_light),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_UBUNTU_BOLD
-	FONT_ENTRY(ubuntu_bold),
+	TT_FONT_ENTRY(ubuntu_bold),
 #endif
 	{} /* sentinel */
 };
