@@ -145,6 +145,9 @@ int scene_textline_send_key(struct scene *scn, struct scene_obj_textline *tline,
 			/* Copy the backup text from the scene buffer */
 			memcpy(abuf_data(&tline->buf), abuf_data(&scn->buf),
 			       abuf_size(&scn->buf));
+
+			/* cursor is not needed now */
+			vidconsole_readline_end();
 		} else {
 			event->type = EXPOACT_QUIT;
 			log_debug("menu quit\n");
@@ -240,6 +243,9 @@ int scene_textline_open(struct scene *scn, struct scene_obj_textline *tline)
 	ret = vidconsole_entry_save(cons, &scn->entry_save);
 	if (ret)
 		return log_msg_ret("sav", ret);
+
+	/* make sure the cursor is visible */
+	vidconsole_readline_start(true);
 
 	return 0;
 }
