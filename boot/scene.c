@@ -386,7 +386,7 @@ int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set)
 
 static void handle_alignment(enum scene_obj_align horiz,
 			     enum scene_obj_align vert,
-			     struct scene_obj_bbox *bbox,
+			     struct vid_bbox *bbox,
 			     struct scene_obj_dims *dims,
 			     int xsize, int ysize,
 			     struct scene_obj_offset *offset)
@@ -555,7 +555,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 	struct vidconsole_colour old;
 	enum colour_idx fore, back;
 	struct scene_obj_dims dims;
-	struct scene_obj_bbox bbox;
+	struct vid_bbox bbox;
 	const char *str;
 	int ret;
 

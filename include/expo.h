@@ -235,21 +235,6 @@ enum scene_obj_t {
 };
 
 /**
- * struct scene_obj_bbox - Dimensions of an object
- *
- * @x0: x position, in pixels from left side
- * @y0: y position, in pixels from top
- * @x1: x position of right size
- * @y1: y position of bottom
- */
-struct scene_obj_bbox {
-	int x0;
-	int y0;
-	int x1;
-	int y1;
-};
-
-/**
  * struct scene_obj_offset - Offsets for drawing the object
  *
  * Stores the offset from x0, x1 at which objects are drawn
@@ -367,8 +352,8 @@ struct scene_obj {
 	char *name;
 	uint id;
 	enum scene_obj_t type;
-	struct scene_obj_bbox req_bbox;
-	struct scene_obj_bbox bbox;
+	struct vid_bbox req_bbox;
+	struct vid_bbox bbox;
 	struct scene_obj_offset ofs;
 	struct scene_obj_dims dims;
 	enum scene_obj_align horiz;
