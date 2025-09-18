@@ -82,14 +82,13 @@ int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
 	return console_fixed_putc_xy(dev, x_frac, y, cp, priv->fontdata);
 }
 
-static __maybe_unused int console_get_cursor_info(struct udevice *dev,
-						  bool visible, uint x, uint y,
-						  uint index)
+static __maybe_unused int console_get_cursor_info(struct udevice *dev)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct console_simple_priv *priv = dev_get_priv(dev);
 	struct video_fontdata *fontdata = priv->fontdata;
 	struct vidconsole_cursor *curs = &vc_priv->curs;
+	int x, y, index;
 
 	/* for now, this is not used outside expo */
 	if (!IS_ENABLED(CONFIG_EXPO))

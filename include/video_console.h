@@ -342,17 +342,14 @@ struct vidconsole_ops {
 	/**
 	 * get_cursor_info() - Get cursor position info
 	 *
-	 * Calculates and stores cursor position information
+	 * Calculates and stores cursor position information. This must fill in
+	 * @x, @y, @height and @index using struct vidconsole_priv fields
+	 * @xmark_frac, @ymark and @index
 	 *
 	 * @dev: Console device to use
-	 * @visible: true to show the cursor, false to hide it
-	 * @x: X position in pixels
-	 * @y: Y position in pixels
-	 * @index: Character position (0 = at start)
 	 * Return: 0 if OK, -ve on error
 	 */
-	int (*get_cursor_info)(struct udevice *dev, bool visible,
-			       uint x, uint y, uint index);
+	int (*get_cursor_info)(struct udevice *dev);
 
 	/**
 	 * mark_start() - Mark the current position as the state of CLI entry

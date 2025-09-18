@@ -1018,12 +1018,12 @@ static int truetype_entry_restore(struct udevice *dev, struct abuf *buf)
 	return 0;
 }
 
-static int truetype_get_cursor_info(struct udevice *dev, bool visible,
-				    uint x, uint y, uint index)
+static int truetype_get_cursor_info(struct udevice *dev)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct console_tt_priv *priv = dev_get_priv(dev);
 	struct vidconsole_cursor *curs = &vc_priv->curs;
+	int x, y, index;
 	uint height;
 
 	if (xpl_phase() <= PHASE_SPL)
@@ -1034,14 +1034,12 @@ static int truetype_get_cursor_info(struct udevice *dev, bool visible,
 	 * passed-in values, since an entry_restore() must have been done before
 	 * calling this function.
 	 */
-	if (visible) {
-		index = priv->pos_ptr;
-		if (index < priv->pos_ptr)
-			x = VID_TO_PIXEL(priv->pos[index].xpos_frac);
-		else
-			x = VID_TO_PIXEL(vc_priv->xcur_frac);
-		y = vc_priv->ycur;
-	}
+	index = priv->pos_ptr;
+	if (index < priv->pos_ptr)
+		x = VID_TO_PIXEL(priv->pos[index].xpos_frac);
+	else
+		x = VID_TO_PIXEL(vc_priv->xcur_frac);
+	y = vc_priv->ycur;
 
 	/* Get font height from current font type */
 	if (priv->cur_fontdata)
@@ -1052,8 +1050,8 @@ static int truetype_get_cursor_info(struct udevice *dev, bool visible,
 	/* Store line pointer and height in cursor struct */
 	curs->x = x;
 	curs->y = y;
-	curs->index = index;
 	curs->height = height;
+	curs->index = index;
 
 	return 0;
 }

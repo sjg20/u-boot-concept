@@ -720,11 +720,12 @@ int vidconsole_show_cursor(struct udevice *dev, uint x, uint y, uint index)
 	int ret;
 
 	/* find out where the cursor should be drawn */
-	if (ops->get_cursor_info) {
-		ret = ops->get_cursor_info(dev, true, x, y, index);
-		if (ret && ret != -ENOSYS)
-			return ret;
-	}
+	if (!ops->get_cursor_info)
+		return -ENOSYS;
+
+	ret = ops->get_cursor_info(dev);
+	if (ret)
+		return ret;
 
 	/* If the driver stored cursor line and height, use them for drawing */
 	if (curs->height) {
