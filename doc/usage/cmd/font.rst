@@ -12,7 +12,7 @@ Synopsis
 ::
 
     font list
-    font select <name> [<size>]
+    font select [<name> [<size>]]
     font size [<size>]
 
 Description
@@ -25,11 +25,13 @@ font list
 ~~~~~~~~~
 
 This lists the available fonts, using the name of the font file in the build.
+Any enabled bitmap fonts are listed as well.
 
 font select
 ~~~~~~~~~~~
 
-This selects a new font and optionally changes the size.
+This selects a new font and optionally changes the size. If the name is not
+provided, the default font is used.
 
 font size
 ~~~~~~~~~
@@ -49,6 +51,16 @@ Examples
     => font size 40
     => font select cantoraone_regular 20
     =>
+
+This shows an example of selecting a bitmap font Truetype is active::
+
+    => font list
+    8x16
+    12x22
+    nimbus_sans_l_regular
+    cantoraone_regular
+    => font sel 8x16
+
 
 Configuration
 -------------

@@ -13,6 +13,7 @@
 #include <video.h>
 #include <video_console.h>
 #include <video_font.h>
+#include "vidconsole_internal.h"
 
 /* Functions needed by stb_truetype.h */
 static int tt_floor(double val)
@@ -197,11 +198,17 @@ static int console_truetype_set_row(struct udevice *dev, uint row, int clr)
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct console_tt_priv *priv = dev_get_priv(dev);
-	struct console_tt_metrics *met = priv->cur_met;
 	void *end, *line;
+	int font_height;
 
-	line = vid_priv->fb + row * met->font_size * vid_priv->line_length;
-	end = line + met->font_size * vid_priv->line_length;
+	/* Get font height from current font type */
+	if (priv->cur_fontdata)
+		font_height = priv->cur_fontdata->height;
+	else
+		font_height = priv->cur_met->font_size;
+
+	line = vid_priv->fb + row * font_height * vid_priv->line_length;
+	end = line + font_height * vid_priv->line_length;
 
 	switch (vid_priv->bpix) {
 	case VIDEO_BPP8: {
@@ -250,17 +257,22 @@ static int console_truetype_move_rows(struct udevice *dev, uint rowdst,
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct console_tt_priv *priv = dev_get_priv(dev);
-	struct console_tt_metrics *met = priv->cur_met;
 	void *dst;
 	void *src;
-	int i, diff;
+	int i, diff, font_height;
 
-	dst = vid_priv->fb + rowdst * met->font_size * vid_priv->line_length;
-	src = vid_priv->fb + rowsrc * met->font_size * vid_priv->line_length;
-	memmove(dst, src, met->font_size * vid_priv->line_length * count);
+	/* Get font height from current font type */
+	if (priv->cur_fontdata)
+		font_height = priv->cur_fontdata->height;
+	else
+		font_height = priv->cur_met->font_size;
+
+	dst = vid_priv->fb + rowdst * font_height * vid_priv->line_length;
+	src = vid_priv->fb + rowsrc * font_height * vid_priv->line_length;
+	memmove(dst, src, font_height * vid_priv->line_length * count);
 
 	/* Scroll up our position history */
-	diff = (rowsrc - rowdst) * met->font_size;
+	diff = (rowsrc - rowdst) * font_height;
 	for (i = 0; i < priv->pos_ptr; i++)
 		priv->pos[i].ypos -= diff;
 
@@ -281,7 +293,7 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_tt_priv *priv = dev_get_priv(dev);
 	struct console_tt_metrics *met = priv->cur_met;
-	stbtt_fontinfo *font = &met->font;
+	stbtt_fontinfo *font;
 	int width, height, xoff, yoff;
 	double xpos, x_shift;
 	int lsb;
@@ -292,7 +304,12 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	void *start, *end, *line;
 	int row, kern;
 
+	/* Use fixed font if selected */
+	if (priv->cur_fontdata)
+		return console_fixed_putc_xy(dev, x, y, cp, priv->cur_fontdata);
+
 	/* First get some basic metrics about this character */
+	font = &met->font;
 	stbtt_GetCodepointHMetrics(font, cp, &advance, &lsb);
 
 	/*

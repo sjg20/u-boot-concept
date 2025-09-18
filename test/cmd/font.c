@@ -82,9 +82,12 @@ static int font_test_base(struct unit_test_state *uts)
 	ut_assert_nextline("30");
 	ut_assertok(ut_check_console_end(uts));
 
+	ut_assertok(run_command("font select", 0));
+	ut_assertok(ut_check_console_end(uts));
+
 	ut_assertok(vidconsole_get_font_size(dev, &name, &size));
-	ut_asserteq_str("cantoraone_regular", name);
-	ut_asserteq(30, size);
+	ut_asserteq_str("nimbus_sans_l_regular", name);
+	ut_asserteq(CONFIG_CONSOLE_TRUETYPE_SIZE, size);
 
 	return 0;
 }

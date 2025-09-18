@@ -944,7 +944,7 @@ static int dm_test_video_box(struct unit_test_state *uts)
 	video_draw_box(dev, 500, 100, 600, 200, 20,
 		       video_index_to_colour(priv, VID_LIGHT_RED), false);
 	ut_asserteq(133, video_compress_fb(uts, dev, false));
-	
+
 	/* test filled boxes */
 	video_draw_box(dev, 150, 250, 200, 300, 0,
 		       video_index_to_colour(priv, VID_GREEN), true);
@@ -956,3 +956,44 @@ static int dm_test_video_box(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_video_box, UTF_SCAN_FDT);
+
+/* font switching between TrueType and bitmap fonts */
+static int dm_test_video_font_switch(struct unit_test_state *uts)
+{
+	struct udevice *dev, *con;
+	const char *truetype_text =
+		"This is a long line of text written with TrueType font that "
+		"should wrap to multiple lines to test the multi-line "
+		"functionality properly. This is the second part of TrueType "
+		"text that should also be long enough to wrap and test the "
+		"line handling.";
+	const char *bitmap_text =
+		"Now this is bitmap font text that spans multiple lines and "
+		"should be rendered with the standard 8x16 bitmap font instead "
+		"of TrueType. More of the line of-bitmap text for testing "
+		"purposes.";
+	const char *final_truetype_text =
+		"Finally back to TrueType font for this concluding multi-line "
+		"text that demonstrates the font switching functionality "
+		"working correctly.\nFinal line of TrueType text to complete "
+		"the test.\n";
+
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+
+	/* Start with TrueType font and write multi-line text */
+	vidconsole_put_string(con, truetype_text);
+
+	/* Switch to bitmap font */
+	ut_assertok(vidconsole_select_font(con, "8x16", 0));
+	vidconsole_put_string(con, bitmap_text);
+
+	/* Switch back to TrueType font */
+	ut_assertok(vidconsole_select_font(con, NULL, 0));
+	vidconsole_put_string(con, final_truetype_text);
+
+	ut_asserteq(14892, video_compress_fb(uts, dev, false));
+
+	return 0;
+}
+DM_TEST(dm_test_video_font_switch, UTF_SCAN_PDATA | UTF_SCAN_FDT);

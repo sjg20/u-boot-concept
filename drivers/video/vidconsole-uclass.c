@@ -835,4 +835,5 @@ void vidconsole_set_bitmap_font(struct udevice *dev,
 		vc_priv->rows = vid_priv->ysize / fontdata->height;
 		/* xsize_frac is set in vidconsole_pre_probe() */
 	}
+	vc_priv->xstart_frac = 0;
 }
