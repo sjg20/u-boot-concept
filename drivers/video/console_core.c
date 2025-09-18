@@ -160,7 +160,7 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
 	return ret;
 }
 
-int cursor_show(void **line, struct video_priv *vid_priv, uint height,
+int cursor_show(void *line, struct video_priv *vid_priv, uint height,
 		bool direction)
 {
 	int step, line_step, pbytes, ret;
@@ -183,10 +183,10 @@ int cursor_show(void **line, struct video_priv *vid_priv, uint height,
 	value = vid_priv->colour_fg;
 
 	for (int row = 0; row < height; row++) {
-		dst = *line;
+		dst = line;
 		for (int col = 0; col < VIDCONSOLE_CURSOR_WIDTH; col++)
 			fill_pixel_and_goto_next(&dst, value, pbytes, step);
-		*line += line_step;
+		line += line_step;
 	}
 
 	return ret;

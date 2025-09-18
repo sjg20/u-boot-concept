@@ -85,7 +85,7 @@ static int __maybe_unused console_set_cursor_visible(struct udevice *dev,
 	struct console_simple_priv *priv = dev_get_priv(dev);
 	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
-	void *start, *line;
+	void *start;
 
 	/* for now, this is not used outside expo */
 	if (!IS_ENABLED(CONFIG_EXPO))
@@ -98,8 +98,7 @@ static int __maybe_unused console_set_cursor_visible(struct udevice *dev,
 		x -= 1;
 
 	start = vid_priv->fb + y * vid_priv->line_length + x * pbytes;
-	line = start;
-	cursor_show(&line, vid_priv, vc_priv->y_charsize, NORMAL_DIRECTION);
+	cursor_show(start, vid_priv, vc_priv->y_charsize, NORMAL_DIRECTION);
 
 	return 0;
 }

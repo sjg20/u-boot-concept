@@ -116,7 +116,7 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
  *
  * Return: 0, if success, or else error code.
  */
-int cursor_show(void **line, struct video_priv *vid_priv, uint height,
+int cursor_show(void *line, struct video_priv *vid_priv, uint height,
 		bool direction);
 
 /**

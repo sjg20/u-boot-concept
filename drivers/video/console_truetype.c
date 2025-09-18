@@ -1032,7 +1032,7 @@ static int truetype_set_cursor_visible(struct udevice *dev, bool visible,
 		x * VNBYTES(vid_priv->bpix);
 
 	/* Use the shared cursor drawing function */
-	cursor_show(&line, vid_priv, height, NORMAL_DIRECTION);
+	cursor_show(line, vid_priv, height, NORMAL_DIRECTION);
 
 	video_damage(dev->parent, x, y, VIDCONSOLE_CURSOR_WIDTH, height);
 
