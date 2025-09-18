@@ -761,6 +761,25 @@ int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
 }
 #endif /* CONFIG_CURSOR */
 
+int vidconsole_mark_start(struct udevice *dev)
+{
+	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+
+	priv->xmark_frac = priv->xcur_frac;
+	priv->ymark = priv->ycur;
+	priv->cli_index = 0;
+	if (ops->mark_start) {
+		int ret;
+
+		ret = ops->mark_start(dev);
+		if (ret != -ENOSYS)
+			return ret;
+	}
+
+	return 0;
+}
+
 void vidconsole_push_colour(struct udevice *dev, enum colour_idx fg,
 			    enum colour_idx bg, struct vidconsole_colour *old)
 {
@@ -884,3 +903,23 @@ void vidconsole_set_bitmap_font(struct udevice *dev,
 void vidconsole_idle(struct udevice *dev)
 {
 }
+
+#ifdef CONFIG_CURSOR
+void vidconsole_readline_start(bool indent)
+{
+	struct uclass *uc;
+	struct udevice *dev;
+
+	uclass_id_foreach_dev(UCLASS_VIDEO_CONSOLE, dev, uc) {
+		struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+
+		priv->curs.indent = indent;
+		vidconsole_mark_start(dev);
+	}
+}
+
+void vidconsole_readline_end(void)
+{
+	/* TODO: mark the end */
+}
+#endif /* CURSOR */

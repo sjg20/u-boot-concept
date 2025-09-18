@@ -30,6 +30,7 @@ enum {
  * vertical bar of width VIDCONSOLE_CURSOR_WIDTH shown in the foreground colour.
  *
  * @visible:	cursor is currently visible
+ * @indent:	indent subsequent lines to the same position as the first line
  * @x:		cursor left X position in pixels
  * @y:		cursor top Y position in pixels
  * @height:	height of cursor in pixels
@@ -37,6 +38,7 @@ enum {
  */
 struct vidconsole_cursor {
 	bool visible;
+	bool indent;
 
 	/* filled in by get_cursor_info(): */
 	uint x;
@@ -70,6 +72,8 @@ struct vidconsole_cursor {
  * @xsize_frac:		Width of the display in fractional units
  * @xstart_frac:	Left margin for the text console in fractional units
  * @last_ch:		Last character written to the text console on this line
+ * @xmark_frac:		X position of start of CLI text entry, in fractional units
+ * @ymark:		Y position of start of CLI text
  * @cli_index:		Character index into the CLI text (0=start)
  * @escape:		TRUE if currently accumulating an ANSI escape sequence
  * @escape_len:		Length of accumulated escape sequence so far
@@ -92,6 +96,8 @@ struct vidconsole_priv {
 	int xsize_frac;
 	int xstart_frac;
 	int last_ch;
+	int xmark_frac;
+	int ymark;
 	int cli_index;
 	/*
 	 * ANSI escape sequences are accumulated character by character,
@@ -345,6 +351,17 @@ struct vidconsole_ops {
 	 */
 	int (*get_cursor_info)(struct udevice *dev, bool visible,
 			       uint x, uint y, uint index);
+
+	/**
+	 * mark_start() - Mark the current position as the state of CLI entry
+	 *
+	 * This indicates that a new CLI entry is starting, so the user will be
+	 * entering characters from this point. The console can use this to set
+	 * the beginning point for the cursor.
+	 *
+	 * @dev: Console device to use
+	 */
+	int (*mark_start)(struct udevice *dev);
 };
 
 /* Get a pointer to the driver operations for a video console device */
@@ -461,6 +478,24 @@ int vidconsole_show_cursor(struct udevice *dev, uint x, uint y, uint index);
  */
 int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
 				  uint x, uint y, uint index);
+
+/**
+ * vidconsole_readline_start() - Enable cursor for all video consoles
+ *
+ * Called at the start of command line input to show cursors on all
+ * active video consoles
+ *
+ * @indent: indent subsequent lines to the same position as the first line
+ */
+void vidconsole_readline_start(bool indent);
+
+/**
+ * vidconsole_readline_end() - Disable cursor for all video consoles
+ *
+ * Called at the end of command line input to hide cursors on all
+ * active video consoles
+ */
+void vidconsole_readline_end(void);
 #else
 static inline int vidconsole_show_cursor(struct udevice *dev, uint x, uint y,
 					 uint index)
@@ -474,6 +509,15 @@ static inline int vidconsole_set_cursor_visible(struct udevice *dev,
 {
 	return 0;
 }
+
+static inline void vidconsole_readline_start(bool indent)
+{
+}
+
+static inline void vidconsole_readline_end(void)
+{
+}
+
 #endif /* CONFIG_CURSOR */
 
 static inline void cli_index_adjust(struct vidconsole_priv *priv, int by)
