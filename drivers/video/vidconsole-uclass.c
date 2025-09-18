@@ -931,6 +931,18 @@ void vidconsole_set_bitmap_font(struct udevice *dev,
 
 void vidconsole_idle(struct udevice *dev)
 {
+	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+	struct vidconsole_cursor *curs = &priv->curs;
+
+	/* Only handle cursor if it's enabled */
+	if (curs->enabled && !curs->visible) {
+		/*
+		 * TODO(sjg@chromium.org): We are using a saved position here,
+		 * but vidconsole_show_cursor() calls get_cursor_info() to
+		 * recalc the position anyway.
+		 */
+		vidconsole_show_cursor(dev);
+	}
 }
 
 #ifdef CONFIG_CURSOR
