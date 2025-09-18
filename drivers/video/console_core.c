@@ -61,6 +61,31 @@ inline void fill_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int ste
 	*dstp = dst_byte + step;
 }
 
+inline u32 swap_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int step)
+{
+	u8 *dst_byte = *dstp;
+	u32 old_value = 0;
+
+	if (pbytes == 4) {
+		u32 *dst = *dstp;
+		old_value = *dst;
+		*dst = value;
+	}
+	if (pbytes == 2) {
+		u16 *dst = *dstp;
+		old_value = *dst;
+		*dst = value;
+	}
+	if (pbytes == 1) {
+		u8 *dst = *dstp;
+		old_value = *dst;
+		*dst = value;
+	}
+	*dstp = dst_byte + step;
+
+	return old_value;
+}
+
 int fill_char_vertically(uchar *pfont, void **line, struct video_priv *vid_priv,
 			 struct video_fontdata *fontdata, bool direction)
 {

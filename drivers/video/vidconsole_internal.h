@@ -46,6 +46,18 @@ int check_bpix_support(int bpix);
 void fill_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int step);
 
 /**
+ * swap_pixel_and_goto_next() - Swap 1 pixel in framebuffer, and go to next one
+ *
+ * @param dstp		a pointer to pointer to framebuffer.
+ * @param value		value to write to framebuffer.
+ * @param pbytes	framebuffer bytes per pixel.
+ * @param step		framebuffer pointer increment. Usually is equal to pbytes,
+ *			and may be negative to control filling direction.
+ * Return: old value of the pixel
+ */
+u32 swap_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int step);
+
+/**
  * Fills 1 character in framebuffer vertically. Vertically means we're filling char font data rows
  * across the lines.
  *
