@@ -29,6 +29,7 @@ enum {
  * The cursor is set up and maintained by the vidconsole. It is a simple
  * vertical bar of width VIDCONSOLE_CURSOR_WIDTH shown in the foreground colour.
  *
+ * @enabled:	cursor is active (e.g. during readline)
  * @visible:	cursor is currently visible
  * @indent:	indent subsequent lines to the same position as the first line
  * @x:		cursor left X position in pixels
@@ -37,6 +38,7 @@ enum {
  * @index:	cursor index within the CLI or field being edited
  */
 struct vidconsole_cursor {
+	bool enabled;
 	bool visible;
 	bool indent;
 

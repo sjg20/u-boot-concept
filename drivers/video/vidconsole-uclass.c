@@ -919,12 +919,20 @@ void vidconsole_readline_start(bool indent)
 		struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
 
 		priv->curs.indent = indent;
+		priv->curs.enabled = true;
 		vidconsole_mark_start(dev);
 	}
 }
 
 void vidconsole_readline_end(void)
 {
-	/* TODO: mark the end */
+	struct uclass *uc;
+	struct udevice *dev;
+
+	uclass_id_foreach_dev(UCLASS_VIDEO_CONSOLE, dev, uc) {
+		struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+
+		priv->curs.enabled = false;
+	}
 }
 #endif /* CURSOR */
