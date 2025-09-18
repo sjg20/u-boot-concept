@@ -895,11 +895,52 @@ int scene_render_deps(struct scene *scn, uint id)
 	return 0;
 }
 
+/**
+ * scene_get_dirty_bbox() - Get bounding box of all dirty objects in a scene
+ *
+ * @scn: Scene to scan
+ * @bbox: Returns bounding box of all dirty objects
+ * Return: 0 if dirty objects found, -ENOENT if no dirty objects
+ */
+static int scene_get_dirty_bbox(struct scene *scn, struct vid_bbox *bbox)
+{
+	struct scene_obj *obj;
+	bool found_dirty = false;
+
+	list_for_each_entry(obj, &scn->obj_head, sibling) {
+		if (obj->flags & SCENEOF_DIRTY) {
+			if (!found_dirty) {
+				/* First dirty object - initialize bbox */
+				*bbox = obj->bbox;
+				found_dirty = true;
+			} else {
+				/* Expand bbox to include this object */
+				if (obj->bbox.x0 < bbox->x0)
+					bbox->x0 = obj->bbox.x0;
+				if (obj->bbox.y0 < bbox->y0)
+					bbox->y0 = obj->bbox.y0;
+				if (obj->bbox.x1 > bbox->x1)
+					bbox->x1 = obj->bbox.x1;
+				if (obj->bbox.y1 > bbox->y1)
+					bbox->y1 = obj->bbox.y1;
+			}
+		}
+	}
+
+	return found_dirty ? 0 : -ENOENT;
+}
+
 int scene_render(struct scene *scn)
 {
 	struct expo *exp = scn->expo;
 	struct scene_obj *obj;
+	struct vid_bbox dirty_bbox;
 	int ret;
+
+	/* Get bounding box of dirty objects and add to expo damage */
+	ret = scene_get_dirty_bbox(scn, &dirty_bbox);
+	if (!ret)
+		expo_damage_add(exp, &dirty_bbox);
 
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
 		if (!(obj->flags & SCENEOF_HIDE)) {
