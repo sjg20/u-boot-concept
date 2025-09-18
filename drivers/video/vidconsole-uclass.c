@@ -712,7 +712,7 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf)
 }
 
 #ifdef CONFIG_CURSOR
-int vidconsole_show_cursor(struct udevice *dev, uint x, uint y, uint index)
+int vidconsole_show_cursor(struct udevice *dev)
 {
 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
@@ -747,7 +747,7 @@ int vidconsole_show_cursor(struct udevice *dev, uint x, uint y, uint index)
 			     curs->height);
 	}
 
-	priv->curs.visible = true;
+	curs->visible = true;
 
 	return 0;
 }

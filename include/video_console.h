@@ -451,17 +451,12 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf);
 /**
  * vidconsole_show_cursor() - Show the cursor
  *
- * Shows a cursor at the specified position. The position is passed in, but for
- * the truetype console it is not actually used, since it tracks where the
- * cursor must go.
+ * Shows a cursor at the current position.
  *
  * @dev: Console device to use
- * @x: X position in pixels
- * @y: Y position in pixels
- * @index: Character position (0 = at start)
  * Return: 0 if OK, -ve on error
  */
-int vidconsole_show_cursor(struct udevice *dev, uint x, uint y, uint index);
+int vidconsole_show_cursor(struct udevice *dev);
 
 /**
  * vidconsole_readline_start() - Enable cursor for all video consoles
@@ -481,8 +476,7 @@ void vidconsole_readline_start(bool indent);
  */
 void vidconsole_readline_end(void);
 #else
-static inline int vidconsole_show_cursor(struct udevice *dev, uint x, uint y,
-					 uint index)
+static inline int vidconsole_show_cursor(struct udevice *dev)
 {
 	return 0;
 }
