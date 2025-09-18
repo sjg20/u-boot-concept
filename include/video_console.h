@@ -613,4 +613,11 @@ void vidconsole_set_quiet(struct udevice *dev, bool quiet);
 void vidconsole_set_bitmap_font(struct udevice *dev,
 				struct video_fontdata *fontdata);
 
+/*
+ * vidconsole_idle() - Handle periodic cursor display during idle time
+ *
+ * @dev: vidconsole device
+ */
+void vidconsole_idle(struct udevice *dev);
+
 #endif

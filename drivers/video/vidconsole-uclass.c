@@ -837,3 +837,7 @@ void vidconsole_set_bitmap_font(struct udevice *dev,
 	}
 	vc_priv->xstart_frac = 0;
 }
+
+void vidconsole_idle(struct udevice *dev)
+{
+}

@@ -621,7 +621,20 @@ int video_default_font_height(struct udevice *dev)
 
 static void video_idle(struct cyclic_info *cyc)
 {
-	video_sync_all();
+	if (CONFIG_IS_ENABLED(CURSOR)) {
+		struct udevice *cons;
+		struct uclass *uc;
+
+		/* Handle cursor display for each video console */
+		uclass_id_foreach_dev(UCLASS_VIDEO_CONSOLE, cons, uc) {
+			if (device_active(cons)) {
+				vidconsole_idle(cons);
+				video_sync(cons->parent, true);
+			}
+		}
+	} else {
+		video_sync_all();
+	}
 }
 
 void video_set_white_on_black(struct udevice *dev, bool white_on_black)
