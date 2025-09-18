@@ -70,6 +70,7 @@ struct vidconsole_cursor {
  * @xsize_frac:		Width of the display in fractional units
  * @xstart_frac:	Left margin for the text console in fractional units
  * @last_ch:		Last character written to the text console on this line
+ * @cli_index:		Character index into the CLI text (0=start)
  * @escape:		TRUE if currently accumulating an ANSI escape sequence
  * @escape_len:		Length of accumulated escape sequence so far
  * @col_saved:		Saved X position, in fractional units (VID_TO_POS(x))
@@ -91,6 +92,7 @@ struct vidconsole_priv {
 	int xsize_frac;
 	int xstart_frac;
 	int last_ch;
+	int cli_index;
 	/*
 	 * ANSI escape sequences are accumulated character by character,
 	 * starting after the ESC char (0x1b) until the entire sequence
@@ -473,6 +475,12 @@ static inline int vidconsole_set_cursor_visible(struct udevice *dev,
 	return 0;
 }
 #endif /* CONFIG_CURSOR */
+
+static inline void cli_index_adjust(struct vidconsole_priv *priv, int by)
+{
+	if (CONFIG_IS_ENABLED(CURSOR))
+		priv->cli_index += by;
+}
 
 /**
  * vidconsole_push_colour() - Temporarily change the font colour
