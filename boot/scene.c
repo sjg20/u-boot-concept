@@ -1300,6 +1300,7 @@ int scene_sync_bbox(struct scene *scn)
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
 		int req_width = obj->req_bbox.x1 - obj->req_bbox.x0;
 		int req_height = obj->req_bbox.y1 - obj->req_bbox.y0;
+		struct vid_bbox old_bbox = obj->bbox;
 
 		if (obj->flags & SCENEOF_SYNC_POS) {
 			if (obj->flags & SCENEOF_SIZE_VALID) {
@@ -1321,6 +1322,12 @@ int scene_sync_bbox(struct scene *scn)
 			obj->bbox.x1 = obj->bbox.x0 + req_width;
 		if (obj->flags & SCENEOF_SYNC_BBOX)
 			obj->bbox = obj->req_bbox;
+
+		/* Set dirty flag if bbox changed */
+		if (old_bbox.x0 != obj->bbox.x0 || old_bbox.y0 != obj->bbox.y0 ||
+		    old_bbox.x1 != obj->bbox.x1 || old_bbox.y1 != obj->bbox.y1)
+			obj->flags |= SCENEOF_DIRTY;
+
 		obj->flags &= ~(SCENEOF_SYNC_POS | SCENEOF_SYNC_SIZE |
 				SCENEOF_SYNC_WIDTH | SCENEOF_SYNC_BBOX);
 	}
