@@ -80,31 +80,28 @@ static __maybe_unused int console_get_cursor_info(struct udevice *dev,
 						  uint index)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_simple_priv *priv = dev_get_priv(dev);
 	struct video_fontdata *fontdata = priv->fontdata;
 	struct vidconsole_cursor *curs = &vc_priv->curs;
-	int pbytes = VNBYTES(vid_priv->bpix);
-	void *start, *line;
 
 	/* for now, this is not used outside expo */
 	if (!IS_ENABLED(CONFIG_EXPO))
 		return -ENOSYS;
 
+	x = VID_TO_PIXEL(vc_priv->xmark_frac);
+	y = vc_priv->ymark;
+	index = vc_priv->cli_index;
 	x += index * fontdata->width;
 
 	/* place the cursor 1 pixel before the start of the next char */
 	if (x > 0)
 		x -= 1;
 
-	start = vid_priv->fb + y * vid_priv->line_length + x * pbytes;
-	line = start;
-
 	/* Store line pointer and height in cursor struct */
 	curs->x = x;
 	curs->y = y;
 	curs->height = vc_priv->y_charsize;
+	curs->index = index;
 
 	return 0;
 }
