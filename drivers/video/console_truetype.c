@@ -12,6 +12,7 @@
 #include <spl.h>
 #include <video.h>
 #include <video_console.h>
+#include <video_font.h>
 
 /* Functions needed by stb_truetype.h */
 static int tt_floor(double val)
@@ -169,6 +170,7 @@ struct console_tt_metrics {
  *		last character. We record enough characters to go back to the
  *		start of the current command line.
  * @pos_ptr:	Current position in the position history
+ * @cur_fontdata:	Current fixed font data (NULL if using TrueType)
  */
 struct console_tt_priv {
 	struct console_tt_metrics *cur_met;
@@ -176,6 +178,7 @@ struct console_tt_priv {
 	int num_metrics;
 	struct pos_info pos[POS_HISTORY_SIZE];
 	int pos_ptr;
+	struct video_fontdata *cur_fontdata;
 };
 
 /**
@@ -595,9 +598,19 @@ int console_truetype_get_font(struct udevice *dev, int seq,
 			      struct vidfont_info *info)
 {
 	struct font_info *tab;
+	struct video_fontdata *fontdata;
 	int i;
 
-	for (i = 0, tab = font_table; tab->begin; tab++, i++) {
+	/* List fixed fonts first */
+	for (i = 0, fontdata = fonts; fontdata->name; fontdata++, i++) {
+		if (i == seq) {
+			info->name = fontdata->name;
+			return 0;
+		}
+	}
+
+	/* then list TrueType fonts */
+	for (tab = font_table; tab->begin; tab++, i++) {
 		if (i == seq && font_valid(tab)) {
 			info->name = tab->name;
 			return 0;
@@ -671,6 +684,27 @@ static struct console_tt_metrics *find_metrics(struct udevice *dev,
 	return NULL;
 }
 
+/**
+ * set_bitmap_font() - Set up console to use a fixed font
+ *
+ * @dev:	Console device
+ * @fontdata:	Fixed font data to use
+ * Return: 0 if OK, -ve on error
+ */
+static void set_bitmap_font(struct udevice *dev,
+			    struct video_fontdata *fontdata)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct console_tt_priv *priv = dev_get_priv(dev);
+
+	priv->cur_fontdata = fontdata;
+	priv->cur_met = NULL;
+
+	vidconsole_set_bitmap_font(dev, fontdata);
+
+	vc_priv->tab_width_frac = VID_TO_POS(fontdata->width) * 8 / 2;
+}
+
 static void select_metrics(struct udevice *dev, struct console_tt_metrics *met)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
@@ -734,9 +768,24 @@ static int get_metrics(struct udevice *dev, const char *name, uint size,
 static int truetype_select_font(struct udevice *dev, const char *name,
 				uint size)
 {
+	struct console_tt_priv *priv = dev_get_priv(dev);
 	struct console_tt_metrics *met;
+	struct video_fontdata *fontdata;
 	int ret;
 
+	/* Check if this is a request for a fixed font */
+	if (name) {
+		for (fontdata = fonts; fontdata->name; fontdata++) {
+			if (!strcmp(name, fontdata->name)) {
+				/* Switch to fixed-font mode */
+				set_bitmap_font(dev, fontdata);
+				return 0;
+			}
+		}
+	}
+
+	/* Continue with TrueType font selection */
+	priv->cur_fontdata = NULL;
 	ret = get_metrics(dev, name, size, &met);
 	if (ret)
 		return log_msg_ret("sel", ret);
@@ -1036,11 +1085,18 @@ static int truetype_set_cursor_visible(struct udevice *dev, bool visible,
 const char *console_truetype_get_font_size(struct udevice *dev, uint *sizep)
 {
 	struct console_tt_priv *priv = dev_get_priv(dev);
-	struct console_tt_metrics *met = priv->cur_met;
 
-	*sizep = met->font_size;
+	if (priv->cur_fontdata) {
+		/* Using fixed font */
+		*sizep = priv->cur_fontdata->height;
+		return priv->cur_fontdata->name;
+	} else {
+		/* Using TrueType font */
+		struct console_tt_metrics *met = priv->cur_met;
 
-	return met->font_name;
+		*sizep = met->font_size;
+		return met->font_name;
+	}
 }
 
 static int console_truetype_probe(struct udevice *dev)
