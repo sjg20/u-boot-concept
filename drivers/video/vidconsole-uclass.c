@@ -655,7 +655,7 @@ int vidconsole_nominal(struct udevice *dev, const char *name, uint size,
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
 	int ret;
 
-	if (ops->measure) {
+	if (ops->nominal) {
 		ret = ops->nominal(dev, name, size, num_chars, bbox);
 		if (ret != -ENOSYS)
 			return ret;
@@ -675,7 +675,7 @@ int vidconsole_entry_save(struct udevice *dev, struct abuf *buf)
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
 	int ret;
 
-	if (ops->measure) {
+	if (ops->entry_save) {
 		ret = ops->entry_save(dev, buf);
 		if (ret != -ENOSYS)
 			return ret;
@@ -692,7 +692,7 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf)
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
 	int ret;
 
-	if (ops->measure) {
+	if (ops->entry_restore) {
 		ret = ops->entry_restore(dev, buf);
 		if (ret != -ENOSYS)
 			return ret;
