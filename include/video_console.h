@@ -24,6 +24,28 @@ enum {
 };
 
 /**
+ * struct vidconsole_cursor - cursor state for a video console
+ *
+ * The cursor is set up and maintained by the vidconsole. It is a simple
+ * vertical bar of width VIDCONSOLE_CURSOR_WIDTH shown in the foreground colour.
+ *
+ * @visible:	cursor is currently visible
+ * @x:		cursor left X position in pixels
+ * @y:		cursor top Y position in pixels
+ * @height:	height of cursor in pixels
+ * @index:	cursor index within the CLI or field being edited
+ */
+struct vidconsole_cursor {
+	bool visible;
+
+	/* filled in by get_cursor_info(): */
+	uint x;
+	uint y;
+	uint height;
+	uint index;
+};
+
+/**
  * struct vidconsole_priv - uclass-private data about a console device
  *
  * Drivers must set up @rows, @cols, @x_charsize, @y_charsize in their probe()
@@ -55,6 +77,7 @@ enum {
  * @escape_buf:		Buffer to accumulate escape sequence
  * @utf8_buf:		Buffer to accumulate UTF-8 byte sequence
  * @quiet:		Suppress all output from stdio
+ * @curs:		Cursor state and management
  */
 struct vidconsole_priv {
 	struct stdio_dev sdev;
@@ -80,6 +103,7 @@ struct vidconsole_priv {
 	char escape_buf[32];
 	char utf8_buf[5];
 	bool quiet;
+	struct vidconsole_cursor curs;
 };
 
 /**
