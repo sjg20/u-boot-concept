@@ -930,7 +930,21 @@ static int scene_get_dirty_bbox(struct scene *scn, struct vid_bbox *bbox)
 	return found_dirty ? 0 : -ENOENT;
 }
 
-int scene_render(struct scene *scn)
+/**
+ * bbox_intersects() - Check if two bounding boxes intersect
+ *
+ * @bbox1: First bounding box
+ * @bbox2: Second bounding box
+ * Return: true if bounding boxes intersect, false otherwise
+ */
+static bool bbox_intersects(const struct vid_bbox *bbox1,
+			    const struct vid_bbox *bbox2)
+{
+	return !(bbox1->x1 <= bbox2->x0 || bbox2->x1 <= bbox1->x0 ||
+		 bbox1->y1 <= bbox2->y0 || bbox2->y1 <= bbox1->y0);
+}
+
+int scene_render(struct scene *scn, bool dirty_only)
 {
 	struct expo *exp = scn->expo;
 	struct scene_obj *obj;
@@ -943,7 +957,16 @@ int scene_render(struct scene *scn)
 		expo_damage_add(exp, &dirty_bbox);
 
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		if (!(obj->flags & SCENEOF_HIDE)) {
+		bool render = true;
+
+		if (obj->flags & SCENEOF_HIDE)
+			continue;
+
+		/* render objects that intersect with dirty bbox */
+		if (dirty_only && !ret)
+			render = bbox_intersects(&obj->bbox, &dirty_bbox);
+
+		if (render) {
 			ret = scene_obj_render(obj, exp->text_mode);
 			if (ret && ret != -ENOTSUPP)
 				return log_msg_ret("ren", ret);

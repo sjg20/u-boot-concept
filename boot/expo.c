@@ -320,7 +320,7 @@ int expo_render(struct expo *exp)
 		if (!scn)
 			return log_msg_ret("scn", -ENOENT);
 
-		ret = scene_render(scn);
+		ret = scene_render(scn, false);
 		if (ret)
 			return log_msg_ret("ren", ret);
 	}
