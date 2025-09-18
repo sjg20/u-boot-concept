@@ -29,6 +29,26 @@ enum {
  * The cursor is set up and maintained by the vidconsole. It is a simple
  * vertical bar of width VIDCONSOLE_CURSOR_WIDTH shown in the foreground colour.
  *
+ * No cursor processing is done unless @enabled is true.
+ *
+ * To figure out where to draw the cursor, the vidconsole's get_cursor_info() is
+ * called. It fills in the @x, @y, @height and @index information below. That
+ * information remains valid while the cursor is shown, so it can be used to
+ * hide the cursor.
+ *
+ * The cursor is drawn only when idle (by vidconsole_show_cursor() called from
+ * vidconsole_idle()). It is erased as soon as any output needs to be written to
+ * the display - vidconsole_hide_cursor() is called from a few places in the
+ * vidconsole uclass.
+ *
+ * Under the hood, vidconsole_show_cursor() calls cursor_show() which saves the
+ * pixels under the cursor as it draws it. Once finished it sets @visible to
+ * true, so that we know we must erase the cursor before drawing anything else.
+ *
+ * The old pixels end up in @save_data and are used by cursor_hide() (called
+ * from vidconsole_hide_cursor()) to restore the display contents to what they
+ * were. Once that is done, @visible is set back to false.
+ *
  * @enabled:	cursor is active (e.g. during readline)
  * @visible:	cursor is currently visible
  * @indent:	indent subsequent lines to the same position as the first line
