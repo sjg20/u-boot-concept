@@ -590,10 +590,6 @@ static int console_truetype_backspace(struct udevice *dev)
 	else
 		xend = vid_priv->xsize;
 
-	video_fill_part(vid_dev, VID_TO_PIXEL(pos->xpos_frac), pos->ypos,
-			xend, pos->ypos + vc_priv->y_charsize,
-			vid_priv->colour_bg);
-
 	/* Move the cursor back to where it was when we pushed this record */
 	vc_priv->xcur_frac = pos->xpos_frac;
 	vc_priv->ycur = pos->ypos;
