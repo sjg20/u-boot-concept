@@ -99,8 +99,7 @@ static int __maybe_unused console_set_cursor_visible(struct udevice *dev,
 
 	start = vid_priv->fb + y * vid_priv->line_length + x * pbytes;
 	line = start;
-	draw_cursor_vertically(&line, vid_priv, vc_priv->y_charsize,
-			       NORMAL_DIRECTION);
+	cursor_show(&line, vid_priv, vc_priv->y_charsize, NORMAL_DIRECTION);
 
 	return 0;
 }

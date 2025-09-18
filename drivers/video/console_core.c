@@ -160,8 +160,8 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
 	return ret;
 }
 
-int draw_cursor_vertically(void **line, struct video_priv *vid_priv,
-			   uint height, bool direction)
+int cursor_show(void **line, struct video_priv *vid_priv, uint height,
+		bool direction)
 {
 	int step, line_step, pbytes, ret;
 	uint value;
@@ -188,6 +188,7 @@ int draw_cursor_vertically(void **line, struct video_priv *vid_priv,
 			fill_pixel_and_goto_next(&dst, value, pbytes, step);
 		*line += line_step;
 	}
+
 	return ret;
 }
 
