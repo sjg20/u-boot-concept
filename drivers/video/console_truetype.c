@@ -295,6 +295,58 @@ static int console_truetype_move_rows(struct udevice *dev, uint rowdst,
 	return 0;
 }
 
+/**
+ * clear_from() - Clear characters on the display from given index onwards
+ *
+ * Erases all characters from the specified position index in the position
+ * history to the end of the position array (pos_count). This handles line
+ * wrapping by clearing to the end of lines and continuing on subsequent lines.
+ *
+ * @dev:	Device to update
+ * @index:	Starting index in priv->pos array to erase from
+ */
+static void clear_from(struct udevice *dev, int index)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct console_tt_priv *priv = dev_get_priv(dev);
+	struct udevice *vid_dev = dev->parent;
+	struct video_priv *vid_priv = dev_get_uclass_priv(vid_dev);
+	struct pos_info *start_pos, *end_pos;
+	int xstart, xend;
+	int ystart, yend;
+
+	assert(priv->pos_count && index && index < priv->pos_count);
+
+	start_pos = &priv->pos[index];
+	xstart = VID_TO_PIXEL(start_pos->xpos_frac);
+	ystart = start_pos->ypos;
+
+	/* End position is the last character in the position array */
+	end_pos = &priv->pos[priv->pos_count - 1];
+	xend = VID_TO_PIXEL(end_pos->xpos_frac) + end_pos->width;
+	yend = end_pos->ypos;
+
+	/* If on the same line, just erase from start to end position */
+	if (ystart == yend) {
+		video_fill_part(vid_dev, xstart, ystart, xend, ystart + vc_priv->y_charsize,
+				vid_priv->colour_bg);
+	} else {
+		/* Different lines - erase to end of first line */
+		video_fill_part(vid_dev, xstart, ystart, vid_priv->xsize,
+				ystart + vc_priv->y_charsize, vid_priv->colour_bg);
+
+		/* Erase any complete lines in between */
+		if (yend > ystart + vc_priv->y_charsize) {
+			video_fill_part(vid_dev, 0, ystart + vc_priv->y_charsize,
+					vid_priv->xsize, yend, vid_priv->colour_bg);
+		}
+
+		/* Erase from start of final line to end of last character */
+		video_fill_part(vid_dev, 0, yend, xend, yend + vc_priv->y_charsize,
+				vid_priv->colour_bg);
+	}
+}
+
 static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 				    int cp)
 {
@@ -326,15 +378,19 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	 * First out our current X position in fractional pixels. If we wrote
 	 * a character previously, use kerning to fine-tune the position of
 	 * this character */
+	pos = priv->pos_ptr < priv->pos_count ? &priv->pos[priv->pos_ptr] :
+		NULL;
 	xpos = frac(VID_TO_PIXEL((double)x));
 	kern = 0;
 	if (vc_priv->last_ch) {
-		kern = stbtt_GetCodepointKernAdvance(font, vc_priv->last_ch,
-						     cp);
+		int last_cp = vc_priv->last_ch;
+
+		if (pos)
+			last_cp = pos->cp;
+		kern = stbtt_GetCodepointKernAdvance(font, last_cp, cp);
 		if (_DEBUG) {
 			console_printf_select_stderr(true, "kern %c (%02x)",
-						     vc_priv->last_ch,
-						     vc_priv->last_ch);
+						     last_cp, last_cp);
 		}
 		xpos += met->scale * kern;
 	}
@@ -357,6 +413,18 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 
 	/* Write the current cursor position into history */
 	if (priv->pos_ptr < POS_HISTORY_SIZE) {
+		bool erase = false;
+
+		/* Check if we're overwriting a different character */
+		if (pos && pos->cp != cp) {
+			erase = true;
+			/* Erase using the old character's position before updating */
+			clear_from(dev, priv->pos_ptr);
+
+			/* After erasing, we don't care about erased characters */
+			priv->pos_count = priv->pos_ptr;
+		}
+
 		pos = &priv->pos[priv->pos_ptr];
 		pos->xpos_frac = vc_priv->xcur_frac;
 		pos->ypos = vc_priv->ycur;
