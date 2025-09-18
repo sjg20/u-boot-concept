@@ -124,6 +124,16 @@ int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
 		bool direction);
 
 /**
+ * console_alloc_cursor() - Allocate cursor save buffer
+ *
+ * Allocates memory for saving pixels under the cursor
+ *
+ * @dev: vidconsole device
+ * Return: 0 if success, -ENOMEM if allocation fails
+ */
+int console_alloc_cursor(struct udevice *dev);
+
+/**
  * console probe function.
  *
  * @param dev	a pointer to device.

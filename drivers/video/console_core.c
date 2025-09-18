@@ -9,6 +9,8 @@
 #include <video.h>
 #include <video_console.h>
 #include <dm.h>
+#include <malloc.h>
+#include <spl.h>
 #include <video_font.h>
 #include "vidconsole_internal.h"
 
@@ -198,9 +200,46 @@ int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
 	return 0;
 }
 
+int console_alloc_cursor(struct udevice *dev)
+{
+	struct vidconsole_priv *vc_priv;
+	struct vidconsole_cursor *curs;
+	struct video_priv *vid_priv;
+	struct udevice *vid;
+	int save_count;
+
+	if (!CONFIG_IS_ENABLED(CURSOR) || xpl_phase() < PHASE_BOARD_R)
+		return 0;
+
+	vc_priv = dev_get_uclass_priv(dev);
+	vid = dev_get_parent(dev);
+	vid_priv = dev_get_uclass_priv(vid);
+	curs = &vc_priv->curs;
+
+	/* Allocate cursor save buffer for maximum possible cursor height */
+	save_count = vid_priv->ysize * VIDCONSOLE_CURSOR_WIDTH;
+	curs->save_data = malloc(save_count * sizeof(u32));
+	if (!curs->save_data)
+		return -ENOMEM;
+
+	return 0;
+}
+
 int console_probe(struct udevice *dev)
 {
-	return console_set_font(dev, fonts);
+	int ret;
+
+	ret = console_set_font(dev, fonts);
+	if (ret)
+		return ret;
+
+	if (CONFIG_IS_ENABLED(CURSOR) && xpl_phase() == PHASE_BOARD_R) {
+		ret = console_alloc_cursor(dev);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
 }
 
 const char *console_simple_get_font_size(struct udevice *dev, uint *sizep)

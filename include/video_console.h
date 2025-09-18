@@ -32,6 +32,8 @@ enum {
  * @enabled:	cursor is active (e.g. during readline)
  * @visible:	cursor is currently visible
  * @indent:	indent subsequent lines to the same position as the first line
+ * @saved:	true if save_data contains valid data
+ * @save_data:	saved pixels under cursor
  * @x:		cursor left X position in pixels
  * @y:		cursor top Y position in pixels
  * @height:	height of cursor in pixels
@@ -41,6 +43,8 @@ struct vidconsole_cursor {
 	bool enabled;
 	bool visible;
 	bool indent;
+	bool saved;
+	u32 *save_data;
 
 	/* filled in by get_cursor_info(): */
 	uint x;
