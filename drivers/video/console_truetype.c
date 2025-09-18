@@ -173,6 +173,8 @@ struct console_tt_metrics {
  *		start of the current command line.
  * @pos_ptr:	Current position in the position history
  * @cur_fontdata:	Current fixed font data (NULL if using TrueType)
+ * @pos_start:	Value of pos_ptr when the cursor is at the start of the text
+ *	being entered by the user
  */
 struct console_tt_priv {
 	struct console_tt_metrics *cur_met;
@@ -181,6 +183,7 @@ struct console_tt_priv {
 	struct pos_info pos[POS_HISTORY_SIZE];
 	int pos_ptr;
 	struct video_fontdata *cur_fontdata;
+	int pos_start;
 };
 
 /**
@@ -1060,6 +1063,15 @@ const char *console_truetype_get_font_size(struct udevice *dev, uint *sizep)
 	}
 }
 
+static int truetype_mark_start(struct udevice *dev)
+{
+	struct console_tt_priv *priv = dev_get_priv(dev);
+
+	priv->pos_start = priv->pos_ptr;
+
+	return 0;
+}
+
 static int console_truetype_probe(struct udevice *dev)
 {
 	struct console_tt_priv *priv = dev_get_priv(dev);
@@ -1106,6 +1118,7 @@ struct vidconsole_ops console_truetype_ops = {
 	.entry_save	= truetype_entry_save,
 	.entry_restore	= truetype_entry_restore,
 	.get_cursor_info	= truetype_get_cursor_info,
+	.mark_start	= truetype_mark_start,
 };
 
 U_BOOT_DRIVER(vidconsole_truetype) = {
