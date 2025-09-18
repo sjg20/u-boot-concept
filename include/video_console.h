@@ -404,6 +404,7 @@ int vidconsole_entry_save(struct udevice *dev, struct abuf *buf);
  */
 int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf);
 
+#ifdef CONFIG_CURSOR
 /**
  * vidconsole_set_cursor_visible() - Show or hide the cursor
  *
@@ -418,6 +419,14 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf);
  */
 int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
 				  uint x, uint y, uint index);
+#else
+static inline int vidconsole_set_cursor_visible(struct udevice *dev,
+						bool visible, uint x, uint y,
+						uint index)
+{
+	return 0;
+}
+#endif /* CONFIG_CURSOR */
 
 /**
  * vidconsole_push_colour() - Temporarily change the font colour

@@ -105,8 +105,9 @@ static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
 	return VID_TO_POS(fontdata->width);
 }
 
-static int console_set_cursor_visible(struct udevice *dev, bool visible,
-				      uint x, uint y, uint index)
+static int __maybe_unused console_set_cursor_visible(struct udevice *dev,
+						     bool visible, uint x,
+						     uint y, uint index)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
@@ -140,7 +141,9 @@ struct vidconsole_ops console_ops = {
 	.get_font_size	= console_simple_get_font_size,
 	.get_font	= console_simple_get_font,
 	.select_font	= console_simple_select_font,
+#ifdef CONFIG_CURSOR
 	.set_cursor_visible	= console_set_cursor_visible,
+#endif
 };
 
 U_BOOT_DRIVER(vidconsole_normal) = {

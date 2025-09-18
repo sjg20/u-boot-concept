@@ -701,6 +701,7 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf)
 	return 0;
 }
 
+#ifdef CONFIG_CURSOR
 int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
 				  uint x, uint y, uint index)
 {
@@ -715,6 +716,7 @@ int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
 
 	return 0;
 }
+#endif
 
 void vidconsole_push_colour(struct udevice *dev, enum colour_idx fg,
 			    enum colour_idx bg, struct vidconsole_colour *old)
