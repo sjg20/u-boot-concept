@@ -88,7 +88,7 @@ static __maybe_unused int console_get_cursor_info(struct udevice *dev)
 	struct console_simple_priv *priv = dev_get_priv(dev);
 	struct video_fontdata *fontdata = priv->fontdata;
 	struct vidconsole_cursor *curs = &vc_priv->curs;
-	int x, y, index;
+	int x, y, index, xspace, xpos;
 
 	/* for now, this is not used outside expo */
 	if (!IS_ENABLED(CONFIG_EXPO))
@@ -97,7 +97,30 @@ static __maybe_unused int console_get_cursor_info(struct udevice *dev)
 	x = VID_TO_PIXEL(vc_priv->xmark_frac);
 	y = vc_priv->ymark;
 	index = vc_priv->cli_index;
-	x += index * fontdata->width;
+
+	/* rounded up character position in this line */
+	xpos = (x + vc_priv->x_charsize - 1) / vc_priv->x_charsize;
+
+	/* number of characters which can fit on this (first) line */
+	xspace = vc_priv->cols - xpos;
+
+	if (!curs->indent && index > xspace) {
+		/* move to the next line */
+		y += vc_priv->y_charsize;
+		index -= xspace;
+
+		/* figure out the available space in subsequent lines */
+		if (!curs->indent) {
+			xspace = vc_priv->cols;
+			x = 0;
+		}
+
+		/* calculate the line based on that */
+		y += index / xspace;
+		x += (index % xspace) * fontdata->width;
+	} else {
+		x += index * fontdata->width;
+	}
 
 	/* place the cursor 1 pixel before the start of the next char */
 	if (x > 0)
@@ -107,7 +130,7 @@ static __maybe_unused int console_get_cursor_info(struct udevice *dev)
 	curs->x = x;
 	curs->y = y;
 	curs->height = vc_priv->y_charsize;
-	curs->index = index;
+	curs->index = vc_priv->cli_index;
 
 	return 0;
 }
