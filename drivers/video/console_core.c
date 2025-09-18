@@ -160,12 +160,12 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
 	return ret;
 }
 
-int cursor_show(void *line, struct video_priv *vid_priv, uint height,
+int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
 		bool direction)
 {
 	int step, line_step, pbytes, ret;
+	void *line, *dst;
 	uint value;
-	void *dst;
 
 	ret = check_bpix_support(vid_priv->bpix);
 	if (ret)
@@ -180,16 +180,22 @@ int cursor_show(void *line, struct video_priv *vid_priv, uint height,
 		line_step = vid_priv->line_length;
 	}
 
+	/* Figure out where to write the cursor in the frame buffer */
+	line = vid_priv->fb + curs->y * vid_priv->line_length +
+		curs->x * VNBYTES(vid_priv->bpix);
+
 	value = vid_priv->colour_fg;
 
-	for (int row = 0; row < height; row++) {
+	for (int row = 0; row < curs->height; row++) {
 		dst = line;
+
 		for (int col = 0; col < VIDCONSOLE_CURSOR_WIDTH; col++)
 			fill_pixel_and_goto_next(&dst, value, pbytes, step);
+
 		line += line_step;
 	}
 
-	return ret;
+	return 0;
 }
 
 int console_probe(struct udevice *dev)

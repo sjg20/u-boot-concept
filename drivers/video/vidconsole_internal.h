@@ -9,6 +9,10 @@
 #include <charset.h>
 #include <config.h>
 
+struct udevice;
+struct vidconsole_cursor;
+struct video_priv;
+
 #define FLIPPED_DIRECTION 1
 #define NORMAL_DIRECTION 0
 
@@ -98,10 +102,10 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
 /**
  * cursor_show() - Draw a simple vertical cursor
  *
- * @line: pointer to framebuffer buffer: upper left cursor corner
- * @vid_priv: driver private data
- * @height: height of the cursor in pixels
- * @param direction	controls cursor orientation. Can be normal or flipped.
+ * @curs: cursor information
+ * @vid_priv: video-device info
+ * @direction: controls cursor orientation (normal or flipped)
+ *
  * When normal:               When flipped:
  *|-----------------------------------------------|
  *|               *        |   line stepping      |
@@ -116,7 +120,7 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
  *
  * Return: 0, if success, or else error code.
  */
-int cursor_show(void *line, struct video_priv *vid_priv, uint height,
+int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
 		bool direction);
 
 /**

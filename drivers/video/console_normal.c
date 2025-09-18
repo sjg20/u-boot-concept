@@ -75,17 +75,18 @@ int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
 	return console_fixed_putc_xy(dev, x_frac, y, cp, priv->fontdata);
 }
 
-static int __maybe_unused console_set_cursor_visible(struct udevice *dev,
-						     bool visible, uint x,
-						     uint y, uint index)
+static __maybe_unused int console_get_cursor_info(struct udevice *dev,
+						  bool visible, uint x, uint y,
+						  uint index)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_simple_priv *priv = dev_get_priv(dev);
 	struct video_fontdata *fontdata = priv->fontdata;
+	struct vidconsole_cursor *curs = &vc_priv->curs;
 	int pbytes = VNBYTES(vid_priv->bpix);
-	void *start;
+	void *start, *line;
 
 	/* for now, this is not used outside expo */
 	if (!IS_ENABLED(CONFIG_EXPO))
@@ -98,7 +99,12 @@ static int __maybe_unused console_set_cursor_visible(struct udevice *dev,
 		x -= 1;
 
 	start = vid_priv->fb + y * vid_priv->line_length + x * pbytes;
-	cursor_show(start, vid_priv, vc_priv->y_charsize, NORMAL_DIRECTION);
+	line = start;
+
+	/* Store line pointer and height in cursor struct */
+	curs->x = x;
+	curs->y = y;
+	curs->height = vc_priv->y_charsize;
 
 	return 0;
 }
@@ -116,7 +122,7 @@ struct vidconsole_ops console_ops = {
 	.get_font	= console_simple_get_font,
 	.select_font	= console_simple_select_font,
 #ifdef CONFIG_CURSOR
-	.set_cursor_visible	= console_set_cursor_visible,
+	.get_cursor_info	= console_get_cursor_info,
 #endif
 };
 

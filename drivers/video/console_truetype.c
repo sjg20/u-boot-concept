@@ -993,33 +993,30 @@ static int truetype_entry_restore(struct udevice *dev, struct abuf *buf)
 	return 0;
 }
 
-static int truetype_set_cursor_visible(struct udevice *dev, bool visible,
-				       uint x, uint y, uint index)
+static int truetype_get_cursor_info(struct udevice *dev, bool visible,
+				    uint x, uint y, uint index)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_tt_priv *priv = dev_get_priv(dev);
-	void *line;
+	struct vidconsole_cursor *curs = &vc_priv->curs;
 	uint height;
 
 	if (xpl_phase() <= PHASE_SPL)
 		return -ENOSYS;
-
-	if (!visible)
-		return 0;
 
 	/*
 	 * figure out where to place the cursor. This driver ignores the
 	 * passed-in values, since an entry_restore() must have been done before
 	 * calling this function.
 	 */
-	if (index < priv->pos_ptr)
-		x = VID_TO_PIXEL(priv->pos[index].xpos_frac);
-	else
-		x = VID_TO_PIXEL(vc_priv->xcur_frac);
-
-	y = vc_priv->ycur;
+	if (visible) {
+		index = priv->pos_ptr;
+		if (index < priv->pos_ptr)
+			x = VID_TO_PIXEL(priv->pos[index].xpos_frac);
+		else
+			x = VID_TO_PIXEL(vc_priv->xcur_frac);
+		y = vc_priv->ycur;
+	}
 
 	/* Get font height from current font type */
 	if (priv->cur_fontdata)
@@ -1027,16 +1024,13 @@ static int truetype_set_cursor_visible(struct udevice *dev, bool visible,
 	else
 		height = priv->cur_met->font_size;
 
-	/* Figure out where to write the cursor in the frame buffer */
-	line = vid_priv->fb + y * vid_priv->line_length +
-		x * VNBYTES(vid_priv->bpix);
+	/* Store line pointer and height in cursor struct */
+	curs->x = x;
+	curs->y = y;
+	curs->index = index;
+	curs->height = height;
 
-	/* Use the shared cursor drawing function */
-	cursor_show(line, vid_priv, height, NORMAL_DIRECTION);
-
-	video_damage(dev->parent, x, y, VIDCONSOLE_CURSOR_WIDTH, height);
-
-	return video_sync(vid, true);
+	return 0;
 }
 
 const char *console_truetype_get_font_size(struct udevice *dev, uint *sizep)
@@ -1101,7 +1095,7 @@ struct vidconsole_ops console_truetype_ops = {
 	.nominal	= truetype_nominal,
 	.entry_save	= truetype_entry_save,
 	.entry_restore	= truetype_entry_restore,
-	.set_cursor_visible	= truetype_set_cursor_visible
+	.get_cursor_info	= truetype_get_cursor_info,
 };
 
 U_BOOT_DRIVER(vidconsole_truetype) = {

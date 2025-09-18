@@ -330,9 +330,9 @@ struct vidconsole_ops {
 	int (*entry_restore)(struct udevice *dev, struct abuf *buf);
 
 	/**
-	 * set_cursor_visible() - Show or hide the cursor
+	 * get_cursor_info() - Get cursor position info
 	 *
-	 * Shows or hides a cursor at the current position
+	 * Calculates and stores cursor position information
 	 *
 	 * @dev: Console device to use
 	 * @visible: true to show the cursor, false to hide it
@@ -341,8 +341,8 @@ struct vidconsole_ops {
 	 * @index: Character position (0 = at start)
 	 * Return: 0 if OK, -ve on error
 	 */
-	int (*set_cursor_visible)(struct udevice *dev, bool visible,
-				  uint x, uint y, uint index);
+	int (*get_cursor_info)(struct udevice *dev, bool visible,
+			       uint x, uint y, uint index);
 };
 
 /* Get a pointer to the driver operations for a video console device */
@@ -431,6 +431,21 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf);
 
 #ifdef CONFIG_CURSOR
 /**
+ * vidconsole_show_cursor() - Show the cursor
+ *
+ * Shows a cursor at the specified position. The position is passed in, but for
+ * the truetype console it is not actually used, since it tracks where the
+ * cursor must go.
+ *
+ * @dev: Console device to use
+ * @x: X position in pixels
+ * @y: Y position in pixels
+ * @index: Character position (0 = at start)
+ * Return: 0 if OK, -ve on error
+ */
+int vidconsole_show_cursor(struct udevice *dev, uint x, uint y, uint index);
+
+/**
  * vidconsole_set_cursor_visible() - Show or hide the cursor
  *
  * Shows or hides a cursor at the current position
@@ -445,6 +460,12 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf);
 int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
 				  uint x, uint y, uint index);
 #else
+static inline int vidconsole_show_cursor(struct udevice *dev, uint x, uint y,
+					 uint index)
+{
+	return 0;
+}
+
 static inline int vidconsole_set_cursor_visible(struct udevice *dev,
 						bool visible, uint x, uint y,
 						uint index)

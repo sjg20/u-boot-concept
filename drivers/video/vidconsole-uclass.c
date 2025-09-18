@@ -17,6 +17,7 @@
 #include <dm.h>
 #include <video.h>
 #include <video_console.h>
+#include "vidconsole_internal.h"
 #include <video_font.h>		/* Bitmap font for code page 437 */
 #include <linux/ctype.h>
 
@@ -702,21 +703,59 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf)
 }
 
 #ifdef CONFIG_CURSOR
+int vidconsole_show_cursor(struct udevice *dev, uint x, uint y, uint index)
+{
+	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+	struct vidconsole_cursor *curs = &priv->curs;
+	int ret;
+
+	/* find out where the cursor should be drawn */
+	if (ops->get_cursor_info) {
+		ret = ops->get_cursor_info(dev, true, x, y, index);
+		if (ret && ret != -ENOSYS)
+			return ret;
+	}
+
+	/* If the driver stored cursor line and height, use them for drawing */
+	if (curs->height) {
+		struct udevice *vid = dev_get_parent(dev);
+		struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+
+		/*
+		 * avoid drawing off the display - we assume that the driver
+		 * ensures that curs->y < vid_priv->ysize
+		 */
+		curs->height = min(curs->height, vid_priv->ysize - curs->y);
+
+		ret = cursor_show(curs, vid_priv, NORMAL_DIRECTION);
+		if (ret)
+			return ret;
+
+		/* Update display damage for cursor area */
+		video_damage(vid, curs->x, curs->y, VIDCONSOLE_CURSOR_WIDTH,
+			     curs->height);
+	}
+
+	priv->curs.visible = true;
+
+	return 0;
+}
+
 int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
 				  uint x, uint y, uint index)
 {
-	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
-	int ret;
+	if (visible) {
+		int ret;
 
-	if (ops->set_cursor_visible) {
-		ret = ops->set_cursor_visible(dev, visible, x, y, index);
-		if (ret != -ENOSYS)
+		ret = vidconsole_show_cursor(dev, x, y, index);
+		if (ret)
 			return ret;
 	}
 
 	return 0;
 }
-#endif
+#endif /* CONFIG_CURSOR */
 
 void vidconsole_push_colour(struct udevice *dev, enum colour_idx fg,
 			    enum colour_idx bg, struct vidconsole_colour *old)
