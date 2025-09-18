@@ -21,25 +21,9 @@
 static int console_set_font(struct udevice *dev, struct video_fontdata *fontdata)
 {
 	struct console_simple_priv *priv = dev_get_priv(dev);
-	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
-
-	debug("console_simple: setting %s font\n", fontdata->name);
-	debug("width: %d\n", fontdata->width);
-	debug("byte width: %d\n", fontdata->byte_width);
-	debug("height: %d\n", fontdata->height);
 
 	priv->fontdata = fontdata;
-	vc_priv->x_charsize = fontdata->width;
-	vc_priv->y_charsize = fontdata->height;
-	if (vid_priv->rot % 2) {
-		vc_priv->cols = vid_priv->ysize / fontdata->width;
-		vc_priv->rows = vid_priv->xsize / fontdata->height;
-		vc_priv->xsize_frac = VID_TO_POS(vid_priv->ysize);
-	} else {
-		vc_priv->cols = vid_priv->xsize / fontdata->width;
-		vc_priv->rows = vid_priv->ysize / fontdata->height;
-	}
+	vidconsole_set_bitmap_font(dev, fontdata);
 
 	return 0;
 }

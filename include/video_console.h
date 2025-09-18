@@ -10,6 +10,7 @@
 #include <video.h>
 
 struct abuf;
+struct video_fontdata;
 struct video_priv;
 
 #define VID_FRAC_DIV	256
@@ -602,5 +603,14 @@ int vidconsole_get_font_size(struct udevice *dev, const char **name, uint *sizep
  * @quiet: true to suppress stdout/stderr output, false to enable it
  */
 void vidconsole_set_quiet(struct udevice *dev, bool quiet);
+
+/**
+ * vidconsole_set_bitmap_font() - prepare vidconsole for chosen bitmap font
+ *
+ * @dev		vidconsole device
+ * @fontdata	pointer to font data struct
+ */
+void vidconsole_set_bitmap_font(struct udevice *dev,
+				struct video_fontdata *fontdata);
 
 #endif

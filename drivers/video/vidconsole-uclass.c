@@ -812,3 +812,27 @@ void vidconsole_set_quiet(struct udevice *dev, bool quiet)
 
 	priv->quiet = quiet;
 }
+
+void vidconsole_set_bitmap_font(struct udevice *dev,
+				struct video_fontdata *fontdata)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+
+	log_debug("console_simple: setting %s font\n", fontdata->name);
+	log_debug("width: %d\n", fontdata->width);
+	log_debug("byte width: %d\n", fontdata->byte_width);
+	log_debug("height: %d\n", fontdata->height);
+
+	vc_priv->x_charsize = fontdata->width;
+	vc_priv->y_charsize = fontdata->height;
+	if (vid_priv->rot % 2) {
+		vc_priv->cols = vid_priv->ysize / fontdata->width;
+		vc_priv->rows = vid_priv->xsize / fontdata->height;
+		vc_priv->xsize_frac = VID_TO_POS(vid_priv->ysize);
+	} else {
+		vc_priv->cols = vid_priv->xsize / fontdata->width;
+		vc_priv->rows = vid_priv->ysize / fontdata->height;
+		/* xsize_frac is set in vidconsole_pre_probe() */
+	}
+}
