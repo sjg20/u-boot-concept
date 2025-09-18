@@ -536,3 +536,33 @@ void expo_exit_mode(struct expo *exp)
 {
 	video_manual_sync(exp->display, false);
 }
+
+void expo_damage_reset(struct expo *exp)
+{
+	exp->damage.x0 = 0;
+	exp->damage.y0 = 0;
+	exp->damage.x1 = 0;
+	exp->damage.y1 = 0;
+}
+
+void expo_damage_add(struct expo *exp, const struct vid_bbox *bbox)
+{
+	/* If bbox is invalid (empty), do nothing */
+	if (bbox->x1 <= bbox->x0 || bbox->y1 <= bbox->y0)
+		return;
+
+	/* If current damage is empty, set it to the new bbox */
+	if (exp->damage.x1 <= exp->damage.x0 || exp->damage.y1 <= exp->damage.y0) {
+		exp->damage = *bbox;
+	} else {
+		/* Expand damage area to include new bbox */
+		if (bbox->x0 < exp->damage.x0)
+			exp->damage.x0 = bbox->x0;
+		if (bbox->y0 < exp->damage.y0)
+			exp->damage.y0 = bbox->y0;
+		if (bbox->x1 > exp->damage.x1)
+			exp->damage.x1 = bbox->x1;
+		if (bbox->y1 > exp->damage.y1)
+			exp->damage.y1 = bbox->y1;
+	}
+}

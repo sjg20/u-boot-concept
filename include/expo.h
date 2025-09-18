@@ -135,6 +135,7 @@ struct expo_theme {
  * @mouse_ptr: Pointer to mouse pointer image data (BMP format)
  * @mouse_size: Size of mouse pointer (width and height in pixels)
  * @mouse_pos: Current mouse position
+ * @damage: Bounding box of the area that needs to be redrawn
  * @priv: Private data for the controller
  * @done: Indicates that a cedit session is complete and the user has quit
  * @save: Indicates that cedit data should be saved, rather than discarded
@@ -160,6 +161,7 @@ struct expo {
 	const void *mouse_ptr;
 	struct vid_size mouse_size;
 	struct vid_pos mouse_pos;
+	struct vid_bbox damage;
 	void *priv;
 	bool done;
 	bool save;
@@ -1196,5 +1198,26 @@ void expo_enter_mode(struct expo *exp);
  * finishing the expo loop.
  */
 void expo_exit_mode(struct expo *exp);
+
+/**
+ * expo_damage_reset() - Reset the damage tracking area
+ *
+ * @exp: Expo to reset damage tracking for
+ *
+ * Clears the damage area, indicating that no part of the display needs
+ * to be redrawn.
+ */
+void expo_damage_reset(struct expo *exp);
+
+/**
+ * expo_damage_add() - Add a damaged area to the expo damage tracking
+ *
+ * @exp: Expo to add damage to
+ * @bbox: Bounding box of the damaged area to add
+ *
+ * Expands the current damage area to include the new damaged region.
+ * If there is no existing damage, the damage area is set to the new region.
+ */
+void expo_damage_add(struct expo *exp, const struct vid_bbox *bbox);
 
 #endif /*__EXPO_H */
