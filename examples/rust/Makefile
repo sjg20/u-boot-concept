@@ -41,8 +41,6 @@ $(OUTDIR):
 
 # Build dynamic version (links with libu-boot.so)
 $(OUTDIR)/demo: $(RUST_SOURCES) $(UBOOT_BUILD)/libu-boot.so | $(OUTDIR)
-	@echo "Building Rust demo (dynamic) with library from $(UBOOT_BUILD)"
-	@echo "OUTDIR=$(OUTDIR), abspath=$(OUTDIR_ABS)"
 	@if [ ! -f "$(UBOOT_BUILD)/libu-boot.so" ]; then \
 		echo "No shared library at $(UBOOT_BUILD)/libu-boot.so" >&2; \
 		echo "Please build U-Boot: make sandbox_defconfig && make" >&2; \
@@ -54,7 +52,6 @@ $(OUTDIR)/demo: $(RUST_SOURCES) $(UBOOT_BUILD)/libu-boot.so | $(OUTDIR)
 
 # Build static version (links with libu-boot.a)
 $(OUTDIR)/demo_static: $(RUST_SOURCES) $(UBOOT_BUILD)/libu-boot.a | $(OUTDIR)
-	@echo "Building Rust demo (static) with library from $(UBOOT_BUILD)"
 	@if [ ! -f "$(UBOOT_BUILD)/libu-boot.a" ]; then \
 		echo "No static library at $(UBOOT_BUILD)/libu-boot.a" >&2; \
 		echo "Please build U-Boot: make sandbox_defconfig && make" >&2; \
