@@ -442,6 +442,11 @@ static int vidconsole_output_glyph(struct udevice *dev, int ch)
 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
 	int ret;
 
+	if (_DEBUG) {
+		console_printf_select_stderr(true,
+				     "glyph last_ch '%c': ch '%c' (%02x): ",
+				     priv->last_ch, ch >= ' ' ? ch : ' ', ch);
+	}
 	/*
 	 * Failure of this function normally indicates an unsupported
 	 * colour depth. Check this and return an error to help with

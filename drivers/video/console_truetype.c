@@ -6,6 +6,7 @@
 #define LOG_CATEGORY	UCLASS_VIDEO
 
 #include <abuf.h>
+#include <console.h>
 #include <dm.h>
 #include <log.h>
 #include <malloc.h>
@@ -321,7 +322,16 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	if (vc_priv->last_ch) {
 		kern = stbtt_GetCodepointKernAdvance(font, vc_priv->last_ch,
 						     cp);
+		if (_DEBUG) {
+			console_printf_select_stderr(true, "kern %c (%02x)",
+						     vc_priv->last_ch,
+						     vc_priv->last_ch);
+		}
 		xpos += met->scale * kern;
+	}
+	if (_DEBUG) {
+		console_printf_select_stderr(true, " %c (%02x)\n",
+					     cp >= ' ' ? cp : ' ', cp);
 	}
 
 	/*
