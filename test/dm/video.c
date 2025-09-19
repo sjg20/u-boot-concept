@@ -229,7 +229,8 @@ DM_TEST(dm_test_video_text_12x22, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_video_chars(struct unit_test_state *uts)
 {
 	struct udevice *dev, *con;
-	const char *test_string = "Well\b\b\b\bxhe is\r \n\ta very \amodest  \bman\n\t\tand Has much to\b\bto be modest about.";
+	const char *test_string = "Well\b\b\b\bxhe is\r \n\ta very \amodest  "
+		"\bman\n\t\tand Has much to\b\bto be modest about.";
 
 	ut_assertok(select_vidconsole(uts, "vidconsole0"));
 	ut_assertok(video_get_nologo(uts, &dev));
@@ -581,7 +582,13 @@ DM_TEST(dm_test_video_comp_bmp8, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_video_truetype(struct unit_test_state *uts)
 {
 	struct udevice *dev, *con;
-	const char *test_string = "Criticism may not be agreeable, but it is necessary. It fulfils the same function as pain in the human body. It calls attention to an unhealthy state of things. Some see private enterprise as a predatory target to be shot, others as a cow to be milked, but few are those who see it as a sturdy horse pulling the wagon. The \aprice OF\b\bof greatness\n\tis responsibility.\n\nBye";
+	const char *test_string = "Criticism may not be agreeable, but it "
+		"is necessary. It fulfils the same function as pain in the "
+		"human body. It calls attention to an unhealthy state of "
+		"things. Some see private enterprise as a predatory target to "
+		"be shot, others as a cow to be milked, but few are those who "
+		"see it as a sturdy horse pulling the wagon. The \aprice "
+		"OF\b\bof greatness\n\tis responsibility.\n\nBye";
 
 	ut_assertok(video_get_nologo(uts, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
@@ -599,7 +606,13 @@ static int dm_test_video_truetype_scroll(struct unit_test_state *uts)
 {
 	struct sandbox_sdl_plat *plat;
 	struct udevice *dev, *con;
-	const char *test_string = "Criticism may not be agreeable, but it is necessary. It fulfils the same function as pain in the human body. It calls attention to an unhealthy state of things. Some see private enterprise as a predatory target to be shot, others as a cow to be milked, but few are those who see it as a sturdy horse pulling the wagon. The \aprice OF\b\bof greatness\n\tis responsibility.\n\nBye";
+	const char *test_string = "Criticism may not be agreeable, but it "
+		"is necessary. It fulfils the same function as pain in the "
+		"human body. It calls attention to an unhealthy state of "
+		"things. Some see private enterprise as a predatory target to "
+		"be shot, others as a cow to be milked, but few are those who "
+		"see it as a sturdy horse pulling the wagon. The \aprice "
+		"OF\b\bof greatness\n\tis responsibility.\n\nBye";
 
 	ut_assertok(uclass_find_device(UCLASS_VIDEO, 0, &dev));
 	ut_assert(!device_active(dev));
@@ -621,7 +634,11 @@ static int dm_test_video_truetype_bs(struct unit_test_state *uts)
 {
 	struct sandbox_sdl_plat *plat;
 	struct udevice *dev, *con;
-	const char *test_string = "...Criticism may or may\b\b\b\b\b\bnot be agreeable, but seldom it is necessary\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bit is necessary. It fulfils the same function as pain in the human body. It calls attention to an unhealthy state of things.";
+	const char *test_string = "...Criticism may or may\b\b\b\b\b\bnot be "
+		"agreeable, but seldom it is necessary\b\b\b\b\b\b\b\b\b\b\b\b"
+		"\b\b\b\b\b\b\b\b\b\bit is necessary. It fulfils the same "
+		"function as pain in the human body. It calls attention to an "
+		"unhealthy state of things.";
 
 	ut_assertok(uclass_find_device(UCLASS_VIDEO, 0, &dev));
 	ut_assert(!device_active(dev));
@@ -645,7 +662,8 @@ static int dm_test_video_copy(struct unit_test_state *uts)
 	struct video_uc_plat *uc_plat;
 	struct udevice *dev, *con;
 	struct video_priv *priv;
-	const char *test_string = "\n\tCriticism may not be agreeable, but it is necessary.\t";
+	const char *test_string = "\n\tCriticism may not be agreeable, but it "
+		"is necessary.\t";
 	ulong addr;
 
 	if (!IS_ENABLED(CONFIG_VIDEO_COPY))
@@ -710,7 +728,8 @@ static int dm_test_video_damage(struct unit_test_state *uts)
 	struct video_priv *priv;
 	const char *test_string_1 = "Criticism may not be agreeable, ";
 	const char *test_string_2 = "but it is necessary.";
-	const char *test_string_3 = "It fulfils the same function as pain in the human body.";
+	const char *test_string_3 = "It fulfils the same function as pain in "
+		"the human body.";
 
 	if (!IS_ENABLED(CONFIG_VIDEO_DAMAGE))
 		return -EAGAIN;
