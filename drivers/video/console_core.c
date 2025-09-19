@@ -9,6 +9,8 @@
 #include <video.h>
 #include <video_console.h>
 #include <dm.h>
+#include <malloc.h>
+#include <spl.h>
 #include <video_font.h>
 #include "vidconsole_internal.h"
 
@@ -21,25 +23,9 @@
 static int console_set_font(struct udevice *dev, struct video_fontdata *fontdata)
 {
 	struct console_simple_priv *priv = dev_get_priv(dev);
-	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
-
-	debug("console_simple: setting %s font\n", fontdata->name);
-	debug("width: %d\n", fontdata->width);
-	debug("byte width: %d\n", fontdata->byte_width);
-	debug("height: %d\n", fontdata->height);
 
 	priv->fontdata = fontdata;
-	vc_priv->x_charsize = fontdata->width;
-	vc_priv->y_charsize = fontdata->height;
-	if (vid_priv->rot % 2) {
-		vc_priv->cols = vid_priv->ysize / fontdata->width;
-		vc_priv->rows = vid_priv->xsize / fontdata->height;
-		vc_priv->xsize_frac = VID_TO_POS(vid_priv->ysize);
-	} else {
-		vc_priv->cols = vid_priv->xsize / fontdata->width;
-		vc_priv->rows = vid_priv->ysize / fontdata->height;
-	}
+	vidconsole_set_bitmap_font(dev, fontdata);
 
 	return 0;
 }
@@ -73,6 +59,31 @@ inline void fill_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int ste
 		*dst = value;
 	}
 	*dstp = dst_byte + step;
+}
+
+inline u32 swap_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int step)
+{
+	u8 *dst_byte = *dstp;
+	u32 old_value = 0;
+
+	if (pbytes == 4) {
+		u32 *dst = *dstp;
+		old_value = *dst;
+		*dst = value;
+	}
+	if (pbytes == 2) {
+		u16 *dst = *dstp;
+		old_value = *dst;
+		*dst = value;
+	}
+	if (pbytes == 1) {
+		u8 *dst = *dstp;
+		old_value = *dst;
+		*dst = value;
+	}
+	*dstp = dst_byte + step;
+
+	return old_value;
 }
 
 int fill_char_vertically(uchar *pfont, void **line, struct video_priv *vid_priv,
@@ -176,12 +187,13 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
 	return ret;
 }
 
-int draw_cursor_vertically(void **line, struct video_priv *vid_priv,
-			   uint height, bool direction)
+int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
+		bool direction)
 {
-	int step, line_step, pbytes, ret;
+	int step, line_step, pbytes, ret, row;
+	void *line, *dst;
+	u32 *save_ptr;
 	uint value;
-	void *dst;
 
 	ret = check_bpix_support(vid_priv->bpix);
 	if (ret)
@@ -196,20 +208,116 @@ int draw_cursor_vertically(void **line, struct video_priv *vid_priv,
 		line_step = vid_priv->line_length;
 	}
 
-	value = vid_priv->colour_fg;
-
-	for (int row = 0; row < height; row++) {
-		dst = *line;
-		for (int col = 0; col < VIDCONSOLE_CURSOR_WIDTH; col++)
-			fill_pixel_and_goto_next(&dst, value, pbytes, step);
-		*line += line_step;
+	/* we should not already have saved data */
+	if (curs->saved) {
+		debug("Trying to show cursor but data is already saved\n");
+		return -EINVAL;
 	}
-	return ret;
+
+	/* Figure out where to write the cursor in the frame buffer */
+	line = vid_priv->fb + curs->y * vid_priv->line_length +
+		curs->x * VNBYTES(vid_priv->bpix);
+
+	/* save pixels under cursor and draw new cursor in one pass */
+	value = vid_priv->colour_fg;
+	save_ptr = curs->save_data;
+	for (row = 0; row < curs->height; row++) {
+		dst = line;
+
+		for (int col = 0; col < VIDCONSOLE_CURSOR_WIDTH; col++)
+			*save_ptr++ = swap_pixel_and_goto_next(&dst, value,
+							       pbytes, step);
+		line += line_step;
+	}
+	curs->saved = true;
+
+	return 0;
+}
+
+int cursor_hide(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
+		bool direction)
+{
+	int step, line_step, pbytes, ret;
+	void *line, *dst;
+
+	ret = check_bpix_support(vid_priv->bpix);
+	if (ret)
+		return ret;
+
+	pbytes = VNBYTES(vid_priv->bpix);
+	if (direction) {
+		step = -pbytes;
+		line_step = -vid_priv->line_length;
+	} else {
+		step = pbytes;
+		line_step = vid_priv->line_length;
+	}
+
+	/* Trying to hide cursor - we should have saved data */
+	if (!curs->saved) {
+		debug("Trying to hide cursor but no data was saved\n");
+		return -EINVAL;
+	}
+
+	/* Figure out where to write the cursor in the frame buffer */
+	line = vid_priv->fb + curs->y * vid_priv->line_length +
+		curs->x * VNBYTES(vid_priv->bpix);
+
+	/* Restore saved pixels */
+	u32 *save_ptr = curs->save_data;
+	dst = line;
+	for (int row = 0; row < curs->height; row++) {
+		void *row_dst = dst;
+		for (int col = 0; col < VIDCONSOLE_CURSOR_WIDTH; col++)
+			fill_pixel_and_goto_next(&row_dst, *save_ptr++, pbytes,
+						 step);
+		dst += line_step;
+	}
+	curs->saved = false;
+
+	return 0;
+}
+
+int console_alloc_cursor(struct udevice *dev)
+{
+	struct vidconsole_priv *vc_priv;
+	struct vidconsole_cursor *curs;
+	struct video_priv *vid_priv;
+	struct udevice *vid;
+	int save_count;
+
+	if (!CONFIG_IS_ENABLED(CURSOR) || xpl_phase() < PHASE_BOARD_R)
+		return 0;
+
+	vc_priv = dev_get_uclass_priv(dev);
+	vid = dev_get_parent(dev);
+	vid_priv = dev_get_uclass_priv(vid);
+	curs = &vc_priv->curs;
+
+	/* Allocate cursor save buffer for maximum possible cursor height */
+	save_count = vid_priv->ysize * VIDCONSOLE_CURSOR_WIDTH;
+	curs->save_data = malloc(save_count * sizeof(u32));
+	if (!curs->save_data)
+		return -ENOMEM;
+
+	return 0;
 }
 
 int console_probe(struct udevice *dev)
 {
-	return console_set_font(dev, fonts);
+	int ret;
+
+	ret = console_set_font(dev, fonts);
+	if (ret)
+		return ret;
+
+	if (CONFIG_IS_ENABLED(CURSOR) && xpl_phase() == PHASE_BOARD_R) {
+		ret = console_alloc_cursor(dev);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
 }
 
 const char *console_simple_get_font_size(struct udevice *dev, uint *sizep)
@@ -226,6 +334,39 @@ int console_simple_get_font(struct udevice *dev, int seq, struct vidfont_info *i
 	info->name = fonts[seq].name;
 
 	return info->name ? 0 : -ENOENT;
+}
+
+int console_fixed_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp,
+			   struct video_fontdata *fontdata)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct udevice *vid = dev->parent;
+	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+	int pbytes = VNBYTES(vid_priv->bpix);
+	int x, linenum, ret;
+	void *start, *line;
+	u8 ch = console_utf_to_cp437(cp);
+	uchar *pfont = fontdata->video_fontdata +
+			ch * fontdata->char_pixel_bytes;
+
+	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
+		return -EAGAIN;
+	linenum = y;
+	x = VID_TO_PIXEL(x_frac);
+	start = vid_priv->fb + linenum * vid_priv->line_length + x * pbytes;
+	line = start;
+
+	ret = fill_char_vertically(pfont, &line, vid_priv, fontdata, NORMAL_DIRECTION);
+	if (ret)
+		return ret;
+
+	video_damage(dev->parent,
+		     x,
+		     y,
+		     fontdata->width,
+		     fontdata->height);
+
+	return VID_TO_POS(fontdata->width);
 }
 
 int console_simple_select_font(struct udevice *dev, const char *name, uint size)

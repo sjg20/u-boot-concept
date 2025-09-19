@@ -9,6 +9,10 @@
 #include <charset.h>
 #include <config.h>
 
+struct udevice;
+struct vidconsole_cursor;
+struct video_priv;
+
 #define FLIPPED_DIRECTION 1
 #define NORMAL_DIRECTION 0
 
@@ -40,6 +44,18 @@ int check_bpix_support(int bpix);
  *			and may be negative to control filling direction.
  */
 void fill_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int step);
+
+/**
+ * swap_pixel_and_goto_next() - Swap 1 pixel in framebuffer, and go to next one
+ *
+ * @param dstp		a pointer to pointer to framebuffer.
+ * @param value		value to write to framebuffer.
+ * @param pbytes	framebuffer bytes per pixel.
+ * @param step		framebuffer pointer increment. Usually is equal to pbytes,
+ *			and may be negative to control filling direction.
+ * Return: old value of the pixel
+ */
+u32 swap_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int step);
 
 /**
  * Fills 1 character in framebuffer vertically. Vertically means we're filling char font data rows
@@ -96,12 +112,12 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
 			   struct video_fontdata *fontdata, bool direction);
 
 /**
- * draw_cursor_vertically() - Draw a simple vertical cursor
+ * cursor_show() - Show cursor by saving and drawing pixels
  *
- * @line: pointer to framebuffer buffer: upper left cursor corner
- * @vid_priv: driver private data
- * @height: height of the cursor in pixels
- * @param direction	controls cursor orientation. Can be normal or flipped.
+ * @curs: cursor information
+ * @vid_priv: video-device info
+ * @direction: controls cursor orientation (normal or flipped)
+ *
  * When normal:               When flipped:
  *|-----------------------------------------------|
  *|               *        |   line stepping      |
@@ -114,10 +130,31 @@ int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_pri
  *|---!!we're starting from upper left char corner|
  *|-----------------------------------------------|
  *
- * Return: 0, if success, or else error code.
+ * Return: 0 on success, -EINVAL if cursor data already saved
  */
-int draw_cursor_vertically(void **line, struct video_priv *vid_priv,
-			   uint height, bool direction);
+int cursor_show(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
+		bool direction);
+
+/**
+ * cursor_hide() - Hide cursor by restoring saved pixels
+ *
+ * @curs: cursor information
+ * @vid_priv: video-device info
+ * @direction: controls cursor orientation (normal or flipped)
+ * Return: 0 if success, -EINVAL if no cursor data was saved
+ */
+int cursor_hide(struct vidconsole_cursor *curs, struct video_priv *vid_priv,
+		bool direction);
+
+/**
+ * console_alloc_cursor() - Allocate cursor save buffer
+ *
+ * Allocates memory for saving pixels under the cursor
+ *
+ * @dev: vidconsole device
+ * Return: 0 if success, -ENOMEM if allocation fails
+ */
+int console_alloc_cursor(struct udevice *dev);
 
 /**
  * console probe function.
@@ -145,6 +182,30 @@ int console_simple_get_font(struct udevice *dev, int seq, struct vidfont_info *i
  * See details in video_console.h select_font function
  **/
 int console_simple_select_font(struct udevice *dev, const char *name, uint size);
+
+/**
+ * Normal console putc_xy function that can be called by other console drivers
+ *
+ * @param dev		console device
+ * @param x_frac	fractional X position
+ * @param y		Y position in pixels
+ * @param cp		Unicode code point
+ * @returns width in fractional pixels, or -ve on error
+ */
+int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp);
+
+/**
+ * Fixed font putc_xy function that can be called with explicit font data
+ *
+ * @param dev		console device
+ * @param x_frac	fractional X position
+ * @param y		Y position in pixels
+ * @param cp		Unicode code point
+ * @param fontdata	font data to use for rendering
+ * @returns width in fractional pixels, or -ve on error
+ */
+int console_fixed_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp,
+			  struct video_fontdata *fontdata);
 
 /**
  * Internal function to convert Unicode code points to code page 437.

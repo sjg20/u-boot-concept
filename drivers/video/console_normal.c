@@ -8,10 +8,17 @@
 
 #include <charset.h>
 #include <dm.h>
+#include <spl.h>
 #include <video.h>
 #include <video_console.h>
 #include <video_font.h>		/* Get font data, width and height */
 #include "vidconsole_internal.h"
+
+struct console_store {
+	int xpos_frac;
+	int ypos;
+	int cli_index;
+};
 
 static int console_set_row(struct udevice *dev, uint row, int clr)
 {
@@ -68,69 +75,108 @@ static int console_move_rows(struct udevice *dev, uint rowdst,
 	return 0;
 }
 
-static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
+int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
 {
-	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_simple_priv *priv = dev_get_priv(dev);
-	struct video_fontdata *fontdata = priv->fontdata;
-	int pbytes = VNBYTES(vid_priv->bpix);
-	int x, linenum, ret;
-	void *start, *line;
-	u8 ch = console_utf_to_cp437(cp);
-	uchar *pfont = fontdata->video_fontdata +
-			ch * fontdata->char_pixel_bytes;
 
-	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
-		return -EAGAIN;
-	linenum = y;
-	x = VID_TO_PIXEL(x_frac);
-	start = vid_priv->fb + linenum * vid_priv->line_length + x * pbytes;
-	line = start;
-
-	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
-		return -EAGAIN;
-
-	ret = fill_char_vertically(pfont, &line, vid_priv, fontdata, NORMAL_DIRECTION);
-	if (ret)
-		return ret;
-
-	video_damage(dev->parent,
-		     x,
-		     y,
-		     fontdata->width,
-		     fontdata->height);
-
-	return VID_TO_POS(fontdata->width);
+	return console_fixed_putc_xy(dev, x_frac, y, cp, priv->fontdata);
 }
 
-static int console_set_cursor_visible(struct udevice *dev, bool visible,
-				      uint x, uint y, uint index)
+static __maybe_unused int console_get_cursor_info(struct udevice *dev)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_simple_priv *priv = dev_get_priv(dev);
 	struct video_fontdata *fontdata = priv->fontdata;
-	int pbytes = VNBYTES(vid_priv->bpix);
-	void *start, *line;
+	struct vidconsole_cursor *curs = &vc_priv->curs;
+	int x, y, index, xspace, xpos;
 
 	/* for now, this is not used outside expo */
 	if (!IS_ENABLED(CONFIG_EXPO))
 		return -ENOSYS;
 
-	x += index * fontdata->width;
-	start = vid_priv->fb + y * vid_priv->line_length + x * pbytes;
+	x = VID_TO_PIXEL(vc_priv->xmark_frac);
+	y = vc_priv->ymark;
+	index = vc_priv->cli_index;
+
+	/* rounded up character position in this line */
+	xpos = (x + vc_priv->x_charsize - 1) / vc_priv->x_charsize;
+
+	/* number of characters which can fit on this (first) line */
+	xspace = vc_priv->cols - xpos;
+
+	if (!curs->indent && index > xspace) {
+		/* move to the next line */
+		y += vc_priv->y_charsize;
+		index -= xspace;
+
+		/* figure out the available space in subsequent lines */
+		if (!curs->indent) {
+			xspace = vc_priv->cols;
+			x = 0;
+		}
+
+		/* calculate the line based on that */
+		y += index / xspace;
+		x += (index % xspace) * fontdata->width;
+	} else {
+		x += index * fontdata->width;
+	}
 
 	/* place the cursor 1 pixel before the start of the next char */
-	x -= 1;
+	if (x > 0)
+		x -= 1;
 
-	line = start;
-	draw_cursor_vertically(&line, vid_priv, vc_priv->y_charsize,
-			       NORMAL_DIRECTION);
+	/* Store line pointer and height in cursor struct */
+	curs->x = x;
+	curs->y = y;
+	curs->height = vc_priv->y_charsize;
+	curs->index = vc_priv->cli_index;
 
 	return 0;
+}
+
+static __maybe_unused int normal_entry_save(struct udevice *dev,
+					    struct abuf *buf)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct console_store store;
+	const uint size = sizeof(store);
+
+	if (xpl_phase() <= PHASE_SPL)
+		return -ENOSYS;
+
+	if (!abuf_realloc(buf, size))
+		return log_msg_ret("sav", -ENOMEM);
+
+	store.xpos_frac = vc_priv->xcur_frac;
+	store.ypos  = vc_priv->ycur;
+	store.cli_index  = vc_priv->cli_index;
+	memcpy(abuf_data(buf), &store, size);
+
+	return 0;
+}
+
+static __maybe_unused int normal_entry_restore(struct udevice *dev,
+					       struct abuf *buf)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct console_store store;
+
+	if (xpl_phase() <= PHASE_SPL)
+		return -ENOSYS;
+
+	memcpy(&store, abuf_data(buf), sizeof(store));
+
+	vc_priv->xcur_frac = store.xpos_frac;
+	vc_priv->ycur = store.ypos;
+	vc_priv->cli_index = store.cli_index;
+
+	return 0;
+}
+
+static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, int cp)
+{
+	return console_normal_putc_xy(dev, x_frac, y, cp);
 }
 
 struct vidconsole_ops console_ops = {
@@ -140,7 +186,11 @@ struct vidconsole_ops console_ops = {
 	.get_font_size	= console_simple_get_font_size,
 	.get_font	= console_simple_get_font,
 	.select_font	= console_simple_select_font,
-	.set_cursor_visible	= console_set_cursor_visible,
+#ifdef CONFIG_CURSOR
+	.get_cursor_info	= console_get_cursor_info,
+	.entry_save	= normal_entry_save,
+	.entry_restore	= normal_entry_restore,
+#endif
 };
 
 U_BOOT_DRIVER(vidconsole_normal) = {

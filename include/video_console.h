@@ -10,6 +10,7 @@
 #include <video.h>
 
 struct abuf;
+struct video_fontdata;
 struct video_priv;
 
 #define VID_FRAC_DIV	256
@@ -20,6 +21,56 @@ struct video_priv;
 enum {
 	/* cursor width in pixels */
 	VIDCONSOLE_CURSOR_WIDTH		= 2,
+};
+
+/**
+ * struct vidconsole_cursor - cursor state for a video console
+ *
+ * The cursor is set up and maintained by the vidconsole. It is a simple
+ * vertical bar of width VIDCONSOLE_CURSOR_WIDTH shown in the foreground colour.
+ *
+ * No cursor processing is done unless @enabled is true.
+ *
+ * To figure out where to draw the cursor, the vidconsole's get_cursor_info() is
+ * called. It fills in the @x, @y, @height and @index information below. That
+ * information remains valid while the cursor is shown, so it can be used to
+ * hide the cursor.
+ *
+ * The cursor is drawn only when idle (by vidconsole_show_cursor() called from
+ * vidconsole_idle()). It is erased as soon as any output needs to be written to
+ * the display - vidconsole_hide_cursor() is called from a few places in the
+ * vidconsole uclass.
+ *
+ * Under the hood, vidconsole_show_cursor() calls cursor_show() which saves the
+ * pixels under the cursor as it draws it. Once finished it sets @visible to
+ * true, so that we know we must erase the cursor before drawing anything else.
+ *
+ * The old pixels end up in @save_data and are used by cursor_hide() (called
+ * from vidconsole_hide_cursor()) to restore the display contents to what they
+ * were. Once that is done, @visible is set back to false.
+ *
+ * @enabled:	cursor is active (e.g. during readline)
+ * @visible:	cursor is currently visible
+ * @indent:	indent subsequent lines to the same position as the first line
+ * @saved:	true if save_data contains valid data
+ * @save_data:	saved pixels under cursor
+ * @x:		cursor left X position in pixels
+ * @y:		cursor top Y position in pixels
+ * @height:	height of cursor in pixels
+ * @index:	cursor index within the CLI or field being edited
+ */
+struct vidconsole_cursor {
+	bool enabled;
+	bool visible;
+	bool indent;
+	bool saved;
+	u32 *save_data;
+
+	/* filled in by get_cursor_info(): */
+	uint x;
+	uint y;
+	uint height;
+	uint index;
 };
 
 /**
@@ -47,6 +98,9 @@ enum {
  * @xsize_frac:		Width of the display in fractional units
  * @xstart_frac:	Left margin for the text console in fractional units
  * @last_ch:		Last character written to the text console on this line
+ * @xmark_frac:		X position of start of CLI text entry, in fractional units
+ * @ymark:		Y position of start of CLI text
+ * @cli_index:		Character index into the CLI text (0=start)
  * @escape:		TRUE if currently accumulating an ANSI escape sequence
  * @escape_len:		Length of accumulated escape sequence so far
  * @col_saved:		Saved X position, in fractional units (VID_TO_POS(x))
@@ -54,6 +108,7 @@ enum {
  * @escape_buf:		Buffer to accumulate escape sequence
  * @utf8_buf:		Buffer to accumulate UTF-8 byte sequence
  * @quiet:		Suppress all output from stdio
+ * @curs:		Cursor state and management
  */
 struct vidconsole_priv {
 	struct stdio_dev sdev;
@@ -67,6 +122,9 @@ struct vidconsole_priv {
 	int xsize_frac;
 	int xstart_frac;
 	int last_ch;
+	int xmark_frac;
+	int ymark;
+	int cli_index;
 	/*
 	 * ANSI escape sequences are accumulated character by character,
 	 * starting after the ESC char (0x1b) until the entire sequence
@@ -79,6 +137,7 @@ struct vidconsole_priv {
 	char escape_buf[32];
 	char utf8_buf[5];
 	bool quiet;
+	struct vidconsole_cursor curs;
 };
 
 /**
@@ -305,19 +364,27 @@ struct vidconsole_ops {
 	int (*entry_restore)(struct udevice *dev, struct abuf *buf);
 
 	/**
-	 * set_cursor_visible() - Show or hide the cursor
+	 * get_cursor_info() - Get cursor position info
 	 *
-	 * Shows or hides a cursor at the current position
+	 * Calculates and stores cursor position information. This must fill in
+	 * @x, @y, @height and @index using struct vidconsole_priv fields
+	 * @xmark_frac, @ymark and @index
 	 *
 	 * @dev: Console device to use
-	 * @visible: true to show the cursor, false to hide it
-	 * @x: X position in pixels
-	 * @y: Y position in pixels
-	 * @index: Character position (0 = at start)
 	 * Return: 0 if OK, -ve on error
 	 */
-	int (*set_cursor_visible)(struct udevice *dev, bool visible,
-				  uint x, uint y, uint index);
+	int (*get_cursor_info)(struct udevice *dev);
+
+	/**
+	 * mark_start() - Mark the current position as the state of CLI entry
+	 *
+	 * This indicates that a new CLI entry is starting, so the user will be
+	 * entering characters from this point. The console can use this to set
+	 * the beginning point for the cursor.
+	 *
+	 * @dev: Console device to use
+	 */
+	int (*mark_start)(struct udevice *dev);
 };
 
 /* Get a pointer to the driver operations for a video console device */
@@ -404,20 +471,69 @@ int vidconsole_entry_save(struct udevice *dev, struct abuf *buf);
  */
 int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf);
 
+#ifdef CONFIG_CURSOR
 /**
- * vidconsole_set_cursor_visible() - Show or hide the cursor
+ * vidconsole_show_cursor() - Show the cursor
  *
- * Shows or hides a cursor at the current position
+ * Shows a cursor at the current position.
  *
  * @dev: Console device to use
- * @visible: true to show the cursor, false to hide it
- * @x: X position in pixels
- * @y: Y position in pixels
- * @index: Character position (0 = at start)
  * Return: 0 if OK, -ve on error
  */
-int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
-				  uint x, uint y, uint index);
+int vidconsole_show_cursor(struct udevice *dev);
+
+/**
+ * vidconsole_hide_cursor() - Hide the cursor
+ *
+ * Hides the cursor if it's currently visible
+ *
+ * @dev: Console device to use
+ * Return: 0 if OK, -ve on error
+ */
+int vidconsole_hide_cursor(struct udevice *dev);
+
+/**
+ * vidconsole_readline_start() - Enable cursor for all video consoles
+ *
+ * Called at the start of command line input to show cursors on all
+ * active video consoles
+ *
+ * @indent: indent subsequent lines to the same position as the first line
+ */
+void vidconsole_readline_start(bool indent);
+
+/**
+ * vidconsole_readline_end() - Disable cursor for all video consoles
+ *
+ * Called at the end of command line input to hide cursors on all
+ * active video consoles
+ */
+void vidconsole_readline_end(void);
+#else
+static inline int vidconsole_show_cursor(struct udevice *dev)
+{
+	return 0;
+}
+
+static inline int vidconsole_hide_cursor(struct udevice *dev)
+{
+	return 0;
+}
+
+static inline void vidconsole_readline_start(bool indent)
+{
+}
+
+static inline void vidconsole_readline_end(void)
+{
+}
+#endif /* CONFIG_CURSOR */
+
+static inline void cli_index_adjust(struct vidconsole_priv *priv, int by)
+{
+	if (CONFIG_IS_ENABLED(CURSOR))
+		priv->cli_index += by;
+}
 
 /**
  * vidconsole_push_colour() - Temporarily change the font colour
@@ -593,5 +709,21 @@ int vidconsole_get_font_size(struct udevice *dev, const char **name, uint *sizep
  * @quiet: true to suppress stdout/stderr output, false to enable it
  */
 void vidconsole_set_quiet(struct udevice *dev, bool quiet);
+
+/**
+ * vidconsole_set_bitmap_font() - prepare vidconsole for chosen bitmap font
+ *
+ * @dev		vidconsole device
+ * @fontdata	pointer to font data struct
+ */
+void vidconsole_set_bitmap_font(struct udevice *dev,
+				struct video_fontdata *fontdata);
+
+/*
+ * vidconsole_idle() - Handle periodic cursor display during idle time
+ *
+ * @dev: vidconsole device
+ */
+void vidconsole_idle(struct udevice *dev);
 
 #endif

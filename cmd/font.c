@@ -31,9 +31,6 @@ static int do_font_select(struct cmd_tbl *cmdtp, int flag, int argc,
 	uint size = 0;
 	int ret;
 
-	if (argc < 2)
-		return CMD_RET_USAGE;
-
 	if (uclass_first_device_err(UCLASS_VIDEO_CONSOLE, &dev))
 		return CMD_RET_FAILURE;
 	name = argv[1];

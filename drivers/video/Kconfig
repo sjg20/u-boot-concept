@@ -68,6 +68,14 @@ config BACKLIGHT
 	  This provides backlight uclass driver that enables basic panel
 	  backlight support.
 
+config CURSOR
+	bool "Show a cursor on the console"
+	default y
+	help
+	  Show a cursor on the video console when entering commands. This is
+	  a simple vertical bar drawn before the character at the current
+	  position. The cursor makes it easy to see the current input position.
+
 config VIDEO_PCI_DEFAULT_FB_SIZE
 	hex "Default framebuffer size to use if no drivers request it"
 	default 0x1000000 if X86

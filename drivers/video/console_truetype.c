@@ -6,12 +6,15 @@
 #define LOG_CATEGORY	UCLASS_VIDEO
 
 #include <abuf.h>
+#include <console.h>
 #include <dm.h>
 #include <log.h>
 #include <malloc.h>
 #include <spl.h>
 #include <video.h>
 #include <video_console.h>
+#include <video_font.h>
+#include "vidconsole_internal.h"
 
 /* Functions needed by stb_truetype.h */
 static int tt_floor(double val)
@@ -117,10 +120,14 @@ static double tt_acos(double val)
  *
  * @xpos_frac:	Fractional X position in pixels (multiplied by VID_FRAC_DIV)
  * @ypos:	Y position (pixels from the top)
+ * @width:	Width of the character at this position in pixels (rounded up)
+ * @cp:		Unicode code point of the character
  */
 struct pos_info {
 	int xpos_frac;
 	int ypos;
+	int width;
+	int cp;
 };
 
 /*
@@ -169,6 +176,10 @@ struct console_tt_metrics {
  *		last character. We record enough characters to go back to the
  *		start of the current command line.
  * @pos_ptr:	Current position in the position history
+ * @cur_fontdata:	Current fixed font data (NULL if using TrueType)
+ * @pos_start:	Value of pos_ptr when the cursor is at the start of the text
+ *	being entered by the user
+ * @pos_count:	Maximum value reached by pos_ptr (initially zero)
  */
 struct console_tt_priv {
 	struct console_tt_metrics *cur_met;
@@ -176,6 +187,9 @@ struct console_tt_priv {
 	int num_metrics;
 	struct pos_info pos[POS_HISTORY_SIZE];
 	int pos_ptr;
+	struct video_fontdata *cur_fontdata;
+	int pos_start;
+	int pos_count;
 };
 
 /**
@@ -194,11 +208,17 @@ static int console_truetype_set_row(struct udevice *dev, uint row, int clr)
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct console_tt_priv *priv = dev_get_priv(dev);
-	struct console_tt_metrics *met = priv->cur_met;
 	void *end, *line;
+	int font_height;
 
-	line = vid_priv->fb + row * met->font_size * vid_priv->line_length;
-	end = line + met->font_size * vid_priv->line_length;
+	/* Get font height from current font type */
+	if (priv->cur_fontdata)
+		font_height = priv->cur_fontdata->height;
+	else
+		font_height = priv->cur_met->font_size;
+
+	line = vid_priv->fb + row * font_height * vid_priv->line_length;
+	end = line + font_height * vid_priv->line_length;
 
 	switch (vid_priv->bpix) {
 	case VIDEO_BPP8: {
@@ -247,17 +267,22 @@ static int console_truetype_move_rows(struct udevice *dev, uint rowdst,
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct console_tt_priv *priv = dev_get_priv(dev);
-	struct console_tt_metrics *met = priv->cur_met;
 	void *dst;
 	void *src;
-	int i, diff;
+	int i, diff, font_height;
 
-	dst = vid_priv->fb + rowdst * met->font_size * vid_priv->line_length;
-	src = vid_priv->fb + rowsrc * met->font_size * vid_priv->line_length;
-	memmove(dst, src, met->font_size * vid_priv->line_length * count);
+	/* Get font height from current font type */
+	if (priv->cur_fontdata)
+		font_height = priv->cur_fontdata->height;
+	else
+		font_height = priv->cur_met->font_size;
+
+	dst = vid_priv->fb + rowdst * font_height * vid_priv->line_length;
+	src = vid_priv->fb + rowsrc * font_height * vid_priv->line_length;
+	memmove(dst, src, font_height * vid_priv->line_length * count);
 
 	/* Scroll up our position history */
-	diff = (rowsrc - rowdst) * met->font_size;
+	diff = (rowsrc - rowdst) * font_height;
 	for (i = 0; i < priv->pos_ptr; i++)
 		priv->pos[i].ypos -= diff;
 
@@ -270,6 +295,58 @@ static int console_truetype_move_rows(struct udevice *dev, uint rowdst,
 	return 0;
 }
 
+/**
+ * clear_from() - Clear characters on the display from given index onwards
+ *
+ * Erases all characters from the specified position index in the position
+ * history to the end of the position array (pos_count). This handles line
+ * wrapping by clearing to the end of lines and continuing on subsequent lines.
+ *
+ * @dev:	Device to update
+ * @index:	Starting index in priv->pos array to erase from
+ */
+static void clear_from(struct udevice *dev, int index)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct console_tt_priv *priv = dev_get_priv(dev);
+	struct udevice *vid_dev = dev->parent;
+	struct video_priv *vid_priv = dev_get_uclass_priv(vid_dev);
+	struct pos_info *start_pos, *end_pos;
+	int xstart, xend;
+	int ystart, yend;
+
+	assert(priv->pos_count && index && index < priv->pos_count);
+
+	start_pos = &priv->pos[index];
+	xstart = VID_TO_PIXEL(start_pos->xpos_frac);
+	ystart = start_pos->ypos;
+
+	/* End position is the last character in the position array */
+	end_pos = &priv->pos[priv->pos_count - 1];
+	xend = VID_TO_PIXEL(end_pos->xpos_frac) + end_pos->width;
+	yend = end_pos->ypos;
+
+	/* If on the same line, just erase from start to end position */
+	if (ystart == yend) {
+		video_fill_part(vid_dev, xstart, ystart, xend, ystart + vc_priv->y_charsize,
+				vid_priv->colour_bg);
+	} else {
+		/* Different lines - erase to end of first line */
+		video_fill_part(vid_dev, xstart, ystart, vid_priv->xsize,
+				ystart + vc_priv->y_charsize, vid_priv->colour_bg);
+
+		/* Erase any complete lines in between */
+		if (yend > ystart + vc_priv->y_charsize) {
+			video_fill_part(vid_dev, 0, ystart + vc_priv->y_charsize,
+					vid_priv->xsize, yend, vid_priv->colour_bg);
+		}
+
+		/* Erase from start of final line to end of last character */
+		video_fill_part(vid_dev, 0, yend, xend, yend + vc_priv->y_charsize,
+				vid_priv->colour_bg);
+	}
+}
+
 static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 				    int cp)
 {
@@ -278,7 +355,7 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_tt_priv *priv = dev_get_priv(dev);
 	struct console_tt_metrics *met = priv->cur_met;
-	stbtt_fontinfo *font = &met->font;
+	stbtt_fontinfo *font;
 	int width, height, xoff, yoff;
 	double xpos, x_shift;
 	int lsb;
@@ -289,19 +366,37 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	void *start, *end, *line;
 	int row, kern;
 
+	/* Use fixed font if selected */
+	if (priv->cur_fontdata)
+		return console_fixed_putc_xy(dev, x, y, cp, priv->cur_fontdata);
+
 	/* First get some basic metrics about this character */
+	font = &met->font;
 	stbtt_GetCodepointHMetrics(font, cp, &advance, &lsb);
 
 	/*
 	 * First out our current X position in fractional pixels. If we wrote
 	 * a character previously, use kerning to fine-tune the position of
 	 * this character */
+	pos = priv->pos_ptr < priv->pos_count ? &priv->pos[priv->pos_ptr] :
+		NULL;
 	xpos = frac(VID_TO_PIXEL((double)x));
 	kern = 0;
 	if (vc_priv->last_ch) {
-		kern = stbtt_GetCodepointKernAdvance(font, vc_priv->last_ch,
-						     cp);
+		int last_cp = vc_priv->last_ch;
+
+		if (pos)
+			last_cp = pos->cp;
+		kern = stbtt_GetCodepointKernAdvance(font, last_cp, cp);
+		if (_DEBUG) {
+			console_printf_select_stderr(true, "kern %c (%02x)",
+						     last_cp, last_cp);
+		}
 		xpos += met->scale * kern;
+	}
+	if (_DEBUG) {
+		console_printf_select_stderr(true, " %c (%02x)\n",
+					     cp >= ' ' ? cp : ' ', cp);
 	}
 
 	/*
@@ -318,10 +413,26 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 
 	/* Write the current cursor position into history */
 	if (priv->pos_ptr < POS_HISTORY_SIZE) {
+		bool erase = false;
+
+		/* Check if we're overwriting a different character */
+		if (pos && pos->cp != cp) {
+			erase = true;
+			/* Erase using the old character's position before updating */
+			clear_from(dev, priv->pos_ptr);
+
+			/* After erasing, we don't care about erased characters */
+			priv->pos_count = priv->pos_ptr;
+		}
+
 		pos = &priv->pos[priv->pos_ptr];
 		pos->xpos_frac = vc_priv->xcur_frac;
 		pos->ypos = vc_priv->ycur;
+		pos->width = (width_frac + VID_FRAC_DIV - 1) / VID_FRAC_DIV;
+		pos->cp = cp;
 		priv->pos_ptr++;
+		if (priv->pos_ptr > priv->pos_count)
+			priv->pos_count = priv->pos_ptr;
 	}
 
 	/*
@@ -479,10 +590,6 @@ static int console_truetype_backspace(struct udevice *dev)
 	else
 		xend = vid_priv->xsize;
 
-	video_fill_part(vid_dev, VID_TO_PIXEL(pos->xpos_frac), pos->ypos,
-			xend, pos->ypos + vc_priv->y_charsize,
-			vid_priv->colour_bg);
-
 	/* Move the cursor back to where it was when we pushed this record */
 	vc_priv->xcur_frac = pos->xpos_frac;
 	vc_priv->ycur = pos->ypos;
@@ -497,6 +604,7 @@ static int console_truetype_entry_start(struct udevice *dev)
 
 	/* A new input line has start, so clear our history */
 	priv->pos_ptr = 0;
+	priv->pos_count = 0;
 	vc_priv->last_ch = 0;
 
 	return 0;
@@ -520,7 +628,7 @@ struct font_info {
 	extern u8 __ttf_ ## _name ## _begin[]; \
 	extern u8 __ttf_ ## _name ## _end[];
 
-#define FONT_ENTRY(_name)		{ \
+#define TT_FONT_ENTRY(_name)		{ \
 	.name = #_name, \
 	.begin = __ttf_ ## _name ## _begin, \
 	.end = __ttf_ ## _name ## _end, \
@@ -535,22 +643,22 @@ FONT_DECL(ubuntu_bold);
 
 static struct font_info font_table[] = {
 #ifdef CONFIG_CONSOLE_TRUETYPE_NIMBUS
-	FONT_ENTRY(nimbus_sans_l_regular),
+	TT_FONT_ENTRY(nimbus_sans_l_regular),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_ANKACODER
-	FONT_ENTRY(ankacoder_c75_r),
+	TT_FONT_ENTRY(ankacoder_c75_r),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_RUFSCRIPT
-	FONT_ENTRY(rufscript010),
+	TT_FONT_ENTRY(rufscript010),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_CANTORAONE
-	FONT_ENTRY(cantoraone_regular),
+	TT_FONT_ENTRY(cantoraone_regular),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_UBUNTU_LIGHT
-	FONT_ENTRY(ubuntu_light),
+	TT_FONT_ENTRY(ubuntu_light),
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE_UBUNTU_BOLD
-	FONT_ENTRY(ubuntu_bold),
+	TT_FONT_ENTRY(ubuntu_bold),
 #endif
 	{} /* sentinel */
 };
@@ -595,9 +703,19 @@ int console_truetype_get_font(struct udevice *dev, int seq,
 			      struct vidfont_info *info)
 {
 	struct font_info *tab;
+	struct video_fontdata *fontdata;
 	int i;
 
-	for (i = 0, tab = font_table; tab->begin; tab++, i++) {
+	/* List fixed fonts first */
+	for (i = 0, fontdata = fonts; fontdata->name; fontdata++, i++) {
+		if (i == seq) {
+			info->name = fontdata->name;
+			return 0;
+		}
+	}
+
+	/* then list TrueType fonts */
+	for (tab = font_table; tab->begin; tab++, i++) {
 		if (i == seq && font_valid(tab)) {
 			info->name = tab->name;
 			return 0;
@@ -671,6 +789,27 @@ static struct console_tt_metrics *find_metrics(struct udevice *dev,
 	return NULL;
 }
 
+/**
+ * set_bitmap_font() - Set up console to use a fixed font
+ *
+ * @dev:	Console device
+ * @fontdata:	Fixed font data to use
+ * Return: 0 if OK, -ve on error
+ */
+static void set_bitmap_font(struct udevice *dev,
+			    struct video_fontdata *fontdata)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct console_tt_priv *priv = dev_get_priv(dev);
+
+	priv->cur_fontdata = fontdata;
+	priv->cur_met = NULL;
+
+	vidconsole_set_bitmap_font(dev, fontdata);
+
+	vc_priv->tab_width_frac = VID_TO_POS(fontdata->width) * 8 / 2;
+}
+
 static void select_metrics(struct udevice *dev, struct console_tt_metrics *met)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
@@ -734,9 +873,24 @@ static int get_metrics(struct udevice *dev, const char *name, uint size,
 static int truetype_select_font(struct udevice *dev, const char *name,
 				uint size)
 {
+	struct console_tt_priv *priv = dev_get_priv(dev);
 	struct console_tt_metrics *met;
+	struct video_fontdata *fontdata;
 	int ret;
 
+	/* Check if this is a request for a fixed font */
+	if (name) {
+		for (fontdata = fonts; fontdata->name; fontdata++) {
+			if (!strcmp(name, fontdata->name)) {
+				/* Switch to fixed-font mode */
+				set_bitmap_font(dev, fontdata);
+				return 0;
+			}
+		}
+	}
+
+	/* Continue with TrueType font selection */
+	priv->cur_fontdata = NULL;
 	ret = get_metrics(dev, name, size, &met);
 	if (ret)
 		return log_msg_ret("sel", ret);
@@ -921,126 +1075,75 @@ static int truetype_entry_restore(struct udevice *dev, struct abuf *buf)
 	vc_priv->xcur_frac = store.cur.xpos_frac;
 	vc_priv->ycur = store.cur.ypos;
 	priv->pos_ptr = store.priv.pos_ptr;
+	priv->pos_count = store.priv.pos_count;
 	memcpy(priv->pos, store.priv.pos,
 	       store.priv.pos_ptr * sizeof(struct pos_info));
 
 	return 0;
 }
 
-static int truetype_set_cursor_visible(struct udevice *dev, bool visible,
-				       uint x, uint y, uint index)
+static int truetype_get_cursor_info(struct udevice *dev)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	struct console_tt_priv *priv = dev_get_priv(dev);
-	struct console_tt_metrics *met = priv->cur_met;
-	uint row, width, height, xoff;
-	void *start, *line;
-	uint out, val;
+	struct vidconsole_cursor *curs = &vc_priv->curs;
+	int x, y, index;
+	uint height;
 
 	if (xpl_phase() <= PHASE_SPL)
 		return -ENOSYS;
-
-	if (!visible)
-		return 0;
 
 	/*
 	 * figure out where to place the cursor. This driver ignores the
 	 * passed-in values, since an entry_restore() must have been done before
 	 * calling this function.
 	 */
+	index = priv->pos_ptr;
 	if (index < priv->pos_ptr)
 		x = VID_TO_PIXEL(priv->pos[index].xpos_frac);
 	else
 		x = VID_TO_PIXEL(vc_priv->xcur_frac);
-
 	y = vc_priv->ycur;
-	height = met->font_size;
-	xoff = 0;
 
-	val = vid_priv->colour_bg ? 0 : 255;
-	width = VIDCONSOLE_CURSOR_WIDTH;
+	/* Get font height from current font type */
+	if (priv->cur_fontdata)
+		height = priv->cur_fontdata->height;
+	else
+		height = priv->cur_met->font_size;
 
-	/* Figure out where to write the cursor in the frame buffer */
-	start = vid_priv->fb + y * vid_priv->line_length +
-		x * VNBYTES(vid_priv->bpix);
-	line = start;
+	/* Store line pointer and height in cursor struct */
+	curs->x = x;
+	curs->y = y;
+	curs->height = height;
+	curs->index = index;
 
-	/* draw a vertical bar in the correct position */
-	for (row = 0; row < height; row++) {
-		switch (vid_priv->bpix) {
-		case VIDEO_BPP8:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-				u8 *dst = line + xoff;
-				int i;
-
-				out = val;
-				for (i = 0; i < width; i++) {
-					if (vid_priv->colour_fg)
-						*dst++ |= out;
-					else
-						*dst++ &= out;
-				}
-			}
-			break;
-		case VIDEO_BPP16: {
-			u16 *dst = (u16 *)line + xoff;
-			int i;
-
-			if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-				for (i = 0; i < width; i++) {
-					out = val >> 3 |
-						(val >> 2) << 5 |
-						(val >> 3) << 11;
-					if (vid_priv->colour_fg)
-						*dst++ |= out;
-					else
-						*dst++ &= out;
-				}
-			}
-			break;
-		}
-		case VIDEO_BPP32: {
-			u32 *dst = (u32 *)line + xoff;
-			int i;
-
-			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-				for (i = 0; i < width; i++) {
-					int out;
-
-					if (vid_priv->format == VIDEO_X2R10G10B10)
-						out = val << 2 | val << 12 | val << 22;
-					else
-						out = val | val << 8 | val << 16;
-					if (vid_priv->colour_fg)
-						*dst++ |= out;
-					else
-						*dst++ &= out;
-				}
-			}
-			break;
-		}
-		default:
-			return -ENOSYS;
-		}
-
-		line += vid_priv->line_length;
-	}
-
-	video_damage(dev->parent, x, y, width, height);
-
-	return video_sync(vid, true);
+	return 0;
 }
 
 const char *console_truetype_get_font_size(struct udevice *dev, uint *sizep)
 {
 	struct console_tt_priv *priv = dev_get_priv(dev);
-	struct console_tt_metrics *met = priv->cur_met;
 
-	*sizep = met->font_size;
+	if (priv->cur_fontdata) {
+		/* Using fixed font */
+		*sizep = priv->cur_fontdata->height;
+		return priv->cur_fontdata->name;
+	} else {
+		/* Using TrueType font */
+		struct console_tt_metrics *met = priv->cur_met;
 
-	return met->font_name;
+		*sizep = met->font_size;
+		return met->font_name;
+	}
+}
+
+static int truetype_mark_start(struct udevice *dev)
+{
+	struct console_tt_priv *priv = dev_get_priv(dev);
+
+	priv->pos_start = priv->pos_ptr;
+
+	return 0;
 }
 
 static int console_truetype_probe(struct udevice *dev)
@@ -1072,6 +1175,10 @@ static int console_truetype_probe(struct udevice *dev)
 
 	debug("%s: ready\n", __func__);
 
+	ret = console_alloc_cursor(dev);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 
@@ -1088,7 +1195,8 @@ struct vidconsole_ops console_truetype_ops = {
 	.nominal	= truetype_nominal,
 	.entry_save	= truetype_entry_save,
 	.entry_restore	= truetype_entry_restore,
-	.set_cursor_visible	= truetype_set_cursor_visible
+	.get_cursor_info	= truetype_get_cursor_info,
+	.mark_start	= truetype_mark_start,
 };
 
 U_BOOT_DRIVER(vidconsole_truetype) = {

@@ -127,15 +127,14 @@ static ulong alloc_fb(struct udevice *dev, ulong *addrp)
 int video_reserve(ulong *addrp)
 {
 	struct udevice *dev;
+	struct uclass *uc;
 	ulong size;
 
 	if (IS_ENABLED(CONFIG_SPL_VIDEO_HANDOFF) && xpl_phase() == PHASE_BOARD_F)
 		return 0;
 
 	gd->video_top = *addrp;
-	for (uclass_find_first_device(UCLASS_VIDEO, &dev);
-	     dev;
-	     uclass_find_next_device(&dev)) {
+	uclass_id_foreach_dev(UCLASS_VIDEO, dev, uc) {
 		size = alloc_fb(dev, addrp);
 		debug("%s: Reserving %lx bytes at %lx for video device '%s'\n",
 		      __func__, size, *addrp, dev->name);
@@ -539,11 +538,10 @@ int video_sync(struct udevice *vid, bool force)
 void video_sync_all(void)
 {
 	struct udevice *dev;
+	struct uclass *uc;
 	int ret;
 
-	for (uclass_find_first_device(UCLASS_VIDEO, &dev);
-	     dev;
-	     uclass_find_next_device(&dev)) {
+	uclass_id_foreach_dev(UCLASS_VIDEO, dev, uc) {
 		if (device_active(dev)) {
 			ret = video_sync(dev, true);
 			if (ret)
@@ -555,14 +553,13 @@ void video_sync_all(void)
 bool video_is_active(void)
 {
 	struct udevice *dev;
+	struct uclass *uc;
 
 	/* Assume video to be active if SPL passed video hand-off to U-boot */
 	if (IS_ENABLED(CONFIG_SPL_VIDEO_HANDOFF) && xpl_phase() > PHASE_SPL)
 		return true;
 
-	for (uclass_find_first_device(UCLASS_VIDEO, &dev);
-	     dev;
-	     uclass_find_next_device(&dev)) {
+	uclass_id_foreach_dev(UCLASS_VIDEO, dev, uc) {
 		if (device_active(dev))
 			return true;
 	}
@@ -624,7 +621,20 @@ int video_default_font_height(struct udevice *dev)
 
 static void video_idle(struct cyclic_info *cyc)
 {
-	video_sync_all();
+	if (CONFIG_IS_ENABLED(CURSOR)) {
+		struct udevice *cons;
+		struct uclass *uc;
+
+		/* Handle cursor display for each video console */
+		uclass_id_foreach_dev(UCLASS_VIDEO_CONSOLE, cons, uc) {
+			if (device_active(cons)) {
+				vidconsole_idle(cons);
+				video_sync(cons->parent, true);
+			}
+		}
+	} else {
+		video_sync_all();
+	}
 }
 
 void video_set_white_on_black(struct udevice *dev, bool white_on_black)

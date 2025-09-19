@@ -666,6 +666,15 @@ config CYCLIC_MAX_CPU_TIME_US
 	  takes longer than this duration this function will get unregistered
 	  automatically.
 
+config CYCLIC_WARN_LATE
+	bool "Warn if a cyclic function takes too long"
+	default y if !CC_OPTIMIZE_FOR_DEBUG
+	help
+	  Show a warning on the console if a cyclic function goes over the
+	  alotted maximum time. The message is of the form:
+
+	     cyclic_run() cyclic function <func_name> took too long: x vs y max
+
 endif # CYCLIC
 
 config EVENT

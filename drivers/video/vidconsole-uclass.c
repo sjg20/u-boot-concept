@@ -17,6 +17,7 @@
 #include <dm.h>
 #include <video.h>
 #include <video_console.h>
+#include "vidconsole_internal.h"
 #include <video_font.h>		/* Bitmap font for code page 437 */
 #include <linux/ctype.h>
 
@@ -70,6 +71,9 @@ static int vidconsole_back(struct udevice *dev)
 			return ret;
 	}
 
+	/* Hide cursor at old position if it's visible */
+	vidconsole_hide_cursor(dev);
+
 	priv->xcur_frac -= VID_TO_POS(priv->x_charsize);
 	if (priv->xcur_frac < priv->xstart_frac) {
 		priv->xcur_frac = (priv->cols - 1) *
@@ -78,6 +82,9 @@ static int vidconsole_back(struct udevice *dev)
 		if (priv->ycur < 0)
 			priv->ycur = 0;
 	}
+	assert(priv->cli_index);
+	cli_index_adjust(priv, -1);
+
 	return video_sync(dev->parent, false);
 }
 
@@ -123,6 +130,9 @@ static char *parsenum(char *s, int *num)
 void vidconsole_set_cursor_pos(struct udevice *dev, int x, int y)
 {
 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+
+	/* Hide cursor at old position if it's visible */
+	vidconsole_hide_cursor(dev);
 
 	priv->xcur_frac = VID_TO_POS(x);
 	priv->xstart_frac = priv->xcur_frac;
@@ -438,6 +448,11 @@ static int vidconsole_output_glyph(struct udevice *dev, int ch)
 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
 	int ret;
 
+	if (_DEBUG) {
+		console_printf_select_stderr(true,
+				     "glyph last_ch '%c': ch '%c' (%02x): ",
+				     priv->last_ch, ch >= ' ' ? ch : ' ', ch);
+	}
 	/*
 	 * Failure of this function normally indicates an unsupported
 	 * colour depth. Check this and return an error to help with
@@ -454,6 +469,7 @@ static int vidconsole_output_glyph(struct udevice *dev, int ch)
 	priv->last_ch = ch;
 	if (priv->xcur_frac >= priv->xsize_frac)
 		vidconsole_newline(dev);
+	cli_index_adjust(priv, 1);
 
 	return 0;
 }
@@ -462,6 +478,9 @@ int vidconsole_put_char(struct udevice *dev, char ch)
 {
 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
 	int cp, ret;
+
+	/* Hide cursor to avoid artifacts */
+	vidconsole_hide_cursor(dev);
 
 	if (priv->escape) {
 		vidconsole_escape_char(dev, ch);
@@ -655,7 +674,7 @@ int vidconsole_nominal(struct udevice *dev, const char *name, uint size,
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
 	int ret;
 
-	if (ops->measure) {
+	if (ops->nominal) {
 		ret = ops->nominal(dev, name, size, num_chars, bbox);
 		if (ret != -ENOSYS)
 			return ret;
@@ -675,7 +694,7 @@ int vidconsole_entry_save(struct udevice *dev, struct abuf *buf)
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
 	int ret;
 
-	if (ops->measure) {
+	if (ops->entry_save) {
 		ret = ops->entry_save(dev, buf);
 		if (ret != -ENOSYS)
 			return ret;
@@ -692,7 +711,7 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf)
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
 	int ret;
 
-	if (ops->measure) {
+	if (ops->entry_restore) {
 		ret = ops->entry_restore(dev, buf);
 		if (ret != -ENOSYS)
 			return ret;
@@ -701,14 +720,88 @@ int vidconsole_entry_restore(struct udevice *dev, struct abuf *buf)
 	return 0;
 }
 
-int vidconsole_set_cursor_visible(struct udevice *dev, bool visible,
-				  uint x, uint y, uint index)
+#ifdef CONFIG_CURSOR
+int vidconsole_show_cursor(struct udevice *dev)
 {
+	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+	struct vidconsole_cursor *curs = &priv->curs;
 	int ret;
 
-	if (ops->set_cursor_visible) {
-		ret = ops->set_cursor_visible(dev, visible, x, y, index);
+	/* find out where the cursor should be drawn */
+	if (!ops->get_cursor_info)
+		return -ENOSYS;
+
+	ret = ops->get_cursor_info(dev);
+	if (ret)
+		return ret;
+
+	/* If the driver stored cursor line and height, use them for drawing */
+	if (curs->height) {
+		struct udevice *vid = dev_get_parent(dev);
+		struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+
+		/*
+		 * avoid drawing off the display - we assume that the driver
+		 * ensures that curs->y < vid_priv->ysize
+		 */
+		curs->height = min(curs->height, vid_priv->ysize - curs->y);
+
+		ret = cursor_show(curs, vid_priv, NORMAL_DIRECTION);
+		if (ret)
+			return ret;
+
+		/* Update display damage for cursor area */
+		video_damage(vid, curs->x, curs->y, VIDCONSOLE_CURSOR_WIDTH,
+			     curs->height);
+	}
+
+	curs->visible = true;
+
+	return 0;
+}
+
+int vidconsole_hide_cursor(struct udevice *dev)
+{
+	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+	struct vidconsole_cursor *curs = &priv->curs;
+	int ret;
+
+	if (!curs->visible)
+		return 0;
+
+	/* If the driver stored cursor line and height, use them for drawing */
+	if (curs->height) {
+		struct udevice *vid = dev_get_parent(dev);
+		struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+
+		ret = cursor_hide(curs, vid_priv, NORMAL_DIRECTION);
+		if (ret)
+			return ret;
+
+		/* Update display damage for cursor area */
+		video_damage(vid, curs->x, curs->y, VIDCONSOLE_CURSOR_WIDTH,
+			     curs->height);
+	}
+
+	curs->visible = false;
+
+	return 0;
+}
+#endif /* CONFIG_CURSOR */
+
+int vidconsole_mark_start(struct udevice *dev)
+{
+	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+
+	priv->xmark_frac = priv->xcur_frac;
+	priv->ymark = priv->ycur;
+	priv->cli_index = 0;
+	if (ops->mark_start) {
+		int ret;
+
+		ret = ops->mark_start(dev);
 		if (ret != -ENOSYS)
 			return ret;
 	}
@@ -810,3 +903,72 @@ void vidconsole_set_quiet(struct udevice *dev, bool quiet)
 
 	priv->quiet = quiet;
 }
+
+void vidconsole_set_bitmap_font(struct udevice *dev,
+				struct video_fontdata *fontdata)
+{
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+
+	log_debug("console_simple: setting %s font\n", fontdata->name);
+	log_debug("width: %d\n", fontdata->width);
+	log_debug("byte width: %d\n", fontdata->byte_width);
+	log_debug("height: %d\n", fontdata->height);
+
+	vc_priv->x_charsize = fontdata->width;
+	vc_priv->y_charsize = fontdata->height;
+	if (vid_priv->rot % 2) {
+		vc_priv->cols = vid_priv->ysize / fontdata->width;
+		vc_priv->rows = vid_priv->xsize / fontdata->height;
+		vc_priv->xsize_frac = VID_TO_POS(vid_priv->ysize);
+	} else {
+		vc_priv->cols = vid_priv->xsize / fontdata->width;
+		vc_priv->rows = vid_priv->ysize / fontdata->height;
+		/* xsize_frac is set in vidconsole_pre_probe() */
+	}
+	vc_priv->xstart_frac = 0;
+}
+
+void vidconsole_idle(struct udevice *dev)
+{
+	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+	struct vidconsole_cursor *curs = &priv->curs;
+
+	/* Only handle cursor if it's enabled */
+	if (curs->enabled && !curs->visible) {
+		/*
+		 * TODO(sjg@chromium.org): We are using a saved position here,
+		 * but vidconsole_show_cursor() calls get_cursor_info() to
+		 * recalc the position anyway.
+		 */
+		vidconsole_show_cursor(dev);
+	}
+}
+
+#ifdef CONFIG_CURSOR
+void vidconsole_readline_start(bool indent)
+{
+	struct uclass *uc;
+	struct udevice *dev;
+
+	uclass_id_foreach_dev(UCLASS_VIDEO_CONSOLE, dev, uc) {
+		struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+
+		priv->curs.indent = indent;
+		priv->curs.enabled = true;
+		vidconsole_mark_start(dev);
+	}
+}
+
+void vidconsole_readline_end(void)
+{
+	struct uclass *uc;
+	struct udevice *dev;
+
+	uclass_id_foreach_dev(UCLASS_VIDEO_CONSOLE, dev, uc) {
+		struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+
+		priv->curs.enabled = false;
+	}
+}
+#endif /* CURSOR */

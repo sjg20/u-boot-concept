@@ -16,6 +16,7 @@
 #include <pager.h>
 #include <time.h>
 #include <watchdog.h>
+#include <video_console.h>
 #include <linux/errno.h>
 #include <asm/global_data.h>
 
@@ -676,6 +677,8 @@ int cli_readline_into_buffer(const char *const prompt, char *buffer,
 		if (prompt)
 			puts(prompt);
 
+		/* tell the vidconsole the cursor is at its start position */
+		vidconsole_readline_start(false);
 		rc = cread_line(prompt, p, &len, timeout);
 		rc = rc < 0 ? rc : len;
 
@@ -685,6 +688,8 @@ int cli_readline_into_buffer(const char *const prompt, char *buffer,
 
 	pager_set_bypass(gd_pager(), old_bypass);
 	pager_reset(gd_pager());
+
+	vidconsole_readline_end();
 
 	return rc;
 }

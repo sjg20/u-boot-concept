@@ -229,7 +229,8 @@ DM_TEST(dm_test_video_text_12x22, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_video_chars(struct unit_test_state *uts)
 {
 	struct udevice *dev, *con;
-	const char *test_string = "Well\b\b\b\bxhe is\r \n\ta very \amodest  \bman\n\t\tand Has much to\b\bto be modest about.";
+	const char *test_string = "Well\b\b\b\bxhe is\r \n\ta very \amodest  "
+		"\bman\n\t\tand Has much to\b\bto be modest about.";
 
 	ut_assertok(select_vidconsole(uts, "vidconsole0"));
 	ut_assertok(video_get_nologo(uts, &dev));
@@ -581,13 +582,19 @@ DM_TEST(dm_test_video_comp_bmp8, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_video_truetype(struct unit_test_state *uts)
 {
 	struct udevice *dev, *con;
-	const char *test_string = "Criticism may not be agreeable, but it is necessary. It fulfils the same function as pain in the human body. It calls attention to an unhealthy state of things. Some see private enterprise as a predatory target to be shot, others as a cow to be milked, but few are those who see it as a sturdy horse pulling the wagon. The \aprice OF\b\bof greatness\n\tis responsibility.\n\nBye";
+	const char *test_string = "Criticism may not be agreeable, but it "
+		"is necessary. It fulfils the same function as pain in the "
+		"human body. It calls attention to an unhealthy state of "
+		"things. Some see private enterprise as a predatory target to "
+		"be shot, others as a cow to be milked, but few are those who "
+		"see it as a sturdy horse pulling the wagon. The \aprice "
+		"OF\b\bof greatness\n\tis responsibility.\n\nBye";
 
 	ut_assertok(video_get_nologo(uts, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
 	vidconsole_put_stringn(con, test_string, 30);
-	ut_asserteq(13055, video_compress_fb(uts, dev, false));
+	ut_asserteq(13073, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	return 0;
@@ -599,7 +606,13 @@ static int dm_test_video_truetype_scroll(struct unit_test_state *uts)
 {
 	struct sandbox_sdl_plat *plat;
 	struct udevice *dev, *con;
-	const char *test_string = "Criticism may not be agreeable, but it is necessary. It fulfils the same function as pain in the human body. It calls attention to an unhealthy state of things. Some see private enterprise as a predatory target to be shot, others as a cow to be milked, but few are those who see it as a sturdy horse pulling the wagon. The \aprice OF\b\bof greatness\n\tis responsibility.\n\nBye";
+	const char *test_string = "Criticism may not be agreeable, but it "
+		"is necessary. It fulfils the same function as pain in the "
+		"human body. It calls attention to an unhealthy state of "
+		"things. Some see private enterprise as a predatory target to "
+		"be shot, others as a cow to be milked, but few are those who "
+		"see it as a sturdy horse pulling the wagon. The \aprice "
+		"OF\b\bof greatness\n\tis responsibility.\n\nBye";
 
 	ut_assertok(uclass_find_device(UCLASS_VIDEO, 0, &dev));
 	ut_assert(!device_active(dev));
@@ -621,7 +634,11 @@ static int dm_test_video_truetype_bs(struct unit_test_state *uts)
 {
 	struct sandbox_sdl_plat *plat;
 	struct udevice *dev, *con;
-	const char *test_string = "...Criticism may or may\b\b\b\b\b\bnot be agreeable, but seldom it is necessary\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bit is necessary. It fulfils the same function as pain in the human body. It calls attention to an unhealthy state of things.";
+	const char *test_string = "...Criticism may or may\b\b\b\b\b\bnot be "
+		"agreeable, but seldom it is necessary\b\b\b\b\b\b\b\b\b\b\b\b"
+		"\b\b\b\b\b\b\b\b\b\bit is necessary. It fulfils the same "
+		"function as pain in the human body. It calls attention to an "
+		"unhealthy state of things.";
 
 	ut_assertok(uclass_find_device(UCLASS_VIDEO, 0, &dev));
 	ut_assert(!device_active(dev));
@@ -631,7 +648,7 @@ static int dm_test_video_truetype_bs(struct unit_test_state *uts)
 	ut_assertok(video_get_nologo(uts, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(29223, video_compress_fb(uts, dev, false));
+	ut_asserteq(29310, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	return 0;
@@ -645,7 +662,8 @@ static int dm_test_video_copy(struct unit_test_state *uts)
 	struct video_uc_plat *uc_plat;
 	struct udevice *dev, *con;
 	struct video_priv *priv;
-	const char *test_string = "\n\tCriticism may not be agreeable, but it is necessary.\t";
+	const char *test_string = "\n\tCriticism may not be agreeable, but it "
+		"is necessary.\t";
 	ulong addr;
 
 	if (!IS_ENABLED(CONFIG_VIDEO_COPY))
@@ -710,7 +728,8 @@ static int dm_test_video_damage(struct unit_test_state *uts)
 	struct video_priv *priv;
 	const char *test_string_1 = "Criticism may not be agreeable, ";
 	const char *test_string_2 = "but it is necessary.";
-	const char *test_string_3 = "It fulfils the same function as pain in the human body.";
+	const char *test_string_3 = "It fulfils the same function as pain in "
+		"the human body.";
 
 	if (!IS_ENABLED(CONFIG_VIDEO_DAMAGE))
 		return -EAGAIN;
@@ -925,7 +944,7 @@ static int dm_test_video_box(struct unit_test_state *uts)
 	video_draw_box(dev, 500, 100, 600, 200, 20,
 		       video_index_to_colour(priv, VID_LIGHT_RED), false);
 	ut_asserteq(133, video_compress_fb(uts, dev, false));
-	
+
 	/* test filled boxes */
 	video_draw_box(dev, 150, 250, 200, 300, 0,
 		       video_index_to_colour(priv, VID_GREEN), true);
@@ -937,3 +956,128 @@ static int dm_test_video_box(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_video_box, UTF_SCAN_FDT);
+
+/* font switching between TrueType and bitmap fonts */
+static int dm_test_video_font_switch(struct unit_test_state *uts)
+{
+	struct udevice *dev, *con;
+	const char *truetype_text =
+		"This is a long line of text written with TrueType font that "
+		"should wrap to multiple lines to test the multi-line "
+		"functionality properly. This is the second part of TrueType "
+		"text that should also be long enough to wrap and test the "
+		"line handling.";
+	const char *bitmap_text =
+		"Now this is bitmap font text that spans multiple lines and "
+		"should be rendered with the standard 8x16 bitmap font instead "
+		"of TrueType. More of the line of-bitmap text for testing "
+		"purposes.";
+	const char *final_truetype_text =
+		"Finally back to TrueType font for this concluding multi-line "
+		"text that demonstrates the font switching functionality "
+		"working correctly.\nFinal line of TrueType text to complete "
+		"the test.\n";
+
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+
+	/* Start with TrueType font and write multi-line text */
+	vidconsole_put_string(con, truetype_text);
+
+	/* Switch to bitmap font */
+	ut_assertok(vidconsole_select_font(con, "8x16", 0));
+	vidconsole_put_string(con, bitmap_text);
+
+	/* Switch back to TrueType font */
+	ut_assertok(vidconsole_select_font(con, NULL, 0));
+	vidconsole_put_string(con, final_truetype_text);
+
+	ut_asserteq(14892, video_compress_fb(uts, dev, false));
+
+	return 0;
+}
+DM_TEST(dm_test_video_font_switch, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* cursor backspace without artifacts */
+static int check_cursor_backspace(struct unit_test_state *uts,
+				  struct udevice *dev, struct udevice *con,
+				  int exp_height)
+{
+	int with_a, with_cursor, after_backspace, after_idle, after_hide;
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(con);
+	struct vidconsole_cursor *curs = &vc_priv->curs;
+
+	/* Output chars without cursor */
+	ut_assert(!curs->visible);
+	ut_assert(!curs->enabled);
+	ut_assert(!curs->saved);
+	ut_assert(!curs->height);
+	ut_assertok(vidconsole_put_char(con, ' '));
+	ut_assertok(vidconsole_put_char(con, 'a'));
+	with_a = video_compress_fb(uts, dev, false);
+
+	/* Show cursor at current position (after 'a') */
+	ut_assertok(vidconsole_show_cursor(con));
+	ut_assert(curs->visible);
+	ut_assert(curs->saved);
+	ut_asserteq(exp_height, curs->height);
+	with_cursor = video_compress_fb(uts, dev, false);
+
+	/* Enable the cursor so that backspace will move it */
+	curs->enabled = true;
+
+	/* Do backspace - the cursor will be hidden */
+	ut_assertok(vidconsole_put_char(con, '\b'));
+	ut_assert(!curs->visible);
+	ut_assert(!curs->saved);
+	after_backspace = video_compress_fb(uts, dev, false);
+	ut_asserteq(with_a, after_backspace);
+	ut_assert(curs->enabled);
+
+	/* Run idle function - this should show the cursor */
+	vidconsole_idle(con);
+	ut_assert(curs->visible);
+	ut_assert(curs->saved);
+	after_idle = video_compress_fb(uts, dev, false);
+	ut_assert(after_idle != with_a);
+
+	/* Hide the cursor */
+	ut_assertok(vidconsole_hide_cursor(con));
+	ut_assert(curs->enabled);
+	ut_assert(!curs->visible);
+	ut_assert(!curs->saved);
+	after_hide = video_compress_fb(uts, dev, false);
+
+	ut_asserteq(with_a, after_hide);
+
+	return 0;
+}
+
+/* cursor backspace without artifacts */
+static int dm_test_video_backspace_normal(struct unit_test_state *uts)
+{
+	struct udevice *dev, *con;
+
+	ut_assertok(select_vidconsole(uts, "vidconsole0"));
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	ut_assertok(vidconsole_select_font(con, "8x16", 0));
+	ut_assertok(check_cursor_backspace(uts, dev, con, 16));
+
+	return 0;
+}
+DM_TEST(dm_test_video_backspace_normal, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* cursor backspace without artifacts on truetype */
+static int dm_test_video_backspace_truetype(struct unit_test_state *uts)
+{
+	struct udevice *dev, *con;
+
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	ut_assertok(vidconsole_select_font(con, NULL, 30));
+	ut_assertok(check_cursor_backspace(uts, dev, con, 30));
+
+	return 0;
+}
+DM_TEST(dm_test_video_backspace_truetype, UTF_SCAN_PDATA | UTF_SCAN_FDT);

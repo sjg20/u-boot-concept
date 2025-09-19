@@ -71,8 +71,9 @@ static void cyclic_run(void)
 			cyclic->cpu_time_us += cpu_time;
 
 			/* Check if cpu-time exceeds max allowed time */
-			if ((cpu_time > CONFIG_CYCLIC_MAX_CPU_TIME_US) &&
-			    (!cyclic->already_warned)) {
+			if (IS_ENABLED(CONFIG_CYCLIC_WARN_LATE) &&
+			    cpu_time > CONFIG_CYCLIC_MAX_CPU_TIME_US &&
+			    !cyclic->already_warned) {
 				pr_err("cyclic function %s took too long: %lldus vs %dus max\n",
 				       cyclic->name, cpu_time,
 				       CONFIG_CYCLIC_MAX_CPU_TIME_US);
