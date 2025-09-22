@@ -2505,18 +2505,18 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 			       prop_name, ph_type, bootstage_id,
 			       &fit_base_uname_config);
 	if (noffset >= 0) {
-
 		ret = check_allowed(fit, noffset, images, image_type, arch,
 				    bootstage_id);
 		if (ret)
 			return ret;
 
-		ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
+		ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf,
+				  &len);
 		if (ret)
 			return ret;
 
-		ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
-				     load_op, bootstage_id, &load);
+		ret = handle_load_op(fit, noffset, prop_name, buf, len,
+				     image_type, load_op, bootstage_id, &load);
 		if (ret)
 			return ret;
 
