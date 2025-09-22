@@ -38,8 +38,7 @@ Release candidate schedule:
 * **2025.10-rc3**: Mon 25-Aug-2025
 * **2025.10-rc2**: Mon 08-Sep-2025
 * **2025.10-rc1**: Mon 22-Sep-2025
-* **2025.10** (Final): \
-Mon 06-Oct-2025
+* **2025.10** (Final): Mon 06-Oct-2025
 
 Release History
 ---------------
