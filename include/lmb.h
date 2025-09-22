@@ -93,7 +93,16 @@ long lmb_reserve(phys_addr_t base, phys_size_t size);
  */
 long lmb_reserve_flags(phys_addr_t base, phys_size_t size,
 		       enum lmb_flags flags);
+
+#if CONFIG_IS_ENABLED(LMB)
 phys_addr_t lmb_alloc(phys_size_t size, ulong align);
+#else
+static inline phys_addr_t lmb_alloc(phys_size_t size, ulong align)
+{
+	return 0;
+}
+#endif
+
 phys_addr_t lmb_alloc_base(phys_size_t size, ulong align, phys_addr_t max_addr);
 phys_addr_t lmb_alloc_addr(phys_addr_t base, phys_size_t size);
 phys_size_t lmb_get_free_size(phys_addr_t addr);
