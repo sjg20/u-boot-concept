@@ -1300,8 +1300,7 @@ int boot_run(struct bootm_info *bmi, const char *cmd, int extra_states)
 	int states;
 
 	bmi->cmd_name = cmd;
-	states = BOOTM_STATE_MEASURE | BOOTM_STATE_OS_PREP |
-		BOOTM_STATE_OS_FAKE_GO | BOOTM_STATE_OS_GO;
+	states = BOOTM_STATE_MEASURE | BOOTM_STATE_OS_PREP;
 	if (IS_ENABLED(CONFIG_SYS_BOOT_RAMDISK_HIGH))
 		states |= BOOTM_STATE_RAMDISK;
 	states |= extra_states;
@@ -1318,7 +1317,7 @@ int bootm_run(struct bootm_info *bmi)
 {
 	return boot_run(bmi, "bootm", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
-			BOOTM_STATE_LOADOS);
+			BOOTM_STATE_LOADOS | BOOTM_STATE_OS_GO);
 }
 
 int bootz_run(struct bootm_info *bmi)
@@ -1356,7 +1355,7 @@ int bootz_run(struct bootm_info *bmi)
 
 	images->os.os = IH_OS_LINUX;
 
-	return boot_run(bmi, "bootz", 0);
+	return boot_run(bmi, "bootz", BOOTM_STATE_OS_GO);
 }
 
 int booti_run(struct bootm_info *bmi)
@@ -1365,7 +1364,7 @@ int booti_run(struct bootm_info *bmi)
 
 	return boot_run(bmi, "booti", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
-			BOOTM_STATE_LOADOS);
+			BOOTM_STATE_LOADOS | BOOTM_STATE_OS_GO);
 }
 
 void bootm_read_env(struct bootm_info *bmi)
