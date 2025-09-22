@@ -33,6 +33,7 @@
  * @PAGERST_WAIT_USER: Waiting for the user to press a key
  * @PAGERST_CLEAR_PROMPT: Clearing the prompt ready for more output
  * @PAGERST_BYPASS: Pager is being bypassed
+ * @PAGERST_QUIT_SUPPRESS: Output is being suppressed after 'q' keypress
  */
 enum pager_state {
 	PAGERST_OK,
@@ -40,6 +41,7 @@ enum pager_state {
 	PAGERST_WAIT_USER,
 	PAGERST_CLEAR_PROMPT,
 	PAGERST_BYPASS,
+	PAGERST_QUIT_SUPPRESS,
 };
 
 /**
@@ -112,7 +114,8 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s);
  *
  * When the pager prompts for user input, pressing SPACE continues to the next
  * page, while pressing capital 'Q' puts the pager into bypass mode and
- * disables further paging.
+ * disables further paging. Pressing 'q' quits and suppresses all output until
+ * the next command prompt.
  *
  * @pag: Pager to use
  * @use_pager: Whether or not to use the pager functionality
@@ -158,6 +161,17 @@ bool pager_set_test_bypass(struct pager *pag, bool bypass);
 void pager_reset(struct pager *pag);
 
 /**
+ * pager_clear_quit() - Clear quit suppression mode
+ *
+ * If the pager is in PAGERST_QUIT_SUPPRESS state, this resets it to normal
+ * operation (PAGERST_OK). This is typically called at the start of
+ * cli_readline_into_buffer() to allow new commands to display output normally.
+ *
+ * @pag: Pager to update, may be NULL in which case this function does nothing
+ */
+void pager_clear_quit(struct pager *pag);
+
+/**
  * pager_uninit() - Uninit the pager
  *
  * Frees all memory and also @pag
@@ -186,6 +200,10 @@ static inline bool pager_set_bypass(struct pager *pag, bool bypass)
 static inline bool pager_set_test_bypass(struct pager *pag, bool bypass)
 {
 	return true;
+}
+
+static inline void pager_clear_quit(struct pager *pag)
+{
 }
 
 static inline void pager_reset(struct pager *pag)
