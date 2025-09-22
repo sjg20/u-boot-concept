@@ -48,7 +48,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 
 	if (!booti_is_valid(ih)) {
 		puts("Bad Linux ARM64 Image magic!\n");
-		return 1;
+		return -EPERM;
 	}
 
 	/*
@@ -73,10 +73,17 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 	 * images->ep.  Otherwise, relocate the image to the base of RAM
 	 * since memory below it is not accessible via the linear mapping.
 	 */
-	if (!force_reloc && (le64_to_cpu(ih->flags) & BIT(3)))
-		dst = image - text_offset;
-	else
+	if (!force_reloc && (le64_to_cpu(ih->flags) & BIT(3))) {
+		if (IS_ENABLED(CONFIG_LMB)) {
+			dst = lmb_alloc(image_size, SZ_2M);
+			if (!dst)
+				return -ENOSPC;
+		} else {
+			dst = image - text_offset;
+		}
+	} else {
 		dst = gd->bd->bi_dram[0].start;
+	}
 
 	*relocated_addr = ALIGN(dst, SZ_2M) + text_offset;
 
