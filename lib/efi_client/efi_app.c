@@ -193,63 +193,6 @@ static void efi_exit(void)
 	priv->boot->exit(priv->parent_image, EFI_SUCCESS, 0, NULL);
 }
 
-/**
- * efi_main() - Start an EFI image
- *
- * This function is called by our EFI start-up code. It handles running
- * U-Boot. If it returns, EFI will continue. Another way to get back to EFI
- * is via reset_cpu().
- */
-efi_status_t EFIAPI efi_main(efi_handle_t image,
-			     struct efi_system_table *sys_table)
-{
-	struct efi_priv local_priv, *priv = &local_priv;
-	efi_status_t ret;
-
-	/* Set up access to EFI data structures */
-	ret = efi_init(priv, "App", image, sys_table);
-	if (ret) {
-		printf("Failed to set up U-Boot: err=%lx\n", ret);
-		return ret;
-	}
-	efi_set_priv(priv);
-
-	/*
-	 * Set up the EFI debug UART so that printf() works. This is
-	 * implemented in the EFI serial driver, serial_efi.c. The application
-	 * can use printf() freely.
-	 */
-	debug_uart_init();
-
-	ret = setup_memory(priv);
-	if (ret) {
-		printf("Failed to set up memory: ret=%lx\n", ret);
-		return ret;
-	}
-
-	scan_tables(priv->sys_table);
-	find_protocols(priv);
-
-	/*
-	 * We could store the EFI memory map here, but it changes all the time,
-	 * so this is only useful for debugging.
-	 *
-	 * ret = efi_store_memory_map(priv);
-	 * if (ret)
-	 *	return ret;
-	 */
-
-	printf("starting\n");
-
-	board_init_f(GD_FLG_SKIP_RELOC);
-	gd = gd->new_gd;
-	board_init_r(NULL, 0);
-	free_memory(priv);
-	efi_exit();
-
-	return EFI_SUCCESS;
-}
-
 static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 {
 	struct efi_priv *priv = efi_get_priv();
@@ -421,3 +364,60 @@ U_BOOT_DRIVER(efi_sysreset) = {
 	.of_match = efi_sysreset_ids,
 	.ops = &efi_sysreset_ops,
 };
+
+/**
+ * efi_main() - Start an EFI image
+ *
+ * This function is called by our EFI start-up code. It handles running
+ * U-Boot. If it returns, EFI will continue. Another way to get back to EFI
+ * is via reset_cpu().
+ */
+efi_status_t EFIAPI efi_main(efi_handle_t image,
+			     struct efi_system_table *sys_table)
+{
+	struct efi_priv local_priv, *priv = &local_priv;
+	efi_status_t ret;
+
+	/* Set up access to EFI data structures */
+	ret = efi_init(priv, "App", image, sys_table);
+	if (ret) {
+		printf("Failed to set up U-Boot: err=%lx\n", ret);
+		return ret;
+	}
+	efi_set_priv(priv);
+
+	/*
+	 * Set up the EFI debug UART so that printf() works. This is
+	 * implemented in the EFI serial driver, serial_efi.c. The application
+	 * can use printf() freely.
+	 */
+	debug_uart_init();
+
+	ret = setup_memory(priv);
+	if (ret) {
+		printf("Failed to set up memory: ret=%lx\n", ret);
+		return ret;
+	}
+
+	scan_tables(priv->sys_table);
+	find_protocols(priv);
+
+	/*
+	 * We could store the EFI memory map here, but it changes all the time,
+	 * so this is only useful for debugging.
+	 *
+	 * ret = efi_store_memory_map(priv);
+	 * if (ret)
+	 *	return ret;
+	 */
+
+	printf("starting\n");
+
+	board_init_f(GD_FLG_SKIP_RELOC);
+	gd = gd->new_gd;
+	board_init_r(NULL, 0);
+	free_memory(priv);
+	efi_exit();
+
+	return EFI_SUCCESS;
+}
