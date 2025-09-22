@@ -403,12 +403,13 @@ static int pager_test_bypass_mode(struct unit_test_state *uts)
 	struct pager *pag;
 	const char *text = "This text should be returned directly";
 	const char *result;
+	bool was_bypassed;
 
 	/* Init with small page length to ensure paging would normally occur */
 	ut_assertok(pager_init(&pag, 2, 1024));
 
 	/* Enable bypass mode */
-	pager_set_test_bypass(pag, true);
+	was_bypassed = pager_set_test_bypass(pag, true);
 
 	/* Post text - should get original string back directly */
 	result = pager_post(pag, true, text);
@@ -418,8 +419,8 @@ static int pager_test_bypass_mode(struct unit_test_state *uts)
 	result = pager_next(pag, true, 0);
 	ut_assertnull(result);
 
-	/* Disable bypass mode */
-	pager_set_test_bypass(pag, false);
+	/* Restore old bypass mode */
+	pager_set_test_bypass(pag, was_bypassed);
 
 	/* Now pager should work normally */
 	result = pager_post(pag, true, text);

@@ -708,7 +708,7 @@ int ut_run_list(struct unit_test_state *uts, const char *category,
 		const char *test_insert)
 {
 	;
-	bool has_dm_tests = false;
+	bool was_bypassed, has_dm_tests = false;
 	ulong start_offset = 0;
 	ulong test_offset = 0;
 	int ret;
@@ -748,10 +748,10 @@ int ut_run_list(struct unit_test_state *uts, const char *category,
 		memcpy(uts->fdt_copy, gd->fdt_blob, uts->fdt_size);
 	}
 	uts->force_run = force_run;
-	pager_set_test_bypass(gd_pager(), true);
+	was_bypassed = pager_set_test_bypass(gd_pager(), true);
 	ret = ut_run_tests(uts, prefix, tests, count, select_name,
 			   test_insert);
-	pager_set_test_bypass(gd_pager(), false);
+	pager_set_test_bypass(gd_pager(), was_bypassed);
 
 	/* Best efforts only...ignore errors */
 	if (has_dm_tests)
