@@ -1189,7 +1189,7 @@ static int on_console(const char *name, const char *value, enum env_op op,
 		int lines = calc_check_console_lines();
 
 		/* Set bypass mode if not connected to a terminal */
-		pager_set_bypass(gd_pager(), lines != 0);
+		pager_set_bypass(gd_pager(), lines == 0);
 		if (lines)
 			pager_set_page_len(gd_pager(), lines);
 	}

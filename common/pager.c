@@ -20,7 +20,8 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s)
 	struct membuf old;
 	int ret, len;
 
-	if (!pag || !use_pager || pag->test_bypass || pag->state == PAGERST_BYPASS)
+	if (!pag || !use_pager || pag->test_bypass ||
+	    pag->state == PAGERST_BYPASS)
 		return s;
 
 	len = strlen(s);
