@@ -38,11 +38,16 @@ Release candidate schedule:
 * **2025.10-rc3**: Mon 25-Aug-2025
 * **2025.10-rc2**: Mon 08-Sep-2025
 * **2025.10-rc1**: Mon 22-Sep-2025
-* **2025.10** (Final): Mon 06-Oct-2025
+* **2025.10** (Final): \
+Mon 06-Oct-2025
 
 Release History
 ---------------
 
+**2025.10-rc3** - Release Candidate
+   :Date: 2025-09-22
+   :Commit: 238eb7c10261a6ffdd7e5c7f28dec83409bbd79f
+   :Subject: N/A
 **2025.10-rc2** - Release Candidate
    :Date: 2025-09-11
    :Commit: 0447d5f5f59c7f3ab3a158ae25ad484aad24b75e
@@ -50,3 +55,4 @@ Release History
 
 *Releases will be automatically added here by the CI system when version*
 *bumps occur.*
+
