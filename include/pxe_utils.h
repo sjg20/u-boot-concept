@@ -135,6 +135,7 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
  * @conf_fdt: FDT address
  * @restart: true to use BOOTM_STATE_RESTART instead of BOOTM_STATE_START (only
  *	supported with FIT / bootm)
+ * @fake_go: Do a 'fake' boot, up to the last possible point, then return
  */
 struct pxe_context {
 	/**
@@ -170,6 +171,7 @@ struct pxe_context {
 	char *conf_fdt_str;
 	ulong conf_fdt;
 	bool restart;
+	bool fake_go;
 };
 
 /**
