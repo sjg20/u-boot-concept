@@ -185,6 +185,14 @@ static void find_protocols(struct efi_priv *priv)
 	boot->locate_protocol(&guid, NULL, (void **)&priv->efi_dp_to_text);
 }
 
+static void efi_exit(void)
+{
+	struct efi_priv *priv = efi_get_priv();
+
+	printf("U-Boot EFI exiting\n");
+	priv->boot->exit(priv->parent_image, EFI_SUCCESS, 0, NULL);
+}
+
 /**
  * efi_main() - Start an EFI image
  *
@@ -237,16 +245,9 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	gd = gd->new_gd;
 	board_init_r(NULL, 0);
 	free_memory(priv);
+	efi_exit();
 
 	return EFI_SUCCESS;
-}
-
-static void efi_exit(void)
-{
-	struct efi_priv *priv = efi_get_priv();
-
-	printf("U-Boot EFI exiting\n");
-	priv->boot->exit(priv->parent_image, EFI_SUCCESS, 0, NULL);
 }
 
 static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
