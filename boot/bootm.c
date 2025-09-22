@@ -848,7 +848,7 @@ static int bootm_load_os(struct bootm_info *bmi, int boot_progress)
 
 		/* Handle BOOTM_STATE_LOADOS */
 		if (relocated_addr != load) {
-			printf("Moving Image from 0x%lx to 0x%lx, end=0x%lx\n",
+			printf("Moving Image from %lx to %lx, end %lx\n",
 			       load, relocated_addr,
 			       relocated_addr + image_size);
 			memmove((void *)relocated_addr, load_buf, image_size);
