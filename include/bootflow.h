@@ -52,11 +52,14 @@ enum bootflow_state_t {
  * @BOOTFLOWF_STATIC_BUF: Indicates that @bflow->buf is statically set, rather
  *	than being allocated by malloc().
  * @BOOTFLOWF_USE_BUILTIN_FDT: Indicates that current bootflow uses built-in FDT
+ * @BOOTFLOWF_FAKE_GO: Do a 'fake' boot, up to the last possible point, then
+ * return
  */
 enum bootflow_flags_t {
 	BOOTFLOWF_USE_PRIOR_FDT		= BIT(0),
 	BOOTFLOWF_STATIC_BUF		= BIT(1),
 	BOOTFLOWF_USE_BUILTIN_FDT	= BIT(2),
+	BOOTFLOWF_FAKE_GO		= BIT(3),
 };
 
 /**

@@ -231,6 +231,9 @@ bootflow boot
 
 This boots the current bootflow, reading any required files first.
 
+For debugging only, the `-f` flag can be provided to cause a fake boot. This
+runs the boot through to the point of handing off to the OS, then returns, to
+allow the state to be examined.
 
 bootflow cmdline
 ~~~~~~~~~~~~~~~~

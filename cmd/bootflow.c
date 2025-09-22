@@ -523,7 +523,11 @@ static int do_bootflow_boot(struct cmd_tbl *cmdtp, int flag, int argc,
 {
 	struct bootstd_priv *std;
 	struct bootflow *bflow;
+	bool fake = false;
 	int ret;
+
+	if (IS_ENABLED(CONFIG_BOOTM_FAKE_GO) && argc > 1 && *argv[1] == '-')
+		fake = strchr(argv[1], 'f');
 
 	ret = bootstd_get_priv(&std);
 	if (ret)
@@ -538,6 +542,14 @@ static int do_bootflow_boot(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 	}
 	bflow = std->cur_bootflow;
+
+	if (IS_ENABLED(CONFIG_BOOTM_FAKE_GO)) {
+		if (fake)
+			bflow->flags |= BOOTFLOWF_FAKE_GO;
+		else
+			bflow->flags &= ~BOOTFLOWF_FAKE_GO;
+	}
+	log_debug("cmd bflow flags %x\n", bflow->flags);
 	ret = bootflow_run_boot(NULL, bflow);
 	if (ret)
 		return CMD_RET_FAILURE;
@@ -649,7 +661,7 @@ U_BOOT_LONGHELP(bootflow,
 	"bootflow select [<num>|<name>] - select a bootflow\n"
 	"bootflow info [-ds]            - show info on current bootflow (-d dump bootflow)\n"
 	"bootflow read                  - read all current-bootflow files\n"
-	"bootflow boot                  - boot current bootflow\n"
+	"bootflow boot [-f]             - boot current bootflow (-f fake)\n"
 	"bootflow menu [-t]             - show a menu of available bootflows\n"
 	"bootflow cmdline [set|get|clear|delete|auto] <param> [<value>] - update cmdline"
 #else
@@ -664,7 +676,7 @@ U_BOOT_CMD_WITH_SUBCMDS(bootflow, "Boot flows", bootflow_help_text,
 	U_BOOT_SUBCMD_MKENT(select, 2, 1, do_bootflow_select),
 	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_bootflow_info),
 	U_BOOT_SUBCMD_MKENT(read, 1, 1, do_bootflow_read),
-	U_BOOT_SUBCMD_MKENT(boot, 1, 1, do_bootflow_boot),
+	U_BOOT_SUBCMD_MKENT(boot, 2, 1, do_bootflow_boot),
 	U_BOOT_SUBCMD_MKENT(menu, 2, 1, do_bootflow_menu),
 	U_BOOT_SUBCMD_MKENT(cmdline, 4, 1, do_bootflow_cmdline),
 #endif
