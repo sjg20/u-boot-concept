@@ -1260,9 +1260,9 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		ret = boot_fn(BOOTM_STATE_OS_PREP, bmi);
 	}
 
-#ifdef CONFIG_TRACE
 	/* Pretend to run the OS, then run a user command */
-	if (!ret && (states & BOOTM_STATE_OS_FAKE_GO)) {
+	if (IS_ENABLED(CONFIG_BOOTM_FAKE_GO) && !ret &&
+	    (states & BOOTM_STATE_OS_FAKE_GO)) {
 		char *cmd_list = env_get("fakegocmd");
 
 		log_debug("fake_go\n");
@@ -1270,7 +1270,6 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		if (!ret && cmd_list)
 			ret = run_command_list(cmd_list, -1, 0);
 	}
-#endif
 
 	/* Check for unsupported subcommand. */
 	if (ret) {
