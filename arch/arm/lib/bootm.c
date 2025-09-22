@@ -167,8 +167,9 @@ __weak void board_prep_linux(struct bootm_headers *images) { }
 static int boot_prep_linux(struct bootm_headers *images)
 {
 	char *commandline = env_get("bootargs");
+	bool use_fdt = CONFIG_IS_ENABLED(OF_LIBFDT) && IS_ENABLED(CONFIG_LMB);
 
-	if (CONFIG_IS_ENABLED(OF_LIBFDT) && IS_ENABLED(CONFIG_LMB) && images->ft_len) {
+	if (use_fdt && images->ft_len) {
 		debug("using: FDT\n");
 		if (image_setup_linux(images)) {
 			log_err("FDT creation failed!");
@@ -203,6 +204,9 @@ static int boot_prep_linux(struct bootm_headers *images)
 		}
 		setup_board_tags(&params);
 		setup_end_tag(gd->bd);
+	} else if (use_fdt && !images->ft_len) {
+		log_err("No FDT provided\n");
+		return -ENOENT;
 	} else {
 		panic("FDT and ATAGS support not compiled in\n");
 	}
