@@ -190,8 +190,7 @@ Release candidate schedule:
 * **{target_year}.{target_month:02d}-rc3**: {rc3_date.strftime('%a %d-%b-%Y')}
 * **{target_year}.{target_month:02d}-rc2**: {rc2_date.strftime('%a %d-%b-%Y')}
 * **{target_year}.{target_month:02d}-rc1**: {rc1_date.strftime('%a %d-%b-%Y')}
-* **{target_year}.{target_month:02d}** (Final): \\
-{final_date.strftime('%a %d-%b-%Y')}
+* **{target_year}.{target_month:02d}** (Final): {final_date.strftime('%a %d-%b-%Y')}
 
 '''
     return schedule_text

@@ -9,6 +9,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -874,6 +875,169 @@ class TestMainFunction(unittest.TestCase):
             self.assertEqual(result, 0)
             expected_msg = 'Updated documentation for version 2025.02'
             self.assertIn(expected_msg, mock_stdout.getvalue())
+
+
+class TestRSTFormatting(unittest.TestCase):
+    """Test that generated RST content is valid for Sphinx"""
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        """Clean up test fixtures"""
+        shutil.rmtree(self.test_dir)
+
+    def test_generate_schedule_rst_validity(self):
+        """Test that generate_schedule() produces valid RST"""
+        schedule = generate_schedule()
+
+        # Write schedule to a test file
+        test_rst_path = os.path.join(self.test_dir, 'test_schedule.rst')
+        with open(test_rst_path, 'w', encoding='utf-8') as f:
+            f.write('''.. SPDX-License-Identifier: GPL-2.0+
+
+Test Document
+=============
+
+''')
+            f.write(schedule)
+
+        # Try to validate with rst2html if available (fallback test)
+        try:
+            # Run docutils rst2html to validate the RST syntax
+            result = subprocess.run(['rst2html', test_rst_path],
+                                  capture_output=True, text=True, timeout=30)
+            # If rst2html is available and succeeds, the RST is valid
+            if result.returncode == 0:
+                self.assertTrue(True, "RST validation passed with rst2html")
+            else:
+                # Check for specific formatting errors
+                stderr = result.stderr.lower()
+                if 'bullet list ends without a blank line' in stderr:
+                    self.fail(f"RST formatting error in schedule: {result.stderr}")
+                elif 'unexpected unindent' in stderr:
+                    self.fail(f"RST formatting error in schedule: {result.stderr}")
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            # rst2html not available or timeout, do basic content checks
+            pass
+
+        # Basic RST format validation checks
+        lines = schedule.split('\n')
+
+        # Check for proper bullet list formatting
+        in_bullet_list = False
+        last_line_was_bullet = False
+
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+
+            # Check if this line starts a bullet list item
+            if stripped.startswith('* '):
+                in_bullet_list = True
+                last_line_was_bullet = True
+
+                # Check for line continuation issues
+                if '\\' in line:
+                    # If there's a backslash continuation, ensure it's properly formatted
+                    # The continuation should be on the same line, not the next line
+                    self.assertFalse(line.rstrip().endswith('\\'),
+                                   f"Line {i+1} has improper line continuation: {line}")
+            elif in_bullet_list and stripped == '':
+                # Empty line might end the bullet list
+                last_line_was_bullet = False
+            elif in_bullet_list and stripped and not stripped.startswith('  '):
+                # Non-indented content after bullet list should have blank line before it
+                if last_line_was_bullet:
+                    self.fail(f"Line {i+1} lacks blank line after bullet list: {line}")
+                in_bullet_list = False
+                last_line_was_bullet = False
+            elif in_bullet_list and stripped.startswith('  '):
+                # Indented content is part of the bullet list
+                last_line_was_bullet = False
+            else:
+                in_bullet_list = False
+                last_line_was_bullet = False
+
+    def test_update_docs_rst_validity(self):
+        """Test that update_docs() produces valid RST"""
+        docs_path = os.path.join(self.test_dir, 'concept_releases.rst')
+
+        # Create initial file
+        with open(docs_path, 'w', encoding='utf-8') as f:
+            f.write('''.. SPDX-License-Identifier: GPL-2.0+
+
+U-Boot Concept Releases
+=======================
+
+This document tracks all concept releases of U-Boot.
+
+Release History
+---------------
+
+''')
+
+        # Add a release that includes schedule generation
+        release_info = ReleaseInfo(
+            is_final=False,
+            version='2025.02-rc1',
+            year=2025,
+            month=2,
+            rc_number=1
+        )
+
+        changes_made = update_docs(release_info, 'abc123def', docs_path)
+        self.assertTrue(changes_made)
+
+        # Read the updated content
+        with open(docs_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Try to validate with rst2html if available
+        try:
+            result = subprocess.run(['rst2html', docs_path],
+                                  capture_output=True, text=True, timeout=30)
+            if result.returncode != 0:
+                stderr = result.stderr.lower()
+                if 'bullet list ends without a blank line' in stderr:
+                    self.fail(f"RST formatting error in generated docs: {result.stderr}")
+                elif 'unexpected unindent' in stderr:
+                    self.fail(f"RST formatting error in generated docs: {result.stderr}")
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            # rst2html not available, continue with manual checks
+            pass
+
+        # Manual validation of RST structure
+        lines = content.split('\n')
+
+        # Find the Next Release section and check its formatting
+        next_release_idx = -1
+        for i, line in enumerate(lines):
+            if line.strip() == 'Next Release':
+                next_release_idx = i
+                break
+
+        if next_release_idx != -1:
+            # Check the bullet list in the schedule section
+            in_candidate_schedule = False
+            for i in range(next_release_idx, len(lines)):
+                line = lines[i]
+                if 'Release candidate schedule:' in line:
+                    in_candidate_schedule = True
+                    continue
+                elif in_candidate_schedule and line.strip().startswith('* '):
+                    # This is a bullet list item
+                    # Check it doesn't have improper line continuation
+                    self.assertFalse(line.rstrip().endswith('\\'),
+                                   f"Line {i+1} has improper line continuation in schedule: {line}")
+                elif in_candidate_schedule and line.strip() == '':
+                    # Empty line - bullet list might be ending
+                    continue
+                elif (in_candidate_schedule and line.strip() and
+                      not line.strip().startswith('* ') and
+                      not line.startswith('  ')):
+                    # End of bullet list section
+                    break
 
 
 class TestReleaseVersionScenarios(unittest.TestCase):
