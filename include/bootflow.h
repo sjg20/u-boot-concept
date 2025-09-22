@@ -42,18 +42,21 @@ enum bootflow_state_t {
 /**
  * enum bootflow_flags_t - flags for bootflows
  *
+ * These flags are set up by the bootmeth when the bootflow is created, except
+ * for BOOTFLOWF_FAKE which can be set later.
+ *
  * @BOOTFLOWF_USE_PRIOR_FDT: Indicates that an FDT was not found by the bootmeth
  *	and it is using the prior-stage FDT, which is the U-Boot control FDT.
  *	This is only possible with the EFI bootmeth (distro-efi) and only when
  *	CONFIG_OF_HAS_PRIOR_STAGE is enabled
  * @BOOTFLOWF_STATIC_BUF: Indicates that @bflow->buf is statically set, rather
  *	than being allocated by malloc().
- * @BOOTFLOWF_USE_BUILTIN_FDT : Indicates that current bootflow uses built-in FDT
+ * @BOOTFLOWF_USE_BUILTIN_FDT: Indicates that current bootflow uses built-in FDT
  */
 enum bootflow_flags_t {
-	BOOTFLOWF_USE_PRIOR_FDT	= 1 << 0,
-	BOOTFLOWF_STATIC_BUF	= 1 << 1,
-	BOOTFLOWF_USE_BUILTIN_FDT	= 1 << 2,
+	BOOTFLOWF_USE_PRIOR_FDT		= BIT(0),
+	BOOTFLOWF_STATIC_BUF		= BIT(1),
+	BOOTFLOWF_USE_BUILTIN_FDT	= BIT(2),
 };
 
 /**
