@@ -170,6 +170,7 @@ int boot_relocate_fdt(char **of_flat_tree, ulong *of_size)
 		return 0;
 
 	if (fdt_check_header(fdt_blob) != 0) {
+		log_debug("fdt at %lx\n", (ulong)map_to_sysmem(fdt_blob));
 		fdt_error("image is not a fdt");
 		goto error;
 	}
@@ -330,6 +331,7 @@ static int select_fdt(struct bootm_headers *images, const char *select, u8 arch,
 		/* use FIT configuration provided in first bootm
 		 * command argument
 		 */
+		log_debug("using existing config node\n");
 		fdt_addr = map_to_sysmem(images->fit_hdr_os);
 		fdt_noffset = fit_get_node_from_config(images, FIT_FDT_PROP,
 						       fdt_addr);
@@ -446,6 +448,7 @@ int boot_get_fdt(void *buf, const char *select, uint arch,
 	char *fdt_blob = NULL;
 	ulong fdt_addr;
 
+	log_debug("select '%s'\n", select);
 	if (select || genimg_has_config(images)) {
 		int ret;
 
