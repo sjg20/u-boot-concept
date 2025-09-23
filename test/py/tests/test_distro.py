@@ -84,7 +84,7 @@ def test_distro_arm_app_extlinux(ubman):
         ubman.run_command('bootmeth order extlinux')
         ubman.run_command('boot', wait_for_prompt=False)
 
-        ubman.expect(["Booting bootflow 'efi_media.bootdev.part_2' with extlinux"])
+        ubman.expect(["Booting bootflow 'efi_media_1.bootdev.part_2' with extlinux"])
         ubman.expect(['Exiting EFI'])
         ubman.expect(['Booting Linux on physical CPU'])
 
@@ -102,7 +102,8 @@ def test_distro_arm_app_efi(ubman):
         ubman.run_command('bootmeth order efi')
         ubman.run_command('boot', wait_for_prompt=False)
 
-        ubman.expect(["Booting bootflow 'efi_media.bootdev.part_1' with efi"])
+        ubman.expect(
+            ["Booting bootflow 'efi_media_1.bootdev.part_1' with efi"])
 
         # Press Escape to force GRUB to appear, even if the silent menu was
         # enabled by a previous boot
