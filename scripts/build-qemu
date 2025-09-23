@@ -200,6 +200,8 @@ class BuildQemu:
         self.build_dir.mkdir(parents=True, exist_ok=True)
         cmd = ['buildman', '-w', '-o', str(self.build_dir), '--board',
                self.board, '-I']
+        if self.args.no_pager:
+            cmd += ['-a', '~CONSOLE_PAGER']
 
         self.execute_command(
             cmd,

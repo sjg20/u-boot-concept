@@ -301,6 +301,8 @@ def add_common_args(parser):
         help='Use KVM (Kernel-based Virtual Machine) for acceleration')
     parser.add_argument('-K', '--kernel',
                         help='Kernel to run using -kernel')
+    parser.add_argument('-n', '--no-pager', action='store_true',
+                        help="Disable the pager (for testing)")
     parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
                         help='Run a specified Operating System')
     parser.add_argument('-r', '--run', action='store_true',
