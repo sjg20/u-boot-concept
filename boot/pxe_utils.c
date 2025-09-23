@@ -427,6 +427,11 @@ skip_overlay:
 static int label_process_fdt(struct pxe_context *ctx, struct pxe_label *label,
 			     char *kernel_addr, const char **fdt_argp)
 {
+	log_debug("label '%s' kernel_addr '%s' label->fdt '%s' fdtdir '%s' "
+		  "kernel_label '%s' fdt_argp '%s'\n",
+		  label->name, kernel_addr, label->fdt, label->fdtdir,
+		  label->kernel_label, *fdt_argp);
+
 	/* For FIT, the label can be identical to kernel one */
 	if (label->fdt && !strcmp(label->kernel_label, label->fdt)) {
 		*fdt_argp = kernel_addr;
@@ -594,7 +599,11 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 		int states;
 
 		states = ctx->restart ? BOOTM_STATE_RESTART : BOOTM_STATE_START;
-		log_debug("using bootm\n");
+		log_debug("using bootm fake_go=%d\n", ctx->fake_go);
+		if (ctx->fake_go)
+			states |= BOOTM_STATE_OS_FAKE_GO;
+		else
+			states |= BOOTM_STATE_OS_GO;
 		ret = boot_run(&bmi, "ext", states | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
 			BOOTM_STATE_LOADOS);
@@ -782,8 +791,10 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 
 	if (!conf_fdt_str) {
 		if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
-		    strcmp("-", label->fdt))
+		    strcmp("-", label->fdt)) {
 			conf_fdt_str = env_get("fdt_addr");
+			log_debug("using fdt_addr '%s'\n", conf_fdt_str);
+		}
 	}
 
 	if (!conf_fdt_str) {
@@ -792,13 +803,17 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		buf = map_sysmem(kern_addr, 0);
 		if (genimg_get_format(buf) != IMAGE_FORMAT_FIT) {
 			if (!IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS) ||
-			    strcmp("-", label->fdt))
+			    strcmp("-", label->fdt)) {
 				conf_fdt_str = env_get("fdtcontroladdr");
+				log_debug("using fdtcontroladdr '%s'\n",
+					  conf_fdt_str);
+			}
 		}
 		unmap_sysmem(buf);
 	}
 	if (conf_fdt_str)
 		conf_fdt = hextoul(conf_fdt_str, NULL);
+	log_debug("conf_fdt %lx\n", conf_fdt);
 
 	if (ctx->bflow && conf_fdt_str)
 		ctx->bflow->fdt_addr = conf_fdt;

@@ -164,14 +164,16 @@ static void do_nonsec_virt_switch(void)
 __weak void board_prep_linux(struct bootm_headers *images) { }
 
 /* Subcommand: PREP */
-static void boot_prep_linux(struct bootm_headers *images)
+static int boot_prep_linux(struct bootm_headers *images)
 {
 	char *commandline = env_get("bootargs");
+	bool use_fdt = CONFIG_IS_ENABLED(OF_LIBFDT) && IS_ENABLED(CONFIG_LMB);
 
-	if (CONFIG_IS_ENABLED(OF_LIBFDT) && IS_ENABLED(CONFIG_LMB) && images->ft_len) {
+	if (use_fdt && images->ft_len) {
 		debug("using: FDT\n");
 		if (image_setup_linux(images)) {
-			panic("FDT creation failed!");
+			log_err("FDT creation failed!");
+			return -EINVAL;
 		}
 	} else if (BOOTM_ENABLE_TAGS) {
 		debug("using: ATAGS\n");
@@ -202,11 +204,16 @@ static void boot_prep_linux(struct bootm_headers *images)
 		}
 		setup_board_tags(&params);
 		setup_end_tag(gd->bd);
+	} else if (use_fdt && !images->ft_len) {
+		log_err("No FDT provided\n");
+		return -ENOENT;
 	} else {
 		panic("FDT and ATAGS support not compiled in\n");
 	}
 
 	board_prep_linux(images);
+
+	return 0;
 }
 
 __weak bool armv7_boot_nonsec_default(void)
@@ -345,6 +352,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 int do_bootm_linux(int flag, struct bootm_info *bmi)
 {
 	struct bootm_headers *images = bmi->images;
+	int ret;
 
 	log_debug("boot linux flag %x\n", flag);
 	/* No need for those on ARM */
@@ -353,7 +361,9 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 
 	if (flag & BOOTM_STATE_OS_PREP) {
 		log_debug("Preparing to boot Linux\n");
-		boot_prep_linux(images);
+		ret = boot_prep_linux(images);
+		if (ret)
+			return ret;
 		return 0;
 	}
 
@@ -364,7 +374,9 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	}
 
 	log_debug("No flags set: continuing to prepare and jump to Linux\n");
-	boot_prep_linux(images);
+	ret = boot_prep_linux(images);
+	if (ret)
+		return ret;
 	boot_jump_linux(images, flag);
 	return 0;
 }

@@ -848,7 +848,7 @@ static int bootm_load_os(struct bootm_info *bmi, int boot_progress)
 
 		/* Handle BOOTM_STATE_LOADOS */
 		if (relocated_addr != load) {
-			printf("Moving Image from 0x%lx to 0x%lx, end=0x%lx\n",
+			printf("Moving Image from %lx to %lx, end %lx\n",
 			       load, relocated_addr,
 			       relocated_addr + image_size);
 			memmove((void *)relocated_addr, load_buf, image_size);
@@ -1260,9 +1260,9 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		ret = boot_fn(BOOTM_STATE_OS_PREP, bmi);
 	}
 
-#ifdef CONFIG_TRACE
 	/* Pretend to run the OS, then run a user command */
-	if (!ret && (states & BOOTM_STATE_OS_FAKE_GO)) {
+	if (IS_ENABLED(CONFIG_BOOTM_FAKE_GO) && !ret &&
+	    (states & BOOTM_STATE_OS_FAKE_GO)) {
 		char *cmd_list = env_get("fakegocmd");
 
 		log_debug("fake_go\n");
@@ -1270,7 +1270,6 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		if (!ret && cmd_list)
 			ret = run_command_list(cmd_list, -1, 0);
 	}
-#endif
 
 	/* Check for unsupported subcommand. */
 	if (ret) {
@@ -1301,8 +1300,7 @@ int boot_run(struct bootm_info *bmi, const char *cmd, int extra_states)
 	int states;
 
 	bmi->cmd_name = cmd;
-	states = BOOTM_STATE_MEASURE | BOOTM_STATE_OS_PREP |
-		BOOTM_STATE_OS_FAKE_GO | BOOTM_STATE_OS_GO;
+	states = BOOTM_STATE_MEASURE | BOOTM_STATE_OS_PREP;
 	if (IS_ENABLED(CONFIG_SYS_BOOT_RAMDISK_HIGH))
 		states |= BOOTM_STATE_RAMDISK;
 	states |= extra_states;
@@ -1319,7 +1317,7 @@ int bootm_run(struct bootm_info *bmi)
 {
 	return boot_run(bmi, "bootm", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
-			BOOTM_STATE_LOADOS);
+			BOOTM_STATE_LOADOS | BOOTM_STATE_OS_GO);
 }
 
 int bootz_run(struct bootm_info *bmi)
@@ -1357,7 +1355,7 @@ int bootz_run(struct bootm_info *bmi)
 
 	images->os.os = IH_OS_LINUX;
 
-	return boot_run(bmi, "bootz", 0);
+	return boot_run(bmi, "bootz", BOOTM_STATE_OS_GO);
 }
 
 int booti_run(struct bootm_info *bmi)
@@ -1366,7 +1364,7 @@ int booti_run(struct bootm_info *bmi)
 
 	return boot_run(bmi, "booti", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
-			BOOTM_STATE_LOADOS);
+			BOOTM_STATE_LOADOS | BOOTM_STATE_OS_GO);
 }
 
 void bootm_read_env(struct bootm_info *bmi)

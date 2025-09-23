@@ -392,7 +392,7 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 		break;
 	case IMAGE_FORMAT_FIT:
 		if (CONFIG_IS_ENABLED(FIT)) {
-			log_debug("ramdisk fit load");
+			log_debug("ramdisk fit load\n");
 			rd_noffset = fit_image_load(images, rd_addr,
 						    &fit_uname_ramdisk,
 						    &fit_uname_config,
@@ -400,6 +400,7 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 						    BOOTSTAGE_ID_FIT_RD_START,
 						    FIT_LOAD_OPTIONAL_NON_ZERO,
 						    rd_datap, rd_lenp);
+			log_debug("rd_noffset %d\n", rd_noffset);
 			if (rd_noffset < 0)
 				return rd_noffset;
 
@@ -418,7 +419,7 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 				void *vendor_boot_img = map_sysmem(get_avendor_bootimg_addr(), 0);
 				void *ramdisk_img;
 
-				log_debug("android abootimg");
+				log_debug("android abootimg\n");
 				if (init_boot_img == -1)
 					ramdisk_img = map_sysmem(boot_img, 0);
 				else
@@ -431,7 +432,7 @@ static int select_ramdisk(struct bootm_headers *images, const char *select, u8 a
 			} else {
 				void *ptr = map_sysmem(images->os.start, 0);
 
-				log_debug("android other");
+				log_debug("android other\n");
 				ret = android_image_get_ramdisk(ptr, NULL, rd_datap, rd_lenp);
 				unmap_sysmem(ptr);
 			}

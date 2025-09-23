@@ -70,7 +70,11 @@ only available if `CONFIG_CONSOLE_MUX` is also enabled.
 
 When activated, the pager pauses at the end of each 'page' (screenful) of
 output, shows a prompt ": Press SPACE to continue" and lets the user read the
-output. To continue to the next page, press the SPACE key.
+output. To continue to the next page, press the SPACE key. To quit paging
+without seeing further output from the current command, press 'q'.
+
+The pager can be bypassed by pressing 'Q' at the prompt. This disables the pager
+until the 'pager' environment variable is given a new value.
 
 Page Size Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~

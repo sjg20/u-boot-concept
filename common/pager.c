@@ -20,8 +20,12 @@ const char *pager_post(struct pager *pag, bool use_pager, const char *s)
 	struct membuf old;
 	int ret, len;
 
-	if (!pag || !use_pager || pag->test_bypass || pag->state == PAGERST_BYPASS)
+	if (!pag || !use_pager || pag->test_bypass ||
+	    pag->state == PAGERST_BYPASS)
 		return s;
+
+	if (pag->state == PAGERST_QUIT_SUPPRESS)
+		return NULL;
 
 	len = strlen(s);
 	if (!len)
@@ -70,6 +74,14 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		pag->state = PAGERST_WAIT_USER;
 		return PAGER_PROMPT;
 	case PAGERST_WAIT_USER:
+		if (key == 'Q') {
+			pag->state = PAGERST_BYPASS;
+			return PAGER_BLANK;
+		}
+		if (key == 'q') {
+			pag->state = PAGERST_QUIT_SUPPRESS;
+			return "\r                                                  \r";
+		}
 		if (key != ' ')
 			return PAGER_WAITING;
 		pag->state = PAGERST_CLEAR_PROMPT;
@@ -78,6 +90,9 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		pag->state = PAGERST_OK;
 		break;
 	case PAGERST_BYPASS:
+		break;
+	case PAGERST_QUIT_SUPPRESS:
+		membuf_purge(&pag->mb);
 		return NULL;
 	}
 
@@ -92,17 +107,26 @@ const char *pager_next(struct pager *pag, bool use_pager, int key)
 		return NULL;
 	}
 
-	/* return lines until we reach the limit */
-	for (p = str, end = str + ret; p < end; p++) {
-		if (*p == '\n' && ++pag->line_count == pag->page_len - 1) {
-			/* remember to display the pager message next time */
-			pag->state = PAGERST_AT_LIMIT;
-			pag->line_count = 0;
+	end = str + ret;
+	if (pag->state != PAGERST_BYPASS) {
+		/* return lines until we reach the limit */
+		for (p = str; p < end; p++) {
+			if (*p == '\n' &&
+			    ++pag->line_count == pag->page_len - 1) {
+				/*
+				 * remember to display the pager message next
+				 * time
+				 */
+				pag->state = PAGERST_AT_LIMIT;
+				pag->line_count = 0;
 
-			/* skip the newline, since our prompt has one */
-			p++;
-			break;
+				/* skip the newline, since our prompt has one */
+				p++;
+				break;
+			}
 		}
+	} else {
+		p = end;
 	}
 
 	/* remove the used bytes from the membuf */
@@ -162,6 +186,15 @@ void pager_reset(struct pager *pag)
 	pag->line_count = 0;
 }
 
+void pager_clear_quit(struct pager *pag)
+{
+	if (!pag)
+		return;
+
+	if (pag->state == PAGERST_QUIT_SUPPRESS)
+		pag->state = PAGERST_OK;
+}
+
 static int on_pager(const char *name, const char *value, enum env_op op,
 		    int flags)
 {
@@ -177,6 +210,7 @@ static int on_pager(const char *name, const char *value, enum env_op op,
 		if (value) {
 			new_page_len = simple_strtoul(value, NULL, 16);
 			pager_set_page_len(pag, new_page_len);
+			pager_set_bypass(pag, false);
 		}
 		break;
 	case env_op_delete:

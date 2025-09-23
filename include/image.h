@@ -1134,7 +1134,8 @@ int bootz_setup(ulong image, ulong *start, ulong *end);
  * @start: Returns start address of image
  * @size : Returns size image
  * @force_reloc: Ignore image->ep field, always place image to RAM start
- * Return: 0 if OK, 1 if the image was not recognised
+ * Return: 0 if OK, -EPERM image was not recognised, -ENOSPC if there was not
+ * enough lmb space
  */
 int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 		bool force_reloc);

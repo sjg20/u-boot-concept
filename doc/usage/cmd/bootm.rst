@@ -130,7 +130,8 @@ prep
     are required. After this the OS itself is ready to boot.
 
 fake
-    This is only used for testing and only available when `CONFIG_TRACE` is
+    This is only used for testing and only available when `CONFIG_BOOTM_FAKE_GO`
+    is
     enabled. It fakes a boot of the OS, performs all the normal steps right up
     to the point where U-Boot is about to jump to the OS. It then runs a list
     of commands from the `fakegocmd` environment variable. Note that the

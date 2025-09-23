@@ -2467,10 +2467,12 @@ static int handle_load_op(const void *fit, int noffset, const char *prop_name,
 		       prop_name, data, load);
 	} else {
 		load = data;	/* No load address specified */
+		log_debug("No load\n");
 	}
 
 	ret = decomp_image(fit, noffset, prop_name, buf, size, image_type,
 			   load_op, bootstage_id, data, load, load_end);
+	log_debug("Decomp ret %d\n", ret);
 	if (ret)
 		return ret;
 
@@ -2505,18 +2507,19 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 			       prop_name, ph_type, bootstage_id,
 			       &fit_base_uname_config);
 	if (noffset >= 0) {
-
 		ret = check_allowed(fit, noffset, images, image_type, arch,
 				    bootstage_id);
 		if (ret)
 			return ret;
 
-		ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf, &len);
+		ret = obtain_data(fit, noffset, prop_name, bootstage_id, &buf,
+				  &len);
 		if (ret)
 			return ret;
 
-		ret = handle_load_op(fit, noffset, prop_name, buf, len, image_type,
-				     load_op, bootstage_id, &load);
+		ret = handle_load_op(fit, noffset, prop_name, buf, len,
+				     image_type, load_op, bootstage_id, &load);
+		log_debug("handle_load_op() returned %d\n", ret);
 		if (ret)
 			return ret;
 
@@ -2527,6 +2530,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	}
 
 	/* note that fit_uname will always be NULL if noffset == -ENOPKG */
+	log_debug("noffset %d\n", noffset);
 	if (noffset >= 0 || noffset == -ENOPKG) {
 		if (fit_unamep)
 			*fit_unamep = (char *)fit_uname;

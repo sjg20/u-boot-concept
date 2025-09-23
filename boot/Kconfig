@@ -453,6 +453,14 @@ config BOOTM_VXWORKS
 	help
 	  Support booting VxWorks images via the bootm command.
 
+config BOOTM_FAKE_GO
+	bool "Support faking a boot, for debugging purposes"
+	default y if TRACE || EFI_APP
+	help
+	  Provides a way to fake the boot, so that almost everything is done
+	  to prepare for the boot, but the jump to the OS does not actually
+	  happen. This can be useful for debugging.
+
 endif  # BOOT
 
 config PXE_UTILS
