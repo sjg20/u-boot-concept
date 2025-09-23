@@ -106,13 +106,20 @@ def test_distro_arm_app_efi(ubman):
             ["Booting bootflow 'efi_media_1.bootdev.part_1' with efi"])
 
         # Press Escape to force GRUB to appear, even if the silent menu was
-        # enabled by a previous boot
+        # enabled by a previous boot. If the menu is already set to appear, this
+        # will exit to the grub> prompt
+        ubman.send('\x1b')
+
+        # Press Escape again, to force it to the grub> prompt
         ubman.send('\x1b')
 
     # Wait until we see the editor appear
     with ubman.log.section('grub'):
+        ubman.expect(['grub>'])
+
+        ubman.run_command('normal', wait_for_prompt=False)
+
         ubman.expect(['ESC to return previous'])
-        # ubman.expect(['The highlighted entry will be executed automatically in 29s'])
 
         # Press 'e' to edit the command line
         ubman.log.info("Pressing 'e'")
