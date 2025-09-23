@@ -84,7 +84,7 @@ def test_distro_arm_app_extlinux(ubman):
         ubman.run_command('bootmeth order extlinux')
         ubman.run_command('boot', wait_for_prompt=False)
 
-        ubman.expect(["Booting bootflow 'efi_media.bootdev.part_2' with extlinux"])
+        ubman.expect(["Booting bootflow 'efi_media_1.bootdev.part_2' with extlinux"])
         ubman.expect(['Exiting EFI'])
         ubman.expect(['Booting Linux on physical CPU'])
 
@@ -102,16 +102,24 @@ def test_distro_arm_app_efi(ubman):
         ubman.run_command('bootmeth order efi')
         ubman.run_command('boot', wait_for_prompt=False)
 
-        ubman.expect(["Booting bootflow 'efi_media.bootdev.part_1' with efi"])
+        ubman.expect(
+            ["Booting bootflow 'efi_media_1.bootdev.part_1' with efi"])
 
         # Press Escape to force GRUB to appear, even if the silent menu was
-        # enabled by a previous boot
+        # enabled by a previous boot. If the menu is already set to appear, this
+        # will exit to the grub> prompt
+        ubman.send('\x1b')
+
+        # Press Escape again, to force it to the grub> prompt
         ubman.send('\x1b')
 
     # Wait until we see the editor appear
     with ubman.log.section('grub'):
+        ubman.expect(['grub>'])
+
+        ubman.run_command('normal', wait_for_prompt=False)
+
         ubman.expect(['ESC to return previous'])
-        # ubman.expect(['The highlighted entry will be executed automatically in 29s'])
 
         # Press 'e' to edit the command line
         ubman.log.info("Pressing 'e'")

@@ -155,7 +155,8 @@ class BuildEfi:
 
     def do_build(self, build):
         """Build U-Boot for the selected board"""
-        res = command.run_one('buildman', '-w', '-o', self.build_dir,
+        extra = ['-a', '~CONSOLE_PAGER'] if self.args.no_pager else []
+        res = command.run_one('buildman', '-w', '-o', self.build_dir, *extra,
                               '--board', build, '-I', raise_on_error=False)
         if res.return_code and res.return_code != 101:  # Allow warnings
             raise ValueError(
