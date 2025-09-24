@@ -313,6 +313,8 @@ enum scene_obj_align {
  * @SCENEOF_SYNC_SIZE: object's size (width/height) has changed
  * @SCENEOF_SYNC_WIDTH: object's widget has changed
  * @SCENEOF_SYNC_BBOX: object's bounding box has changed
+ * @SCENEOF_MANUAL: manually arrange the items associated with this object
+ * @SCENEOF_LAST: used just as a check for the size of the flags mask
  */
 enum scene_obj_flags_t {
 	SCENEOF_HIDE	= 1 << 0,
@@ -323,6 +325,9 @@ enum scene_obj_flags_t {
 	SCENEOF_SYNC_SIZE	= BIT(5),
 	SCENEOF_SYNC_WIDTH	= BIT(6),
 	SCENEOF_SYNC_BBOX	= BIT(7),
+	SCENEOF_MANUAL		= BIT(8),
+
+	SCENEOF_LAST,	/* check for size of flags below */
 };
 
 enum {
@@ -361,11 +366,15 @@ struct scene_obj {
 	struct scene_obj_dims dims;
 	enum scene_obj_align horiz;
 	enum scene_obj_align vert;
-	u8 flags;
-	u8 bit_length;
+	u16 flags;
 	u16 start_bit;
+	u8 bit_length;
 	struct list_head sibling;
 };
+
+/* Ensure the largest flag value fits in the flags field */
+_Static_assert(SCENEOF_LAST < BIT(sizeof(((struct scene_obj *)0)->flags) * 8),
+	       "scene_obj flags exceed flags field capacity");
 
 /* object can be highlighted when moving around expo */
 static inline bool scene_obj_can_highlight(const struct scene_obj *obj)
@@ -976,6 +985,20 @@ int scene_obj_set_valign(struct scene *scn, uint id, enum scene_obj_align aln);
  * Returns: 0 if OK, -ENOENT if @id is invalid
  */
 int scene_obj_set_hide(struct scene *scn, uint id, bool hide);
+
+/**
+ * scene_obj_set_manual() - Set whether an object arranges its dependents
+ *
+ * When this is enabled, scene_arrange() will refrain from moving objects
+ * attached to this one. E.g. for a menu, normally it moves text objects
+ * associated with the menu.
+ *
+ * @scn: Scene to update
+ * @id: ID of object to update
+ * @manual: true to disable arrange dependents when this object is updated
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_obj_set_manual(struct scene *scn, uint id, bool manual);
 
 /**
  * scene_menu_set_title() - Set the title of a menu
