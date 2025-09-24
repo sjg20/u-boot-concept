@@ -21,11 +21,6 @@ int do_addr_find(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	loff_t size;
 	int ret;
 
-	if (!gd->fdt_blob) {
-		log_err("No FDT setup\n");
-		return CMD_RET_FAILURE;
-	}
-
 	if (fs_set_blk_dev(argv[1], argc >= 3 ? argv[2] : NULL, FS_TYPE_ANY)) {
 		log_err("Can't set block device\n");
 		return CMD_RET_FAILURE;
