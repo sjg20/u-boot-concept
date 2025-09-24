@@ -24,6 +24,8 @@
 #endif
 
 struct abuf;
+struct efi_input_key;
+struct efi_key_data;
 struct udevice;
 
 /* Type INTN in UEFI specification */
@@ -911,5 +913,35 @@ int efi_read_var(const u16 *name, const efi_guid_t *guid, u32 *attrp,
 		 struct abuf *buf, u64 *timep);
 
 uint16_t *efi_dp_str(struct efi_device_path *dp);
+
+/**
+ * efi_decode_key() - Convert EFI input key to character
+ *
+ * Converts an EFI input key structure to a character code, handling
+ * both unicode characters and scan codes for special keys like arrow keys
+ * and backspace.
+ *
+ * Unicode characters are returned as-is, with the exception that carriage
+ * return ('\r') is converted to newline ('\n') for consistency with U-Boot
+ * conventions.
+ *
+ * @key: Pointer to EFI input key structure
+ * Return: Character code (0-255), or 0 if no valid character
+ */
+int efi_decode_key(struct efi_input_key *key);
+
+/**
+ * efi_decode_key_ex() - Convert EFI extended input key to character
+ *
+ * Converts an EFI extended key data structure to a character code by
+ * extracting the basic input key and calling efi_decode_key().
+ *
+ * This function provides a convenient wrapper for handling EFI Simple Text
+ * Input EX Protocol key data, which includes modifier keys (currently ignored)
+ *
+ * @key_data: Pointer to EFI extended key data structure
+ * Return: Character code (0-255), or 0 if no valid character
+ */
+int efi_decode_key_ex(struct efi_key_data *key_data);
 
 #endif /* _LINUX_EFI_H */
