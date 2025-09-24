@@ -67,7 +67,7 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 			     "U-Boot - Boot Menu", NULL);
 	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 32,
-				  SCENEOB_DISPLAY_MAX, 30);
+				  1366, 60);
 	ret |= scene_obj_set_halign(scn, OBJ_MENU_TITLE, SCENEOA_CENTRE);
 
 	logo = video_get_u_boot_logo(NULL);
@@ -90,13 +90,13 @@ int bootflow_menu_new(struct expo **expp)
 	     "The highlighted entry will be executed automatically in %ds.",
 	     NULL);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 590,
-				  SCENEOB_DISPLAY_MAX, 30);
+				  1366, 590 + 40);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 620,
-				  SCENEOB_DISPLAY_MAX, 30);
+				  1366, 620 + 40);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 100, 650,
 				  1366 - 100, 700);
 	ret |= scene_obj_set_bbox(scn, OBJ_AUTOBOOT, 0, 720,
-				  SCENEOB_DISPLAY_MAX, 750);
+				  1366, 750);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1A, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1B, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
