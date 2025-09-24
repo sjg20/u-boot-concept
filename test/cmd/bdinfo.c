@@ -191,6 +191,7 @@ static int bdinfo_test_all(struct unit_test_state *uts)
 #if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
 	ut_assertok(test_num_l(uts, "multi_dtb_fit", (ulong)gd->multi_dtb_fit));
 #endif
+	ut_assertok(test_num_l(uts, "flags", gd->flags));
 
 	if (IS_ENABLED(CONFIG_LMB) && gd->fdt_blob) {
 		ut_assertok(lmb_test_dump_all(uts));

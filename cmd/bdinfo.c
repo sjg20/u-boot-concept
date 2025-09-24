@@ -138,6 +138,7 @@ static int bdinfo_print_all(struct bd_info *bd)
 #if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
 	lprint_num_l("multi_dtb_fit", (ulong)gd->multi_dtb_fit);
 #endif
+	lprint_num_l("flags", gd->flags);
 	if (IS_ENABLED(CONFIG_LMB) && gd->fdt_blob) {
 		lmb_dump_all_force();
 		if (IS_ENABLED(CONFIG_OF_REAL))
