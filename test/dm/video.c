@@ -950,7 +950,6 @@ static int dm_test_video_box(struct unit_test_state *uts)
 		       video_index_to_colour(priv, VID_GREEN), true);
 	video_draw_box(dev, 350, 250, 400, 300, 0,
 		       video_index_to_colour(priv, VID_YELLOW), true);
-
 	ut_asserteq(175, video_compress_fb(uts, dev, false));
 
 	return 0;

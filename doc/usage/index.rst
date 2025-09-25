@@ -26,6 +26,7 @@ Shell commands
    :maxdepth: 1
 
    cmd/acpi
+   cmd/addr_find
    cmd/addrmap
    cmd/armffa
    cmd/askenv
@@ -100,6 +101,7 @@ Shell commands
    cmd/mv
    cmd/panic
    cmd/part
+   cmd/part_find
    cmd/pause
    cmd/pinmux
    cmd/printenv

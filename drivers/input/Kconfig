@@ -14,6 +14,7 @@ config TPL_INPUT
 config DM_KEYBOARD
 	bool "Enable driver model keyboard support"
 	depends on DM
+	default y if EFI_APP
 	help
 	  This adds a uclass for keyboards and implements keyboard support
 	  using driver model. The API is implemented by keyboard.h and
@@ -62,6 +63,19 @@ config CROS_EC_KEYB
 	  Most ARM Chromebooks use an EC to provide access to the keyboard.
 	  Messages are used to request key scans from the EC and these are
 	  then decoded into keys by this driver.
+
+config EFI_KEYB
+	bool "Keyboard on top of EFI"
+	depends on DM_KEYBOARD && EFI_APP
+	default y
+	help
+	  Provides a keyboard driver for EFI. While this is often connected
+	  to the serial driver, that can be confusing on a device which has
+	  both serial and keyboard devices. Provide a separate keyboard
+	  driver.
+
+	  For now this is not used, pending further work on teasing this
+	  apart within the EFI subsystem.
 
 config SPL_CROS_EC_KEYB
 	bool "Enable Chrome OS EC keyboard support in SPL"

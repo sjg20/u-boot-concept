@@ -12,6 +12,7 @@ obj-$(CONFIG_CMD_PAUSE) += test_pause.o
 endif
 obj-y += exit.o
 obj-$(CONFIG_X86) += cpuid.o msr.o
+obj-$(CONFIG_CMD_ADDR_FIND) += addr_find.o
 obj-$(CONFIG_CMD_ADDRMAP) += addrmap.o
 obj-$(CONFIG_CMD_BDI) += bdinfo.o
 obj-$(CONFIG_CMD_CHID) += chid.o
@@ -28,6 +29,7 @@ obj-$(CONFIG_CMD_MEMINFO) += meminfo.o
 endif
 obj-$(CONFIG_CMD_MEMORY) += mem_copy.o
 obj-$(CONFIG_CMD_MEM_SEARCH) += mem_search.o
+obj-$(CONFIG_CMD_PART_FIND) += part_find.o
 ifdef CONFIG_CMD_PCI
 obj-$(CONFIG_CMD_PCI_MPS) += pci_mps.o
 endif

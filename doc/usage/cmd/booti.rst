@@ -58,7 +58,7 @@ This is the boot log of an Odroid C2 board:
     => load mmc 0:1 $ramdisk_addr_r initrd.img-5.10.0-3-arm64
     27421776 bytes read in 1209 ms (21.6 MiB/s)
     => booti $kernel_addr_r $ramdisk_addr_r:$filesize $fdt_addr_r
-    Moving Image from 0x8080000 to 0x8200000, end=9c60000
+    Moving Image from 8080000 to 8200000, end 9c60000
     ## Flattened Device Tree blob at 08008000
        Booting using the fdt blob at 0x8008000
        Loading Ramdisk to 7a52a000, end 7bf50c50 ... OK
@@ -87,7 +87,7 @@ Here is the boot log for the compressed kernel:
     27421776 bytes read in 1181 ms (22.1 MiB/s)
     => booti $kernel_addr_r $ramdisk_addr_r:$filesize $fdt_addr_r
        Uncompressing Kernel Image
-    Moving Image from 0x8080000 to 0x8200000, end=9c60000
+    Moving Image from 8080000 to 8200000, end 9c60000
     ## Flattened Device Tree blob at 08008000
        Booting using the fdt blob at 0x8008000
        Loading Ramdisk to 7a52a000, end 7bf50c50 ... OK

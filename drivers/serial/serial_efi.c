@@ -73,7 +73,6 @@ static int serial_efi_get_key(struct serial_efi_priv *priv)
 static int serial_efi_getc(struct udevice *dev)
 {
 	struct serial_efi_priv *priv = dev_get_priv(dev);
-	char conv_scan[10] = {0, 'p', 'n', 'f', 'b', 'a', 'e', 0, 8};
 	int ret, ch;
 
 	ret = serial_efi_get_key(priv);
@@ -81,19 +80,7 @@ static int serial_efi_getc(struct udevice *dev)
 		return ret;
 
 	priv->have_key = false;
-	ch = priv->key.unicode_char;
-
-	/*
-	 * Unicode char 8 (for backspace) is never returned. Instead we get a
-	 * key scan code of 8. Handle this so that backspace works correctly
-	 * in the U-Boot command line.
-	 */
-	if (!ch && priv->key.scan_code < sizeof(conv_scan)) {
-		ch = conv_scan[priv->key.scan_code];
-		if (ch >= 'a')
-			ch -= 'a' - 1;
-	}
-	debug(" [%x %x %x] ", ch, priv->key.unicode_char, priv->key.scan_code);
+	ch = efi_decode_key(&priv->key);
 
 	return ch;
 }

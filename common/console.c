@@ -1108,6 +1108,7 @@ int console_clear(void)
 		if (ret)
 			return ret;
 	}
+	pager_reset(gd_pager());
 
 	return 0;
 }

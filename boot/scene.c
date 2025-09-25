@@ -359,6 +359,18 @@ int scene_obj_set_hide(struct scene *scn, uint id, bool hide)
 	return 0;
 }
 
+int scene_obj_set_manual(struct scene *scn, uint id, bool manual)
+{
+	int ret;
+
+	ret = scene_obj_flag_clrset(scn, id, SCENEOF_MANUAL,
+				    manual ? SCENEOF_MANUAL : 0);
+	if (ret)
+		return log_msg_ret("fla", ret);
+
+	return 0;
+}
+
 int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set)
 {
 	struct scene_obj *obj;
@@ -810,6 +822,8 @@ int scene_arrange(struct scene *scn)
 		handle_alignment(obj->horiz, obj->vert, &obj->bbox, &obj->dims,
 				 xsize, ysize, &obj->ofs);
 
+		if (obj->flags & SCENEOF_MANUAL)
+			continue;
 		switch (obj->type) {
 		case SCENEOBJT_NONE:
 		case SCENEOBJT_IMAGE:

@@ -6,7 +6,7 @@
 from img.common import setup_extlinux_image
 
 
-def setup_ubuntu_image(config, log, devnum, basename):
+def setup_ubuntu_image(config, log, devnum, basename, version='24.04.1 LTS'):
     """Create a 20MB Ubuntu disk image with a single FAT partition
 
     Args:
@@ -32,16 +32,16 @@ timeout 50
 
 
 label l0
-	menu label Ubuntu 24.04.1 LTS 6.8.0-53-generic
+	menu label Ubuntu %s 6.8.0-53-generic
 	linux /boot/%s
 	initrd /boot/%s
 
 	append root=/dev/disk/by-uuid/bcfdda4a-8249-4f40-9f0f-7c1a76b6cbe8 ro earlycon
 
 label l0r
-	menu label Ubuntu 24.04.1 LTS 6.8.0-53-generic (rescue target)
+	menu label Ubuntu %s 6.8.0-53-generic (rescue target)
 	linux /boot/%s
 	initrd /boot/%s
-''' % (vmlinux, initrd, vmlinux, initrd)
+''' % ((version, vmlinux, initrd) * 2)
     setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
                          script)
