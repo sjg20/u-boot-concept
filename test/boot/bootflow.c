@@ -316,6 +316,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_assert(!iter.doing_global);
 	ut_assert(!iter.have_global);
 	ut_asserteq(-1, iter.first_glob_method);
+	ut_asserteq(BIT(0), iter.methods_done);
 
 	/*
 	 * This shows MEDIA even though there is none, since in
@@ -324,6 +325,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	 * know.
 	 */
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	bootflow_free(&bflow);
 
 	ut_asserteq(-EPROTONOSUPPORT, bootflow_scan_next(&iter, &bflow));
 	ut_asserteq(3, iter.num_methods);
@@ -333,6 +335,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq_str("efi", iter.method->name);
 	ut_asserteq(0, bflow.err);
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	ut_asserteq(BIT(0) | BIT(1), iter.methods_done);
 	bootflow_free(&bflow);
 
 	/* now the VBE boothmeth */
@@ -344,6 +347,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq_str("vbe", iter.method->name);
 	ut_asserteq(0, bflow.err);
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	ut_asserteq(BIT(0) | BIT(1) | BIT(2), iter.methods_done);
 	bootflow_free(&bflow);
 
 	/* The next device is mmc1.bootdev - at first we use the whole device */
@@ -355,6 +359,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq_str("extlinux", iter.method->name);
 	ut_asserteq(0, bflow.err);
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	ut_asserteq(BIT(0) | BIT(1) | BIT(2), iter.methods_done);
 	bootflow_free(&bflow);
 
 	ut_asserteq(-ENOENT, bootflow_scan_next(&iter, &bflow));
@@ -365,6 +370,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq_str("efi", iter.method->name);
 	ut_asserteq(0, bflow.err);
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	ut_asserteq(BIT(0) | BIT(1) | BIT(2), iter.methods_done);
 	bootflow_free(&bflow);
 
 	/* now the VBE boothmeth */
@@ -376,6 +382,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq_str("vbe", iter.method->name);
 	ut_asserteq(0, bflow.err);
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	ut_asserteq(BIT(0) | BIT(1) | BIT(2), iter.methods_done);
 	bootflow_free(&bflow);
 
 	/* Then move to partition 1 where we find something */
@@ -418,6 +425,7 @@ static int bootflow_iter(struct unit_test_state *uts)
 	ut_asserteq_str("extlinux", iter.method->name);
 	ut_asserteq(0, bflow.err);
 	ut_asserteq(BOOTFLOWST_MEDIA, bflow.state);
+	ut_asserteq(BIT(0) | BIT(1) | BIT(2), iter.methods_done);
 	bootflow_free(&bflow);
 
 	bootflow_iter_uninit(&iter);
