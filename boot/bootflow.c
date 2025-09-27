@@ -356,7 +356,13 @@ static int iter_incr(struct bootflow_iter *iter)
 	}
 
 	/* Get the next boothmethod */
-	if (++iter->cur_method < iter->num_methods) {
+	for (iter->cur_method++; iter->cur_method < iter->num_methods;
+	     iter->cur_method++) {
+		/* loop until we find a global bootmeth we haven't used */
+		if (IS_ENABLED(CONFIG_BOOTMETH_GLOBAL) && iter->doing_global &&
+		    !bootmeth_glob_allowed(iter, iter->cur_method))
+			continue;
+
 		iter->method = iter->method_order[iter->cur_method];
 		log_debug("-> next method '%s'\n", iter->method->name);
 		return 0;
