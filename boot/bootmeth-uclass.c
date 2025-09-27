@@ -147,8 +147,7 @@ int bootmeth_setup_iter_order(struct bootflow_iter *iter, bool include_global)
 				bool is_global;
 
 				ucp = dev_get_uclass_plat(dev);
-				is_global = ucp->flags &
-					BOOTMETHF_GLOBAL;
+				is_global = ucp->flags & BOOTMETHF_GLOBAL;
 				if (is_global) {
 					iter->first_glob_method = i;
 					break;
@@ -193,6 +192,7 @@ int bootmeth_setup_iter_order(struct bootflow_iter *iter, bool include_global)
 	if (!count)
 		return log_msg_ret("count2", -ENOENT);
 
+	/* start with the global bootmeths */
 	if (IS_ENABLED(CONFIG_BOOTMETH_GLOBAL) && include_global &&
 	    iter->first_glob_method != -1 && iter->first_glob_method != count) {
 		iter->cur_method = iter->first_glob_method;
