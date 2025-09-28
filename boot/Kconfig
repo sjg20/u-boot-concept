@@ -505,6 +505,16 @@ config BOOT_DEFAULTS
 	  of U-Boot to boot various images. Currently much functionality is
 	  tied to enabling the command that exercises it.
 
+config BOOTCTL
+	bool "Support for boot control"
+	depends on BOOTSTD
+	default y
+	help
+	  This supports an experimental boot control, providing a way to
+	  discover and boot Operating Systems.
+
+	  For now, this is experimental.
+
 menuconfig BOOTSTD
 	bool "Standard boot"
 	default y if BLK

@@ -74,6 +74,11 @@ config UT_LIB_RSA
 
 endif  # UT_LIB
 
+config UT_BOOTCTL
+	bool "Unit tests for boot schema"
+	depends on BOOTSTD && SANDBOX
+	default y
+
 config UT_BOOTSTD
 	bool "Unit tests for standard boot"
 	depends on BOOTSTD && SANDBOX
