@@ -467,7 +467,7 @@ static int bootflow_iter_glob(struct unit_test_state *uts)
 	ut_asserteq(-EPROTONOSUPPORT, bootflow_scan_next(&iter, &bflow));
 
 	/* at this point the global bootmeths are stranded above num_methods */
-	ut_asserteq(3, iter.num_methods);
+	ut_asserteq(4, iter.num_methods);
 	ut_asserteq(3, iter.first_glob_method);
 	ut_assert(!iter.doing_global);
 	ut_assert(iter.have_global);
@@ -534,7 +534,7 @@ static int bootflow_iter_disable(struct unit_test_state *uts)
 	ut_assertok(bootflow_scan_first(NULL, NULL, &iter, 0, &bflow));
 
 	/* at this point the global bootmeths are stranded above num_methods */
-	ut_asserteq(4, iter.num_methods);
+	ut_asserteq(5, iter.num_methods);
 	ut_assert(!iter.doing_global);
 	ut_assert(iter.have_global);
 	ut_asserteq(4, iter.first_glob_method);
@@ -546,7 +546,7 @@ static int bootflow_iter_disable(struct unit_test_state *uts)
 	ut_assert_console_end();
 
 	/* Check that the sandbox bootmeth has been removed */
-	ut_asserteq(3, iter.num_methods);
+	ut_asserteq(4, iter.num_methods);
 
 	for (i = 0; i < iter.num_methods; i++)
 		ut_assert(strcmp("sandbox", iter.method_order[i]->name));
