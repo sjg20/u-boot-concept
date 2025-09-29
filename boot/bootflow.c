@@ -195,14 +195,19 @@ static int iter_incr(struct bootflow_iter *iter)
 	log_debug("entry: err=%d\n", iter->err);
 	global = iter->doing_global;
 
-	if (iter->err == BF_NO_MORE_DEVICES)
+	if (iter->err == BF_NO_MORE_DEVICES) {
+		log_debug("-> err: no more devices1\n");
 		return BF_NO_MORE_DEVICES;
+	}
 
 	/* Get the next boothmethod */
 	if (++iter->cur_method < iter->num_methods) {
 		iter->method = iter->method_order[iter->cur_method];
+		log_debug("-> next method '%s'\n", iter->method->name);
 		return 0;
 	}
+	log_debug("! no more methods: cur_method %d num_methods %d\n",
+		  iter->cur_method, iter->num_methods);
 
 	/*
 	 * If we have finished scanning the global bootmeths, start the
@@ -219,8 +224,10 @@ static int iter_incr(struct bootflow_iter *iter)
 		inc_dev = false;
 	}
 
-	if (iter->flags & BOOTFLOWIF_SINGLE_PARTITION)
+	if (iter->flags & BOOTFLOWIF_SINGLE_PARTITION) {
+		log_debug("-> single partition: no more devices\n");
 		return BF_NO_MORE_DEVICES;
+	}
 
 	/* No more bootmeths; start at the first one, and... */
 	iter->cur_method = 0;
@@ -228,11 +235,15 @@ static int iter_incr(struct bootflow_iter *iter)
 
 	if (iter->err != BF_NO_MORE_PARTS) {
 		/* ...select next partition  */
-		if (++iter->part <= iter->max_part)
+		if (++iter->part <= iter->max_part) {
+			log_debug("-> next partition %d max %d\n", iter->part,
+				  iter->max_part);
 			return 0;
+		}
 	}
 
 	/* No more partitions; start at the first one and... */
+	log_debug("! no more partitions\n");
 	iter->part = 0;
 
 	/*
@@ -328,8 +339,13 @@ static int iter_incr(struct bootflow_iter *iter)
 	}
 
 	/* if there are no more bootdevs, give up */
-	if (ret)
+	if (ret) {
+		log_debug("-> no more bootdevs\n");
 		return log_msg_ret("incr", BF_NO_MORE_DEVICES);
+	}
+
+	log_debug("-> bootdev '%s' method '%s'\n", dev->name,
+		  iter->method->name);
 
 	return 0;
 }
