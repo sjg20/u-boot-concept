@@ -740,4 +740,13 @@ int bootflow_menu_poll(struct expo *exp, int *seqp);
  */
 const char *bootflow_guess_label(const struct bootflow *bflow);
 
+/**
+ * bootflow_show() - Show the status of a bootflow
+ *
+ * @seq: Bootflow index
+ * @bflow: Bootflow to show
+ * @errors: True to show the error received, if any
+ */
+void bootflow_show(int index, struct bootflow *bflow, bool errors);
+
 #endif

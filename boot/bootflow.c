@@ -56,6 +56,63 @@ const char *bootflow_state_get_name(enum bootflow_state_t state)
 	return bootflow_state[state];
 }
 
+/**
+ * report_bootflow_err() - Report where a bootflow failed
+ *
+ * When a bootflow does not make it to the 'loaded' state, something went wrong.
+ * Print a helpful message if there is an error
+ *
+ * @bflow: Bootflow to process
+ * @err: Error code (0 if none)
+ */
+static void report_bootflow_err(struct bootflow *bflow, int err)
+{
+	if (!err)
+		return;
+
+	/* Indent out to 'Method' */
+	printf("     ** ");
+
+	switch (bflow->state) {
+	case BOOTFLOWST_BASE:
+		printf("No media/partition found");
+		break;
+	case BOOTFLOWST_MEDIA:
+		printf("No partition found");
+		break;
+	case BOOTFLOWST_PART:
+		printf("No filesystem found");
+		break;
+	case BOOTFLOWST_FS:
+		printf("File not found");
+		break;
+	case BOOTFLOWST_FILE:
+		printf("File cannot be loaded");
+		break;
+	case BOOTFLOWST_READY:
+		printf("Ready");
+		break;
+	case BOOTFLOWST_COUNT:
+		log_err("Unexpected boot value of bootflow error %d",
+			 bflow->state);
+		break;
+	}
+
+	printf(", err=%dE\n", err);
+}
+
+void bootflow_show(int index, struct bootflow *bflow, bool errors)
+{
+	const char *name = bootflow_guess_label(bflow);
+
+	printf("%3x  %-11s  %-6s  %-9.9s %4x  %-25.25s %s\n", index,
+	       bflow->method ? bflow->method->name : "(none)",
+	       bootflow_state_get_name(bflow->state), name, bflow->part,
+	       bflow->name, bflow->fname ?: "");
+	if (errors)
+		report_bootflow_err(bflow, bflow->err);
+}
+
 int bootflow_first_glob(struct bootflow **bflowp)
 {
 	struct bootstd_priv *std;
