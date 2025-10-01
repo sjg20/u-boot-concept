@@ -1080,3 +1080,23 @@ static int dm_test_video_backspace_truetype(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_video_backspace_truetype, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* video commands */
+static int dm_test_video_cmd(struct unit_test_state *uts)
+{
+	struct udevice *dev, *con;
+
+	ut_assertok(select_vidconsole(uts, "vidconsole0"));
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	ut_assertok(vidconsole_select_font(con, "8x16", 0));
+
+	ut_assertok(run_command("setcurs 10 5", 0));
+
+	ut_assertok(run_command("lcdputs \"Test string\"", 0));
+	ut_asserteq(187, video_compress_fb(uts, dev, false));
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	return 0;
+}
+DM_TEST(dm_test_video_cmd, UTF_SCAN_PDATA | UTF_SCAN_FDT);
