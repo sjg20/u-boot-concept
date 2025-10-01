@@ -49,6 +49,7 @@ The lcdputs command is available if CONFIG_CMD_VIDEO=y.
 See also
 --------
 
+* :doc:`video` - video command with subcommands
 * :doc:`setcurs` - set cursor position
 
 Return value

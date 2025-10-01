@@ -58,3 +58,11 @@ U_BOOT_CMD(
 	"print string on video framebuffer",
 	"    <string>"
 );
+
+U_BOOT_LONGHELP(video,
+	"setcursor <col> <row> - Set cursor position\n"
+	"video puts <string>         - Write string at current position");
+
+U_BOOT_CMD_WITH_SUBCMDS(video, "Video commands", video_help_text,
+	U_BOOT_SUBCMD_MKENT(setcursor, 3, 1, do_video_setcursor),
+	U_BOOT_SUBCMD_MKENT(puts, 2, 1, do_video_puts));

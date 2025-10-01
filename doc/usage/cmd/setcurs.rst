@@ -48,6 +48,7 @@ The setcurs command is available if CONFIG_CMD_VIDEO=y.
 See also
 --------
 
+* :doc:`video` - video command with subcommands
 * :doc:`lcdputs` - print string on video framebuffer
 
 Return value

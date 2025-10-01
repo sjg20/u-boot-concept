@@ -1097,6 +1097,11 @@ static int dm_test_video_cmd(struct unit_test_state *uts)
 	ut_asserteq(187, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
+	ut_assertok(run_command("video setcursor 0 0", 0));
+	ut_assertok(run_command("video puts \"Top left\"", 0));
+	ut_asserteq(272, video_compress_fb(uts, dev, false));
+	ut_assertok(video_check_copy_fb(uts, dev));
+
 	return 0;
 }
 DM_TEST(dm_test_video_cmd, UTF_SCAN_PDATA | UTF_SCAN_FDT);

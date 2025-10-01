@@ -137,6 +137,7 @@ Shell commands
    cmd/ums
    cmd/unbind
    cmd/ut
+   cmd/video
    cmd/virtio
    cmd/wdt
    cmd/wget
