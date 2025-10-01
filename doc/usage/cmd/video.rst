@@ -13,7 +13,8 @@ Synopsis
 
     video setcursor <col> <row>
     video puts <string>
-    video write [<col>:<row> <string>]...
+    video write [-p] [<col>:<row> <string>]...
+    video images
 
 Description
 -----------
@@ -66,6 +67,15 @@ locations in a single command.
 string
     Text string to display at the specified position
 
+video images
+~~~~~~~~~~~~
+
+    video images
+
+List all images that are compiled into U-Boot. This shows the name and size
+of each image that was built from .bmp files in the drivers/video/images
+directory.
+
 Examples
 --------
 
@@ -89,6 +99,15 @@ Write text at multiple positions::
 Write text using pixel coordinates::
 
     => video write -p 0:0 "Top left corner" a0:80 "Pixel position"
+
+List compiled-in images::
+
+    => video images
+    Name                       Size
+    -------------------- ----------
+    u_boot                     6932
+
+    Total images: 1
 
 Configuration
 -------------
