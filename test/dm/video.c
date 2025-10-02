@@ -667,15 +667,25 @@ static int dm_test_video_comp_bmp8(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_video_comp_bmp8, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 
-/* Test drawing the riscos pointer */
-static int dm_test_video_bmp_alpha(struct unit_test_state *uts)
+/**
+ * check_bmp_alpha() - Test drawing the riscos pointer with transparency
+ *
+ * Draws the riscos pointer BMP in various positions with and without
+ * transparency to verify alpha blending works correctly
+ *
+ * @uts: Test state
+ * @dev: Video device
+ * @first: Expected compression after first pointer draw
+ * @second: Expected compression after second pointer draw
+ * @trans: Expected compression after drawing with transparency
+ * Return: 0 if OK, -ve on error
+ */
+static int check_bmp_alpha(struct unit_test_state *uts, struct udevice *dev,
+			   int first, int second, int trans)
 {
-	struct video_priv *priv;
-	struct udevice *dev;
+	struct video_priv *priv = dev_get_uclass_priv(dev);
 	ulong addr;
 
-	ut_assertok(video_get_nologo(uts, &dev));
-	priv = dev_get_uclass_priv(dev);
 	addr = map_to_sysmem(video_image_getptr(riscos_arrow));
 
 	/* Draw a black rectangle first */
@@ -684,17 +694,49 @@ static int dm_test_video_bmp_alpha(struct unit_test_state *uts)
 
 	/* Draw the pointer on top of the black rectangle */
 	ut_assertok(video_bmp_display(dev, addr, 110, 110, false));
-	ut_asserteq(174, video_compress_fb(uts, dev, false));
+	ut_asserteq(first, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
-	/* Draw the pointer on top of the black rectangle */
+	/* Draw the pointer on top of the white background */
 	ut_assertok(video_bmp_display(dev, addr, 350, 110, false));
-	ut_asserteq(249, video_compress_fb(uts, dev, false));
+	ut_asserteq(second, video_compress_fb(uts, dev, false));
+
+	/* Draw the pointer with white (0xffffff) as transparent */
+	ut_assertok(video_bmp_displaya(dev, addr, 110, 160, false, true,
+				       0xffffff));
+	ut_assertok(video_bmp_displaya(dev, addr, 350, 160, false, true,
+				       0xffffff));
+	ut_asserteq(trans, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	return 0;
 }
-DM_TEST(dm_test_video_bmp_alpha, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* Test drawing the riscos pointer on a 16bpp display */
+static int dm_test_video_bmp_alpha16(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(check_bmp_alpha(uts, dev, 174, 249, 358));
+
+	return 0;
+}
+DM_TEST(dm_test_video_bmp_alpha16, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* Test drawing the riscos pointer on 32bpp display */
+static int dm_test_video_bmp_alpha32(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(uclass_find_first_device(UCLASS_VIDEO, &dev));
+	ut_assertnonnull(dev);
+	ut_assertok(sandbox_sdl_set_bpp(dev, VIDEO_BPP32));
+	ut_assertok(check_bmp_alpha(uts, dev, 641, 710, 869));
+
+	return 0;
+}
+DM_TEST(dm_test_video_bmp_alpha32, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 
 /* Test TrueType console */
 static int dm_test_video_truetype(struct unit_test_state *uts)

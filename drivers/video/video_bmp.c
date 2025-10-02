@@ -507,3 +507,9 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 {
 	return draw_bmp(dev, bmp_image, x, y, align, false, 0);
 }
+
+int video_bmp_displaya(struct udevice *dev, ulong bmp_image, int x, int y,
+		       bool align, bool alpha, u32 acolour)
+{
+	return draw_bmp(dev, bmp_image, x, y, align, alpha, acolour);
+}

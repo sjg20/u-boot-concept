@@ -384,6 +384,22 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 		      bool align);
 
 /**
+ * video_bmp_displaya() - Display a BMP image with alpha transparency
+ *
+ * @dev:	Device to use
+ * @bmp_image:	Address of BMP image
+ * @x:		X position to draw image
+ * @y:		Y position to draw image
+ * @align:	true to adjust the coordinates to centre the image (see
+ *		video_bmp_display() for details)
+ * @alpha:	true to enable alpha transparency
+ * @acolour:	Color to treat as transparent (RGB888 format: 0xRRGGBB)
+ * Return: 0 if OK, -ve on error
+ */
+int video_bmp_displaya(struct udevice *dev, ulong bmp_image, int x, int y,
+		       bool align, bool alpha, u32 acolour);
+
+/**
  * video_get_xsize() - Get the width of the display in pixels
  *
  * @dev:	Device to check
