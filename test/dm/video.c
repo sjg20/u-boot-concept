@@ -50,6 +50,7 @@ DM_TEST(dm_test_video_base, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 		      bool use_copy)
 {
+	struct sandbox_state *state = state_get_current();
 	struct video_priv *priv = dev_get_uclass_priv(dev);
 	uint destlen;
 	void *dest;
@@ -70,8 +71,10 @@ int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 	if (ret)
 		return ret;
 
-	/* provide a useful delay if #define LOG_DEBUG at the top of file */
-	if (_DEBUG)
+	/* provide a useful delay if -V flag is used or LOG_DEBUG is set */
+	if (state->video_test)
+		mdelay(state->video_test);
+	else if (_DEBUG)
 		mdelay(300);
 
 	return destlen;

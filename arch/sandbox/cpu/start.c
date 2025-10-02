@@ -365,6 +365,16 @@ static int sandbox_cmdline_cb_double_lcd(struct sandbox_state *state,
 SANDBOX_CMDLINE_OPT_SHORT(double_lcd, 'K', 0,
 			  "Double the LCD display size in each direction");
 
+static int sandbox_cmdline_cb_video_test(struct sandbox_state *state,
+					 const char *arg)
+{
+	state->video_test = simple_strtol(arg, NULL, 10);
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(video_test, 'V', 1,
+			  "Enable video test mode (ms delay between asserts)");
+
 static const char *term_args[STATE_TERM_COUNT] = {
 	"raw-with-sigs",
 	"raw",

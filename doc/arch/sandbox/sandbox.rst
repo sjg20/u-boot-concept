@@ -252,6 +252,10 @@ available options. Some of these are described below:
 -v, --verbose
   Show console output from tests. Normally this is suppressed.
 
+-V, --video_test <ms>
+  Enable video test mode with a delay (in milliseconds) between assertions. This
+  allows time to examine the display during testing.
+
 -w, --write
   Write driver state to state file on exit. In conjunction with `-r`, this allows
   sandbox to save and restore emulated hardware state (such as a TPM) across
