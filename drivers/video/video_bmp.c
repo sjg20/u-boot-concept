@@ -64,9 +64,12 @@ static u32 get_bmp_col_rgba8888(struct bmp_color_table_entry *cte)
  * @bmap: Pointer to BMP bitmap position to write. This contains a single byte
  *	which is either written directly (bpix == 8) or used to look up the
  *	palette to get a colour to write
+ * @alpha: Enable alpha transparency
+ * @acol: Alpha color (RGB888 format)
  */
 static void write_pix8(u8 *fb, uint bpix, enum video_format eformat,
-		       struct bmp_color_table_entry *palette, u8 *bmap)
+		       struct bmp_color_table_entry *palette, u8 *bmap,
+		       bool alpha, u32 acol)
 {
 	struct bmp_color_table_entry *cte = &palette[*bmap];
 
@@ -96,12 +99,12 @@ static void write_pix8(u8 *fb, uint bpix, enum video_format eformat,
 static void draw_unencoded_bitmap(u8 **fbp, uint bpix,
 				  enum video_format eformat, uchar *bmap,
 				  struct bmp_color_table_entry *palette,
-				  int cnt)
+				  int cnt, bool alpha, u32 acolour)
 {
 	u8 *fb = *fbp;
 
 	while (cnt > 0) {
-		write_pix8(fb, bpix, eformat, palette, bmap++);
+		write_pix8(fb, bpix, eformat, palette, bmap++, alpha, acolour);
 		fb += bpix / 8;
 		cnt--;
 	}
@@ -110,12 +113,12 @@ static void draw_unencoded_bitmap(u8 **fbp, uint bpix,
 
 static void draw_encoded_bitmap(u8 **fbp, uint bpix, enum video_format eformat,
 				struct bmp_color_table_entry *palette, u8 *bmap,
-				int cnt)
+				int cnt, bool alpha, u32 acolour)
 {
 	u8 *fb = *fbp;
 
 	while (cnt > 0) {
-		write_pix8(fb, bpix, eformat, palette, bmap);
+		write_pix8(fb, bpix, eformat, palette, bmap, alpha, acolour);
 		fb += bpix / 8;
 		cnt--;
 	}
@@ -126,7 +129,8 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 				      struct bmp_image *bmp, uint bpix,
 				      struct bmp_color_table_entry *palette,
 				      uchar *fb, int x_off, int y_off,
-				      ulong width, ulong height)
+				      ulong width, ulong height, bool alpha,
+				      u32 acolour)
 {
 	struct video_priv *priv = dev_get_uclass_priv(dev);
 	uchar *bmap;
@@ -178,7 +182,8 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 							cnt = runlen;
 						draw_unencoded_bitmap(
 							&fb, bpix, eformat,
-							bmap, palette, cnt);
+							bmap, palette, cnt,
+							alpha, acolour);
 					}
 					x += runlen;
 				}
@@ -204,7 +209,8 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 						cnt = runlen;
 					draw_encoded_bitmap(&fb, bpix, eformat,
 							    palette, &bmap[1],
-							    cnt);
+							    cnt, alpha,
+							    acolour);
 				}
 				x += runlen;
 			}
@@ -252,8 +258,8 @@ void video_bmp_get_info(const void *bmp_image, ulong *widthp, ulong *heightp,
 	*bpixp = get_unaligned_le16(&bmp->header.bit_count);
 }
 
-int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
-		      bool align)
+static int draw_bmp(struct udevice *dev, ulong bmp_image, int x, int y,
+		    bool align, bool alpha, u32 acolour)
 {
 	struct video_priv *priv = dev_get_uclass_priv(dev);
 	int i, j;
@@ -337,8 +343,10 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 				&bmp->header.compression);
 			debug("compressed %d %d\n", compression, BMP_BI_RLE8);
 			if (compression == BMP_BI_RLE8) {
-				video_display_rle8_bitmap(dev, bmp, bpix, palette, fb,
-							  x, y, width, height);
+				video_display_rle8_bitmap(dev, bmp, bpix,
+							  palette, fb, x, y,
+							  width, height, alpha,
+							  acolour);
 				break;
 			}
 		}
@@ -351,9 +359,10 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 		for (i = 0; i < height; ++i) {
 			schedule();
 			for (j = 0; j < width; j++) {
-				write_pix8(fb, bpix, eformat, palette, bmap);
-				bmap++;
+				write_pix8(fb, bpix, eformat, palette, bmap,
+					   alpha, acolour);
 				fb += bpix / 8;
+				bmap++;
 			}
 			bmap += (padded_width - width);
 			fb -= byte_width + priv->line_length;
@@ -461,4 +470,10 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 	video_damage(dev, x, y, width, height);
 
 	return video_sync(dev, false);
+}
+
+int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
+		      bool align)
+{
+	return draw_bmp(dev, bmp_image, x, y, align, false, 0);
 }
