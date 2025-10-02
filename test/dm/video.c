@@ -1294,3 +1294,55 @@ static int dm_test_video_images(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_video_images, UTF_SCAN_PDATA | UTF_SCAN_FDT | UTF_CONSOLE);
+
+/* Test manual-sync mode suppresses auto-sync */
+static int dm_test_video_manual_sync(struct unit_test_state *uts)
+{
+	struct video_priv *priv;
+	struct udevice *dev, *con;
+
+	ut_assertok(select_vidconsole(uts, "vidconsole0"));
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	priv = dev_get_uclass_priv(dev);
+
+	/* Write some text and verify it appears in the framebuffer */
+	vidconsole_put_string(con, "Test");
+	ut_asserteq(118, video_compress_fb(uts, dev, false));
+
+	/* Sync to copy buffer before enabling manual-sync mode */
+	ut_assertok(video_sync(dev, true));
+
+	/* Enable manual-sync mode - sync should be suppressed */
+	video_set_manual_sync(true);
+
+	/* Clear and write new text - auto-sync should not happen */
+	video_clear(dev);
+	vidconsole_put_string(con, "Manual Sync");
+
+	/* should do nothing in manual-sync mode */
+	ut_assertok(video_sync(dev, false));
+
+	/* The copy framebuffer should still show old content */
+	if (IS_ENABLED(CONFIG_VIDEO_COPY)) {
+		ut_assertf(memcmp(priv->fb, priv->copy_fb, priv->fb_size),
+			   "Copy fb should not match fb in manual-sync mode");
+	}
+
+	/*
+	 * video_sync() with force=true should still do nothing, except of
+	 * course that without a copy framebuffer the string will be present on
+	 * (only) framebuffer
+	 */
+	ut_assertok(video_sync(dev, true));
+	if (IS_ENABLED(CONFIG_VIDEO_COPY)) {
+		ut_asserteq(118, video_compress_fb(uts, dev, true));
+		ut_assertf(memcmp(priv->fb, priv->copy_fb, priv->fb_size),
+			   "Copy fb should not match fb in manual-sync mode");
+	} else {
+		ut_asserteq(183, video_compress_fb(uts, dev, true));
+	}
+
+	return 0;
+}
+DM_TEST(dm_test_video_manual_sync, UTF_SCAN_PDATA | UTF_SCAN_FDT);

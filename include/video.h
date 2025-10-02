@@ -543,4 +543,14 @@ static inline bool video_is_visible(void)
 #endif
 }
 
+/**
+ * video_set_manual_sync() - Set manual-sync mode for video subsystem
+ *
+ * When manual-sync mode is enabled, automatic video sync operations are
+ * suppressed to allow the caller to control rendering timing.
+ *
+ * @enable: true to enable manual-sync mode, false to disable
+ */
+void video_set_manual_sync(bool enable);
+
 #endif

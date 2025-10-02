@@ -65,11 +65,13 @@ struct cyclic_info;
  *	gd->video_top and works downwards, running out of space when it hits
  *	gd->video_bottom.
  * @cyc_active: true if cyclic video sync is currently registered
+ * @manual_sync: true if manual-sync mode is active (caller controls video sync)
  * @cyc: handle for cyclic-execution function, or NULL if none
  */
 struct video_uc_priv {
 	ulong video_ptr;
 	bool cyc_active;
+	bool manual_sync;
 	struct cyclic_info cyc;
 };
 
@@ -501,8 +503,13 @@ static void video_flush_copy(struct udevice *vid)
 int video_sync(struct udevice *vid, bool force)
 {
 	struct video_priv *priv = dev_get_uclass_priv(vid);
+	struct video_uc_priv *uc_priv = uclass_get_priv(vid->uclass);
 	struct video_ops *ops = video_get_ops(vid);
 	int ret;
+
+	/* Skip sync if manual-sync mode is active */
+	if (uc_priv->manual_sync)
+		return 0;
 
 	if (IS_ENABLED(CONFIG_VIDEO_COPY))
 		video_flush_copy(vid);
@@ -622,6 +629,20 @@ int video_default_font_height(struct udevice *dev)
 
 static void video_idle(struct cyclic_info *cyc)
 {
+	struct video_uc_priv *uc_priv;
+	struct uclass *uc;
+	int ret;
+
+	ret = uclass_get(UCLASS_VIDEO, &uc);
+	if (ret)
+		return;
+
+	uc_priv = uclass_get_priv(uc);
+
+	/* Skip sync if manual-sync mode is active */
+	if (uc_priv->manual_sync)
+		return;
+
 	if (CONFIG_IS_ENABLED(CURSOR)) {
 		struct udevice *cons;
 		struct uclass *uc;
@@ -807,6 +828,20 @@ __maybe_unused static int video_destroy(struct uclass *uc)
 	}
 
 	return 0;
+}
+
+void video_set_manual_sync(bool enable)
+{
+	struct video_uc_priv *uc_priv;
+	struct uclass *uc;
+	int ret;
+
+	ret = uclass_get(UCLASS_VIDEO, &uc);
+	if (ret)
+		return;
+
+	uc_priv = uclass_get_priv(uc);
+	uc_priv->manual_sync = enable;
 }
 
 UCLASS_DRIVER(video) = {
