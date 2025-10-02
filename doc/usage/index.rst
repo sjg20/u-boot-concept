@@ -85,6 +85,7 @@ Shell commands
    cmd/if
    cmd/itest
    cmd/imxtract
+   cmd/lcdputs
    cmd/load
    cmd/loadb
    cmd/loadm
@@ -117,6 +118,7 @@ Shell commands
    cmd/scmi
    cmd/scp03
    cmd/seama
+   cmd/setcurs
    cmd/setexpr
    cmd/sf
    cmd/shim
@@ -135,6 +137,7 @@ Shell commands
    cmd/ums
    cmd/unbind
    cmd/ut
+   cmd/video
    cmd/virtio
    cmd/wdt
    cmd/wget

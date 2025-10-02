@@ -581,28 +581,24 @@ int video_get_ysize(struct udevice *dev)
 	return priv->ysize;
 }
 
-#define SPLASH_DECL(_name) \
-	extern u8 __splash_ ## _name ## _begin[]; \
-	extern u8 __splash_ ## _name ## _end[]
-
-#define SPLASH_START(_name)	__splash_ ## _name ## _begin
-#define SPLASH_END(_name)	__splash_ ## _name ## _end
-
-SPLASH_DECL(u_boot_logo);
-
 void *video_get_u_boot_logo(int *sizep)
 {
-	if (sizep)
-		*sizep = SPLASH_END(u_boot_logo) - SPLASH_START(u_boot_logo);
+	void *ptr;
+	int size;
 
-	return SPLASH_START(u_boot_logo);
+	ptr = video_image_get(u_boot, &size);
+	if (sizep)
+		*sizep = size;
+
+	return ptr;
 }
 
 static int show_splash(struct udevice *dev)
 {
-	u8 *data = SPLASH_START(u_boot_logo);
+	u8 *data;
 	int ret;
 
+	data = video_image_getptr(u_boot);
 	ret = video_bmp_display(dev, map_to_sysmem(data), -4, 4, true);
 
 	return 0;

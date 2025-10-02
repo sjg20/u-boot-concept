@@ -7,7 +7,9 @@
 #ifndef _VIDEO_H_
 #define _VIDEO_H_
 
+#include <linker_lists.h>
 #include <stdio_dev.h>
+#include <video_defs.h>
 #ifdef CONFIG_SANDBOX
 #include <asm/state.h>
 #endif
@@ -200,6 +202,50 @@ enum colour_idx {
 
 	VID_COLOUR_COUNT
 };
+
+/**
+ * struct video_image - Information about an embedded image
+ *
+ * This structure holds the pointers to the start and end of an image
+ * that is embedded in the U-Boot binary, along with its name.
+ * On 64-bit: 2*8 + VIDEO_IMAGE_NAMELEN = 32 bytes
+ * On 32-bit: 2*4 + VIDEO_IMAGE_NAMELEN = 24 bytes
+ *
+ * @begin: Pointer to the start of the image data
+ * @end: Pointer to the end of the image data
+ * @name: Name of the image (e.g., "u_boot", "canonical"), null-terminated
+ */
+struct video_image {
+	const void *begin;
+	const void *end;
+	char name[VIDEO_IMAGE_NAMELEN];
+};
+
+/**
+ * video_image_get() - Get the start address and size of an image
+ *
+ * @_name: Name of the image taken from filename (e.g. u_boot)
+ * @_sizep: Returns the size of the image in bytes
+ * Return: Pointer to the start of the image data
+ */
+#define video_image_get(_name, _sizep) ({ \
+	struct video_image *__img = ll_entry_get(struct video_image, _name, \
+						  video_image); \
+	*(_sizep) = (ulong)__img->end - (ulong)__img->begin; \
+	(void *)__img->begin; \
+	})
+
+/**
+ * video_image_getptr() - Get the start address of an image
+ *
+ * @_name: Name of the image taken from filename (e.g. u_boot)
+ * Return: Pointer to the start of the image data
+ */
+#define video_image_getptr(_name) ({ \
+	struct video_image *__img = ll_entry_get(struct video_image, _name, \
+						  video_image); \
+	(void *)__img->begin; \
+	})
 
 /**
  * video_index_to_colour() - convert a color code to a pixel's internal

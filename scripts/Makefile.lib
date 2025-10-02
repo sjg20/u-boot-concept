@@ -523,23 +523,43 @@ cmd_S_splash=						\
 $(obj)/%_logo.S: $(src)/%_logo.bmp
 	$(call cmd,S_splash)
 
-# Generate an assembly file to wrap the EFI 'Boot Graphics Resource Table' image
-quiet_cmd_S_bgrt= BGRT    $@
-# Modified for U-Boot
-cmd_S_bgrt=						\
+# Handle image files in drivers/video/images without _logo suffix
+# Generate an assembly file to wrap the image data and create a linker-list entry
+quiet_cmd_S_image= IMAGE   $@
+cmd_S_image=						\
 (							\
-	echo '.section .rodata.bgrt.init,"a"';		\
+	echo '\#include <video_defs.h>';		\
+	echo '.section .rodata.image.init,"a"';		\
 	echo '.balign 16';				\
-	echo '.global __$(*F)_image_begin';		\
-	echo '__$(*F)_image_begin:';			\
+	echo '.global __image_$(*F)_begin';		\
+	echo '__image_$(*F)_begin:';			\
 	echo '.incbin "$<" ';				\
-	echo '__$(*F)_image_end:';			\
-	echo '.global __$(*F)_image_end';			\
+	echo '__image_$(*F)_end:';			\
+	echo '.global __image_$(*F)_end';		\
 	echo '.balign 16';				\
+	echo '';					\
+	echo '/* Linker list entry for this image */';	\
+	echo '.section __u_boot_list_2_video_image_2_$(*F), "aw"'; \
+	echo '.balign 8';				\
+	echo '.global _u_boot_list_2_video_image_2_$(*F)'; \
+	echo '_u_boot_list_2_video_image_2_$(*F):';	\
+	echo '\#ifdef __LP64__';			\
+	echo '.quad __image_$(*F)_begin';		\
+	echo '.quad __image_$(*F)_end';			\
+	echo '.asciz "'$(*F)'"';			\
+	echo '.org _u_boot_list_2_video_image_2_$(*F) + 16 + VIDEO_IMAGE_NAMELEN'; \
+	echo '\#else';					\
+	echo '.long __image_$(*F)_begin';		\
+	echo '.long __image_$(*F)_end';			\
+	echo '.asciz "'$(*F)'"';			\
+	echo '.org _u_boot_list_2_video_image_2_$(*F) + 8 + VIDEO_IMAGE_NAMELEN'; \
+	echo '\#endif';					\
 ) > $@
 
-$(obj)/%_image.S: $(src)/%_image.bmp
-	$(call cmd,S_bgrt)
+ifneq ($(filter drivers/video/images,$(obj)),)
+$(obj)/%.S: $(src)/%.bmp
+	$(call cmd,S_image)
+endif
 
 # EFI applications
 # A Makefile target *.efi is built as EFI application.

@@ -13,23 +13,6 @@
 #include <video.h>
 #include <acpi/acpi_table.h>
 
-#define BGRT_DECL(_name) \
-	extern u8 __bgrt_ ## _name ## _begin[]; \
-	extern u8 __bgrt_ ## _name ## _end[]
-
-#define BGRT_START(_name)	__bgrt_ ## _name ## _begin
-#define BGRT_END(_name)	__bgrt_ ## _name ## _end
-
-BGRT_DECL(image);
-
-static void *bgrt_get_image(int *sizep)
-{
-	if (sizep)
-		*sizep = BGRT_END(image) - BGRT_START(image);
-
-	return BGRT_START(image);
-}
-
 int acpi_write_bgrt(struct acpi_ctx *ctx)
 {
 	struct udevice *dev;
@@ -42,7 +25,10 @@ int acpi_write_bgrt(struct acpi_ctx *ctx)
 	/* If video is available, use the screen size to centre the logo */
 	have_video = !uclass_first_device_err(UCLASS_VIDEO, &dev);
 
-	logo = bgrt_get_image(&size);
+	if (!IS_ENABLED(CONFIG_VIDEO))
+		return -ENOENT;
+
+	logo = video_image_get(bgrt, &size);
 
 	/* If there's no logo data, there's nothing to report */
 	if (!logo)
