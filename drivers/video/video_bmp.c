@@ -388,6 +388,15 @@ static int draw_bmp(struct udevice *dev, ulong bmp_image, int x, int y,
 					u8 red = bmap[0];
 					u8 green = bmap[1];
 					u8 blue = bmap[2];
+					u32 pixel_color = (red << 16) |
+						(green << 8) | blue;
+
+					bmap += 3;
+					/* Skip transparent pixels if alpha enabled */
+					if (alpha && pixel_color == acolour) {
+						fb += bpix / 8;
+						continue;
+					}
 
 					if (bpix == 16) {
 						/* 16bit 565RGB format */
@@ -423,7 +432,6 @@ static int draw_bmp(struct udevice *dev, ulong bmp_image, int x, int y,
 						*fb++ = blue;
 						*fb++ = 0;
 					}
-					bmap += 3;
 				}
 				fb -= priv->line_length + width * (bpix / 8);
 				bmap += (padded_width - width);
