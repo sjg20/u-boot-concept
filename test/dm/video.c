@@ -667,6 +667,35 @@ static int dm_test_video_comp_bmp8(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_video_comp_bmp8, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 
+/* Test drawing the riscos pointer */
+static int dm_test_video_bmp_alpha(struct unit_test_state *uts)
+{
+	struct video_priv *priv;
+	struct udevice *dev;
+	ulong addr;
+
+	ut_assertok(video_get_nologo(uts, &dev));
+	priv = dev_get_uclass_priv(dev);
+	addr = map_to_sysmem(video_image_getptr(riscos_arrow));
+
+	/* Draw a black rectangle first */
+	video_draw_box(dev, 100, 100, 200, 200, 0,
+		       video_index_to_colour(priv, VID_BLACK), true);
+
+	/* Draw the pointer on top of the black rectangle */
+	ut_assertok(video_bmp_display(dev, addr, 110, 110, false));
+	ut_asserteq(174, video_compress_fb(uts, dev, false));
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	/* Draw the pointer on top of the black rectangle */
+	ut_assertok(video_bmp_display(dev, addr, 350, 110, false));
+	ut_asserteq(249, video_compress_fb(uts, dev, false));
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	return 0;
+}
+DM_TEST(dm_test_video_bmp_alpha, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
 /* Test TrueType console */
 static int dm_test_video_truetype(struct unit_test_state *uts)
 {
