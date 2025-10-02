@@ -13,18 +13,13 @@ Synopsis
 
     video setcursor <col> <row>
     video puts <string>
+    video write [<col>:<row> <string>]...
 
 Description
 -----------
 
-The video command provides access to the video-console subsystem.
-
-video setcursor
-~~~~~~~~~~~~~~~
-
-    video setcursor <col> <row>
-
-Set the cursor position on the video console.
+The video command provides access to the video-console subsystem. Common
+arguments are as follows:
 
 col
     Column position in hex, with 0 being the left side. Note that this is the
@@ -36,6 +31,13 @@ row
     text-row position, so the number of pixels per position depends on the
     font size.
 
+video setcursor
+~~~~~~~~~~~~~~~
+
+    video setcursor <col> <row>
+
+Set the cursor position on the video console.
+
 video puts
 ~~~~~~~~~~
 
@@ -45,6 +47,24 @@ Write a string to the video console at the current cursor position.
 
 string
     Text string to display
+
+video write
+~~~~~~~~~~~
+
+    video write [-p] [<col>:<row> <string>]...
+
+Write one or more strings to the video console at specified positions. Each
+position/string pair sets the cursor to the specified location and writes the
+string. Multiple position/string pairs can be provided to write to multiple
+locations in a single command.
+
+-p
+    Use pixel coordinates instead of character positions. When specified, the
+    col and row values are interpreted as pixel offsets and converted to
+    character positions based on the current font size.
+
+string
+    Text string to display at the specified position
 
 Examples
 --------
@@ -60,6 +80,15 @@ Print at different positions::
     => video puts "Top left"
     => video setcursor 0 10
     => video puts "Line 16"
+
+Write text at multiple positions::
+
+    => video write 0:0 "Top left" 0:a "Line 10"
+    => video write 0:a "First column in line10" 2a:0 "Text column 42"
+
+Write text using pixel coordinates::
+
+    => video write -p 0:0 "Top left corner" a0:80 "Pixel position"
 
 Configuration
 -------------
