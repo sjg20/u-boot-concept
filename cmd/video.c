@@ -22,8 +22,8 @@ static int do_video_setcursor(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	if (uclass_first_device_err(UCLASS_VIDEO_CONSOLE, &dev))
 		return CMD_RET_FAILURE;
-	col = dectoul(argv[1], NULL);
-	row = dectoul(argv[2], NULL);
+	col = hextoul(argv[1], NULL);
+	row = hextoul(argv[2], NULL);
 	vidconsole_position_cursor(dev, col, row);
 
 	return 0;
@@ -50,7 +50,7 @@ static int do_video_puts(struct cmd_tbl *cmdtp, int flag, int argc,
 U_BOOT_CMD(
 	setcurs, 3,	1,	do_video_setcursor,
 	"set cursor position within screen",
-	"    <col> <row> in character"
+	"    <col> <row> in hex characters"
 );
 
 U_BOOT_CMD(
