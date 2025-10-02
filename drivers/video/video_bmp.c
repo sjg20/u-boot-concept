@@ -68,14 +68,14 @@ static u32 get_bmp_col_rgba8888(struct bmp_color_table_entry *cte)
 static void write_pix8(u8 *fb, uint bpix, enum video_format eformat,
 		       struct bmp_color_table_entry *palette, u8 *bmap)
 {
+	struct bmp_color_table_entry *cte = &palette[*bmap];
+
 	if (bpix == 8) {
 		*fb++ = *bmap;
 	} else if (bpix == 16) {
-		*(u16 *)fb = get_bmp_col_16bpp(palette[*bmap]);
+		*(u16 *)fb = get_bmp_col_16bpp(*cte);
 	} else {
 		/* Only support big endian */
-		struct bmp_color_table_entry *cte = &palette[*bmap];
-
 		if (bpix == 24) {
 			*fb++ = cte->red;
 			*fb++ = cte->green;
