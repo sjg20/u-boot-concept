@@ -4,6 +4,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#include <bmp_layout.h>
 #include <bzlib.h>
 #include <dm.h>
 #include <gzip.h>
@@ -47,6 +48,79 @@ static int dm_test_video_base(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_video_base, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 
+/**
+ * video_write_bmp() - Write framebuffer to BMP file
+ *
+ * This writes the current framebuffer contents to a BMP file on the host
+ * filesystem. Useful for debugging video tests.
+ *
+ * @uts: Test state
+ * @dev: Video device
+ * @fname: Filename to write to
+ * Return: 0 if OK, -ve on error
+ */
+static int video_write_bmp(struct unit_test_state *uts, struct udevice *dev,
+			   const char *fname)
+{
+	struct video_priv *priv = dev_get_uclass_priv(dev);
+	struct bmp_image *bmp;
+	u32 width = priv->xsize;
+	u32 height = priv->ysize;
+	u32 row_bytes, bmp_size, bpp, bytes_per_pixel;
+	void *bmp_data;
+	int ret, y;
+
+	/* Support 16bpp and 32bpp */
+	switch (priv->bpix) {
+	case VIDEO_BPP16:
+		bpp = 16;
+		bytes_per_pixel = 2;
+		break;
+	case VIDEO_BPP32:
+		bpp = 32;
+		bytes_per_pixel = 4;
+		break;
+	default:
+		return -ENOSYS;
+	}
+
+	/* BMP rows are padded to 4-byte boundary */
+	row_bytes = ALIGN(width * bytes_per_pixel, BMP_DATA_ALIGN);
+	bmp_size = sizeof(struct bmp_header) + row_bytes * height;
+
+	bmp = malloc(bmp_size);
+	if (!bmp)
+		return -ENOMEM;
+
+	memset(bmp, 0, bmp_size);
+
+	/* Fill in BMP header */
+	bmp->header.signature[0] = 'B';
+	bmp->header.signature[1] = 'M';
+	bmp->header.file_size = cpu_to_le32(bmp_size);
+	bmp->header.data_offset = cpu_to_le32(sizeof(struct bmp_header));
+	bmp->header.size = cpu_to_le32(40);
+	bmp->header.width = cpu_to_le32(width);
+	bmp->header.height = cpu_to_le32(height);
+	bmp->header.planes = cpu_to_le16(1);
+	bmp->header.bit_count = cpu_to_le16(bpp);
+	bmp->header.compression = cpu_to_le32(BMP_BI_RGB);
+
+	/* Copy framebuffer data (BMP is bottom-up) */
+	bmp_data = (void *)bmp + sizeof(struct bmp_header);
+	for (y = 0; y < height; y++) {
+		void *src = priv->fb + (height - 1 - y) * priv->line_length;
+		void *dst = bmp_data + y * row_bytes;
+
+		memcpy(dst, src, width * bytes_per_pixel);
+	}
+
+	ret = os_write_file(fname, bmp, bmp_size);
+	free(bmp);
+
+	return ret;
+}
+
 int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 		      bool use_copy)
 {
@@ -70,6 +144,18 @@ int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 	free(dest);
 	if (ret)
 		return ret;
+
+	/* Write frame to file if --video-frames option is set */
+	if (state->video_frames_dir) {
+		char filename[256];
+
+		snprintf(filename, sizeof(filename), "%s/frame%d.bmp",
+			 state->video_frames_dir, state->video_frame_count++);
+		ret = video_write_bmp(uts, dev, filename);
+		if (ret)
+			printf("Failed to write frame to %s: %d\n", filename,
+			       ret);
+	}
 
 	/* provide a useful delay if -V flag is used or LOG_DEBUG is set */
 	if (state->video_test)

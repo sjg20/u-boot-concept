@@ -178,6 +178,8 @@ struct sandbox_state {
 	bool pager_bypass;		/* Enable pager-bypass mode */
 	bool no_term_present;		/* Assume no terminal present */
 	int video_test;			/* ms to wait before next assert */
+	const char *video_frames_dir;	/* Directory to write video frames */
+	int video_frame_count;		/* Number of frames written */
 
 	/* Pointer to information for each SPI bus/cs */
 	struct sandbox_spi_info spi[CONFIG_SANDBOX_SPI_MAX_BUS]
