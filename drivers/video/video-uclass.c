@@ -64,6 +64,7 @@ struct cyclic_info;
  *	available address to use for a device's framebuffer. It starts at
  *	gd->video_top and works downwards, running out of space when it hits
  *	gd->video_bottom.
+ * @cyc_active: true if cyclic video sync is currently registered
  * @cyc: handle for cyclic-execution function, or NULL if none
  */
 struct video_uc_priv {
