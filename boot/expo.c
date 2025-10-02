@@ -300,7 +300,7 @@ static int render_mouse_pointer(struct expo *exp)
 	return 0;
 }
 
-int expo_render(struct expo *exp)
+static int expo_render_(struct expo *exp, bool dirty_only)
 {
 	struct udevice *dev = exp->display;
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev);
@@ -320,7 +320,7 @@ int expo_render(struct expo *exp)
 		if (!scn)
 			return log_msg_ret("scn", -ENOENT);
 
-		ret = scene_render(scn, false);
+		ret = scene_render(scn, dirty_only);
 		if (ret)
 			return log_msg_ret("ren", ret);
 	}
@@ -333,6 +333,16 @@ int expo_render(struct expo *exp)
 	video_sync(dev, true);
 
 	return scn ? 0 : -ECHILD;
+}
+
+int expo_render(struct expo *exp)
+{
+	return expo_render_(exp, false);
+}
+
+int expo_render_dirty(struct expo *exp)
+{
+	return expo_render_(exp, true);
 }
 
 int expo_send_key(struct expo *exp, int key)

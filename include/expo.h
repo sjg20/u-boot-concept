@@ -669,6 +669,18 @@ int expo_first_scene_id(struct expo *exp);
 int expo_render(struct expo *exp);
 
 /**
+ * expo_render_dirty() - render the dirty portion of expo on the display
+ *
+ * Only the objects within the damage bbox are rendered. The others are
+ * assumed to be up-to-date.
+ *
+ * @exp: Expo to render
+ * Return: 0 if OK, -ECHILD if there is no current scene, -ENOENT if the
+ * current scene is not found, other error if something else goes wrong
+ */
+int expo_render_dirty(struct expo *exp);
+
+/**
  * expo_arrange() - Arrange the current scene to deal with object sizes
  *
  * Updates any menus in the current scene so that their objects are in the right
