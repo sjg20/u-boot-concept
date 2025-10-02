@@ -133,14 +133,22 @@ struct video_priv {
 
 /**
  * struct video_ops - structure for keeping video operations
- * @sync: Synchronize FB with device. Some device like SPI based LCD
- *	  displays needs synchronization when data in an FB is available.
- *	  For these devices implement sync hook to call a sync function.
- *	  vid is pointer to video device udevice. Function should return 0
- *	  on success and error code otherwise
  */
 struct video_ops {
-	int (*sync)(struct udevice *vid);
+	/**
+	 * @sync() - Synchronize FB with device
+	 *
+	 * Some devices like SPI-based LCD displays needs synchronization when
+	 * data in a framebuffer is available. These devices can implement this
+	 * method which is called whenever a video device is synced.
+	 *
+	 * Note that if CONFIG_VIDEO_DAMAGE is enabled, the driver can use this
+	 * to optimise the region to redraw.
+	 *
+	 * @dev: Video device
+	 * Return 0 on success, or -ve error code
+	 */
+	int (*sync)(struct udevice *dev);
 };
 
 #define video_get_ops(dev)        ((struct video_ops *)(dev)->driver->ops)
