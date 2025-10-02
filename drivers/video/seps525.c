@@ -221,7 +221,7 @@ static int seps525_spi_startup(struct udevice *dev)
 	return 0;
 }
 
-static int seps525_sync(struct udevice *vid)
+static int seps525_sync(struct udevice *vid, uint flags)
 {
 	struct video_priv *uc_priv = dev_get_uclass_priv(vid);
 	struct seps525_priv *priv = dev_get_priv(vid);

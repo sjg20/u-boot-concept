@@ -505,23 +505,31 @@ int video_sync(struct udevice *vid, bool force)
 	struct video_priv *priv = dev_get_uclass_priv(vid);
 	struct video_uc_priv *uc_priv = uclass_get_priv(vid->uclass);
 	struct video_ops *ops = video_get_ops(vid);
+	uint flags = 0;
 	int ret;
 
 	/* Skip sync if manual-sync mode is active */
 	if (uc_priv->manual_sync)
 		return 0;
 
+	if (force)
+		flags |= VIDSYNC_FORCE;
+
+	/* Check if sync should do full flush */
+	if (!CONFIG_IS_ENABLED(CYCLIC) || force ||
+	    get_timer(priv->last_sync) >= CONFIG_VIDEO_SYNC_MS)
+		flags |= VIDSYNC_FLUSH;
+
 	if (IS_ENABLED(CONFIG_VIDEO_COPY))
 		video_flush_copy(vid);
 
 	if (ops && ops->sync) {
-		ret = ops->sync(vid);
+		ret = ops->sync(vid, flags);
 		if (ret)
 			return ret;
 	}
 
-	if (CONFIG_IS_ENABLED(CYCLIC) && !force &&
-	    get_timer(priv->last_sync) < CONFIG_VIDEO_SYNC_MS)
+	if (!(flags & VIDSYNC_FLUSH))
 		return 0;
 
 	video_flush_dcache(vid, false);

@@ -43,7 +43,7 @@ struct efi_video_priv {
 	bool use_blit;
 };
 
-static int efi_video_sync(struct udevice *dev)
+static int efi_video_sync(struct udevice *dev, uint flags)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev);
 	struct efi_video_priv *priv = dev_get_priv(dev);

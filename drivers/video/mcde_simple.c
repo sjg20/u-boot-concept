@@ -94,7 +94,7 @@ static int mcde_simple_probe(struct udevice *dev)
 	return 0;
 }
 
-static int mcde_simple_video_sync(struct udevice *dev)
+static int mcde_simple_video_sync(struct udevice *dev, uint flags)
 {
 	struct mcde_simple_priv *priv = dev_get_priv(dev);
 	unsigned int val;

@@ -10,6 +10,7 @@
 #include <linker_lists.h>
 #include <stdio_dev.h>
 #include <video_defs.h>
+#include <linux/bitops.h>
 #ifdef CONFIG_SANDBOX
 #include <asm/state.h>
 #endif
@@ -72,6 +73,17 @@ enum video_format {
 	VIDEO_X8B8G8R8,
 	VIDEO_X8R8G8B8,
 	VIDEO_X2R10G10B10,
+};
+
+/**
+ * enum video_sync_flags - Flags for video_sync() operations
+ *
+ * @VIDSYNC_FORCE: Force sync even if recently synced or in manual-sync mode
+ * @VIDSYNC_FLUSH: Flush dcache and perform full sync operations
+ */
+enum video_sync_flags {
+	VIDSYNC_FORCE = BIT(0),
+	VIDSYNC_FLUSH = BIT(1),
 };
 
 /**
@@ -146,9 +158,10 @@ struct video_ops {
 	 * to optimise the region to redraw.
 	 *
 	 * @dev: Video device
+	 * @flags: Flags for the sync operation (enum video_sync_flags)
 	 * Return 0 on success, or -ve error code
 	 */
-	int (*sync)(struct udevice *dev);
+	int (*sync)(struct udevice *dev, uint flags);
 };
 
 #define video_get_ops(dev)        ((struct video_ops *)(dev)->driver->ops)
