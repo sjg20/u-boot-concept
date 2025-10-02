@@ -522,10 +522,6 @@ int video_manual_sync(struct udevice *vid, uint flags)
 	if (IS_ENABLED(CONFIG_VIDEO_COPY) && (flags & VIDSYNC_COPY))
 		video_flush_dcache(vid, true);
 
-#if defined(CONFIG_VIDEO_SANDBOX_SDL)
-	/* to see the copy framebuffer, use priv->copy_fb */
-	sandbox_sdl_sync(priv->fb);
-#endif
 	priv->last_sync = get_timer(0);
 
 	if (IS_ENABLED(CONFIG_VIDEO_DAMAGE)) {

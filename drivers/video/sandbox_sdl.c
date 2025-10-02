@@ -127,6 +127,24 @@ static int sandbox_sdl_bind(struct udevice *dev)
 	return ret;
 }
 
+static int sandbox_sdl_video_sync(struct udevice *vid, uint flags)
+{
+	struct video_priv *priv = dev_get_uclass_priv(vid);
+	const struct video_bbox *damage = NULL;
+
+	if (!(flags & VIDSYNC_FLUSH))
+		return 0;
+
+	if (IS_ENABLED(CONFIG_VIDEO_DAMAGE))
+		damage = &priv->damage;
+
+	return sandbox_sdl_sync(priv->fb, damage);
+}
+
+static const struct video_ops sandbox_sdl_ops = {
+	.sync = sandbox_sdl_video_sync,
+};
+
 static const struct udevice_id sandbox_sdl_ids[] = {
 	{ .compatible = "sandbox,lcd-sdl" },
 	{ }
@@ -139,5 +157,6 @@ U_BOOT_DRIVER(sandbox_lcd_sdl) = {
 	.bind	= sandbox_sdl_bind,
 	.probe	= sandbox_sdl_probe,
 	.remove	= sandbox_sdl_remove,
+	.ops	= &sandbox_sdl_ops,
 	.plat_auto	= sizeof(struct sandbox_sdl_plat),
 };

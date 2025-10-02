@@ -12,6 +12,7 @@
 #include <linux/input.h>
 #include <SDL2/SDL.h>
 #include <asm/state.h>
+#include <video_defs.h>
 
 /**
  * struct buf_info - a data buffer holding audio data
@@ -311,7 +312,7 @@ static int copy_to_texture(void *lcd_base, const struct vid_bbox *damage)
 	return 0;
 }
 
-int sandbox_sdl_sync(void *lcd_base)
+int sandbox_sdl_sync(void *lcd_base, const struct video_bbox *damage)
 {
 	struct SDL_Rect rect;
 	int ret;
@@ -319,7 +320,7 @@ int sandbox_sdl_sync(void *lcd_base)
 	if (!sdl.texture)
 		return 0;
 	SDL_RenderClear(sdl.renderer);
-	ret = copy_to_texture(lcd_base, NULL);
+	ret = copy_to_texture(lcd_base, damage);
 	if (ret) {
 		printf("copy_to_texture: %d: %s\n", ret, SDL_GetError());
 		return -EIO;
