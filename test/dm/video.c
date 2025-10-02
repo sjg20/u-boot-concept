@@ -1373,3 +1373,99 @@ static int dm_test_video_manual_sync(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_video_manual_sync, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* Test that sync() receives the correct damage rectangle */
+static int dm_test_video_sync_damage(struct unit_test_state *uts)
+{
+	struct vid_bbox damage;
+	struct udevice *dev, *con;
+	struct video_priv *priv;
+
+	if (!IS_ENABLED(CONFIG_VIDEO_DAMAGE))
+		return -EAGAIN;
+
+	ut_assertok(select_vidconsole(uts, "vidconsole0"));
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	ut_assertok(vidconsole_select_font(con, "8x16", 0));
+	priv = dev_get_uclass_priv(dev);
+
+	/* Use manual sync to prevent interference with the test */
+	video_set_manual_sync(true);
+
+	/* Clear the display - this creates a full-screen damage and syncs */
+	video_clear(dev);
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+	ut_asserteq(46, video_compress_fb(uts, dev, false));
+
+	/* Get the damage rectangle that was passed to sync() */
+	ut_assertok(sandbox_sdl_get_sync_damage(dev, &damage));
+
+	/* Should be the full screen */
+	ut_assert(vid_bbox_valid(&damage));
+	ut_asserteq(0, damage.x0);
+	ut_asserteq(0, damage.y0);
+	ut_asserteq(priv->xsize, damage.x1);
+	ut_asserteq(priv->ysize, damage.y1);
+
+	/* Sync again with no changes - should have empty damage */
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+	ut_assertok(sandbox_sdl_get_sync_damage(dev, &damage));
+	ut_assert(!vid_bbox_valid(&damage));
+
+	/* Check that priv->damage is still reset to empty */
+	ut_assert(!vid_bbox_valid(&priv->damage));
+
+	/* Write a small piece of text at a specific position */
+	vidconsole_putc_xy(con, VID_TO_POS(400), 67, 'T');
+
+	/* Check priv->damage before sync - should have text damage */
+	ut_assert(vid_bbox_valid(&priv->damage));
+	ut_asserteq(400, priv->damage.x0);
+	ut_asserteq(67, priv->damage.y0);
+	ut_asserteq(400 + 8, priv->damage.x1);  /* 8x16 font */
+	ut_asserteq(67 + 16, priv->damage.y1);
+
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+
+	/* Get the damage rectangle that was passed to sync() */
+	ut_assertok(sandbox_sdl_get_sync_damage(dev, &damage));
+
+	/* The damage should cover just the character */
+	ut_assert(vid_bbox_valid(&damage));
+	ut_asserteq(400, damage.x0);
+	ut_asserteq(67, damage.y0);
+	ut_asserteq(400 + 8, damage.x1);
+	ut_asserteq(67 + 16, damage.y1);
+
+	/* Check priv->damage after sync - should be reset to empty */
+	ut_assert(!vid_bbox_valid(&priv->damage));
+
+	/* Draw a filled box at a different position */
+	ut_assertok(video_draw_box(dev, 200, 300, 250, 340, 1, 0xffffff, true));
+
+	/* Check priv->damage before sync - should have box damage */
+	ut_assert(vid_bbox_valid(&priv->damage));
+	ut_asserteq(200, priv->damage.x0);
+	ut_asserteq(300, priv->damage.y0);
+	ut_asserteq(250, priv->damage.x1);
+	ut_asserteq(340, priv->damage.y1);
+
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+
+	/* Get the damage rectangle for the box */
+	ut_assertok(sandbox_sdl_get_sync_damage(dev, &damage));
+
+	/* The damage should cover the box area */
+	ut_assert(vid_bbox_valid(&damage));
+	ut_asserteq(200, damage.x0);
+	ut_asserteq(300, damage.y0);
+	ut_asserteq(250, damage.x1);
+	ut_asserteq(340, damage.y1);
+
+	/* Check priv->damage after sync - should be reset to inverted/empty */
+	ut_assert(!vid_bbox_valid(&priv->damage));
+
+	return 0;
+}
+DM_TEST(dm_test_video_sync_damage, UTF_SCAN_PDATA | UTF_SCAN_FDT);

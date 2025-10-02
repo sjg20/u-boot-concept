@@ -312,7 +312,7 @@ static int copy_to_texture(void *lcd_base, const struct vid_bbox *damage)
 	return 0;
 }
 
-int sandbox_sdl_sync(void *lcd_base, const struct video_bbox *damage)
+int sandbox_sdl_sync(void *lcd_base, const struct vid_bbox *damage)
 {
 	struct SDL_Rect rect;
 	int ret;

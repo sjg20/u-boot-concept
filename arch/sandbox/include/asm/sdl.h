@@ -10,7 +10,7 @@
 #include <video.h>
 
 struct mouse_event;
-struct video_bbox;
+struct vid_bbox;
 
 #ifdef CONFIG_SANDBOX_SDL
 
@@ -46,7 +46,7 @@ int sandbox_sdl_remove_display(void);
  * @damage: Optional damage rectangle to limit the update region (may be NULL)
  * Return: 0 if screen was updated, -ENODEV is there is no screen.
  */
-int sandbox_sdl_sync(void *lcd_base, const struct video_bbox *damage);
+int sandbox_sdl_sync(void *lcd_base, const struct vid_bbox *damage);
 
 /**
  * sandbox_sdl_scan_keys() - scan for pressed keys
@@ -132,7 +132,7 @@ static inline int sandbox_sdl_remove_display(void)
 }
 
 static inline int sandbox_sdl_sync(void *lcd_base,
-				   const struct video_bbox *damage)
+				   const struct vid_bbox *damage)
 {
 	return -ENODEV;
 }

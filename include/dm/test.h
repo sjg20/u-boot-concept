@@ -7,6 +7,7 @@
 #define __DM_TEST_H
 
 #include <linux/types.h>
+#include <video_defs.h>
 
 struct udevice;
 
@@ -157,6 +158,7 @@ extern struct unit_test_state global_dm_test_state;
  *	2=upside down, 3=90 degree counterclockwise)
  * @vidconsole_drv_name: Name of video console driver (set by tests)
  * @font_size: Console font size to select (set by tests)
+ * @last_sync_damage: Last damage rectangle passed to sync() method (for testing)
  */
 struct sandbox_sdl_plat {
 	int xres;
@@ -165,6 +167,7 @@ struct sandbox_sdl_plat {
 	int rot;
 	const char *vidconsole_drv_name;
 	int font_size;
+	struct vid_bbox last_sync_damage;
 };
 
 /**
@@ -231,5 +234,17 @@ void dm_leak_check_start(struct unit_test_state *uts);
  *
  * @dms: Overall test state
  */int dm_leak_check_end(struct unit_test_state *uts);
+
+/**
+ * sandbox_sdl_get_sync_damage() - Get the last damage rect passed to sync()
+ *
+ * This is used for testing to verify that the correct damage rectangle was
+ * passed to the driver's sync() method.
+ *
+ * @dev: Video device
+ * @damage: Returns the last damage rectangle
+ * Return: 0 if OK, -ve on error
+ */
+int sandbox_sdl_get_sync_damage(struct udevice *dev, struct vid_bbox *damage);
 
 #endif
