@@ -886,6 +886,7 @@ static int dm_test_video_damage(struct unit_test_state *uts)
 	struct sandbox_sdl_plat *plat;
 	struct udevice *dev, *con;
 	struct video_priv *priv;
+	struct vid_bbox *damage;
 	const char *test_string_1 = "Criticism may not be agreeable, ";
 	const char *test_string_2 = "but it is necessary.";
 	const char *test_string_3 = "It fulfils the same function as pain in "
@@ -903,32 +904,34 @@ static int dm_test_video_damage(struct unit_test_state *uts)
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	priv = dev_get_uclass_priv(dev);
 
+	damage = &priv->damage;
+
 	vidconsole_position_cursor(con, 14, 10);
 	vidconsole_put_string(con, test_string_2);
-	ut_asserteq(449, priv->damage.xstart);
-	ut_asserteq(325, priv->damage.ystart);
-	ut_asserteq(661, priv->damage.xend);
-	ut_asserteq(350, priv->damage.yend);
+	ut_asserteq(449, damage->x0);
+	ut_asserteq(325, damage->y0);
+	ut_asserteq(661, damage->x1);
+	ut_asserteq(350, damage->y1);
 
 	vidconsole_position_cursor(con, 7, 5);
 	vidconsole_put_string(con, test_string_1);
-	ut_asserteq(225, priv->damage.xstart);
-	ut_asserteq(164, priv->damage.ystart);
-	ut_asserteq(661, priv->damage.xend);
-	ut_asserteq(350, priv->damage.yend);
+	ut_asserteq(225, damage->x0);
+	ut_asserteq(164, damage->y0);
+	ut_asserteq(661, damage->x1);
+	ut_asserteq(350, damage->y1);
 
 	vidconsole_position_cursor(con, 21, 15);
 	vidconsole_put_string(con, test_string_3);
-	ut_asserteq(225, priv->damage.xstart);
-	ut_asserteq(164, priv->damage.ystart);
-	ut_asserteq(1280, priv->damage.xend);
-	ut_asserteq(510, priv->damage.yend);
+	ut_asserteq(225, damage->x0);
+	ut_asserteq(164, damage->y0);
+	ut_asserteq(1280, damage->x1);
+	ut_asserteq(510, damage->y1);
 
 	video_sync(dev, true);
-	ut_asserteq(priv->xsize, priv->damage.xstart);
-	ut_asserteq(priv->ysize, priv->damage.ystart);
-	ut_asserteq(0, priv->damage.xend);
-	ut_asserteq(0, priv->damage.yend);
+	ut_asserteq(priv->xsize, damage->x0);
+	ut_asserteq(priv->ysize, damage->y0);
+	ut_asserteq(0, damage->x1);
+	ut_asserteq(0, damage->y1);
 
 	ut_asserteq(7335, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));

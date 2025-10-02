@@ -90,11 +90,7 @@ enum video_format {
  * @fb_size:	Frame buffer size
  * @copy_fb:	Copy of the frame buffer to keep up to date; see struct
  *		video_uc_plat
- * @damage:	A bounding box of framebuffer regions updated since last sync
- * @damage.xstart:	X start position in pixels from the left
- * @damage.ystart:	Y start position in pixels from the top
- * @damage.xend:	X end position in pixels from the left
- * @damage.xend:	Y end position in pixels from the top
+ * @damage:	Bounding box of framebuffer regions updated since last sync
  * @line_length:	Length of each frame buffer line, in bytes. This can be
  *		set by the driver, but if not, the uclass will set it after
  *		probing
@@ -124,12 +120,7 @@ struct video_priv {
 	void *fb;
 	int fb_size;
 	void *copy_fb;
-	struct {
-		int xstart;
-		int ystart;
-		int xend;
-		int yend;
-	} damage;
+	struct vid_bbox damage;
 	int line_length;
 	u32 colour_fg;
 	u32 colour_bg;
