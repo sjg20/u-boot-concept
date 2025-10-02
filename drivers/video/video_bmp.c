@@ -385,20 +385,23 @@ static int draw_bmp(struct udevice *dev, ulong bmp_image, int x, int y,
 		if (CONFIG_IS_ENABLED(BMP_24BPP)) {
 			for (i = 0; i < height; ++i) {
 				for (j = 0; j < width; j++) {
+					u8 red = bmap[0];
+					u8 green = bmap[1];
+					u8 blue = bmap[2];
+
 					if (bpix == 16) {
 						/* 16bit 565RGB format */
-						*(u16 *)fb = ((bmap[2] >> 3)
-							<< 11) |
-							((bmap[1] >> 2) << 5) |
-							(bmap[0] >> 3);
-						bmap += 3;
+						*(u16 *)fb =
+							((blue >> 3) << 11) |
+							((green >> 2) << 5) |
+							(red >> 3);
 						fb += 2;
 					} else if (eformat == VIDEO_X2R10G10B10) {
 						u32 pix;
 
-						pix = *bmap++ << 2U;
-						pix |= *bmap++ << 12U;
-						pix |= *bmap++ << 22U;
+						pix = blue << 2U;
+						pix |= green << 12U;
+						pix |= red << 22U;
 						*fb++ = pix & 0xff;
 						*fb++ = (pix >> 8) & 0xff;
 						*fb++ = (pix >> 16) & 0xff;
@@ -406,20 +409,21 @@ static int draw_bmp(struct udevice *dev, ulong bmp_image, int x, int y,
 					} else if (eformat == VIDEO_RGBA8888) {
 						u32 pix;
 
-						pix = *bmap++ << 8U; /* blue */
-						pix |= *bmap++ << 16U; /* green */
-						pix |= *bmap++ << 24U; /* red */
-
-						*fb++ = (pix >> 24) & 0xff;
-						*fb++ = (pix >> 16) & 0xff;
+						pix = red << 24U;
+						pix |= green << 16U;
+						pix |= blue << 8U;
+						pix |= 0xff;
+						*fb++ = pix & 0xff;
 						*fb++ = (pix >> 8) & 0xff;
-						*fb++ = 0xff;
+						*fb++ = (pix >> 16) & 0xff;
+						*fb++ = pix >> 24;
 					} else {
-						*fb++ = *bmap++;
-						*fb++ = *bmap++;
-						*fb++ = *bmap++;
+						*fb++ = red;
+						*fb++ = green;
+						*fb++ = blue;
 						*fb++ = 0;
 					}
+					bmap += 3;
 				}
 				fb -= priv->line_length + width * (bpix / 8);
 				bmap += (padded_width - width);
