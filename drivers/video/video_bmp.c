@@ -54,6 +54,20 @@ static u32 get_bmp_col_rgba8888(struct bmp_color_table_entry *cte)
 }
 
 /**
+ * matches_alpha() - Check if a palette entry matches the alpha color
+ *
+ * @ent: BMP palette entry
+ * @col: Alpha color to compare (RGB888 format)
+ * Return: true if the palette entry matches the alpha color
+ */
+static bool matches_alpha(struct bmp_color_table_entry *ent, u32 col)
+{
+	u32 colour = (ent->red << 16) | (ent->green << 8) | ent->blue;
+
+	return colour == col;
+}
+
+/**
  * write_pix8() - Write a pixel from a BMP image into the framebuffer
  *
  * This handles frame buffers with 8, 16, 24 or 32 bits per pixel
@@ -72,6 +86,10 @@ static void write_pix8(u8 *fb, uint bpix, enum video_format eformat,
 		       bool alpha, u32 acol)
 {
 	struct bmp_color_table_entry *cte = &palette[*bmap];
+
+	/* Check for transparent pixel */
+	if (alpha && matches_alpha(cte, acol))
+		return;
 
 	if (bpix == 8) {
 		*fb++ = *bmap;
