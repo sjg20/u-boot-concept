@@ -134,6 +134,7 @@ struct expo_theme {
  * @mouse_enabled: true if the mouse is enabled
  * @mouse_ptr: Pointer to mouse pointer image data (BMP format)
  * @mouse_size: Size of mouse pointer (width and height in pixels)
+ * @mouse_pos: Current mouse position
  * @priv: Private data for the controller
  * @done: Indicates that a cedit session is complete and the user has quit
  * @save: Indicates that cedit data should be saved, rather than discarded
@@ -158,6 +159,7 @@ struct expo {
 	bool mouse_enabled;
 	const void *mouse_ptr;
 	struct vid_size mouse_size;
+	struct vid_pos mouse_pos;
 	void *priv;
 	bool done;
 	bool save;

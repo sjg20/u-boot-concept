@@ -12,6 +12,7 @@
 #include <expo.h>
 #include <log.h>
 #include <malloc.h>
+#include <mapmem.h>
 #include <menu.h>
 #include <mouse.h>
 #include <video.h>
@@ -249,6 +250,56 @@ int expo_arrange(struct expo *exp)
 	return 0;
 }
 
+static int update_mouse_position(struct expo *exp)
+{
+	struct mouse_event event;
+	int ret;
+
+	if (!IS_ENABLED(CONFIG_MOUSE) || !exp->mouse_enabled)
+		return 0;
+
+	/* Process all available mouse events to get latest position */
+	while (1) {
+		ret = mouse_get_event(exp->mouse, &event);
+		if (ret)
+			break; /* No more events available */
+
+		if (event.type == MOUSE_EV_MOTION) {
+			exp->mouse_pos.x = event.motion.x;
+			exp->mouse_pos.y = event.motion.y;
+		} else if (event.type == MOUSE_EV_BUTTON) {
+			exp->mouse_pos.x = event.button.x;
+			exp->mouse_pos.y = event.button.y;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * render_mouse_pointer() - Render the mouse pointer if enabled and visible
+ *
+ * @exp: Expo containing mouse state
+ * Return: 0 if OK, -ve on error
+ */
+static int render_mouse_pointer(struct expo *exp)
+{
+	struct udevice *dev = exp->display;
+	int ret;
+
+	if (!IS_ENABLED(CONFIG_MOUSE) || !exp->mouse_enabled || !exp->mouse_ptr)
+		return 0;
+
+	/* Use white (0xffffff) as transparent color */
+	ret = video_bmp_displaya(dev, map_to_sysmem(exp->mouse_ptr),
+				 exp->mouse_pos.x, exp->mouse_pos.y, false, true,
+				 0xffffff);
+	if (ret)
+		log_debug("Failed to display mouse pointer: %d\n", ret);
+
+	return 0;
+}
+
 int expo_render(struct expo *exp)
 {
 	struct udevice *dev = exp->display;
@@ -273,6 +324,11 @@ int expo_render(struct expo *exp)
 		if (ret)
 			return log_msg_ret("ren", ret);
 	}
+
+	/* Render mouse pointer if mouse is enabled */
+	ret = render_mouse_pointer(exp);
+	if (ret)
+		return log_msg_ret("mou", ret);
 
 	video_sync(dev, true);
 
@@ -440,6 +496,9 @@ static int poll_mouse(struct expo *exp, struct vid_pos *pos)
 int expo_poll(struct expo *exp, struct expo_action *act)
 {
 	int key, ret = -EAGAIN;
+
+	/* update mouse position if mouse is enabled */
+	update_mouse_position(exp);
 
 	key = poll_keys(exp);
 	if (key != -EAGAIN) {
