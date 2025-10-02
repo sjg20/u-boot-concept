@@ -1343,6 +1343,33 @@ static int dm_test_video_manual_sync(struct unit_test_state *uts)
 		ut_asserteq(183, video_compress_fb(uts, dev, true));
 	}
 
+	/* Now test video_manual_sync() directly with VIDSYNC_FORCE and COPY */
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FORCE | VIDSYNC_FLUSH |
+	VIDSYNC_COPY));
+	ut_asserteq(183, video_compress_fb(uts, dev, false));
+
+	/* The copy framebuffer should now match since we forced the sync */
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	/* Write new text again */
+	vidconsole_put_string(con, "Test2");
+
+	/* without VIDSYNC_FLUSH or COPY - should do nothing */
+	ut_assertok(video_manual_sync(dev, 0));
+
+	/* Copy fb should not match since neither flush nor copy occurred */
+	if (IS_ENABLED(CONFIG_VIDEO_COPY)) {
+		ut_assertf(memcmp(priv->fb, priv->copy_fb, priv->fb_size),
+			   "Copy fb shouldn't match fb w/o VIDSYNC_FLUSH/COPY");
+	}
+
+	/* video_manual_sync() with full flags - should perform full sync */
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	/* Disable manual-sync mode */
+	video_set_manual_sync(false);
+
 	return 0;
 }
 DM_TEST(dm_test_video_manual_sync, UTF_SCAN_PDATA | UTF_SCAN_FDT);

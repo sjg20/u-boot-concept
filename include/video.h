@@ -80,10 +80,12 @@ enum video_format {
  *
  * @VIDSYNC_FORCE: Force sync even if recently synced or in manual-sync mode
  * @VIDSYNC_FLUSH: Flush dcache and perform full sync operations
+ * @VIDSYNC_COPY: Flush framebuffer to copy buffer
  */
 enum video_sync_flags {
 	VIDSYNC_FORCE = BIT(0),
 	VIDSYNC_FLUSH = BIT(1),
+	VIDSYNC_COPY = BIT(2),
 };
 
 /**
@@ -340,6 +342,20 @@ int video_fill_part(struct udevice *dev, int xstart, int ystart, int xend,
  */
 int video_draw_box(struct udevice *dev, int x0, int y0, int x1, int y1,
 		   int width, u32 colour, bool fill);
+
+/**
+ * video_manual_sync() - Manually sync a device's frame buffer with its hardware
+ *
+ * @vid:	Device to sync
+ * @flags:	Flags for the sync (enum video_sync_flags)
+ *
+ * @return: 0 on success, error code otherwise
+ *
+ * Performs the actual sync operation with the provided flags. This is called
+ * by video_sync() after determining the appropriate flags, but can also be
+ * called directly when manual-sync mode is enabled.
+ */
+int video_manual_sync(struct udevice *vid, uint flags);
 
 /**
  * video_sync() - Sync a device's frame buffer with its hardware

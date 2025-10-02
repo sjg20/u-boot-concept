@@ -499,28 +499,13 @@ static void video_flush_copy(struct udevice *vid)
 	}
 }
 
-/* Flush video activity to the caches */
-int video_sync(struct udevice *vid, bool force)
+int video_manual_sync(struct udevice *vid, uint flags)
 {
 	struct video_priv *priv = dev_get_uclass_priv(vid);
-	struct video_uc_priv *uc_priv = uclass_get_priv(vid->uclass);
 	struct video_ops *ops = video_get_ops(vid);
-	uint flags = 0;
 	int ret;
 
-	/* Skip sync if manual-sync mode is active */
-	if (uc_priv->manual_sync)
-		return 0;
-
-	if (force)
-		flags |= VIDSYNC_FORCE;
-
-	/* Check if sync should do full flush */
-	if (!CONFIG_IS_ENABLED(CYCLIC) || force ||
-	    get_timer(priv->last_sync) >= CONFIG_VIDEO_SYNC_MS)
-		flags |= VIDSYNC_FLUSH;
-
-	if (IS_ENABLED(CONFIG_VIDEO_COPY))
+	if (IS_ENABLED(CONFIG_VIDEO_COPY) && (flags & VIDSYNC_COPY))
 		video_flush_copy(vid);
 
 	if (ops && ops->sync) {
@@ -534,7 +519,7 @@ int video_sync(struct udevice *vid, bool force)
 
 	video_flush_dcache(vid, false);
 
-	if (IS_ENABLED(CONFIG_VIDEO_COPY))
+	if (IS_ENABLED(CONFIG_VIDEO_COPY) && (flags & VIDSYNC_COPY))
 		video_flush_dcache(vid, true);
 
 #if defined(CONFIG_VIDEO_SANDBOX_SDL)
@@ -553,6 +538,31 @@ int video_sync(struct udevice *vid, bool force)
 	}
 
 	return 0;
+}
+
+/* Flush video activity to the caches */
+int video_sync(struct udevice *vid, bool force)
+{
+	struct video_priv *priv = dev_get_uclass_priv(vid);
+	struct video_uc_priv *uc_priv = uclass_get_priv(vid->uclass);
+	uint flags = 0;
+
+	/* Skip sync if manual-sync mode is active */
+	if (uc_priv->manual_sync)
+		return 0;
+
+	if (force)
+		flags |= VIDSYNC_FORCE;
+
+	/* Check if sync should do full flush */
+	if (!CONFIG_IS_ENABLED(CYCLIC) || force ||
+	    get_timer(priv->last_sync) >= CONFIG_VIDEO_SYNC_MS)
+		flags |= VIDSYNC_FLUSH;
+
+	if (IS_ENABLED(CONFIG_VIDEO_COPY))
+		flags |= VIDSYNC_COPY;
+
+	return video_manual_sync(vid, flags);
 }
 
 void video_sync_all(void)
