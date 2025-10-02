@@ -291,7 +291,7 @@ static int efi_video_bind(struct udevice *dev)
 }
 
 const static struct video_ops efi_video_ops = {
-	.video_sync	= efi_video_sync,
+	.sync	= efi_video_sync,
 };
 
 static const struct udevice_id efi_video_ids[] = {

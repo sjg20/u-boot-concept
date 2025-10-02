@@ -122,7 +122,7 @@ static int mcde_simple_video_sync(struct udevice *dev)
 }
 
 static struct video_ops mcde_simple_ops = {
-	.video_sync = mcde_simple_video_sync,
+	.sync = mcde_simple_video_sync,
 };
 
 static const struct udevice_id mcde_simple_ids[] = {

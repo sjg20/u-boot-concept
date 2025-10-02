@@ -306,7 +306,7 @@ static int seps525_bind(struct udevice *dev)
 }
 
 static const struct video_ops seps525_ops = {
-	.video_sync = seps525_sync,
+	.sync = seps525_sync,
 };
 
 static const struct udevice_id seps525_ids[] = {

@@ -507,8 +507,8 @@ int video_sync(struct udevice *vid, bool force)
 	if (IS_ENABLED(CONFIG_VIDEO_COPY))
 		video_flush_copy(vid);
 
-	if (ops && ops->video_sync) {
-		ret = ops->video_sync(vid);
+	if (ops && ops->sync) {
+		ret = ops->sync(vid);
 		if (ret)
 			return ret;
 	}

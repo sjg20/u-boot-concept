@@ -133,14 +133,14 @@ struct video_priv {
 
 /**
  * struct video_ops - structure for keeping video operations
- * @video_sync: Synchronize FB with device. Some device like SPI based LCD
- *		displays needs synchronization when data in an FB is available.
- *		For these devices implement video_sync hook to call a sync
- *		function. vid is pointer to video device udevice. Function
- *		should return 0 on success video_sync and error code otherwise
+ * @sync: Synchronize FB with device. Some device like SPI based LCD
+ *	  displays needs synchronization when data in an FB is available.
+ *	  For these devices implement sync hook to call a sync function.
+ *	  vid is pointer to video device udevice. Function should return 0
+ *	  on success and error code otherwise
  */
 struct video_ops {
-	int (*video_sync)(struct udevice *vid);
+	int (*sync)(struct udevice *vid);
 };
 
 #define video_get_ops(dev)        ((struct video_ops *)(dev)->driver->ops)
