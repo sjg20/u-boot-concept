@@ -86,11 +86,35 @@ struct mouse_event {
 };
 
 struct mouse_ops {
+	/**
+	 * mouse_get_event() - Get a mouse event
+	 *
+	 * Gets the next available mouse event from the device. This can be a
+	 * motion event (mouse movement) or a button event (button press or
+	 * release).
+	 *
+	 * @dev: Mouse device
+	 * @event: Returns the mouse event
+	 * Returns: 0 if OK, -EAGAIN if no event available, -ENOSYS if not
+	 * supported
+	 */
 	int (*get_event)(struct udevice *dev, struct mouse_event *event);
 };
 
 #define mouse_get_ops(dev)	((struct mouse_ops *)(dev)->driver->ops)
 
+/**
+ * mouse_get_event() - Get a mouse event
+ *
+ * Gets the next available mouse event from the device. This can be a
+ * motion event (mouse movement) or a button event (button press or
+ * release).
+ *
+ * @dev: Mouse device
+ * @event: Returns the mouse event
+ * Returns: 0 if OK, -EAGAIN if no event available, -ENOSYS if not
+ * supported
+ */
 int mouse_get_event(struct udevice *dev, struct mouse_event *event);
 
 /**
