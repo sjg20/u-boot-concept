@@ -9,6 +9,17 @@
 
 struct expo;
 
+/**
+ * struct expo_test_mode - Test mode information for expo
+ *
+ * @enabled: true if test mode is enabled
+ * @render_count: Number of calls to expo_render() since expo_enter_mode()
+ */
+struct expo_test_mode {
+	bool enabled;
+	int render_count;
+};
+
 #if CONFIG_IS_ENABLED(EXPO_TEST)
 
 /**

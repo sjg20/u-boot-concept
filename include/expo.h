@@ -90,6 +90,8 @@ struct expo_action {
 	};
 };
 
+struct expo_test_mode;
+
 /**
  * struct expo_theme - theme for the expo
  *
@@ -139,6 +141,7 @@ struct expo_theme {
  * @priv: Private data for the controller
  * @done: Indicates that a cedit session is complete and the user has quit
  * @save: Indicates that cedit data should be saved, rather than discarded
+ * @test: Pointer to test mode information, NULL if not allocated
  * @theme: Information about fonts styles, etc.
  * @scene_head: List of scenes
  * @str_head: list of strings
@@ -165,6 +168,7 @@ struct expo {
 	void *priv;
 	bool done;
 	bool save;
+	struct expo_test_mode *test;
 	struct expo_theme theme;
 	struct list_head scene_head;
 	struct list_head str_head;
