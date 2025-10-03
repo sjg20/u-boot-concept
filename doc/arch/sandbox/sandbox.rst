@@ -103,6 +103,9 @@ available options. Some of these are described below:
   even if CONFIG_AUTOBOOT_KEYED is enabled, since it interfers with tests and
   normal usage
 
+-A, --no_term_present
+  Assume no terminal is present. This is used for pager testing.
+
 -b. boot
   The distro boot feature doesn't run by default on sandbox, since it normally
   not vert useful. For the distro_bootcmds to succeed, quite a bit of setup is
@@ -162,7 +165,10 @@ available options. Some of these are described below:
   writes an elf file containing the extracted portion, then execs it. This
   argument provides the filename, so it can be removed before U-Boot exits.
 
--k, --double_lcd
+-k, --select_unittests <arg>
+  Select specific unit tests to run. This is only used with SPL.
+
+-K, --double_lcd
   Doubles the size of the emulated LCD, so that it appears bigger. This can be
   useful on large or high-resolution displays.
 
@@ -198,6 +204,9 @@ available options. Some of these are described below:
   that each phase can locate the correct executable for the next phase. Since
   each program is extracted from the original image and executed (see -j), this
   is the only way that subsequent phases can locate the full image.
+
+-P, --pager_bypass
+  Enable pager bypass mode for testing.
 
 -r, --read
   Read driver state from a dtb file. In conjunction with `-w`, this allows
@@ -247,6 +256,9 @@ available options. Some of these are described below:
   Write driver state to state file on exit. In conjunction with `-r`, this allows
   sandbox to save and restore emulated hardware state (such as a TPM) across
   each U-Boot phase.
+
+-W, --title <title>
+  Set the window title for the sandbox display.
 
 
 Environment Variables
