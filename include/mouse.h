@@ -99,6 +99,18 @@ struct mouse_ops {
 	 * supported
 	 */
 	int (*get_event)(struct udevice *dev, struct mouse_event *event);
+
+	/**
+	 * set_ptr_visible() - Show or hide the system mouse pointer
+	 *
+	 * This is used to hide the system pointer when expo is rendering its
+	 * own custom mouse pointer.
+	 *
+	 * @dev: Mouse device
+	 * @visible: true to show the pointer, false to hide it
+	 * Returns: 0 if OK, -ENOSYS if not supported
+	 */
+	int (*set_ptr_visible)(struct udevice *dev, bool visible);
 };
 
 #define mouse_get_ops(dev)	((struct mouse_ops *)(dev)->driver->ops)
@@ -134,5 +146,17 @@ int mouse_get_click(struct udevice *dev, struct vid_pos *pos);
  * Returns: 0 if position is available, -ve on error
  */
 int mouse_get_pos(struct udevice *dev, struct vid_pos *pos);
+
+/**
+ * mouse_set_ptr_visible() - Show or hide the system mouse pointer
+ *
+ * This is used to hide the system pointer when rendering a custom mouse
+ * pointer (e.g., in expo mode).
+ *
+ * @dev: Mouse device
+ * @visible: true to show the pointer, false to hide it
+ * Returns: 0 if OK, -ENOSYS if not supported
+ */
+int mouse_set_ptr_visible(struct udevice *dev, bool visible);
 
 #endif

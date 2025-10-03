@@ -83,6 +83,16 @@ int mouse_get_pos(struct udevice *dev, struct vid_pos *pos)
 	return 0;
 }
 
+int mouse_set_ptr_visible(struct udevice *dev, bool visible)
+{
+	struct mouse_ops *ops = mouse_get_ops(dev);
+
+	if (!ops->set_ptr_visible)
+		return -ENOSYS;
+
+	return ops->set_ptr_visible(dev, visible);
+}
+
 UCLASS_DRIVER(mouse) = {
 	.id		= UCLASS_MOUSE,
 	.name		= "mouse",
