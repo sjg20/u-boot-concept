@@ -37,10 +37,12 @@ enum mouse_press_state_t {
  *
  * @left_button_state: Current state of left button (BUTTON_PRESSED/BUTTON_RELEASED)
  * @click_pos: Position where the click occurred
+ * @last_pos: Last position received from mouse
  */
 struct mouse_uc_priv {
 	enum mouse_press_state_t left_button_state;
 	struct vid_pos click_pos;
+	struct vid_pos last_pos;
 };
 
 /**
@@ -99,5 +101,14 @@ int mouse_get_event(struct udevice *dev, struct mouse_event *event);
  * Returns: 0 if a click has occurred, -EAGAIN if no click pending
  */
 int mouse_get_click(struct udevice *dev, struct vid_pos *pos);
+
+/**
+ * mouse_get_pos() - Get the current mouse position
+ *
+ * @dev: Mouse device
+ * @pos: Returns last position
+ * Returns: 0 if position is available, -ve on error
+ */
+int mouse_get_pos(struct udevice *dev, struct vid_pos *pos);
 
 #endif
