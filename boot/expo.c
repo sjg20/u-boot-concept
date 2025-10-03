@@ -168,7 +168,7 @@ int expo_set_mouse_enable(struct expo *exp, bool enable)
 {
 	int ret;
 
-	if (!enable) {
+	if (!IS_ENABLED(CONFIG_MOUSE) || !enable) {
 		exp->mouse_enabled = false;
 		return 0;
 	}
@@ -176,6 +176,17 @@ int expo_set_mouse_enable(struct expo *exp, bool enable)
 	ret = uclass_first_device_err(UCLASS_MOUSE, &exp->mouse);
 	if (ret)
 		return log_msg_ret("sme", ret);
+
+	/* Get mouse pointer image and dimensions */
+	exp->mouse_ptr = video_image_getptr(riscos_arrow);
+	if (exp->mouse_ptr) {
+		ulong width, height;
+		uint bpix;
+
+		video_bmp_get_info(exp->mouse_ptr, &width, &height, &bpix);
+		exp->mouse_size.w = width;
+		exp->mouse_size.h = height;
+	}
 
 	exp->mouse_enabled = true;
 
@@ -455,4 +466,14 @@ void expo_req_size(struct expo *exp, int width, int height)
 {
 	exp->req_width = width;
 	exp->req_height = height;
+}
+
+void expo_enter_mode(struct expo *exp)
+{
+	video_manual_sync(exp->display, true);
+}
+
+void expo_exit_mode(struct expo *exp)
+{
+	video_manual_sync(exp->display, false);
 }

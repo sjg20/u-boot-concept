@@ -9,6 +9,7 @@
 
 #include <abuf.h>
 #include <alist.h>
+#include <video_defs.h>
 #include <dm/ofnode_decl.h>
 #include <linux/bitops.h>
 #include <linux/list.h>
@@ -131,6 +132,8 @@ struct expo_theme {
  * @popup: true to use popup menus, instead of showing all items
  * @show_highlight: show a highlight bar on the selected menu item
  * @mouse_enabled: true if the mouse is enabled
+ * @mouse_ptr: Pointer to mouse pointer image data (BMP format)
+ * @mouse_size: Size of mouse pointer (width and height in pixels)
  * @priv: Private data for the controller
  * @done: Indicates that a cedit session is complete and the user has quit
  * @save: Indicates that cedit data should be saved, rather than discarded
@@ -153,6 +156,8 @@ struct expo {
 	bool popup;
 	bool show_highlight;
 	bool mouse_enabled;
+	const void *mouse_ptr;
+	struct vid_size mouse_size;
 	void *priv;
 	bool done;
 	bool save;
@@ -1184,5 +1189,25 @@ int expo_poll(struct expo *exp, struct expo_action *act);
  * @height: Requested display height
  */
 void expo_req_size(struct expo *exp, int width, int height);
+
+/**
+ * expo_enter_mode() - Enter expo mode for the video subsystem
+ *
+ * @exp: Expo to update
+ *
+ * This suppresses automatic video sync operations to allow expo to control
+ * rendering timing. Should be called before starting the expo loop.
+ */
+void expo_enter_mode(struct expo *exp);
+
+/**
+ * expo_exit_mode() - Exit expo mode for the video subsystem
+ *
+ * @exp: Expo to update
+ *
+ * This restores normal video sync operations. Should be called after
+ * finishing the expo loop.
+ */
+void expo_exit_mode(struct expo *exp);
 
 #endif /*__EXPO_H */
