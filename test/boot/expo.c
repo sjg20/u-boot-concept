@@ -7,6 +7,7 @@
 #include <command.h>
 #include <dm.h>
 #include <expo.h>
+#include <expo_test.h>
 #include <menu.h>
 #include <video.h>
 #include <linux/input.h>
@@ -1097,3 +1098,68 @@ static int expo_mouse_click(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(expo_mouse_click, UTF_DM | UTF_SCAN_FDT);
+
+static int expo_test_mode(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct udevice *dev;
+	struct scene *scn;
+	struct expo *exp;
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+	dev = exp->display;
+
+	/* Check test mode is initially off */
+	ut_asserteq(false, exp->test->enabled);
+
+	/* Entering expo mode without expotest env var keeps it off */
+	expo_enter_mode(exp);
+	ut_asserteq(false, exp->test->enabled);
+	expo_exit_mode(exp);
+
+	/* Enable test mode */
+	ut_assertok(env_set("expotest", "1"));
+	expo_enter_mode(exp);
+	ut_asserteq(true, exp->test->enabled);
+
+	/* Check initial render count */
+	ut_asserteq(0, exp->test->render_count);
+
+	/* Render and check count increments */
+	ut_assertok(expo_set_scene_id(exp, scn->id));
+	ut_assertok(scene_arrange(scn));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(1, exp->test->render_count);
+
+	ut_assertok(expo_render(exp));
+	ut_asserteq(2, exp->test->render_count);
+
+	/* Test that expo_enter_mode() resets the counter */
+	expo_exit_mode(exp);
+	expo_enter_mode(exp);
+	ut_asserteq(0, exp->test->render_count);
+	ut_assertok(expo_render(exp));
+	ut_asserteq(1, exp->test->render_count);
+	expo_exit_mode(exp);
+
+	/* Disable test mode */
+	ut_assertok(env_set("expotest", "0"));
+	expo_enter_mode(exp);
+	ut_asserteq(false, exp->test->enabled);
+	expo_exit_mode(exp);
+
+	/* Check test mode is off when env var is unset */
+	ut_assertok(env_set("expotest", NULL));
+	expo_enter_mode(exp);
+	ut_asserteq(false, exp->test->enabled);
+	expo_exit_mode(exp);
+
+	ut_assertok(env_set("expotest", NULL));
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_test_mode, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);

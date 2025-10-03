@@ -346,6 +346,11 @@ static int expo_render_(struct expo *exp, bool dirty_only)
 	if (ret)
 		return log_msg_ret("mou", ret);
 
+	/* Render test-mode info if enabled */
+	ret = expo_test_render(exp);
+	if (ret)
+		return log_msg_ret("tst", ret);
+
 	video_sync(dev, true);
 
 	return scn ? 0 : -ECHILD;
@@ -558,6 +563,8 @@ void expo_enter_mode(struct expo *exp)
 	video_manual_sync(exp->display, true);
 	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled)
 		mouse_set_ptr_visible(exp->mouse, false);
+
+	expo_test_checkenv(exp);
 }
 
 void expo_exit_mode(struct expo *exp)

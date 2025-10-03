@@ -38,11 +38,29 @@ int expo_test_init(struct expo *exp);
 void expo_test_uninit(struct expo *exp);
 
 /**
+ * expo_test_checkenv() - Check environment and reset test mode
+ *
+ * @exp: Expo to update test mode for
+ *
+ * Checks the expotest environment variable and updates the enabled flag
+ * accordingly. Also resets the render count to 0.
+ */
+void expo_test_checkenv(struct expo *exp);
+
+/**
  * expo_test_update() - Update test mode counters
  *
  * @exp: Expo to update test mode for
  */
 void expo_test_update(struct expo *exp);
+
+/**
+ * expo_test_render() - Render test mode information
+ *
+ * @exp: Expo to render test info for
+ * Return: 0 if OK, -ve on error
+ */
+int expo_test_render(struct expo *exp);
 
 #else
 
@@ -55,8 +73,17 @@ static inline void expo_test_uninit(struct expo *exp)
 {
 }
 
+static inline void expo_test_checkenv(struct expo *exp)
+{
+}
+
 static inline void expo_test_update(struct expo *exp)
 {
+}
+
+static inline int expo_test_render(struct expo *exp)
+{
+	return 0;
 }
 
 #endif /* EXPO_TEST */
