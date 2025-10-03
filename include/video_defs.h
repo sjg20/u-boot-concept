@@ -47,6 +47,18 @@ static inline bool vid_bbox_valid(const struct vid_bbox *bbox)
 {
 	return bbox->x1 > bbox->x0 && bbox->y1 > bbox->y0;
 }
+
+/**
+ * struct vid_pos - Represents a position for video operations
+ *
+ * @x: X coordinate in pixels from the left
+ * @y: Y coordinate in pixels from the top
+ */
+struct vid_pos {
+	int x;
+	int y;
+};
+
 #endif /* __ASSEMBLY__ */
 
 #endif /* __VIDEO_DEFS_H */
