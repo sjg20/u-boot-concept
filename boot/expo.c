@@ -411,21 +411,17 @@ static int poll_keys(struct expo *exp)
 	return key ? key : -EAGAIN;
 }
 
-static int poll_mouse(struct expo *exp, int *xp, int *yp)
+static int poll_mouse(struct expo *exp, struct vid_pos *pos)
 {
-	struct vid_pos pos;
 	int ret;
 
 	if (!exp->mouse_enabled)
 		return -EAGAIN;
 
 	/* First check if we have a click available */
-	ret = mouse_get_click(exp->mouse, &pos);
+	ret = mouse_get_click(exp->mouse, pos);
 	if (ret)
 		return log_msg_ret("epm", ret);
-
-	*xp = pos.x;
-	*yp = pos.y;
 
 	return 0; /* Click available */
 }
@@ -438,11 +434,11 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 	if (key != -EAGAIN) {
 		ret = expo_send_key(exp, key);
 	} else if (IS_ENABLED(CONFIG_MOUSE)) {
-		int x, y;
+		struct vid_pos pos;
 
-		ret = poll_mouse(exp, &x, &y);
+		ret = poll_mouse(exp, &pos);
 		if (!ret)
-			ret = expo_send_click(exp, x, y);
+			ret = expo_send_click(exp, pos.x, pos.y);
 	}
 	if (ret)
 		return log_msg_ret("epk", ret);
