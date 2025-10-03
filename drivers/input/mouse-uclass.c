@@ -23,7 +23,7 @@ int mouse_get_event(struct udevice *dev, struct mouse_event *evt)
 	return 0;
 }
 
-int mouse_get_click(struct udevice *dev, int *xp, int *yp)
+int mouse_get_click(struct udevice *dev, struct vid_pos *pos)
 {
 	struct mouse_uc_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct mouse_event event;
@@ -53,11 +53,7 @@ int mouse_get_click(struct udevice *dev, int *xp, int *yp)
 
 		/* If we just detected a click, return it */
 		if (pending) {
-			if (xp)
-				*xp = uc_priv->click_pos.x;
-			if (yp)
-				*yp = uc_priv->click_pos.y;
-
+			*pos = uc_priv->click_pos;
 			return 0;
 		}
 	}

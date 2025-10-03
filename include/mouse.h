@@ -95,10 +95,9 @@ int mouse_get_event(struct udevice *dev, struct mouse_event *event);
  * mouse_get_click() - Check if a left mouse button click has occurred
  *
  * @dev: Mouse device
- * @xp: Returns X coordinate of click (can be NULL)
- * @yp: Returns Y coordinate of click (can be NULL)
+ * @pos: Returns position of click
  * Returns: 0 if a click has occurred, -EAGAIN if no click pending
  */
-int mouse_get_click(struct udevice *dev, int *xp, int *py);
+int mouse_get_click(struct udevice *dev, struct vid_pos *pos);
 
 #endif

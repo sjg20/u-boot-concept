@@ -99,7 +99,7 @@ static int dm_test_mouse_click(struct unit_test_state *uts)
 {
 	struct udevice *dev;
 	struct mouse_event inject;
-	int x, y;
+	struct vid_pos pos;
 
 	ut_assertok(uclass_first_device_err(UCLASS_MOUSE, &dev));
 
@@ -107,7 +107,7 @@ static int dm_test_mouse_click(struct unit_test_state *uts)
 	sandbox_mouse_set_test_mode(dev, true);
 
 	/* test that no click is detected initially */
-	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &pos));
 
 	/* inject a left button press */
 	inject.type = MOUSE_EV_BUTTON;
@@ -123,7 +123,7 @@ static int dm_test_mouse_click(struct unit_test_state *uts)
 	 * calling mouse_get_click() should not detect a click yet (press
 	 * only)
 	 */
-	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &pos));
 
 	/* inject a left button release */
 	inject.type = MOUSE_EV_BUTTON;
@@ -136,12 +136,12 @@ static int dm_test_mouse_click(struct unit_test_state *uts)
 	sandbox_mouse_inject(dev, &inject);
 
 	/* now mouse_get_click() should detect the click */
-	ut_assertok(mouse_get_click(dev, &x, &y));
-	ut_asserteq(300, x);
-	ut_asserteq(400, y);
+	ut_assertok(mouse_get_click(dev, &pos));
+	ut_asserteq(300, pos.x);
+	ut_asserteq(400, pos.y);
 
 	/* verify no more clicks are pending */
-	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &pos));
 
 	return 0;
 }
@@ -151,6 +151,7 @@ static int dm_test_mouse_click_no_coordinates(struct unit_test_state *uts)
 {
 	struct udevice *dev;
 	struct mouse_event inject;
+	struct vid_pos pos;
 
 	ut_assertok(uclass_first_device_err(UCLASS_MOUSE, &dev));
 
@@ -167,15 +168,13 @@ static int dm_test_mouse_click_no_coordinates(struct unit_test_state *uts)
 	sandbox_mouse_inject(dev, &inject);
 
 	/* process the press event */
-	ut_asserteq(-EAGAIN, mouse_get_click(dev, NULL, NULL));
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &pos));
 
 	inject.button.press_state = BUTTON_RELEASED;
 	sandbox_mouse_inject(dev, &inject);
 
-	/*
-	 * now test that click is detected without coordinate return
-	 */
-	ut_assertok(mouse_get_click(dev, NULL, NULL));
+	/* now test that click is detected (coordinates are ignored) */
+	ut_assertok(mouse_get_click(dev, &pos));
 
 	return 0;
 }
@@ -185,7 +184,7 @@ static int dm_test_mouse_right_button(struct unit_test_state *uts)
 {
 	struct udevice *dev;
 	struct mouse_event inject;
-	int x, y;
+	struct vid_pos pos;
 
 	ut_assertok(uclass_first_device_err(UCLASS_MOUSE, &dev));
 
@@ -204,13 +203,13 @@ static int dm_test_mouse_right_button(struct unit_test_state *uts)
 	inject.button.y = 200;
 	sandbox_mouse_inject(dev, &inject);
 
-	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &pos));
 
 	inject.button.press_state = BUTTON_RELEASED;
 	sandbox_mouse_inject(dev, &inject);
 
 	/* still no click detected since it was right button */
-	ut_asserteq(-EAGAIN, mouse_get_click(dev, &x, &y));
+	ut_asserteq(-EAGAIN, mouse_get_click(dev, &pos));
 
 	return 0;
 }
