@@ -9,15 +9,30 @@
 
 struct expo;
 
+/* Number of seconds to average FPS over in test mode */
+#define EXPO_FPS_AVG_SECONDS	5
+
 /**
  * struct expo_test_mode - Test mode information for expo
  *
  * @enabled: true if test mode is enabled
+ * @start_time_ms: Time when expo_enter_mode() was called (milliseconds)
  * @render_count: Number of calls to expo_render() since expo_enter_mode()
+ * @fps_timestamps_ms: Timestamps for FPS calculation (milliseconds)
+ * @fps_frame_counts: Frame counts at each timestamp
+ * @fps_index: Current index in the FPS tracking arrays
+ * @fps_last: Last calculated FPS value
+ * @last_update: Time of last FPS update (milliseconds)
  */
 struct expo_test_mode {
 	bool enabled;
+	ulong start_time_ms;
 	int render_count;
+	ulong fps_timestamps_ms[EXPO_FPS_AVG_SECONDS];
+	int fps_frame_counts[EXPO_FPS_AVG_SECONDS];
+	int fps_index;
+	int fps_last;
+	ulong last_update;
 };
 
 #if CONFIG_IS_ENABLED(EXPO_TEST)
@@ -62,6 +77,14 @@ void expo_test_update(struct expo *exp);
  */
 int expo_test_render(struct expo *exp);
 
+/**
+ * expo_calc_fps() - Calculate FPS based on recent frame history
+ *
+ * @test: Test mode data containing frame history
+ * Return: Calculated FPS value, or 0 if insufficient data
+ */
+int expo_calc_fps(struct expo_test_mode *test);
+
 #else
 
 static inline int expo_test_init(struct expo *exp)
@@ -82,6 +105,11 @@ static inline void expo_test_update(struct expo *exp)
 }
 
 static inline int expo_test_render(struct expo *exp)
+{
+	return 0;
+}
+
+static inline int expo_calc_fps(struct expo_test_mode *test)
 {
 	return 0;
 }

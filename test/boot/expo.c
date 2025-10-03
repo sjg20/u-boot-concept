@@ -1163,3 +1163,60 @@ static int expo_test_mode(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(expo_test_mode, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);
+
+static int expo_test_calc_fps(struct unit_test_state *uts)
+{
+	struct expo_test_mode test;
+	int fps;
+
+	memset(&test, 0, sizeof(test));
+
+	/* No data - should return 0 */
+	fps = expo_calc_fps(&test);
+	ut_asserteq(0, fps);
+
+	/* Single data point - should return 0 */
+	test.fps_index = 0;
+	test.fps_timestamps_ms[0] = 0;
+	test.fps_frame_counts[0] = 0;
+	fps = expo_calc_fps(&test);
+	ut_asserteq(0, fps);
+
+	/* Two data points: 100 frames in 1000ms = 100 FPS */
+	test.fps_index = 1;
+	test.fps_timestamps_ms[0] = 0;
+	test.fps_frame_counts[0] = 0;
+	test.fps_timestamps_ms[1] = 1000;
+	test.fps_frame_counts[1] = 100;
+	fps = expo_calc_fps(&test);
+	ut_asserteq(100, fps);
+
+	/* Three data points spanning 2 seconds: 240 frames in 2000ms = 120 FPS */
+	test.fps_index = 2;
+	test.fps_timestamps_ms[0] = 0;
+	test.fps_frame_counts[0] = 0;
+	test.fps_timestamps_ms[1] = 1000;
+	test.fps_frame_counts[1] = 100;
+	test.fps_timestamps_ms[2] = 2000;
+	test.fps_frame_counts[2] = 240;
+	fps = expo_calc_fps(&test);
+	ut_asserteq(120, fps);
+
+	/* Test wraparound: index at 1, with data at indices 2,3,4,0,1 */
+	test.fps_index = 1;
+	test.fps_timestamps_ms[2] = 0;
+	test.fps_frame_counts[2] = 0;
+	test.fps_timestamps_ms[3] = 1000;
+	test.fps_frame_counts[3] = 60;
+	test.fps_timestamps_ms[4] = 2000;
+	test.fps_frame_counts[4] = 120;
+	test.fps_timestamps_ms[0] = 3000;
+	test.fps_frame_counts[0] = 180;
+	test.fps_timestamps_ms[1] = 4000;
+	test.fps_frame_counts[1] = 240;
+	fps = expo_calc_fps(&test);
+	ut_asserteq(60, fps);  /* 240 frames in 4000ms = 60 FPS */
+
+	return 0;
+}
+BOOTSTD_TEST(expo_test_calc_fps, 0);
