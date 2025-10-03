@@ -119,6 +119,13 @@ int sandbox_sdl_set_bpp(struct udevice *dev, enum video_log2_bpp l2bpp);
  */
 int sandbox_sdl_get_mouse_event(struct mouse_event *evt);
 
+/**
+ * sandbox_sdl_set_cursor_visible() - Show or hide the SDL cursor
+ *
+ * @visible: true to show the cursor, false to hide it
+ */
+void sandbox_sdl_set_cursor_visible(bool visible);
+
 #else
 static inline int sandbox_sdl_init_display(int width, int height, int log2_bpp,
 					   bool double_size)
@@ -176,6 +183,10 @@ static inline int sandbox_sdl_set_bpp(struct udevice *dev,
 static inline int sandbox_sdl_get_mouse_event(struct mouse_event *evt)
 {
 	return -ENODEV;
+}
+
+static inline void sandbox_sdl_set_cursor_visible(bool visible)
+{
 }
 
 #endif

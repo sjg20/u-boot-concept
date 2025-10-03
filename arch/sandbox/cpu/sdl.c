@@ -646,3 +646,8 @@ int sandbox_sdl_sound_stop(void)
 
 	return 0;
 }
+
+void sandbox_sdl_set_cursor_visible(bool visible)
+{
+	SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE);
+}

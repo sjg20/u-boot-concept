@@ -36,8 +36,16 @@ static int mouse_sandbox_get_event(struct udevice *dev,
 	return ret;
 }
 
+static int mouse_sandbox_set_ptr_visible(struct udevice *dev, bool visible)
+{
+	sandbox_sdl_set_cursor_visible(visible);
+
+	return 0;
+}
+
 const struct mouse_ops mouse_sandbox_ops = {
 	.get_event	= mouse_sandbox_get_event,
+	.set_ptr_visible = mouse_sandbox_set_ptr_visible,
 };
 
 static const struct udevice_id mouse_sandbox_ids[] = {
