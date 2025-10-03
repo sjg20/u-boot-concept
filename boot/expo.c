@@ -10,6 +10,7 @@
 
 #include <dm.h>
 #include <expo.h>
+#include <expo_test.h>
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
@@ -23,6 +24,7 @@
 int expo_new(const char *name, void *priv, struct expo **expp)
 {
 	struct expo *exp;
+	int ret;
 
 	exp = calloc(1, sizeof(struct expo));
 	if (!exp)
@@ -31,6 +33,12 @@ int expo_new(const char *name, void *priv, struct expo **expp)
 	if (!exp->name) {
 		free(exp);
 		return log_msg_ret("name", -ENOMEM);
+	}
+	ret = expo_test_init(exp);
+	if (ret) {
+		free(exp->name);
+		free(exp);
+		return log_msg_ret("tst", ret);
 	}
 	exp->priv = priv;
 	INIT_LIST_HEAD(&exp->scene_head);
@@ -53,6 +61,7 @@ void expo_destroy(struct expo *exp)
 	struct scene *scn, *next;
 	struct expo_string *estr, *enext;
 
+	expo_test_uninit(exp);
 	list_for_each_entry_safe(scn, next, &exp->scene_head, sibling)
 		scene_destroy(scn);
 
@@ -313,6 +322,8 @@ static int expo_render_(struct expo *exp, bool dirty_only)
 	enum colour_idx back;
 	u32 colour;
 	int ret;
+
+	expo_test_update(exp);
 
 	back = vid_priv->white_on_black ? VID_BLACK : VID_WHITE;
 	colour = video_index_to_colour(vid_priv, back);
