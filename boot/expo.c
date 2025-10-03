@@ -545,11 +545,15 @@ void expo_req_size(struct expo *exp, int width, int height)
 void expo_enter_mode(struct expo *exp)
 {
 	video_manual_sync(exp->display, true);
+	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled)
+		mouse_set_ptr_visible(exp->mouse, false);
 }
 
 void expo_exit_mode(struct expo *exp)
 {
 	video_manual_sync(exp->display, false);
+	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled)
+		mouse_set_ptr_visible(exp->mouse, true);
 }
 
 void expo_damage_reset(struct expo *exp)
