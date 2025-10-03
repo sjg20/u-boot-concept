@@ -44,8 +44,8 @@ int mouse_get_click(struct udevice *dev, int *xp, int *yp)
 		if (uc_priv->left_button_state == BUTTON_PRESSED &&
 		    new_state == BUTTON_RELEASED) {
 			pending = true;
-			uc_priv->click_x = event.button.x;
-			uc_priv->click_y = event.button.y;
+			uc_priv->click_pos.x = event.button.x;
+			uc_priv->click_pos.y = event.button.y;
 		}
 
 		/* Update button state */
@@ -54,9 +54,9 @@ int mouse_get_click(struct udevice *dev, int *xp, int *yp)
 		/* If we just detected a click, return it */
 		if (pending) {
 			if (xp)
-				*xp = uc_priv->click_x;
+				*xp = uc_priv->click_pos.x;
 			if (yp)
-				*yp = uc_priv->click_y;
+				*yp = uc_priv->click_pos.y;
 
 			return 0;
 		}

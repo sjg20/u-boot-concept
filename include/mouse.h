@@ -9,6 +9,7 @@
 #define _MOUSE_H
 
 #include <stdbool.h>
+#include <video_defs.h>
 
 struct udevice;
 
@@ -35,13 +36,11 @@ enum mouse_press_state_t {
  * struct mouse_uc_priv - private data for mouse uclass
  *
  * @left_button_state: Current state of left button (BUTTON_PRESSED/BUTTON_RELEASED)
- * @click_x: X coordinate where the click occurred
- * @click_y: Y coordinate where the click occurred
+ * @click_pos: Position where the click occurred
  */
 struct mouse_uc_priv {
 	enum mouse_press_state_t left_button_state;
-	int click_x;
-	int click_y;
+	struct vid_pos click_pos;
 };
 
 /**
