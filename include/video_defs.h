@@ -59,6 +59,17 @@ struct vid_pos {
 	int y;
 };
 
+/**
+ * struct vid_size - Represents a size for video operations
+ *
+ * @w: Width in pixels
+ * @h: Height in pixels
+ */
+struct vid_size {
+	int w;
+	int h;
+};
+
 #endif /* __ASSEMBLY__ */
 
 #endif /* __VIDEO_DEFS_H */
