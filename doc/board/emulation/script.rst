@@ -64,6 +64,14 @@ Once configured, you can build and run QEMU for arm64 like this::
 
     scripts/build-qemu -rsw
 
+To pass a custom boot command to U-Boot via fw_cfg, use the `--bootcmd`
+option::
+
+    scripts/build-qemu -rsw --bootcmd "echo Hello from QEMU; bootflow scan -lb"
+
+This will cause U-Boot to execute the specified command instead of the default
+autoboot behavior.
+
 Options
 ~~~~~~~
 
@@ -107,3 +115,10 @@ Options are available to control the script:
 
 -w
     Use word version (32-bit). By default, 64-bit is used
+
+--bootcmd BOOTCMD
+    U-Boot bootcmd to pass via fw_cfg. This allows passing a custom boot
+    command to U-Boot at runtime through QEMU's firmware configuration
+    interface. The bootcmd is written to the 'opt/u-boot/bootcmd' fw_cfg
+    entry and is read by U-Boot's EVT_BOOTCMD handler before the default
+    autoboot process runs.
