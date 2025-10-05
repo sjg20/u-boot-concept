@@ -11,6 +11,7 @@
 #include <efi_api.h>
 #include <efi_stub.h>
 #include <log.h>
+#include <mapmem.h>
 #include <vesa.h>
 #include <video.h>
 
@@ -60,6 +61,10 @@ static int efi_video_sync(struct udevice *dev, uint flags)
 			return -EIO;
 		}
 	}
+	/*
+	 * When use_blit is false and CONFIG_VIDEO_COPY is enabled,
+	 * video_manual_sync() handles copying to copy_fb
+	 */
 
 	return 0;
 }
@@ -252,7 +257,9 @@ static int efi_video_probe(struct udevice *dev)
 		goto err;
 
 	printf("Video: %dx%dx%d @ %lx\n", uc_priv->xsize, uc_priv->ysize,
-	       vesa->bits_per_pixel, (ulong)priv->fb);
+	       vesa->bits_per_pixel, (ulong)uc_priv->fb);
+	log_debug("use_blit %d, copy_base %lx, copy_fb %p\n", priv->use_blit,
+		  (ulong)plat->copy_base, uc_priv->copy_fb);
 
 	return 0;
 
@@ -267,7 +274,6 @@ static int efi_video_bind(struct udevice *dev)
 {
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
 	struct efi_video_priv tmp_priv;
-
 	struct vesa_mode_info vesa;
 	int ret;
 
@@ -282,10 +288,13 @@ static int efi_video_bind(struct udevice *dev)
 			/* this is not reached if the EFI call failed */
 			plat->copy_size = vesa.bytes_per_scanline *
 				vesa.y_resolution;
+			log_debug("copy size %lx\n", plat->copy_size);
 		}
 	}
-	if (tmp_priv.use_blit)
+	if (tmp_priv.use_blit) {
 		plat->size = vesa.bytes_per_scanline * vesa.y_resolution;
+		log_debug("plat size %x\n", plat->size);
+	}
 
 	return 0;
 }
