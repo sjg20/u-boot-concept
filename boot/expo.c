@@ -352,7 +352,7 @@ static int expo_render_(struct expo *exp, bool dirty_only)
 	if (ret)
 		return log_msg_ret("tst", ret);
 
-	video_sync(dev, true);
+	video_manual_sync(dev, VIDSYNC_COPY | VIDSYNC_FLUSH);
 	expo_test_sync(exp);
 
 	return scn ? 0 : -ECHILD;
@@ -569,7 +569,7 @@ void expo_req_size(struct expo *exp, int width, int height)
 
 void expo_enter_mode(struct expo *exp)
 {
-	video_manual_sync(exp->display, true);
+	video_set_manual_sync(true);
 	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled)
 		mouse_set_ptr_visible(exp->mouse, false);
 
@@ -578,7 +578,7 @@ void expo_enter_mode(struct expo *exp)
 
 void expo_exit_mode(struct expo *exp)
 {
-	video_manual_sync(exp->display, false);
+	video_set_manual_sync(false);
 	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled)
 		mouse_set_ptr_visible(exp->mouse, true);
 }
