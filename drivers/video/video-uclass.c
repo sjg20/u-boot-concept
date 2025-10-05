@@ -519,11 +519,6 @@ int video_manual_sync(struct udevice *vid, uint flags)
 
 	video_flush_dcache(vid, false);
 
-	if (IS_ENABLED(CONFIG_VIDEO_COPY) && (flags & VIDSYNC_COPY))
-		video_flush_dcache(vid, true);
-
-	priv->last_sync = get_timer(0);
-
 	if (IS_ENABLED(CONFIG_VIDEO_DAMAGE)) {
 		struct vid_bbox *damage = &priv->damage;
 
@@ -542,6 +537,7 @@ int video_sync(struct udevice *vid, bool force)
 	struct video_priv *priv = dev_get_uclass_priv(vid);
 	struct video_uc_priv *uc_priv = uclass_get_priv(vid->uclass);
 	uint flags = 0;
+	int ret;
 
 	/* Skip sync if manual-sync mode is active */
 	if (uc_priv->manual_sync)
@@ -558,7 +554,13 @@ int video_sync(struct udevice *vid, bool force)
 	if (IS_ENABLED(CONFIG_VIDEO_COPY))
 		flags |= VIDSYNC_COPY;
 
-	return video_manual_sync(vid, flags);
+	ret = video_manual_sync(vid, flags);
+	if (ret)
+		return ret;
+
+	priv->last_sync = get_timer(0);
+
+	return 0;
 }
 
 void video_sync_all(void)
