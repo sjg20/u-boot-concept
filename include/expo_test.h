@@ -23,6 +23,17 @@ struct expo;
  * @fps_index: Current index in the FPS tracking arrays
  * @fps_last: Last calculated FPS value
  * @last_update: Time of last FPS update (milliseconds)
+ * @base_time_us: Base time in microseconds for delta calculations
+ * @render_delta_us: Time between update and render in microseconds
+ * @sync_delta_us: Time taken by video_manual_sync() in microseconds
+ * @poll_delta_us: Time taken by expo_poll() in microseconds
+ * @render_total_us: Cumulative render time in current second (us)
+ * @sync_total_us: Cumulative sync time in current second (us)
+ * @poll_total_us: Cumulative poll time in current second (us)
+ * @frame_count_last_sec: Number of frames in current measurement second
+ * @render_avg_us: Average render time over last second (microseconds)
+ * @sync_avg_us: Average sync time over last second (microseconds)
+ * @poll_avg_us: Average poll time over last second (microseconds)
  */
 struct expo_test_mode {
 	bool enabled;
@@ -33,6 +44,17 @@ struct expo_test_mode {
 	int fps_index;
 	int fps_last;
 	ulong last_update;
+	ulong base_time_us;
+	ulong render_delta_us;
+	ulong sync_delta_us;
+	ulong poll_delta_us;
+	ulong render_total_us;
+	ulong sync_total_us;
+	ulong poll_total_us;
+	int frame_count_last_sec;
+	ulong render_avg_us;
+	ulong sync_avg_us;
+	ulong poll_avg_us;
 };
 
 #if CONFIG_IS_ENABLED(EXPO_TEST)
@@ -63,11 +85,39 @@ void expo_test_uninit(struct expo *exp);
 void expo_test_checkenv(struct expo *exp);
 
 /**
+ * expo_test_mark() - Mark the current time for delta calculations
+ *
+ * @exp: Expo to update test mode for
+ *
+ * Records the current time in microseconds as the base time for subsequent
+ * delta calculations
+ */
+void expo_test_mark(struct expo *exp);
+
+/**
  * expo_test_update() - Update test mode counters
  *
  * @exp: Expo to update test mode for
  */
 void expo_test_update(struct expo *exp);
+
+/**
+ * expo_test_poll() - Calculate poll delta time
+ *
+ * @exp: Expo to update test mode for
+ *
+ * Calculates the time taken by expo_poll() based on the base time
+ */
+void expo_test_poll(struct expo *exp);
+
+/**
+ * expo_test_sync() - Calculate sync delta time
+ *
+ * @exp: Expo to update test mode for
+ *
+ * Calculates the time taken by video_manual_sync() based on the base time
+ */
+void expo_test_sync(struct expo *exp);
 
 /**
  * expo_test_render() - Render test mode information
@@ -100,7 +150,19 @@ static inline void expo_test_checkenv(struct expo *exp)
 {
 }
 
+static inline void expo_test_mark(struct expo *exp)
+{
+}
+
 static inline void expo_test_update(struct expo *exp)
+{
+}
+
+static inline void expo_test_poll(struct expo *exp)
+{
+}
+
+static inline void expo_test_sync(struct expo *exp)
 {
 }
 

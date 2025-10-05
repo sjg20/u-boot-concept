@@ -323,6 +323,7 @@ static int expo_render_(struct expo *exp, bool dirty_only)
 	u32 colour;
 	int ret;
 
+	expo_test_mark(exp);
 	expo_test_update(exp);
 
 	back = vid_priv->white_on_black ? VID_BLACK : VID_WHITE;
@@ -352,6 +353,7 @@ static int expo_render_(struct expo *exp, bool dirty_only)
 		return log_msg_ret("tst", ret);
 
 	video_sync(dev, true);
+	expo_test_sync(exp);
 
 	return scn ? 0 : -ECHILD;
 }
@@ -528,6 +530,8 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 {
 	int key, ret = -EAGAIN;
 
+	expo_test_mark(exp);
+
 	/* update mouse position if mouse is enabled */
 	update_mouse_position(exp);
 
@@ -541,11 +545,16 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 		if (!ret)
 			ret = expo_send_click(exp, pos.x, pos.y);
 	}
-	if (ret)
+	if (ret) {
+		expo_test_poll(exp);
 		return log_msg_ret("epk", ret);
+	}
 
 	/* get the action (either a key or a click) */
 	ret = expo_action_get(exp, act);
+
+	expo_test_poll(exp);
+
 	if (ret)
 		return log_msg_ret("eag", ret);
 

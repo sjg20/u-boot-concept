@@ -578,10 +578,10 @@ Future ideas
 ------------
 
 Test Mode
----------
+~~~~~~~~~
 
 Expo supports a test mode that can be enabled by setting the environment
-variable `expotest` to 1. When enabled, expo displays the frame count in the
+variable `expotest` to 1. When enabled, expo displays performance metrics in the
 top-right corner of the display. This is useful for debugging and performance
 analysis.
 
@@ -590,8 +590,28 @@ To enable test mode::
    => setenv expotest 1
    => bootflow menu
 
-The frame count shows the number of times `expo_render()` has been called since
-`expo_enter_mode()` was invoked. The counter resets each time expo mode is entered.
+Test mode displays the following metrics:
+
+Frame count
+    Shows the total number of frames rendered. This is the number of times
+    `expo_render()` has been called since `expo_enter_mode()` was invoked.
+    The counter resets each time expo mode is entered.
+
+FPS (frames per second)
+    Shows the rendering rate averaged over the past 5 seconds. This provides
+    a stable indication of rendering performance.
+
+Timing information
+    Shows average timings (in millisecond) for the following operations,
+    measured over the past second:
+
+    - Render: Time taken to render the scene
+    - Sync: Time taken to sync the framebuffer to the display
+    - Poll: Time taken to poll for keyboard/mouse input
+
+These metrics help identify performance bottlenecks and verify that expo is
+operating efficiently. The timing information is particularly useful when
+optimizing display drivers or debugging slow rendering issues.
 
 Some ideas for future work:
 

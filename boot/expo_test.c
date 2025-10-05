@@ -49,11 +49,32 @@ void expo_test_checkenv(struct expo *exp)
 	test->last_update = get_timer(0);
 }
 
+void expo_test_mark(struct expo *exp)
+{
+	struct expo_test_mode *test = exp->test;
+
+	test->base_time_us = timer_get_us();
+}
+
 void expo_test_update(struct expo *exp)
 {
 	struct expo_test_mode *test = exp->test;
 
 	test->render_count++;
+}
+
+void expo_test_sync(struct expo *exp)
+{
+	struct expo_test_mode *test = exp->test;
+
+	test->sync_delta_us = get_timer_us(test->base_time_us);
+}
+
+void expo_test_poll(struct expo *exp)
+{
+	struct expo_test_mode *test = exp->test;
+
+	test->poll_delta_us = get_timer_us(test->base_time_us);
 }
 
 int expo_calc_fps(struct expo_test_mode *test)
@@ -108,6 +129,10 @@ int expo_test_render(struct expo *exp)
 	if (!test->enabled)
 		return 0;
 
+	/* Calculate time between update and render */
+	if (test->base_time_us)
+		test->render_delta_us = get_timer_us(test->base_time_us);
+
 	/* Select 8x16 font for test display */
 	ret = vidconsole_select_font(exp->cons, "8x16", 0);
 	if (ret && ret != -ENOSYS)
@@ -116,13 +141,36 @@ int expo_test_render(struct expo *exp)
 	vid_priv = dev_get_uclass_priv(dev);
 	cons_priv = dev_get_uclass_priv(exp->cons);
 
-	/* Update FPS if at least 1 second has elapsed */
+	/* Accumulate delta times for averaging */
+	test->render_total_us += test->render_delta_us;
+	test->sync_total_us += test->sync_delta_us;
+	test->poll_total_us += test->poll_delta_us;
+	test->frame_count_last_sec++;
+
+	/* Update FPS and averages if at least 1 second has elapsed */
 	if (get_timer(test->last_update) >= 1000) {
 		now = get_timer(test->start_time_ms);
 		test->fps_index = (test->fps_index + 1) % EXPO_FPS_AVG_SECONDS;
 		test->fps_timestamps_ms[test->fps_index] = now;
 		test->fps_frame_counts[test->fps_index] = test->render_count;
 		test->fps_last = expo_calc_fps(test);
+
+		/* Calculate averages over the last second */
+		if (test->frame_count_last_sec > 0) {
+			test->render_avg_us = test->render_total_us /
+				test->frame_count_last_sec;
+			test->sync_avg_us = test->sync_total_us /
+				test->frame_count_last_sec;
+			test->poll_avg_us = test->poll_total_us /
+				test->frame_count_last_sec;
+		}
+
+		/* Reset accumulation counters */
+		test->render_total_us = 0;
+		test->sync_total_us = 0;
+		test->poll_total_us = 0;
+		test->frame_count_last_sec = 0;
+
 		test->last_update = get_timer(0);
 	}
 
@@ -140,6 +188,30 @@ int expo_test_render(struct expo *exp)
 		vidconsole_set_cursor_pos(exp->cons, x, y);
 		vidconsole_put_string(exp->cons, buf);
 	}
+
+	/* Display average render time in milliseconds on next line */
+	snprintf(buf, sizeof(buf), "render %6lu.%01lums",
+		 test->render_avg_us / 1000,
+		 (test->render_avg_us % 1000) / 100);
+	y += cons_priv->y_charsize;
+	vidconsole_set_cursor_pos(exp->cons, x, y);
+	vidconsole_put_string(exp->cons, buf);
+
+	/* Display average sync time in milliseconds on next line */
+	snprintf(buf, sizeof(buf), "sync   %6lu.%01lums",
+		 test->sync_avg_us / 1000,
+		 (test->sync_avg_us % 1000) / 100);
+	y += cons_priv->y_charsize;
+	vidconsole_set_cursor_pos(exp->cons, x, y);
+	vidconsole_put_string(exp->cons, buf);
+
+	/* Display average poll time in milliseconds on next line */
+	snprintf(buf, sizeof(buf), "poll   %6lu.%01lums",
+		 test->poll_avg_us / 1000,
+		 (test->poll_avg_us % 1000) / 100);
+	y += cons_priv->y_charsize;
+	vidconsole_set_cursor_pos(exp->cons, x, y);
+	vidconsole_put_string(exp->cons, buf);
 
 	return 0;
 }
