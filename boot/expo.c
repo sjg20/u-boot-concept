@@ -16,6 +16,7 @@
 #include <mapmem.h>
 #include <menu.h>
 #include <mouse.h>
+#include <time.h>
 #include <video.h>
 #include <watchdog.h>
 #include <linux/delay.h>
@@ -45,6 +46,7 @@ int expo_new(const char *name, void *priv, struct expo **expp)
 	INIT_LIST_HEAD(&exp->str_head);
 	exp->next_id = EXPOID_BASE_ID;
 	cli_ch_init(&exp->cch);
+	exp->last_key_ms = get_timer(0);
 
 	*expp = exp;
 
@@ -488,21 +490,19 @@ static int poll_keys(struct expo *exp)
 
 	ichar = cli_ch_process(&exp->cch, 0);
 	if (!ichar) {
-		int i;
-
-		for (i = 0; i < 10 && !ichar && !tstc(); i++) {
-			schedule();
-			mdelay(2);
-			ichar = cli_ch_process(&exp->cch, -ETIMEDOUT);
-		}
-		while (!ichar && tstc()) {
+		/* Check once for available input */
+		if (tstc()) {
 			ichar = getchar();
 			ichar = cli_ch_process(&exp->cch, ichar);
 		}
+
+		if (!ichar && get_timer(exp->last_key_ms) >= 10)
+			ichar = cli_ch_process(&exp->cch, -ETIMEDOUT);
 	}
 
 	key = 0;
 	if (ichar) {
+		exp->last_key_ms = get_timer(0);
 		key = bootmenu_conv_key(ichar);
 		if (key == BKEY_NONE || key >= BKEY_FIRST_EXTRA)
 			key = ichar;
