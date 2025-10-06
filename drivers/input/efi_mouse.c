@@ -40,6 +40,93 @@ struct efi_mouse_priv {
 };
 
 /**
+ * get_rel_pointer() - Handle relative pointer input
+ *
+ * @priv: Private data
+ * @rel_x: Returns relative X movement
+ * @rel_y: Returns relative Y movement
+ * @new_buttons: Returns button state
+ * Return: 0 if OK, -EAGAIN if no event, -ve on error
+ */
+static int get_rel_pointer(struct efi_mouse_priv *priv, int *rel_x,
+			   int *rel_y, int *new_buttons)
+{
+	struct efi_simple_pointer_state state;
+	efi_status_t ret;
+
+	/* Use timer-based polling approach like EFI keyboard */
+	if (priv->timer_event) {
+		struct efi_boot_services *boot = efi_get_boot();
+		efi_uintn_t index;
+		struct efi_event *events[2];
+		efi_uintn_t num_events = 1;
+
+		events[0] = priv->timer_event;
+		if (priv->simple->wait_for_input) {
+			events[1] = priv->simple->wait_for_input;
+			num_events = 2;
+		}
+
+		ret = boot->wait_for_event(num_events, events, &index);
+		if (ret != EFI_SUCCESS)
+			return -EAGAIN;
+	}
+
+	log_debug("rel: calling get_state\n");
+	ret = priv->simple->get_state(priv->simple, &state);
+	log_debug("rel: get_state returned 0x%lx\n", ret);
+	if (ret == EFI_NOT_READY)
+		return -EAGAIN;
+	if (ret) {
+		log_debug("rel: get_state failed (ret=0x%lx)\n", ret);
+		return -EIO;
+	}
+
+	log_debug("rel: RelX=%d RelY=%d LeftBtn=%d RightBtn=%d\n",
+		  state.relative_movement_x, state.relative_movement_y,
+		  state.left_button, state.right_button);
+
+	/*
+	 * Scale down large movement values that seem to be incorrectly
+	 * reported
+	 */
+	*rel_x = state.relative_movement_x;
+	*rel_y = state.relative_movement_y;
+
+	/* If movement values are very large, scale them down */
+	if (abs(*rel_x) > 1000) {
+		*rel_x = *rel_x / 1000;
+		if (*rel_x == 0 && state.relative_movement_x != 0)
+			*rel_x = (state.relative_movement_x > 0) ? 1 : -1;
+	}
+	if (abs(*rel_y) > 1000) {
+		*rel_y = *rel_y / 1000;
+		if (*rel_y == 0 && state.relative_movement_y != 0)
+			*rel_y = (state.relative_movement_y > 0) ? 1 : -1;
+	}
+
+	log_debug("rel: scaled RelX=%d RelY=%d\n", *rel_x, *rel_y);
+
+	/* Update absolute position */
+	priv->x += *rel_x;
+	priv->x = max(priv->x, 0);
+	priv->x = min(priv->x, MOUSE_MAX_COORD);
+
+	priv->y += *rel_y;
+	priv->y = max(priv->y, 0);
+	priv->y = min(priv->y, MOUSE_MAX_COORD);
+
+	/* Extract button state */
+	*new_buttons = 0;
+	if (state.left_button)
+		*new_buttons |= 1 << 0;
+	if (state.right_button)
+		*new_buttons |= 1 << 1;
+
+	return 0;
+}
+
+/**
  * get_button_event() - Check for button-change events
  *
  * @priv: Private data
@@ -80,76 +167,39 @@ static int get_button_event(struct efi_mouse_priv *priv, int new_buttons,
 static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 {
 	struct efi_mouse_priv *priv = dev_get_priv(dev);
-	struct efi_simple_pointer_state state;
-	efi_status_t ret;
+	struct mouse_motion *motion;
 	int new_buttons;
-	if (!priv->simple)
-		return -ENODEV;
-
-	/* Use timer-based polling approach like EFI keyboard */
-	if (priv->timer_event) {
-		struct efi_boot_services *boot = efi_get_boot();
-		efi_uintn_t index;
-		struct efi_event *events[2];
-		efi_uintn_t num_events = 1;
-
-		events[0] = priv->timer_event;
-		if (priv->simple->wait_for_input) {
-			events[1] = priv->simple->wait_for_input;
-			num_events = 2;
-		}
-
-		ret = boot->wait_for_event(num_events, events, &index);
-		if (ret != EFI_SUCCESS)
-			return -EAGAIN;
-	}
+	int rel_x, rel_y;
+	int ret;
 
 	/* Get current pointer state */
-	ret = priv->simple->get_state(priv->simple, &state);
-	if (ret != EFI_SUCCESS) {
-		if (ret == EFI_NOT_READY)
-			return -EAGAIN;
-		printf("EFI mouse: get_state failed (ret=0x%lx)\n", ret);
-		return -EIO;
-	}
+	ret = get_rel_pointer(priv, &rel_x, &rel_y, &new_buttons);
+	if (ret)
+		return ret;
+
+	priv->has_last_state = true;
 
 	/* Check for button changes */
-	new_buttons = 0;
-	if (state.left_button)
-		new_buttons |= 1 << 0;
-	if (state.right_button)
-		new_buttons |= 1 << 1;
 	ret = get_button_event(priv, new_buttons, event);
 	if (!ret)
 		return 0;
 
-	/* Check for movement */
-	if (state.relative_movement_x || state.relative_movement_y) {
-		struct mouse_motion *motion = &event->motion;
-
-		/* Update absolute position */
-		priv->x += state.relative_movement_x;
-		priv->x = max(priv->x, 0);
-		priv->x = min(priv->x, 0xffff);
-
-		priv->y += state.relative_movement_y;
-		priv->y = max(priv->y, 0);
-		priv->y = min(priv->y, 0xffff);
-
-		event->type = MOUSE_EV_MOTION;
-		motion->state = new_buttons;
-		motion->x = priv->x;
-		motion->y = priv->y;
-		motion->xrel = state.relative_movement_x;
-		motion->yrel = state.relative_movement_y;
-
+	/* If there's no movement, nothing to do */
+	if (!rel_x && !rel_y) {
 		priv->buttons = new_buttons;
-		return 0;
+		return -EAGAIN;
 	}
 
+	motion = &event->motion;
+	event->type = MOUSE_EV_MOTION;
+	motion->state = new_buttons;
+	motion->x = priv->x;
+	motion->y = priv->y;
+	motion->xrel = rel_x;
+	motion->yrel = rel_y;
 	priv->buttons = new_buttons;
 
-	return -EAGAIN;
+	return 0;
 }
 
 /**
