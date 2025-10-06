@@ -13,6 +13,7 @@
 #include <efi_api.h>
 #include <log.h>
 #include <mouse.h>
+#include <video.h>
 
 /* Maximum coordinate value for mouse position */
 #define MOUSE_MAX_COORD 0xffff
@@ -49,12 +50,14 @@ struct efi_mouse_priv {
  * get_abs_pointer() - Handle absolute pointer input
  *
  * @priv: Private data
+ * @uc_priv: Uclass-private data
  * @rel_x: Returns relative X movement
  * @rel_y: Returns relative Y movement
  * @new_buttons: Returns button state
  * Return: 0 if OK, -EAGAIN if no event, -ve on error
  */
-static int get_abs_pointer(struct efi_mouse_priv *priv, int *rel_x,
+static int get_abs_pointer(struct efi_mouse_priv *priv,
+			   struct mouse_uc_priv *uc_priv, int *rel_x,
 			   int *rel_y, int *new_buttons)
 {
 	struct efi_absolute_pointer_state state;
@@ -83,8 +86,28 @@ static int get_abs_pointer(struct efi_mouse_priv *priv, int *rel_x,
 		log_debug("abs: rel_x=%d, rel_y=%d\n", *rel_x, *rel_y);
 	}
 	priv->abs_last = state;
-	priv->x = state.current_x;
-	priv->y = state.current_y;
+
+	/* Update absolute position - scale to video display if available */
+	if (uc_priv->video_dev && priv->abs->mode) {
+		struct efi_absolute_pointer_mode *mode = priv->abs->mode;
+		u64 x_range = mode->abs_max_x - mode->abs_min_x;
+		u64 y_range = mode->abs_max_y - mode->abs_min_y;
+
+		if (x_range > 0 && y_range > 0) {
+			log_debug("abs: unscaled x=%llx y=%llx\n",
+				  state.current_x, state.current_y);
+			priv->x = ((state.current_x - mode->abs_min_x) *
+				   uc_priv->video_width) / x_range;
+			priv->y = ((state.current_y - mode->abs_min_y) *
+				   uc_priv->video_height) / y_range;
+		} else {
+			priv->x = state.current_x;
+			priv->y = state.current_y;
+		}
+	} else {
+		priv->x = state.current_x;
+		priv->y = state.current_y;
+	}
 
 	/* Extract button state */
 	*new_buttons = state.active_buttons & 0x3; /* Left and right buttons */
@@ -219,6 +242,7 @@ static int get_button_event(struct efi_mouse_priv *priv, int new_buttons,
 
 static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 {
+	struct mouse_uc_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct efi_mouse_priv *priv = dev_get_priv(dev);
 	struct mouse_motion *motion;
 	int new_buttons;
@@ -230,7 +254,8 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 	 * so we poll directly
 	 */
 	if (priv->use_absolute)
-		ret = get_abs_pointer(priv, &rel_x, &rel_y, &new_buttons);
+		ret = get_abs_pointer(priv, uc_priv, &rel_x, &rel_y,
+				      &new_buttons);
 	else
 		ret = get_rel_pointer(priv, &rel_x, &rel_y, &new_buttons);
 	if (ret)
