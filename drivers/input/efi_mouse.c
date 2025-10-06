@@ -21,8 +21,11 @@
  * struct efi_mouse_priv - Private data for EFI mouse driver
  *
  * @simple: Simple pointer protocol (relative movement)
+ * @abs: Absolute pointer protocol (absolute position)
  * @simple_last: Last simple pointer state
+ * @abs_last: Last absolute pointer state
  * @has_last_state: True if we have a previous state for delta calculation
+ * @use_absolute: True to use absolute pointer, false for simple/relative
  * @x: Current X position
  * @y: Current Y position
  * @buttons: Current button state
@@ -31,13 +34,63 @@
  */
 struct efi_mouse_priv {
 	struct efi_simple_pointer_protocol *simple;
+	struct efi_absolute_pointer_protocol *abs;
 	struct efi_simple_pointer_state simple_last;
+	struct efi_absolute_pointer_state abs_last;
 	bool has_last_state;
+	bool use_absolute;
 	int x, y;
 	int buttons;
 	int old_buttons;
 	struct efi_event *timer_event;
 };
+
+/**
+ * get_abs_pointer() - Handle absolute pointer input
+ *
+ * @priv: Private data
+ * @rel_x: Returns relative X movement
+ * @rel_y: Returns relative Y movement
+ * @new_buttons: Returns button state
+ * Return: 0 if OK, -EAGAIN if no event, -ve on error
+ */
+static int get_abs_pointer(struct efi_mouse_priv *priv, int *rel_x,
+			   int *rel_y, int *new_buttons)
+{
+	struct efi_absolute_pointer_state state;
+	efi_status_t ret;
+
+	/* Debug: check structure size and alignment */
+	log_debug("State struct size: %zu, address: %p\n", sizeof(state),
+		  &state);
+
+	ret = priv->abs->get_state(priv->abs, &state);
+	if (ret == EFI_NOT_READY)
+		return -EAGAIN;
+	if (ret) {
+		log_debug("abs: get_state failed (ret=0x%lx)\n", ret);
+		return -EIO;
+	}
+
+	/* Always log the state values to see what we're getting */
+	log_debug("abs: X=%llu Y=%llu Buttons=0x%x\n", state.current_x,
+		  state.current_y, state.active_buttons);
+
+	/* Calculate relative movement */
+	if (priv->has_last_state) {
+		*rel_x = (int)(state.current_x - priv->abs_last.current_x);
+		*rel_y = (int)(state.current_y - priv->abs_last.current_y);
+		log_debug("abs: rel_x=%d, rel_y=%d\n", *rel_x, *rel_y);
+	}
+	priv->abs_last = state;
+	priv->x = state.current_x;
+	priv->y = state.current_y;
+
+	/* Extract button state */
+	*new_buttons = state.active_buttons & 0x3; /* Left and right buttons */
+
+	return 0;
+}
 
 /**
  * get_rel_pointer() - Handle relative pointer input
@@ -172,8 +225,14 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 	int rel_x, rel_y;
 	int ret;
 
-	/* Get current pointer state */
-	ret = get_rel_pointer(priv, &rel_x, &rel_y, &new_buttons);
+	/*
+	 * Get current pointer state. Under QEMU, EFI pointer-events are broken
+	 * so we poll directly
+	 */
+	if (priv->use_absolute)
+		ret = get_abs_pointer(priv, &rel_x, &rel_y, &new_buttons);
+	else
+		ret = get_rel_pointer(priv, &rel_x, &rel_y, &new_buttons);
 	if (ret)
 		return ret;
 
@@ -198,6 +257,47 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 	motion->xrel = rel_x;
 	motion->yrel = rel_y;
 	priv->buttons = new_buttons;
+
+	return 0;
+}
+
+/**
+ * setup_abs_pointer() - Set up absolute pointer protocol
+ *
+ * @priv: Private data
+ * Return: 0 if OK, -ve on error
+ */
+static int setup_abs_pointer(struct efi_mouse_priv *priv)
+{
+	struct efi_boot_services *boot = efi_get_boot();
+	efi_handle_t *handles;
+	efi_uintn_t num_handles;
+	efi_status_t ret;
+
+	ret = boot->locate_handle_buffer(BY_PROTOCOL,
+					 &efi_guid_absolute_pointer,
+					 NULL, &num_handles, &handles);
+	if (ret)
+		return -ENODEV;
+
+	log_debug("Found %zu absolute pointer device(s) guid %pU\n",
+		  num_handles, &efi_guid_absolute_pointer);
+
+	/* Use the first absolute pointer device */
+	ret = boot->open_protocol(handles[0], &efi_guid_absolute_pointer,
+				   (void **)&priv->abs,
+				   efi_get_parent_image(), NULL,
+				   EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+	if (ret) {
+		log_debug("Cannot open absolute pointer protocol (ret=0x%lx)\n",
+			  ret);
+		efi_free_pool(handles);
+		return -EIO;
+	}
+
+	priv->use_absolute = true;
+	log_debug("Using absolute pointer protocol\n");
+	efi_free_pool(handles);
 
 	return 0;
 }
@@ -235,6 +335,7 @@ static int setup_simple_pointer(struct efi_mouse_priv *priv)
 		return -EIO;
 	}
 
+	priv->use_absolute = false;
 	log_debug("Using simple pointer protocol\n");
 	efi_free_pool(handles);
 
@@ -247,13 +348,17 @@ static int efi_mouse_probe(struct udevice *dev)
 	struct efi_boot_services *boot = efi_get_boot();
 	efi_status_t ret;
 
-	if (setup_simple_pointer(priv))
+	/* Try absolute pointer first, then fall back to simple pointer */
+	if (setup_abs_pointer(priv) && setup_simple_pointer(priv))
 		return -ENODEV;
 
 	/* Reset the pointer device */
-	ret = priv->simple->reset(priv->simple, false);
-	if (ret != EFI_SUCCESS) {
-		log_warning("Failed to reset EFI pointer device\n");
+	if (priv->use_absolute)
+		ret = priv->abs->reset(priv->abs, true);
+	else
+		ret = priv->simple->reset(priv->simple, true);
+	if (ret) {
+		log_warning("Failed to reset device (err=0x%lx)\n", ret);
 		/* Continue anyway - some devices might not support reset */
 	}
 
@@ -275,7 +380,22 @@ static int efi_mouse_probe(struct udevice *dev)
 		}
 	}
 
-	log_info("EFI mouse initialized\n");
+	/* Test protocol validity */
+	if (priv->use_absolute && priv->abs->mode) {
+		struct efi_absolute_pointer_mode *mode = priv->abs->mode;
+
+		log_debug("absolute mouse mode: x %llx-%llx y %llx-%llx\n",
+			  mode->abs_min_x, mode->abs_max_x,
+			  mode->abs_min_y, mode->abs_max_y);
+		log_debug("absolute mouse wait_for_input event: %p\n",
+			  priv->abs->wait_for_input);
+	} else if (!priv->use_absolute && priv->simple) {
+		log_debug("simple mouse wait_for_input event: %p\n",
+			  priv->simple->wait_for_input);
+	}
+
+	log_debug("initialized (%s protocol)\n",
+		  priv->use_absolute ? "absolute" : "simple");
 	return 0;
 }
 
