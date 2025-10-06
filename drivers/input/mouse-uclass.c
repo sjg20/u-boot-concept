@@ -10,6 +10,7 @@
 
 int mouse_get_event(struct udevice *dev, struct mouse_event *evt)
 {
+	struct mouse_uc_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct mouse_ops *ops = mouse_get_ops(dev);
 	int ret;
 
@@ -20,10 +21,22 @@ int mouse_get_event(struct udevice *dev, struct mouse_event *evt)
 	if (ret)
 		return ret;
 
+	/* Update last position for motion events */
+	if (evt->type == MOUSE_EV_MOTION) {
+		uc_priv->last_pos.x = evt->motion.x;
+		uc_priv->last_pos.y = evt->motion.y;
+	}
+
+	/* Update last position for button events */
+	if (evt->type == MOUSE_EV_BUTTON) {
+		uc_priv->last_pos.x = evt->button.x;
+		uc_priv->last_pos.y = evt->button.y;
+	}
+
 	return 0;
 }
 
-int mouse_get_click(struct udevice *dev, int *xp, int *yp)
+int mouse_get_click(struct udevice *dev, struct vid_pos *pos)
 {
 	struct mouse_uc_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct mouse_event event;
@@ -44,8 +57,8 @@ int mouse_get_click(struct udevice *dev, int *xp, int *yp)
 		if (uc_priv->left_button_state == BUTTON_PRESSED &&
 		    new_state == BUTTON_RELEASED) {
 			pending = true;
-			uc_priv->click_x = event.button.x;
-			uc_priv->click_y = event.button.y;
+			uc_priv->click_pos.x = event.button.x;
+			uc_priv->click_pos.y = event.button.y;
 		}
 
 		/* Update button state */
@@ -53,16 +66,21 @@ int mouse_get_click(struct udevice *dev, int *xp, int *yp)
 
 		/* If we just detected a click, return it */
 		if (pending) {
-			if (xp)
-				*xp = uc_priv->click_x;
-			if (yp)
-				*yp = uc_priv->click_y;
-
+			*pos = uc_priv->click_pos;
 			return 0;
 		}
 	}
 
 	return -EAGAIN;
+}
+
+int mouse_get_pos(struct udevice *dev, struct vid_pos *pos)
+{
+	struct mouse_uc_priv *uc_priv = dev_get_uclass_priv(dev);
+
+	*pos = uc_priv->last_pos;
+
+	return 0;
 }
 
 UCLASS_DRIVER(mouse) = {

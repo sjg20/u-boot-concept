@@ -245,20 +245,26 @@ int cedit_run(struct expo *exp)
 
 	expo_set_mouse_enable(exp, true);
 
+	expo_enter_mode(exp);
+
 	exp->done = false;
 	exp->save = false;
 	do {
 		struct expo_action act;
 
 		ret = expo_render(exp);
-		if (ret)
+		if (ret) {
+			expo_exit_mode(exp);
 			return log_msg_ret("cer", ret);
+		}
 
 		ret = expo_poll(exp, &act);
-		if (!ret)
+		if (!ret) {
 			cedit_do_action(exp, scn, vid_priv, &act);
-		else if (ret != -EAGAIN)
+		} else if (ret != -EAGAIN) {
+			expo_exit_mode(exp);
 			return log_msg_ret("cep", ret);
+		}
 	} while (!exp->done);
 
 	if (ret)

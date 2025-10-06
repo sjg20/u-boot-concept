@@ -237,9 +237,10 @@ void scene_destroy(struct scene *scn);
  * This is called from expo_render()
  *
  * @scn: Scene to render
+ * @dirty_only: If true, only render objects that intersect with dirty areas
  * Returns: 0 if OK, -ve on error
  */
-int scene_render(struct scene *scn);
+int scene_render(struct scene *scn, bool dirty_only);
 
 /**
  * scene_send_key() - set a keypress to a scene

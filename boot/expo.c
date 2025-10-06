@@ -12,6 +12,7 @@
 #include <expo.h>
 #include <log.h>
 #include <malloc.h>
+#include <mapmem.h>
 #include <menu.h>
 #include <mouse.h>
 #include <video.h>
@@ -168,7 +169,7 @@ int expo_set_mouse_enable(struct expo *exp, bool enable)
 {
 	int ret;
 
-	if (!enable) {
+	if (!IS_ENABLED(CONFIG_MOUSE) || !enable) {
 		exp->mouse_enabled = false;
 		return 0;
 	}
@@ -176,6 +177,17 @@ int expo_set_mouse_enable(struct expo *exp, bool enable)
 	ret = uclass_first_device_err(UCLASS_MOUSE, &exp->mouse);
 	if (ret)
 		return log_msg_ret("sme", ret);
+
+	/* Get mouse pointer image and dimensions */
+	exp->mouse_ptr = video_image_getptr(riscos_arrow);
+	if (exp->mouse_ptr) {
+		ulong width, height;
+		uint bpix;
+
+		video_bmp_get_info(exp->mouse_ptr, &width, &height, &bpix);
+		exp->mouse_size.w = width;
+		exp->mouse_size.h = height;
+	}
 
 	exp->mouse_enabled = true;
 
@@ -238,7 +250,57 @@ int expo_arrange(struct expo *exp)
 	return 0;
 }
 
-int expo_render(struct expo *exp)
+static int update_mouse_position(struct expo *exp)
+{
+	struct mouse_event event;
+	int ret;
+
+	if (!IS_ENABLED(CONFIG_MOUSE) || !exp->mouse_enabled)
+		return 0;
+
+	/* Process all available mouse events to get latest position */
+	while (1) {
+		ret = mouse_get_event(exp->mouse, &event);
+		if (ret)
+			break; /* No more events available */
+
+		if (event.type == MOUSE_EV_MOTION) {
+			exp->mouse_pos.x = event.motion.x;
+			exp->mouse_pos.y = event.motion.y;
+		} else if (event.type == MOUSE_EV_BUTTON) {
+			exp->mouse_pos.x = event.button.x;
+			exp->mouse_pos.y = event.button.y;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * render_mouse_pointer() - Render the mouse pointer if enabled and visible
+ *
+ * @exp: Expo containing mouse state
+ * Return: 0 if OK, -ve on error
+ */
+static int render_mouse_pointer(struct expo *exp)
+{
+	struct udevice *dev = exp->display;
+	int ret;
+
+	if (!IS_ENABLED(CONFIG_MOUSE) || !exp->mouse_enabled || !exp->mouse_ptr)
+		return 0;
+
+	/* Use white (0xffffff) as transparent color */
+	ret = video_bmp_displaya(dev, map_to_sysmem(exp->mouse_ptr),
+				 exp->mouse_pos.x, exp->mouse_pos.y, false, true,
+				 0xffffff);
+	if (ret)
+		log_debug("Failed to display mouse pointer: %d\n", ret);
+
+	return 0;
+}
+
+static int expo_render_(struct expo *exp, bool dirty_only)
 {
 	struct udevice *dev = exp->display;
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev);
@@ -258,14 +320,29 @@ int expo_render(struct expo *exp)
 		if (!scn)
 			return log_msg_ret("scn", -ENOENT);
 
-		ret = scene_render(scn);
+		ret = scene_render(scn, dirty_only);
 		if (ret)
 			return log_msg_ret("ren", ret);
 	}
 
+	/* Render mouse pointer if mouse is enabled */
+	ret = render_mouse_pointer(exp);
+	if (ret)
+		return log_msg_ret("mou", ret);
+
 	video_sync(dev, true);
 
 	return scn ? 0 : -ECHILD;
+}
+
+int expo_render(struct expo *exp)
+{
+	return expo_render_(exp, false);
+}
+
+int expo_render_dirty(struct expo *exp)
+{
+	return expo_render_(exp, true);
 }
 
 int expo_send_key(struct expo *exp, int key)
@@ -411,20 +488,17 @@ static int poll_keys(struct expo *exp)
 	return key ? key : -EAGAIN;
 }
 
-static int poll_mouse(struct expo *exp, int *xp, int *yp)
+static int poll_mouse(struct expo *exp, struct vid_pos *pos)
 {
-	int ret, x, y;
+	int ret;
 
 	if (!exp->mouse_enabled)
 		return -EAGAIN;
 
 	/* First check if we have a click available */
-	ret = mouse_get_click(exp->mouse, &x, &y);
+	ret = mouse_get_click(exp->mouse, pos);
 	if (ret)
 		return log_msg_ret("epm", ret);
-
-	*xp = x;
-	*yp = y;
 
 	return 0; /* Click available */
 }
@@ -433,15 +507,18 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 {
 	int key, ret = -EAGAIN;
 
+	/* update mouse position if mouse is enabled */
+	update_mouse_position(exp);
+
 	key = poll_keys(exp);
 	if (key != -EAGAIN) {
 		ret = expo_send_key(exp, key);
 	} else if (IS_ENABLED(CONFIG_MOUSE)) {
-		int x, y;
+		struct vid_pos pos;
 
-		ret = poll_mouse(exp, &x, &y);
+		ret = poll_mouse(exp, &pos);
 		if (!ret)
-			ret = expo_send_click(exp, x, y);
+			ret = expo_send_click(exp, pos.x, pos.y);
 	}
 	if (ret)
 		return log_msg_ret("epk", ret);
@@ -458,4 +535,44 @@ void expo_req_size(struct expo *exp, int width, int height)
 {
 	exp->req_width = width;
 	exp->req_height = height;
+}
+
+void expo_enter_mode(struct expo *exp)
+{
+	video_manual_sync(exp->display, true);
+}
+
+void expo_exit_mode(struct expo *exp)
+{
+	video_manual_sync(exp->display, false);
+}
+
+void expo_damage_reset(struct expo *exp)
+{
+	exp->damage.x0 = 0;
+	exp->damage.y0 = 0;
+	exp->damage.x1 = 0;
+	exp->damage.y1 = 0;
+}
+
+void expo_damage_add(struct expo *exp, const struct vid_bbox *bbox)
+{
+	/* If bbox is invalid (empty), do nothing */
+	if (bbox->x1 <= bbox->x0 || bbox->y1 <= bbox->y0)
+		return;
+
+	/* If current damage is empty, set it to the new bbox */
+	if (exp->damage.x1 <= exp->damage.x0 || exp->damage.y1 <= exp->damage.y0) {
+		exp->damage = *bbox;
+	} else {
+		/* Expand damage area to include new bbox */
+		if (bbox->x0 < exp->damage.x0)
+			exp->damage.x0 = bbox->x0;
+		if (bbox->y0 < exp->damage.y0)
+			exp->damage.y0 = bbox->y0;
+		if (bbox->x1 > exp->damage.x1)
+			exp->damage.x1 = bbox->x1;
+		if (bbox->y1 > exp->damage.y1)
+			exp->damage.y1 = bbox->y1;
+	}
 }

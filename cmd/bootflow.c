@@ -55,18 +55,26 @@ __maybe_unused static int bootflow_handle_menu(struct bootstd_priv *std,
 	if (ret)
 		return log_msg_ret("bhs", ret);
 
+	expo_enter_mode(exp);
+
 	ret = -ERESTART;
 	do {
 		if (ret == -ERESTART) {
 			ret = expo_arrange(exp);
-			if (ret)
+			if (ret) {
+				expo_exit_mode(exp);
 				return log_msg_ret("bha", ret);
+			}
 			ret = expo_render(exp);
-			if (ret)
+			if (ret) {
+				expo_exit_mode(exp);
 				return log_msg_ret("bhr", ret);
+			}
 		}
 		ret = bootflow_menu_poll(exp, &seq);
 	} while (ret == -EAGAIN || ret == -ERESTART || ret == -EREMCHG);
+
+	expo_exit_mode(exp);
 
 	if (ret == -EPIPE) {
 		printf("Nothing chosen\n");

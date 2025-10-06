@@ -9,6 +9,7 @@
 #define _MOUSE_H
 
 #include <stdbool.h>
+#include <video_defs.h>
 
 struct udevice;
 
@@ -35,13 +36,13 @@ enum mouse_press_state_t {
  * struct mouse_uc_priv - private data for mouse uclass
  *
  * @left_button_state: Current state of left button (BUTTON_PRESSED/BUTTON_RELEASED)
- * @click_x: X coordinate where the click occurred
- * @click_y: Y coordinate where the click occurred
+ * @click_pos: Position where the click occurred
+ * @last_pos: Last position received from mouse
  */
 struct mouse_uc_priv {
 	enum mouse_press_state_t left_button_state;
-	int click_x;
-	int click_y;
+	struct vid_pos click_pos;
+	struct vid_pos last_pos;
 };
 
 /**
@@ -96,10 +97,18 @@ int mouse_get_event(struct udevice *dev, struct mouse_event *event);
  * mouse_get_click() - Check if a left mouse button click has occurred
  *
  * @dev: Mouse device
- * @xp: Returns X coordinate of click (can be NULL)
- * @yp: Returns Y coordinate of click (can be NULL)
+ * @pos: Returns position of click
  * Returns: 0 if a click has occurred, -EAGAIN if no click pending
  */
-int mouse_get_click(struct udevice *dev, int *xp, int *py);
+int mouse_get_click(struct udevice *dev, struct vid_pos *pos);
+
+/**
+ * mouse_get_pos() - Get the current mouse position
+ *
+ * @dev: Mouse device
+ * @pos: Returns last position
+ * Returns: 0 if position is available, -ve on error
+ */
+int mouse_get_pos(struct udevice *dev, struct vid_pos *pos);
 
 #endif

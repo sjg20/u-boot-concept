@@ -593,20 +593,22 @@ static int cedit_mouse(struct unit_test_state *uts)
 	ut_assertok(click_check(uts, scn, item->label_id, EXPOACT_OPEN, &act));
 	ut_asserteq(ID_CPU_SPEED, act.select.id);
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
-	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, speed->obj.flags);
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID | SCENEOF_DIRTY,
+		    speed->obj.flags);
 
 	/* click outside the label to close the menu */
 	ut_assertok(scene_send_click(scn, 10, 10, &act));
 	ut_asserteq(EXPOACT_CLOSE, act.type);
 	ut_asserteq(ID_CPU_SPEED, act.select.id);
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
-	ut_asserteq(SCENEOF_SIZE_VALID, speed->obj.flags);
+	ut_asserteq(SCENEOF_SIZE_VALID | SCENEOF_DIRTY, speed->obj.flags);
 
 	/* click on CPU speed to open it again */
 	ut_assertok(click_check(uts, scn, item->label_id, EXPOACT_OPEN, &act));
 	ut_asserteq(ID_CPU_SPEED, act.select.id);
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
-	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, speed->obj.flags);
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID | SCENEOF_DIRTY,
+		    speed->obj.flags);
 
 	/* click on the second item (1.5 GHz) */
 	item = scene_menuitem_find_seq(speed, 1);
@@ -619,7 +621,7 @@ static int cedit_mouse(struct unit_test_state *uts)
 
 	/* verify that the second item is now selected and menu is closed */
 	ut_asserteq(ID_CPU_SPEED_2, speed->cur_item_id);
-	ut_asserteq(SCENEOF_SIZE_VALID, speed->obj.flags);
+	ut_asserteq(SCENEOF_SIZE_VALID | SCENEOF_DIRTY, speed->obj.flags);
 	ut_asserteq(ID_CPU_SPEED, scn->highlight_id);
 
 	/* click on the power loss menu to open it */
@@ -629,7 +631,8 @@ static int cedit_mouse(struct unit_test_state *uts)
 				&act));
 	ut_asserteq(ID_POWER_LOSS, act.select.id);
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
-	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, loss->obj.flags);
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID | SCENEOF_DIRTY,
+		    loss->obj.flags);
 
 	/* click on CPU speed to open it again */
 	item = scene_menuitem_find_seq(speed, 0);
@@ -637,7 +640,8 @@ static int cedit_mouse(struct unit_test_state *uts)
 				&act));
 	ut_asserteq(ID_CPU_SPEED, act.select.id);
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
-	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, speed->obj.flags);
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID | SCENEOF_DIRTY,
+		    speed->obj.flags);
 
 	/* click on the lineedit */
 	ut_assertok(click_check(uts, scn, mach->edit_id,
@@ -647,8 +651,9 @@ static int cedit_mouse(struct unit_test_state *uts)
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_asserteq(ID_CPU_SPEED_2, speed->cur_item_id);
 	ut_asserteq(ID_MACHINE_NAME, scn->highlight_id);
-	ut_asserteq(SCENEOF_SIZE_VALID, loss->obj.flags);
-	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID, mach->obj.flags);
+	ut_asserteq(SCENEOF_SIZE_VALID | SCENEOF_DIRTY, loss->obj.flags);
+	ut_asserteq(SCENEOF_OPEN | SCENEOF_SIZE_VALID | SCENEOF_DIRTY,
+		    mach->obj.flags);
 
 	return 0;
 }

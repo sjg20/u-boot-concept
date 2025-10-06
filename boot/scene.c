@@ -386,7 +386,7 @@ int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set)
 
 static void handle_alignment(enum scene_obj_align horiz,
 			     enum scene_obj_align vert,
-			     struct scene_obj_bbox *bbox,
+			     struct vid_bbox *bbox,
 			     struct scene_obj_dims *dims,
 			     int xsize, int ysize,
 			     struct scene_obj_offset *offset)
@@ -555,7 +555,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 	struct vidconsole_colour old;
 	enum colour_idx fore, back;
 	struct scene_obj_dims dims;
-	struct scene_obj_bbox bbox;
+	struct vid_bbox bbox;
 	const char *str;
 	int ret;
 
@@ -895,14 +895,78 @@ int scene_render_deps(struct scene *scn, uint id)
 	return 0;
 }
 
-int scene_render(struct scene *scn)
+/**
+ * scene_get_dirty_bbox() - Get bounding box of all dirty objects in a scene
+ *
+ * @scn: Scene to scan
+ * @bbox: Returns bounding box of all dirty objects
+ * Return: 0 if dirty objects found, -ENOENT if no dirty objects
+ */
+static int scene_get_dirty_bbox(struct scene *scn, struct vid_bbox *bbox)
+{
+	struct scene_obj *obj;
+	bool found_dirty = false;
+
+	list_for_each_entry(obj, &scn->obj_head, sibling) {
+		if (obj->flags & SCENEOF_DIRTY) {
+			if (!found_dirty) {
+				/* First dirty object - initialize bbox */
+				*bbox = obj->bbox;
+				found_dirty = true;
+			} else {
+				/* Expand bbox to include this object */
+				if (obj->bbox.x0 < bbox->x0)
+					bbox->x0 = obj->bbox.x0;
+				if (obj->bbox.y0 < bbox->y0)
+					bbox->y0 = obj->bbox.y0;
+				if (obj->bbox.x1 > bbox->x1)
+					bbox->x1 = obj->bbox.x1;
+				if (obj->bbox.y1 > bbox->y1)
+					bbox->y1 = obj->bbox.y1;
+			}
+		}
+	}
+
+	return found_dirty ? 0 : -ENOENT;
+}
+
+/**
+ * bbox_intersects() - Check if two bounding boxes intersect
+ *
+ * @bbox1: First bounding box
+ * @bbox2: Second bounding box
+ * Return: true if bounding boxes intersect, false otherwise
+ */
+static bool bbox_intersects(const struct vid_bbox *bbox1,
+			    const struct vid_bbox *bbox2)
+{
+	return !(bbox1->x1 <= bbox2->x0 || bbox2->x1 <= bbox1->x0 ||
+		 bbox1->y1 <= bbox2->y0 || bbox2->y1 <= bbox1->y0);
+}
+
+int scene_render(struct scene *scn, bool dirty_only)
 {
 	struct expo *exp = scn->expo;
 	struct scene_obj *obj;
+	struct vid_bbox dirty_bbox;
 	int ret;
 
+	/* Get bounding box of dirty objects and add to expo damage */
+	ret = scene_get_dirty_bbox(scn, &dirty_bbox);
+	if (!ret)
+		expo_damage_add(exp, &dirty_bbox);
+
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		if (!(obj->flags & SCENEOF_HIDE)) {
+		bool render = true;
+
+		if (obj->flags & SCENEOF_HIDE)
+			continue;
+
+		/* render objects that intersect with dirty bbox */
+		if (dirty_only && !ret)
+			render = bbox_intersects(&obj->bbox, &dirty_bbox);
+
+		if (render) {
 			ret = scene_obj_render(obj, exp->text_mode);
 			if (ret && ret != -ENOTSUPP)
 				return log_msg_ret("ren", ret);
@@ -1300,6 +1364,7 @@ int scene_sync_bbox(struct scene *scn)
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
 		int req_width = obj->req_bbox.x1 - obj->req_bbox.x0;
 		int req_height = obj->req_bbox.y1 - obj->req_bbox.y0;
+		struct vid_bbox old_bbox = obj->bbox;
 
 		if (obj->flags & SCENEOF_SYNC_POS) {
 			if (obj->flags & SCENEOF_SIZE_VALID) {
@@ -1321,6 +1386,12 @@ int scene_sync_bbox(struct scene *scn)
 			obj->bbox.x1 = obj->bbox.x0 + req_width;
 		if (obj->flags & SCENEOF_SYNC_BBOX)
 			obj->bbox = obj->req_bbox;
+
+		/* Set dirty flag if bbox changed */
+		if (old_bbox.x0 != obj->bbox.x0 || old_bbox.y0 != obj->bbox.y0 ||
+		    old_bbox.x1 != obj->bbox.x1 || old_bbox.y1 != obj->bbox.y1)
+			obj->flags |= SCENEOF_DIRTY;
+
 		obj->flags &= ~(SCENEOF_SYNC_POS | SCENEOF_SYNC_SIZE |
 				SCENEOF_SYNC_WIDTH | SCENEOF_SYNC_BBOX);
 	}

@@ -9,6 +9,7 @@
 
 #include <abuf.h>
 #include <alist.h>
+#include <video_defs.h>
 #include <dm/ofnode_decl.h>
 #include <linux/bitops.h>
 #include <linux/list.h>
@@ -131,6 +132,10 @@ struct expo_theme {
  * @popup: true to use popup menus, instead of showing all items
  * @show_highlight: show a highlight bar on the selected menu item
  * @mouse_enabled: true if the mouse is enabled
+ * @mouse_ptr: Pointer to mouse pointer image data (BMP format)
+ * @mouse_size: Size of mouse pointer (width and height in pixels)
+ * @mouse_pos: Current mouse position
+ * @damage: Bounding box of the area that needs to be redrawn
  * @priv: Private data for the controller
  * @done: Indicates that a cedit session is complete and the user has quit
  * @save: Indicates that cedit data should be saved, rather than discarded
@@ -153,6 +158,10 @@ struct expo {
 	bool popup;
 	bool show_highlight;
 	bool mouse_enabled;
+	const void *mouse_ptr;
+	struct vid_size mouse_size;
+	struct vid_pos mouse_pos;
+	struct vid_bbox damage;
 	void *priv;
 	bool done;
 	bool save;
@@ -228,21 +237,6 @@ enum scene_obj_t {
 };
 
 /**
- * struct scene_obj_bbox - Dimensions of an object
- *
- * @x0: x position, in pixels from left side
- * @y0: y position, in pixels from top
- * @x1: x position of right size
- * @y1: y position of bottom
- */
-struct scene_obj_bbox {
-	int x0;
-	int y0;
-	int x1;
-	int y1;
-};
-
-/**
  * struct scene_obj_offset - Offsets for drawing the object
  *
  * Stores the offset from x0, x1 at which objects are drawn
@@ -314,6 +308,7 @@ enum scene_obj_align {
  * @SCENEOF_SYNC_WIDTH: object's widget has changed
  * @SCENEOF_SYNC_BBOX: object's bounding box has changed
  * @SCENEOF_MANUAL: manually arrange the items associated with this object
+ * @SCENEOF_DIRTY: object has been modified and needs to be redrawn
  * @SCENEOF_LAST: used just as a check for the size of the flags mask
  */
 enum scene_obj_flags_t {
@@ -326,6 +321,7 @@ enum scene_obj_flags_t {
 	SCENEOF_SYNC_WIDTH	= BIT(6),
 	SCENEOF_SYNC_BBOX	= BIT(7),
 	SCENEOF_MANUAL		= BIT(8),
+	SCENEOF_DIRTY		= BIT(9),
 
 	SCENEOF_LAST,	/* check for size of flags below */
 };
@@ -360,8 +356,8 @@ struct scene_obj {
 	char *name;
 	uint id;
 	enum scene_obj_t type;
-	struct scene_obj_bbox req_bbox;
-	struct scene_obj_bbox bbox;
+	struct vid_bbox req_bbox;
+	struct vid_bbox bbox;
 	struct scene_obj_offset ofs;
 	struct scene_obj_dims dims;
 	enum scene_obj_align horiz;
@@ -671,6 +667,18 @@ int expo_first_scene_id(struct expo *exp);
  * current scene is not found, other error if something else goes wrong
  */
 int expo_render(struct expo *exp);
+
+/**
+ * expo_render_dirty() - render the dirty portion of expo on the display
+ *
+ * Only the objects within the damage bbox are rendered. The others are
+ * assumed to be up-to-date.
+ *
+ * @exp: Expo to render
+ * Return: 0 if OK, -ECHILD if there is no current scene, -ENOENT if the
+ * current scene is not found, other error if something else goes wrong
+ */
+int expo_render_dirty(struct expo *exp);
 
 /**
  * expo_arrange() - Arrange the current scene to deal with object sizes
@@ -1184,5 +1192,46 @@ int expo_poll(struct expo *exp, struct expo_action *act);
  * @height: Requested display height
  */
 void expo_req_size(struct expo *exp, int width, int height);
+
+/**
+ * expo_enter_mode() - Enter expo mode for the video subsystem
+ *
+ * @exp: Expo to update
+ *
+ * This suppresses automatic video sync operations to allow expo to control
+ * rendering timing. Should be called before starting the expo loop.
+ */
+void expo_enter_mode(struct expo *exp);
+
+/**
+ * expo_exit_mode() - Exit expo mode for the video subsystem
+ *
+ * @exp: Expo to update
+ *
+ * This restores normal video sync operations. Should be called after
+ * finishing the expo loop.
+ */
+void expo_exit_mode(struct expo *exp);
+
+/**
+ * expo_damage_reset() - Reset the damage tracking area
+ *
+ * @exp: Expo to reset damage tracking for
+ *
+ * Clears the damage area, indicating that no part of the display needs
+ * to be redrawn.
+ */
+void expo_damage_reset(struct expo *exp);
+
+/**
+ * expo_damage_add() - Add a damaged area to the expo damage tracking
+ *
+ * @exp: Expo to add damage to
+ * @bbox: Bounding box of the damaged area to add
+ *
+ * Expands the current damage area to include the new damaged region.
+ * If there is no existing damage, the damage area is set to the new region.
+ */
+void expo_damage_add(struct expo *exp, const struct vid_bbox *bbox);
 
 #endif /*__EXPO_H */
