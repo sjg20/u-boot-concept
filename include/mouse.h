@@ -38,11 +38,17 @@ enum mouse_press_state_t {
  * @left_button_state: Current state of left button (BUTTON_PRESSED/BUTTON_RELEASED)
  * @click_pos: Position where the click occurred
  * @last_pos: Last position received from mouse
+ * @video_dev: Video device for coordinate scaling
+ * @video_width: Width of video display
+ * @video_height: Height of video display
  */
 struct mouse_uc_priv {
 	enum mouse_press_state_t left_button_state;
 	struct vid_pos click_pos;
 	struct vid_pos last_pos;
+	struct udevice *video_dev;
+	int video_width;
+	int video_height;
 };
 
 /**
@@ -158,5 +164,17 @@ int mouse_get_pos(struct udevice *dev, struct vid_pos *pos);
  * Returns: 0 if OK, -ENOSYS if not supported
  */
 int mouse_set_ptr_visible(struct udevice *dev, bool visible);
+
+/**
+ * mouse_set_video() - Set the video device for coordinate scaling
+ *
+ * Sets up the video device in the mouse uclass private data so mouse drivers
+ * can scale coordinates to match the display resolution.
+ *
+ * @dev: Mouse device
+ * @video_dev: Video device
+ * Returns: 0 if OK, -ve on error
+ */
+int mouse_set_video(struct udevice *dev, struct udevice *video_dev);
 
 #endif

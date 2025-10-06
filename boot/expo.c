@@ -178,6 +178,11 @@ int expo_set_mouse_enable(struct expo *exp, bool enable)
 	if (ret)
 		return log_msg_ret("sme", ret);
 
+	/* Tell the mouse driver about the video device for coordinate scaling */
+	ret = mouse_set_video(exp->mouse, exp->display);
+	if (ret)
+		return log_msg_ret("msv", ret);
+
 	/* Get mouse pointer image and dimensions */
 	exp->mouse_ptr = video_image_getptr(riscos_arrow);
 	if (exp->mouse_ptr) {
