@@ -10,6 +10,7 @@
 #include <video.h>
 
 struct mouse_event;
+struct vid_bbox;
 
 #ifdef CONFIG_SANDBOX_SDL
 
@@ -42,9 +43,10 @@ int sandbox_sdl_remove_display(void);
  * user can see it.
  *
  * @lcd_base: Base of frame buffer
+ * @damage: Optional damage rectangle to limit the update region (may be NULL)
  * Return: 0 if screen was updated, -ENODEV is there is no screen.
  */
-int sandbox_sdl_sync(void *lcd_base);
+int sandbox_sdl_sync(void *lcd_base, const struct vid_bbox *damage);
 
 /**
  * sandbox_sdl_scan_keys() - scan for pressed keys
@@ -106,6 +108,15 @@ int sandbox_sdl_sound_init(int rate, int channels);
  */
 int sandbox_sdl_set_bpp(struct udevice *dev, enum video_log2_bpp l2bpp);
 
+/**
+ * sandbox_sdl_get_mouse_event() - Read a mouse event from SDL
+ *
+ * If a mouse event has been recorded since the last call, this marked the event
+ * as used and then returns its.
+ *
+ * @evt: Mouse event
+ * ReturnL 0 if OK, -EAGAIN if there is no event available
+ */
 int sandbox_sdl_get_mouse_event(struct mouse_event *evt);
 
 #else
@@ -120,7 +131,8 @@ static inline int sandbox_sdl_remove_display(void)
 	return -ENODEV;
 }
 
-static inline int sandbox_sdl_sync(void *lcd_base)
+static inline int sandbox_sdl_sync(void *lcd_base,
+				   const struct vid_bbox *damage)
 {
 	return -ENODEV;
 }

@@ -6,11 +6,13 @@
 #include <errno.h>
 #include <mouse.h>
 #include <unistd.h>
+#include <video_defs.h>
 #include <stdbool.h>
 #include <sysreset.h>
 #include <linux/input.h>
 #include <SDL2/SDL.h>
 #include <asm/state.h>
+#include <video_defs.h>
 
 /**
  * struct buf_info - a data buffer holding audio data
@@ -232,17 +234,46 @@ int sandbox_sdl_init_display(int width, int height, int log2_bpp,
 	return 0;
 }
 
-static int copy_to_texture(void *lcd_base)
+static int copy_to_texture(void *lcd_base, const struct vid_bbox *damage)
 {
 	char *dest;
 	int pitch, x, y;
 	int src_pitch;
 	void *pixels;
 	char *src;
+	SDL_Rect rect, *rectp = NULL;
 	int ret;
+	int x0, y0, x1, y1;
+
+	/* Set up damage region if provided */
+	if (damage && damage->x1 > damage->x0 && damage->y1 > damage->y0) {
+		rect.x = damage->x0;
+		rect.y = damage->y0;
+		rect.w = damage->x1 - damage->x0;
+		rect.h = damage->y1 - damage->y0;
+		rectp = &rect;
+		x0 = damage->x0;
+		y0 = damage->y0;
+		x1 = damage->x1;
+		y1 = damage->y1;
+	} else {
+		x0 = 0;
+		y0 = 0;
+		x1 = sdl.width;
+		y1 = sdl.height;
+	}
 
 	if (sdl.src_depth == sdl.depth) {
-		SDL_UpdateTexture(sdl.texture, NULL, lcd_base, sdl.pitch);
+		if (rectp) {
+			/* Update only the damaged region */
+			src_pitch = sdl.width * sdl.src_depth / 8;
+			src = lcd_base + y0 * src_pitch +
+						x0 * sdl.src_depth / 8;
+			SDL_UpdateTexture(sdl.texture, rectp, src, src_pitch);
+		} else {
+			SDL_UpdateTexture(sdl.texture, NULL, lcd_base,
+					  sdl.pitch);
+		}
 		return 0;
 	}
 
@@ -255,7 +286,7 @@ static int copy_to_texture(void *lcd_base)
 		return -EINVAL;
 	}
 
-	ret = SDL_LockTexture(sdl.texture, NULL, &pixels, &pitch);
+	ret = SDL_LockTexture(sdl.texture, rectp, &pixels, &pitch);
 	if (ret) {
 		printf("SDL lock %d: %s\n", ret, SDL_GetError());
 		return ret;
@@ -263,12 +294,12 @@ static int copy_to_texture(void *lcd_base)
 
 	/* Copy the pixels one by one */
 	src_pitch = sdl.width * sdl.src_depth / 8;
-	for (y = 0; y < sdl.height; y++) {
+	for (y = y0; y < y1; y++) {
 		char val;
 
-		dest = pixels + y * pitch;
-		src = lcd_base + src_pitch * y;
-		for (x = 0; x < sdl.width; x++, dest += 4) {
+		dest = pixels + (y - y0) * pitch;
+		src = lcd_base + src_pitch * y + x0;
+		for (x = x0; x < x1; x++, dest += 4) {
 			val = *src++;
 			dest[0] = val;
 			dest[1] = val;
@@ -281,7 +312,7 @@ static int copy_to_texture(void *lcd_base)
 	return 0;
 }
 
-int sandbox_sdl_sync(void *lcd_base)
+int sandbox_sdl_sync(void *lcd_base, const struct vid_bbox *damage)
 {
 	struct SDL_Rect rect;
 	int ret;
@@ -289,7 +320,7 @@ int sandbox_sdl_sync(void *lcd_base)
 	if (!sdl.texture)
 		return 0;
 	SDL_RenderClear(sdl.renderer);
-	ret = copy_to_texture(lcd_base);
+	ret = copy_to_texture(lcd_base, damage);
 	if (ret) {
 		printf("copy_to_texture: %d: %s\n", ret, SDL_GetError());
 		return -EIO;

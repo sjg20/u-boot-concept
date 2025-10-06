@@ -10,6 +10,7 @@
 #include <linker_lists.h>
 #include <stdio_dev.h>
 #include <video_defs.h>
+#include <linux/bitops.h>
 #ifdef CONFIG_SANDBOX
 #include <asm/state.h>
 #endif
@@ -75,6 +76,19 @@ enum video_format {
 };
 
 /**
+ * enum video_sync_flags - Flags for video_sync() operations
+ *
+ * @VIDSYNC_FORCE: Force sync even if recently synced or in manual-sync mode
+ * @VIDSYNC_FLUSH: Flush dcache and perform full sync operations
+ * @VIDSYNC_COPY: Flush framebuffer to copy buffer
+ */
+enum video_sync_flags {
+	VIDSYNC_FORCE = BIT(0),
+	VIDSYNC_FLUSH = BIT(1),
+	VIDSYNC_COPY = BIT(2),
+};
+
+/**
  * struct video_priv - Device information used by the video uclass
  *
  * @xsize:	Number of pixel columns (e.g. 1366)
@@ -90,11 +104,7 @@ enum video_format {
  * @fb_size:	Frame buffer size
  * @copy_fb:	Copy of the frame buffer to keep up to date; see struct
  *		video_uc_plat
- * @damage:	A bounding box of framebuffer regions updated since last sync
- * @damage.xstart:	X start position in pixels from the left
- * @damage.ystart:	Y start position in pixels from the top
- * @damage.xend:	X end position in pixels from the left
- * @damage.xend:	Y end position in pixels from the top
+ * @damage:	Bounding box of framebuffer regions updated since last sync
  * @line_length:	Length of each frame buffer line, in bytes. This can be
  *		set by the driver, but if not, the uclass will set it after
  *		probing
@@ -124,12 +134,7 @@ struct video_priv {
 	void *fb;
 	int fb_size;
 	void *copy_fb;
-	struct {
-		int xstart;
-		int ystart;
-		int xend;
-		int yend;
-	} damage;
+	struct vid_bbox damage;
 	int line_length;
 	u32 colour_fg;
 	u32 colour_bg;
@@ -142,14 +147,23 @@ struct video_priv {
 
 /**
  * struct video_ops - structure for keeping video operations
- * @video_sync: Synchronize FB with device. Some device like SPI based LCD
- *		displays needs synchronization when data in an FB is available.
- *		For these devices implement video_sync hook to call a sync
- *		function. vid is pointer to video device udevice. Function
- *		should return 0 on success video_sync and error code otherwise
  */
 struct video_ops {
-	int (*video_sync)(struct udevice *vid);
+	/**
+	 * @sync() - Synchronize FB with device
+	 *
+	 * Some devices like SPI-based LCD displays needs synchronization when
+	 * data in a framebuffer is available. These devices can implement this
+	 * method which is called whenever a video device is synced.
+	 *
+	 * Note that if CONFIG_VIDEO_DAMAGE is enabled, the driver can use this
+	 * to optimise the region to redraw.
+	 *
+	 * @dev: Video device
+	 * @flags: Flags for the sync operation (enum video_sync_flags)
+	 * Return 0 on success, or -ve error code
+	 */
+	int (*sync)(struct udevice *dev, uint flags);
 };
 
 #define video_get_ops(dev)        ((struct video_ops *)(dev)->driver->ops)
@@ -330,6 +344,20 @@ int video_draw_box(struct udevice *dev, int x0, int y0, int x1, int y1,
 		   int width, u32 colour, bool fill);
 
 /**
+ * video_manual_sync() - Manually sync a device's frame buffer with its hardware
+ *
+ * @vid:	Device to sync
+ * @flags:	Flags for the sync (enum video_sync_flags)
+ *
+ * @return: 0 on success, error code otherwise
+ *
+ * Performs the actual sync operation with the provided flags. This is called
+ * by video_sync() after determining the appropriate flags, but can also be
+ * called directly when manual-sync mode is enabled.
+ */
+int video_manual_sync(struct udevice *vid, uint flags);
+
+/**
  * video_sync() - Sync a device's frame buffer with its hardware
  *
  * @vid:	Device to sync
@@ -382,6 +410,22 @@ void video_bmp_get_info(const void *bmp_image, ulong *widthp, ulong *heightp,
  */
 int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 		      bool align);
+
+/**
+ * video_bmp_displaya() - Display a BMP image with alpha transparency
+ *
+ * @dev:	Device to use
+ * @bmp_image:	Address of BMP image
+ * @x:		X position to draw image
+ * @y:		Y position to draw image
+ * @align:	true to adjust the coordinates to centre the image (see
+ *		video_bmp_display() for details)
+ * @alpha:	true to enable alpha transparency
+ * @acolour:	Color to treat as transparent (RGB888 format: 0xRRGGBB)
+ * Return: 0 if OK, -ve on error
+ */
+int video_bmp_displaya(struct udevice *dev, ulong bmp_image, int x, int y,
+		       bool align, bool alpha, u32 acolour);
 
 /**
  * video_get_xsize() - Get the width of the display in pixels
@@ -527,5 +571,15 @@ static inline bool video_is_visible(void)
 	return true;
 #endif
 }
+
+/**
+ * video_set_manual_sync() - Set manual-sync mode for video subsystem
+ *
+ * When manual-sync mode is enabled, automatic video sync operations are
+ * suppressed to allow the caller to control rendering timing.
+ *
+ * @enable: true to enable manual-sync mode, false to disable
+ */
+void video_set_manual_sync(bool enable);
 
 #endif

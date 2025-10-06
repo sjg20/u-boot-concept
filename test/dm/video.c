@@ -4,6 +4,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#include <bmp_layout.h>
 #include <bzlib.h>
 #include <dm.h>
 #include <gzip.h>
@@ -47,9 +48,83 @@ static int dm_test_video_base(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_video_base, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 
+/**
+ * video_write_bmp() - Write framebuffer to BMP file
+ *
+ * This writes the current framebuffer contents to a BMP file on the host
+ * filesystem. Useful for debugging video tests.
+ *
+ * @uts: Test state
+ * @dev: Video device
+ * @fname: Filename to write to
+ * Return: 0 if OK, -ve on error
+ */
+static int video_write_bmp(struct unit_test_state *uts, struct udevice *dev,
+			   const char *fname)
+{
+	struct video_priv *priv = dev_get_uclass_priv(dev);
+	struct bmp_image *bmp;
+	u32 width = priv->xsize;
+	u32 height = priv->ysize;
+	u32 row_bytes, bmp_size, bpp, bytes_per_pixel;
+	void *bmp_data;
+	int ret, y;
+
+	/* Support 16bpp and 32bpp */
+	switch (priv->bpix) {
+	case VIDEO_BPP16:
+		bpp = 16;
+		bytes_per_pixel = 2;
+		break;
+	case VIDEO_BPP32:
+		bpp = 32;
+		bytes_per_pixel = 4;
+		break;
+	default:
+		return -ENOSYS;
+	}
+
+	/* BMP rows are padded to 4-byte boundary */
+	row_bytes = ALIGN(width * bytes_per_pixel, BMP_DATA_ALIGN);
+	bmp_size = sizeof(struct bmp_header) + row_bytes * height;
+
+	bmp = malloc(bmp_size);
+	if (!bmp)
+		return -ENOMEM;
+
+	memset(bmp, 0, bmp_size);
+
+	/* Fill in BMP header */
+	bmp->header.signature[0] = 'B';
+	bmp->header.signature[1] = 'M';
+	bmp->header.file_size = cpu_to_le32(bmp_size);
+	bmp->header.data_offset = cpu_to_le32(sizeof(struct bmp_header));
+	bmp->header.size = cpu_to_le32(40);
+	bmp->header.width = cpu_to_le32(width);
+	bmp->header.height = cpu_to_le32(height);
+	bmp->header.planes = cpu_to_le16(1);
+	bmp->header.bit_count = cpu_to_le16(bpp);
+	bmp->header.compression = cpu_to_le32(BMP_BI_RGB);
+
+	/* Copy framebuffer data (BMP is bottom-up) */
+	bmp_data = (void *)bmp + sizeof(struct bmp_header);
+	for (y = 0; y < height; y++) {
+		void *src = priv->fb + (height - 1 - y) * priv->line_length;
+		void *dst = bmp_data + y * row_bytes;
+
+		memcpy(dst, src, width * bytes_per_pixel);
+	}
+
+	ret = os_write_file(fname, bmp, bmp_size);
+	free(bmp);
+
+	return ret;
+}
+
 int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 		      bool use_copy)
 {
+	struct sandbox_state *state = state_get_current();
 	struct video_priv *priv = dev_get_uclass_priv(dev);
 	uint destlen;
 	void *dest;
@@ -70,8 +145,22 @@ int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 	if (ret)
 		return ret;
 
-	/* provide a useful delay if #define LOG_DEBUG at the top of file */
-	if (_DEBUG)
+	/* Write frame to file if --video-frames option is set */
+	if (state->video_frames_dir) {
+		char filename[256];
+
+		snprintf(filename, sizeof(filename), "%s/frame%d.bmp",
+			 state->video_frames_dir, state->video_frame_count++);
+		ret = video_write_bmp(uts, dev, filename);
+		if (ret)
+			printf("Failed to write frame to %s: %d\n", filename,
+			       ret);
+	}
+
+	/* provide a useful delay if -V flag is used or LOG_DEBUG is set */
+	if (state->video_test)
+		mdelay(state->video_test);
+	else if (_DEBUG)
 		mdelay(300);
 
 	return destlen;
@@ -578,6 +667,77 @@ static int dm_test_video_comp_bmp8(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_video_comp_bmp8, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 
+/**
+ * check_bmp_alpha() - Test drawing the riscos pointer with transparency
+ *
+ * Draws the riscos pointer BMP in various positions with and without
+ * transparency to verify alpha blending works correctly
+ *
+ * @uts: Test state
+ * @dev: Video device
+ * @first: Expected compression after first pointer draw
+ * @second: Expected compression after second pointer draw
+ * @trans: Expected compression after drawing with transparency
+ * Return: 0 if OK, -ve on error
+ */
+static int check_bmp_alpha(struct unit_test_state *uts, struct udevice *dev,
+			   int first, int second, int trans)
+{
+	struct video_priv *priv = dev_get_uclass_priv(dev);
+	ulong addr;
+
+	addr = map_to_sysmem(video_image_getptr(riscos_arrow));
+
+	/* Draw a black rectangle first */
+	video_draw_box(dev, 100, 100, 200, 200, 0,
+		       video_index_to_colour(priv, VID_BLACK), true);
+
+	/* Draw the pointer on top of the black rectangle */
+	ut_assertok(video_bmp_display(dev, addr, 110, 110, false));
+	ut_asserteq(first, video_compress_fb(uts, dev, false));
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	/* Draw the pointer on top of the white background */
+	ut_assertok(video_bmp_display(dev, addr, 350, 110, false));
+	ut_asserteq(second, video_compress_fb(uts, dev, false));
+
+	/* Draw the pointer with white (0xffffff) as transparent */
+	ut_assertok(video_bmp_displaya(dev, addr, 110, 160, false, true,
+				       0xffffff));
+	ut_assertok(video_bmp_displaya(dev, addr, 350, 160, false, true,
+				       0xffffff));
+	ut_asserteq(trans, video_compress_fb(uts, dev, false));
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	return 0;
+}
+
+/* Test drawing the riscos pointer on a 16bpp display */
+static int dm_test_video_bmp_alpha16(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(check_bmp_alpha(uts, dev, 174, 249, 358));
+
+	return 0;
+}
+DM_TEST(dm_test_video_bmp_alpha16, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* Test drawing the riscos pointer on 32bpp display */
+static int dm_test_video_bmp_alpha32(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(uclass_find_first_device(UCLASS_VIDEO, &dev));
+	ut_assertnonnull(dev);
+	ut_assertok(sandbox_sdl_set_bpp(dev, VIDEO_BPP32));
+	ut_assertok(check_bmp_alpha(uts, dev, 641, 710, 869));
+
+	return 0;
+}
+DM_TEST(dm_test_video_bmp_alpha32, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
 /* Test TrueType console */
 static int dm_test_video_truetype(struct unit_test_state *uts)
 {
@@ -726,6 +886,7 @@ static int dm_test_video_damage(struct unit_test_state *uts)
 	struct sandbox_sdl_plat *plat;
 	struct udevice *dev, *con;
 	struct video_priv *priv;
+	struct vid_bbox *damage;
 	const char *test_string_1 = "Criticism may not be agreeable, ";
 	const char *test_string_2 = "but it is necessary.";
 	const char *test_string_3 = "It fulfils the same function as pain in "
@@ -743,32 +904,34 @@ static int dm_test_video_damage(struct unit_test_state *uts)
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	priv = dev_get_uclass_priv(dev);
 
+	damage = &priv->damage;
+
 	vidconsole_position_cursor(con, 14, 10);
 	vidconsole_put_string(con, test_string_2);
-	ut_asserteq(449, priv->damage.xstart);
-	ut_asserteq(325, priv->damage.ystart);
-	ut_asserteq(661, priv->damage.xend);
-	ut_asserteq(350, priv->damage.yend);
+	ut_asserteq(449, damage->x0);
+	ut_asserteq(325, damage->y0);
+	ut_asserteq(661, damage->x1);
+	ut_asserteq(350, damage->y1);
 
 	vidconsole_position_cursor(con, 7, 5);
 	vidconsole_put_string(con, test_string_1);
-	ut_asserteq(225, priv->damage.xstart);
-	ut_asserteq(164, priv->damage.ystart);
-	ut_asserteq(661, priv->damage.xend);
-	ut_asserteq(350, priv->damage.yend);
+	ut_asserteq(225, damage->x0);
+	ut_asserteq(164, damage->y0);
+	ut_asserteq(661, damage->x1);
+	ut_asserteq(350, damage->y1);
 
 	vidconsole_position_cursor(con, 21, 15);
 	vidconsole_put_string(con, test_string_3);
-	ut_asserteq(225, priv->damage.xstart);
-	ut_asserteq(164, priv->damage.ystart);
-	ut_asserteq(1280, priv->damage.xend);
-	ut_asserteq(510, priv->damage.yend);
+	ut_asserteq(225, damage->x0);
+	ut_asserteq(164, damage->y0);
+	ut_asserteq(1280, damage->x1);
+	ut_asserteq(510, damage->y1);
 
 	video_sync(dev, true);
-	ut_asserteq(priv->xsize, priv->damage.xstart);
-	ut_asserteq(priv->ysize, priv->damage.ystart);
-	ut_asserteq(0, priv->damage.xend);
-	ut_asserteq(0, priv->damage.yend);
+	ut_asserteq(priv->xsize, damage->x0);
+	ut_asserteq(priv->ysize, damage->y0);
+	ut_asserteq(0, damage->x1);
+	ut_asserteq(0, damage->y1);
 
 	ut_asserteq(7335, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
@@ -1122,11 +1285,187 @@ static int dm_test_video_images(struct unit_test_state *uts)
 	ut_assert_nextline("Name                       Size");
 	ut_assert_nextline("-------------------- ----------");
 	ut_assert_nextline("bgrt                      43926");
+	ut_assert_nextline("riscos_arrow               3798");
 	ut_assert_nextline("u_boot                     6932");
 	ut_assert_skip_to_line("");
-	ut_assert_nextline("Total images: 2");
+	ut_assert_nextline("Total images: 3");
 	ut_assert_console_end();
 
 	return 0;
 }
 DM_TEST(dm_test_video_images, UTF_SCAN_PDATA | UTF_SCAN_FDT | UTF_CONSOLE);
+
+/* Test manual-sync mode suppresses auto-sync */
+static int dm_test_video_manual_sync(struct unit_test_state *uts)
+{
+	struct video_priv *priv;
+	struct udevice *dev, *con;
+
+	ut_assertok(select_vidconsole(uts, "vidconsole0"));
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	priv = dev_get_uclass_priv(dev);
+
+	/* Write some text and verify it appears in the framebuffer */
+	vidconsole_put_string(con, "Test");
+	ut_asserteq(118, video_compress_fb(uts, dev, false));
+
+	/* Sync to copy buffer before enabling manual-sync mode */
+	ut_assertok(video_sync(dev, true));
+
+	/* Enable manual-sync mode - sync should be suppressed */
+	video_set_manual_sync(true);
+
+	/* Clear and write new text - auto-sync should not happen */
+	video_clear(dev);
+	vidconsole_put_string(con, "Manual Sync");
+
+	/* should do nothing in manual-sync mode */
+	ut_assertok(video_sync(dev, false));
+
+	/* The copy framebuffer should still show old content */
+	if (IS_ENABLED(CONFIG_VIDEO_COPY)) {
+		ut_assertf(memcmp(priv->fb, priv->copy_fb, priv->fb_size),
+			   "Copy fb should not match fb in manual-sync mode");
+	}
+
+	/*
+	 * video_sync() with force=true should still do nothing, except of
+	 * course that without a copy framebuffer the string will be present on
+	 * (only) framebuffer
+	 */
+	ut_assertok(video_sync(dev, true));
+	if (IS_ENABLED(CONFIG_VIDEO_COPY)) {
+		ut_asserteq(118, video_compress_fb(uts, dev, true));
+		ut_assertf(memcmp(priv->fb, priv->copy_fb, priv->fb_size),
+			   "Copy fb should not match fb in manual-sync mode");
+	} else {
+		ut_asserteq(183, video_compress_fb(uts, dev, true));
+	}
+
+	/* Now test video_manual_sync() directly with VIDSYNC_FORCE and COPY */
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FORCE | VIDSYNC_FLUSH |
+	VIDSYNC_COPY));
+	ut_asserteq(183, video_compress_fb(uts, dev, false));
+
+	/* The copy framebuffer should now match since we forced the sync */
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	/* Write new text again */
+	vidconsole_put_string(con, "Test2");
+
+	/* without VIDSYNC_FLUSH or COPY - should do nothing */
+	ut_assertok(video_manual_sync(dev, 0));
+
+	/* Copy fb should not match since neither flush nor copy occurred */
+	if (IS_ENABLED(CONFIG_VIDEO_COPY)) {
+		ut_assertf(memcmp(priv->fb, priv->copy_fb, priv->fb_size),
+			   "Copy fb shouldn't match fb w/o VIDSYNC_FLUSH/COPY");
+	}
+
+	/* video_manual_sync() with full flags - should perform full sync */
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+	ut_assertok(video_check_copy_fb(uts, dev));
+
+	/* Disable manual-sync mode */
+	video_set_manual_sync(false);
+
+	return 0;
+}
+DM_TEST(dm_test_video_manual_sync, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+/* Test that sync() receives the correct damage rectangle */
+static int dm_test_video_sync_damage(struct unit_test_state *uts)
+{
+	struct vid_bbox damage;
+	struct udevice *dev, *con;
+	struct video_priv *priv;
+
+	if (!IS_ENABLED(CONFIG_VIDEO_DAMAGE))
+		return -EAGAIN;
+
+	ut_assertok(select_vidconsole(uts, "vidconsole0"));
+	ut_assertok(video_get_nologo(uts, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	ut_assertok(vidconsole_select_font(con, "8x16", 0));
+	priv = dev_get_uclass_priv(dev);
+
+	/* Use manual sync to prevent interference with the test */
+	video_set_manual_sync(true);
+
+	/* Clear the display - this creates a full-screen damage and syncs */
+	video_clear(dev);
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+	ut_asserteq(46, video_compress_fb(uts, dev, false));
+
+	/* Get the damage rectangle that was passed to sync() */
+	ut_assertok(sandbox_sdl_get_sync_damage(dev, &damage));
+
+	/* Should be the full screen */
+	ut_assert(vid_bbox_valid(&damage));
+	ut_asserteq(0, damage.x0);
+	ut_asserteq(0, damage.y0);
+	ut_asserteq(priv->xsize, damage.x1);
+	ut_asserteq(priv->ysize, damage.y1);
+
+	/* Sync again with no changes - should have empty damage */
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+	ut_assertok(sandbox_sdl_get_sync_damage(dev, &damage));
+	ut_assert(!vid_bbox_valid(&damage));
+
+	/* Check that priv->damage is still reset to empty */
+	ut_assert(!vid_bbox_valid(&priv->damage));
+
+	/* Write a small piece of text at a specific position */
+	vidconsole_putc_xy(con, VID_TO_POS(400), 67, 'T');
+
+	/* Check priv->damage before sync - should have text damage */
+	ut_assert(vid_bbox_valid(&priv->damage));
+	ut_asserteq(400, priv->damage.x0);
+	ut_asserteq(67, priv->damage.y0);
+	ut_asserteq(400 + 8, priv->damage.x1);  /* 8x16 font */
+	ut_asserteq(67 + 16, priv->damage.y1);
+
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+
+	/* Get the damage rectangle that was passed to sync() */
+	ut_assertok(sandbox_sdl_get_sync_damage(dev, &damage));
+
+	/* The damage should cover just the character */
+	ut_assert(vid_bbox_valid(&damage));
+	ut_asserteq(400, damage.x0);
+	ut_asserteq(67, damage.y0);
+	ut_asserteq(400 + 8, damage.x1);
+	ut_asserteq(67 + 16, damage.y1);
+
+	/* Check priv->damage after sync - should be reset to empty */
+	ut_assert(!vid_bbox_valid(&priv->damage));
+
+	/* Draw a filled box at a different position */
+	ut_assertok(video_draw_box(dev, 200, 300, 250, 340, 1, 0xffffff, true));
+
+	/* Check priv->damage before sync - should have box damage */
+	ut_assert(vid_bbox_valid(&priv->damage));
+	ut_asserteq(200, priv->damage.x0);
+	ut_asserteq(300, priv->damage.y0);
+	ut_asserteq(250, priv->damage.x1);
+	ut_asserteq(340, priv->damage.y1);
+
+	ut_assertok(video_manual_sync(dev, VIDSYNC_FLUSH | VIDSYNC_COPY));
+
+	/* Get the damage rectangle for the box */
+	ut_assertok(sandbox_sdl_get_sync_damage(dev, &damage));
+
+	/* The damage should cover the box area */
+	ut_assert(vid_bbox_valid(&damage));
+	ut_asserteq(200, damage.x0);
+	ut_asserteq(300, damage.y0);
+	ut_asserteq(250, damage.x1);
+	ut_asserteq(340, damage.y1);
+
+	/* Check priv->damage after sync - should be reset to inverted/empty */
+	ut_assert(!vid_bbox_valid(&priv->damage));
+
+	return 0;
+}
+DM_TEST(dm_test_video_sync_damage, UTF_SCAN_PDATA | UTF_SCAN_FDT);

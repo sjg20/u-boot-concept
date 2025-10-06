@@ -365,6 +365,25 @@ static int sandbox_cmdline_cb_double_lcd(struct sandbox_state *state,
 SANDBOX_CMDLINE_OPT_SHORT(double_lcd, 'K', 0,
 			  "Double the LCD display size in each direction");
 
+static int sandbox_cmdline_cb_video_test(struct sandbox_state *state,
+					 const char *arg)
+{
+	state->video_test = simple_strtol(arg, NULL, 10);
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(video_test, 'V', 1,
+			  "Enable video test mode (ms delay between asserts)");
+
+static int sandbox_cmdline_cb_video_frames(struct sandbox_state *state,
+					   const char *arg)
+{
+	state->video_frames_dir = arg;
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT(video_frames, 1, "Directory to write video frames");
+
 static const char *term_args[STATE_TERM_COUNT] = {
 	"raw-with-sigs",
 	"raw",
@@ -644,6 +663,19 @@ int sandbox_init(int argc, char *argv[], struct global_data *data)
 	state = state_get_current();
 	if (os_parse_args(state, argc, argv))
 		return 1;
+
+	/* Remove old frame*.bmp files if video_frames_dir is set */
+	if (state->video_frames_dir) {
+		char pattern[256];
+		int i;
+
+		for (i = 0; i < 1000; i++) {
+			snprintf(pattern, sizeof(pattern), "%s/frame%d.bmp",
+				 state->video_frames_dir, i);
+			if (os_unlink(pattern))
+				break;
+		}
+	}
 
 	/* Detect if serial console is connected to a terminal */
 	state->serial_is_tty = os_isatty(1) &&
