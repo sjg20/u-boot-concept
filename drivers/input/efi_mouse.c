@@ -39,6 +39,44 @@ struct efi_mouse_priv {
 	struct efi_event *timer_event;
 };
 
+/**
+ * get_button_event() - Check for button-change events
+ *
+ * @priv: Private data
+ * @new_buttons: New button state
+ * @event: Event to populate if button changed
+ * Return: 0 if button event found, -EAGAIN if no button change
+ */
+static int get_button_event(struct efi_mouse_priv *priv, int new_buttons,
+			    struct mouse_event *event)
+{
+	struct mouse_button *but = &event->button;
+	int diff = new_buttons ^ priv->old_buttons;
+	int i;
+
+	if (new_buttons == priv->old_buttons)
+		return -EAGAIN;
+
+	event->type = MOUSE_EV_BUTTON;
+	/* Find first changed button */
+	for (i = 0; i < 2; i++) {
+		u8 mask = 1 << i;
+
+		if (!(diff & mask))
+			continue;
+
+		but->button = i;
+		but->pressed = (new_buttons & mask) ? true : false;
+		but->clicks = 1;
+		but->x = priv->x;
+		but->y = priv->y;
+		priv->old_buttons ^= mask;
+		return 0;
+	}
+
+	return -EAGAIN;
+}
+
 static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 {
 	struct efi_mouse_priv *priv = dev_get_priv(dev);
@@ -81,27 +119,9 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 		new_buttons |= 1 << 0;
 	if (state.right_button)
 		new_buttons |= 1 << 1;
-
-	if (new_buttons != priv->old_buttons) {
-		struct mouse_button *but = &event->button;
-		u8 diff = new_buttons ^ priv->old_buttons;
-		int i;
-
-		event->type = MOUSE_EV_BUTTON;
-		/* Find first changed button */
-		for (i = 0; i < 2; i++) {
-			u8 mask = 1 << i;
-			if (diff & mask) {
-				but->button = i;
-				but->pressed = (new_buttons & mask) ? true : false;
-				but->clicks = 1;
-				but->x = priv->x;
-				but->y = priv->y;
-				priv->old_buttons ^= mask;
-				return 0;
-			}
-		}
-	}
+	ret = get_button_event(priv, new_buttons, event);
+	if (!ret)
+		return 0;
 
 	/* Check for movement */
 	if (state.relative_movement_x || state.relative_movement_y) {
