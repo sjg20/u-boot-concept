@@ -14,9 +14,24 @@
 #include <log.h>
 #include <mouse.h>
 
+/* Maximum coordinate value for mouse position */
+#define MOUSE_MAX_COORD 0xffff
+
+/**
+ * struct efi_mouse_priv - Private data for EFI mouse driver
+ *
+ * @simple: Simple pointer protocol (relative movement)
+ * @simple_last: Last simple pointer state
+ * @has_last_state: True if we have a previous state for delta calculation
+ * @x: Current X position
+ * @y: Current Y position
+ * @buttons: Current button state
+ * @old_buttons: Previous button state for detecting changes
+ * @timer_event: EFI timer event for periodic polling
+ */
 struct efi_mouse_priv {
-	struct efi_simple_pointer_protocol *pointer;
-	struct efi_simple_pointer_state last_state;
+	struct efi_simple_pointer_protocol *simple;
+	struct efi_simple_pointer_state simple_last;
 	bool has_last_state;
 	int x, y;
 	int buttons;
@@ -30,7 +45,7 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 	struct efi_simple_pointer_state state;
 	efi_status_t ret;
 	int new_buttons;
-	if (!priv->pointer)
+	if (!priv->simple)
 		return -ENODEV;
 
 	/* Use timer-based polling approach like EFI keyboard */
@@ -41,8 +56,8 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 		efi_uintn_t num_events = 1;
 
 		events[0] = priv->timer_event;
-		if (priv->pointer->wait_for_input) {
-			events[1] = priv->pointer->wait_for_input;
+		if (priv->simple->wait_for_input) {
+			events[1] = priv->simple->wait_for_input;
 			num_events = 2;
 		}
 
@@ -52,7 +67,7 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 	}
 
 	/* Get current pointer state */
-	ret = priv->pointer->get_state(priv->pointer, &state);
+	ret = priv->simple->get_state(priv->simple, &state);
 	if (ret != EFI_SUCCESS) {
 		if (ret == EFI_NOT_READY)
 			return -EAGAIN;
@@ -117,63 +132,74 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 	return -EAGAIN;
 }
 
+/**
+ * setup_simple_pointer() - Set up simple pointer protocol
+ *
+ * @priv: Private data
+ * Return: 0 if OK, -ve on error
+ */
+static int setup_simple_pointer(struct efi_mouse_priv *priv)
+{
+	struct efi_boot_services *boot = efi_get_boot();
+	efi_handle_t *handles;
+	efi_uintn_t num_handles;
+	efi_status_t ret;
+
+	log_debug("EFI simple-pointer mouse probe\n");
+	ret = boot->locate_handle_buffer(BY_PROTOCOL, &efi_guid_simple_pointer,
+					 NULL, &num_handles, &handles);
+	if (ret)
+		return -ENODEV;
+
+	log_debug("Found %zu simple pointer device(s)\n", num_handles);
+
+	/* Use the first simple pointer device */
+	ret = boot->open_protocol(handles[0], &efi_guid_simple_pointer,
+				   (void **)&priv->simple,
+				   efi_get_parent_image(), NULL,
+				   EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+	if (ret) {
+		log_debug("Cannot open simple pointer protocol (ret=0x%lx)\n",
+			  ret);
+		efi_free_pool(handles);
+		return -EIO;
+	}
+
+	log_debug("Using simple pointer protocol\n");
+	efi_free_pool(handles);
+
+	return 0;
+}
+
 static int efi_mouse_probe(struct udevice *dev)
 {
 	struct efi_mouse_priv *priv = dev_get_priv(dev);
 	struct efi_boot_services *boot = efi_get_boot();
 	efi_status_t ret;
-	efi_handle_t *handles;
-	efi_uintn_t num_handles;
 
-	log_debug("EFI mouse probe\n");
-
-	/* Find Simple Pointer Protocol handles */
-	ret = boot->locate_handle_buffer(BY_PROTOCOL, &efi_guid_simple_pointer,
-					 NULL, &num_handles, &handles);
-	if (ret != EFI_SUCCESS) {
-		printf("EFI mouse: No EFI pointer devices found (ret=0x%lx)\n", ret);
+	if (setup_simple_pointer(priv))
 		return -ENODEV;
-	}
-
-	log_debug("Found %zu EFI pointer device(s)\n", num_handles);
-
-	/* Use the first pointer device */
-	ret = boot->open_protocol(handles[0], &efi_guid_simple_pointer,
-				(void **)&priv->pointer, efi_get_parent_image(),
-				NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-	if (ret != EFI_SUCCESS) {
-		printf("EFI mouse: Failed to open EFI pointer protocol (ret=0x%lx)\n", ret);
-		efi_free_pool(handles);
-		return -ENODEV;
-	}
-
-	efi_free_pool(handles);
 
 	/* Reset the pointer device */
-	ret = priv->pointer->reset(priv->pointer, false);
+	ret = priv->simple->reset(priv->simple, false);
 	if (ret != EFI_SUCCESS) {
 		log_warning("Failed to reset EFI pointer device\n");
 		/* Continue anyway - some devices might not support reset */
 	}
 
-	priv->x = 0;
-	priv->y = 0;
-	priv->buttons = 0;
-	priv->old_buttons = 0;
-	priv->has_last_state = false;
-
 	/* Create a timer event for periodic checking */
 	ret = boot->create_event(EVT_TIMER, TPL_NOTIFY, NULL, NULL,
 				&priv->timer_event);
-	if (ret != EFI_SUCCESS) {
-		printf("EFI mouse: Failed to create timer event (ret=0x%lx)\n", ret);
+	if (ret) {
+		log_debug("Failed to create timer event (ret=0x%lx)\n", ret);
 		/* Continue without timer - fallback to direct polling */
 		priv->timer_event = NULL;
 	} else {
 		/* Set timer to trigger every 10ms (100000 x 100ns = 10ms) */
-		ret = boot->set_timer(priv->timer_event, EFI_TIMER_PERIODIC, 10000);
-		if (ret != EFI_SUCCESS) {
-			printf("EFI mouse: Failed to set timer (ret=0x%lx)\n", ret);
+		ret = boot->set_timer(priv->timer_event, EFI_TIMER_PERIODIC,
+				      10000);
+		if (ret) {
+			log_debug("Failed to set timer (ret=0x%lx)\n", ret);
 			boot->close_event(priv->timer_event);
 			priv->timer_event = NULL;
 		}
@@ -188,15 +214,10 @@ static int efi_mouse_remove(struct udevice *dev)
 	struct efi_mouse_priv *priv = dev_get_priv(dev);
 	struct efi_boot_services *boot = efi_get_boot();
 
-	if (priv->timer_event) {
+	if (priv->timer_event)
 		boot->close_event(priv->timer_event);
-		priv->timer_event = NULL;
-	}
 
-	if (priv->pointer) {
-		/* Protocol will be automatically closed when the image is unloaded */
-		priv->pointer = NULL;
-	}
+	/* Protocol will be automatically closed when the image is unloaded */
 
 	return 0;
 }
