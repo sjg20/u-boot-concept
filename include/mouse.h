@@ -31,6 +31,7 @@ enum mouse_state_t {
  * struct mouse_uc_priv - pre-device private data for mouse uclass
  *
  * @left_pressed: True if left button is currently pressed
+ * @click_pending: True if a click has occurred but not yet retrieved
  * @click_pos: Position where the click occurred
  * @last_pos: Last position received from mouse
  * @video_dev: Video device for coordinate scaling
@@ -39,6 +40,7 @@ enum mouse_state_t {
  */
 struct mouse_uc_priv {
 	bool left_pressed;
+	bool click_pending;
 	struct vid_pos click_pos;
 	struct vid_pos last_pos;
 	struct udevice *video_dev;
