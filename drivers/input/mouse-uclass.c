@@ -51,19 +51,18 @@ int mouse_get_click(struct udevice *dev, struct vid_pos *pos)
 	/* Only process button events for left button */
 	if (event.type == MOUSE_EV_BUTTON &&
 	    event.button.button == BUTTON_LEFT) {
-		enum mouse_press_state_t new_state = event.button.press_state;
+		bool pressed = event.button.press_state == BUTTON_PRESSED;
 		bool pending = false;
 
 		/* Detect press->release transition (click) */
-		if (uc_priv->left_button_state == BUTTON_PRESSED &&
-		    new_state == BUTTON_RELEASED) {
+		if (uc_priv->left_pressed && !pressed) {
 			pending = true;
 			uc_priv->click_pos.x = event.button.x;
 			uc_priv->click_pos.y = event.button.y;
 		}
 
 		/* Update button state */
-		uc_priv->left_button_state = new_state;
+		uc_priv->left_pressed = pressed;
 
 		/* If we just detected a click, return it */
 		if (pending) {
