@@ -28,10 +28,23 @@ int mouse_get_event(struct udevice *dev, struct mouse_event *evt)
 		uc_priv->last_pos.y = evt->motion.y;
 	}
 
-	/* Update last position for button events */
+	/* Update last position for button events and detect clicks */
 	if (evt->type == MOUSE_EV_BUTTON) {
 		uc_priv->last_pos.x = evt->button.x;
 		uc_priv->last_pos.y = evt->button.y;
+
+		/* Process left-button clicks */
+		if (evt->button.button == BUTTON_LEFT) {
+			/* Detect press->release transition (click) */
+			if (uc_priv->left_pressed && !evt->button.pressed) {
+				uc_priv->click_pending = true;
+				uc_priv->click_pos.x = evt->button.x;
+				uc_priv->click_pos.y = evt->button.y;
+			}
+
+			/* Update button state */
+			uc_priv->left_pressed = evt->button.pressed;
+		}
 	}
 
 	return 0;
@@ -41,38 +54,21 @@ int mouse_get_click(struct udevice *dev, struct vid_pos *pos)
 {
 	struct mouse_uc_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct mouse_event event;
-	int ret;
 
-	/* Get one mouse event */
-	ret = mouse_get_event(dev, &event);
-	if (ret)
-		return -EAGAIN; /* No event available */
+	/* Process all available events until we find a click */
+	while (true) {
+		if (mouse_get_event(dev, &event))
+			return -EAGAIN;  /* No more events */
 
-	/* Only process button events for left button */
-	if (event.type == MOUSE_EV_BUTTON &&
-	    event.button.button == BUTTON_LEFT) {
-		enum mouse_press_state_t new_state = event.button.press_state;
-		bool pending = false;
-
-		/* Detect press->release transition (click) */
-		if (uc_priv->left_button_state == BUTTON_PRESSED &&
-		    new_state == BUTTON_RELEASED) {
-			pending = true;
-			uc_priv->click_pos.x = event.button.x;
-			uc_priv->click_pos.y = event.button.y;
-		}
-
-		/* Update button state */
-		uc_priv->left_button_state = new_state;
-
-		/* If we just detected a click, return it */
-		if (pending) {
+		/* Check if this event resulted in a click */
+		if (uc_priv->click_pending) {
 			*pos = uc_priv->click_pos;
-			return 0;
+			uc_priv->click_pending = false;
+			break;
 		}
 	}
 
-	return -EAGAIN;
+	return 0;
 }
 
 int mouse_get_pos(struct udevice *dev, struct vid_pos *pos)

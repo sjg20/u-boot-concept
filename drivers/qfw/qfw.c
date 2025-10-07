@@ -212,8 +212,8 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 	return 0;
 }
 
-static int qfw_locate_file(struct udevice *dev, const char *fname,
-			   enum fw_cfg_selector *selectp, ulong *sizep)
+int qfw_locate_file(struct udevice *dev, const char *fname,
+		    enum fw_cfg_selector *selectp, ulong *sizep)
 {
 	struct fw_file *file;
 	int ret;

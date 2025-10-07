@@ -75,7 +75,7 @@ static int dm_test_mouse_button(struct unit_test_state *uts)
 	/* inject a button press event */
 	inject.type = MOUSE_EV_BUTTON;
 	inject.button.button = BUTTON_LEFT;
-	inject.button.press_state = BUTTON_PRESSED;
+	inject.button.pressed = true;
 	inject.button.clicks = 1;
 	inject.button.x = 150;
 	inject.button.y = 250;
@@ -86,7 +86,7 @@ static int dm_test_mouse_button(struct unit_test_state *uts)
 	ut_assertok(mouse_get_event(dev, &event));
 	ut_asserteq(MOUSE_EV_BUTTON, event.type);
 	ut_asserteq(BUTTON_LEFT, event.button.button);
-	ut_asserteq(BUTTON_PRESSED, event.button.press_state);
+	ut_asserteq(true, event.button.pressed);
 	ut_asserteq(1, event.button.clicks);
 	ut_asserteq(150, event.button.x);
 	ut_asserteq(250, event.button.y);
@@ -112,7 +112,7 @@ static int dm_test_mouse_click(struct unit_test_state *uts)
 	/* inject a left button press */
 	inject.type = MOUSE_EV_BUTTON;
 	inject.button.button = BUTTON_LEFT;
-	inject.button.press_state = BUTTON_PRESSED;
+	inject.button.pressed = true;
 	inject.button.clicks = 1;
 	inject.button.x = 300;
 	inject.button.y = 400;
@@ -128,7 +128,7 @@ static int dm_test_mouse_click(struct unit_test_state *uts)
 	/* inject a left button release */
 	inject.type = MOUSE_EV_BUTTON;
 	inject.button.button = BUTTON_LEFT;
-	inject.button.press_state = BUTTON_RELEASED;
+	inject.button.pressed = false;
 	inject.button.clicks = 1;
 	inject.button.x = 300;
 	inject.button.y = 400;
@@ -161,7 +161,7 @@ static int dm_test_mouse_click_no_coordinates(struct unit_test_state *uts)
 	/* inject press and release to create a click */
 	inject.type = MOUSE_EV_BUTTON;
 	inject.button.button = BUTTON_LEFT;
-	inject.button.press_state = BUTTON_PRESSED;
+	inject.button.pressed = true;
 	inject.button.clicks = 1;
 	inject.button.x = 500;
 	inject.button.y = 600;
@@ -170,7 +170,7 @@ static int dm_test_mouse_click_no_coordinates(struct unit_test_state *uts)
 	/* process the press event */
 	ut_asserteq(-EAGAIN, mouse_get_click(dev, &pos));
 
-	inject.button.press_state = BUTTON_RELEASED;
+	inject.button.pressed = false;
 	sandbox_mouse_inject(dev, &inject);
 
 	/* now test that click is detected (coordinates are ignored) */
@@ -197,7 +197,7 @@ static int dm_test_mouse_right_button(struct unit_test_state *uts)
 	 */
 	inject.type = MOUSE_EV_BUTTON;
 	inject.button.button = BUTTON_RIGHT;
-	inject.button.press_state = BUTTON_PRESSED;
+	inject.button.pressed = true;
 	inject.button.clicks = 1;
 	inject.button.x = 100;
 	inject.button.y = 200;
@@ -205,7 +205,7 @@ static int dm_test_mouse_right_button(struct unit_test_state *uts)
 
 	ut_asserteq(-EAGAIN, mouse_get_click(dev, &pos));
 
-	inject.button.press_state = BUTTON_RELEASED;
+	inject.button.pressed = false;
 	sandbox_mouse_inject(dev, &inject);
 
 	/* still no click detected since it was right button */

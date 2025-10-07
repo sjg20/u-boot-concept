@@ -146,6 +146,7 @@ struct expo_theme {
  * @scene_head: List of scenes
  * @str_head: list of strings
  * @cch: Keyboard context for input
+ * @last_key_ms: timestamp of the last key received
  */
 struct expo {
 	char *name;
@@ -173,6 +174,7 @@ struct expo {
 	struct list_head scene_head;
 	struct list_head str_head;
 	struct cli_ch_state cch;
+	ulong last_key_ms;
 };
 
 /**

@@ -35,7 +35,7 @@ static int do_mouse_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 				struct mouse_button *but = &evt.button;
 
 				printf("button: button==%d, press=%d, clicks=%d, X=%d, Y=%d\n",
-				       but->button, but->press_state,
+				       but->button, but->pressed,
 				       but->clicks, but->x, but->y);
 				break;
 			}

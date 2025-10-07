@@ -12,8 +12,11 @@
 #include <fdtdec.h>
 #include <log.h>
 #include <linux/compiler.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <serial.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* Information about the efi console */
 struct serial_efi_priv {
@@ -44,26 +47,38 @@ int serial_efi_setbrg(struct udevice *dev, int baudrate)
 static int serial_efi_get_key(struct serial_efi_priv *priv)
 {
 	struct efi_simple_text_input_protocol *cin = priv->con_in;
-	struct efi_event *events[2] = {cin->wait_for_key, priv->timer};
-	efi_uintn_t index;
 	efi_status_t ret;
 
 	if (priv->have_key)
 		return 0;
 
-	ret = priv->boot->wait_for_event(2, events, &index);
-	if (ret) {
-		log_err("wait_for_event() failed\n");
-		return -EAGAIN;
-	}
-	if (index)
-		return -EAGAIN;
+	/* For emulators like QEMU, skip the timer wait since USB event
+	 * processing is not needed
+	 */
+	if (gd->flags & GD_FLG_EMUL) {
+		ret = priv->con_in->read_key_stroke(priv->con_in, &priv->key);
+		if (ret == EFI_NOT_READY)
+			return -EAGAIN;
+		else if (ret != EFI_SUCCESS)
+			return -EIO;
+	} else {
+		struct efi_event *events[2] = {cin->wait_for_key, priv->timer};
+		efi_uintn_t index;
 
-	ret = priv->con_in->read_key_stroke(priv->con_in, &priv->key);
-	if (ret == EFI_NOT_READY)
-		return -EAGAIN;
-	else if (ret != EFI_SUCCESS)
-		return -EIO;
+		ret = priv->boot->wait_for_event(2, events, &index);
+		if (ret) {
+			log_err("wait_for_event() failed\n");
+			return -EAGAIN;
+		}
+		if (index)
+			return -EAGAIN;
+
+		ret = priv->con_in->read_key_stroke(priv->con_in, &priv->key);
+		if (ret == EFI_NOT_READY)
+			return -EAGAIN;
+		else if (ret != EFI_SUCCESS)
+			return -EIO;
+	}
 
 	priv->have_key = true;
 
@@ -155,7 +170,7 @@ static int serial_efi_probe(struct udevice *dev)
 	if (ret)
 		return -ECOMM;
 	ret = boot->set_timer(priv->timer, EFI_TIMER_PERIODIC,
-			      1000 * 1000 / 100 /* 1ms in 100ns units */);
+			      100 /* 10μs in 100ns units */);
 	if (ret)
 		return -ECOMM;
 

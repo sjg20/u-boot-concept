@@ -49,6 +49,7 @@ const char *const type_name[] = {
 
 	/* main loop events */
 	"main_loop",
+	"bootcmd",
 
 	/* booting */
 	"boot_os_addr",

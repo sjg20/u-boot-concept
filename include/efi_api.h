@@ -1006,6 +1006,36 @@ struct efi_simple_pointer_protocol {
 	struct efi_simple_pointer_mode *mode;
 };
 
+#define EFI_ABSOLUTE_POINTER_PROTOCOL_GUID \
+	EFI_GUID(0x8d59d32b, 0xc655, 0x4ae9, \
+		 0x9b, 0x15, 0xf2, 0x59, 0x04, 0x99, 0x2a, 0x43)
+
+struct efi_absolute_pointer_state {
+	u64 current_x;
+	u64 current_y;
+	u64 current_z;
+	u32 active_buttons;
+};
+
+struct efi_absolute_pointer_mode {
+	u64 abs_min_x;
+	u64 abs_min_y;
+	u64 abs_min_z;
+	u64 abs_max_x;
+	u64 abs_max_y;
+	u64 abs_max_z;
+	u32 attributes;
+};
+
+struct efi_absolute_pointer_protocol {
+	efi_status_t (EFIAPI *reset)(struct efi_absolute_pointer_protocol *this,
+				     bool extended_verification);
+	efi_status_t (EFIAPI *get_state)(struct efi_absolute_pointer_protocol *this,
+					 struct efi_absolute_pointer_state *state);
+	struct efi_event *wait_for_input;
+	struct efi_absolute_pointer_mode *mode;
+};
+
 #define EFI_DEVICE_PATH_TO_TEXT_PROTOCOL_GUID \
 	EFI_GUID(0x8b843e20, 0x8132, 0x4852, \
 		 0x90, 0xcc, 0x55, 0x1a, 0x4e, 0x4a, 0x7f, 0x1c)

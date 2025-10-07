@@ -764,6 +764,12 @@ enum gd_flags {
 	 * For now, this just avoids console output on startup
 	 */
 	GD_FLG_ULIB = 0x10000000,
+	/**
+	 * @GD_FLG_EMUL: Running in an emulator (e.g. QEMU)
+	 *
+	 * Detected from SMBIOS or other platform information
+	 */
+	GD_FLG_EMUL = 0x20000000,
 };
 
 #if CONFIG_IS_ENABLED(ULIB)

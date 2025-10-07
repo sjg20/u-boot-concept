@@ -22,6 +22,7 @@
 #include <image.h>
 #include <init.h>
 #include <malloc.h>
+#include <smbios.h>
 #include <sysreset.h>
 #include <u-boot/uuid.h>
 #include <asm/global_data.h>
@@ -164,7 +165,8 @@ static void free_memory(struct efi_priv *priv)
 static void scan_tables(struct efi_system_table *sys_table)
 {
 	efi_guid_t acpi = EFI_ACPI_TABLE_GUID;
-	efi_guid_t smbios = SMBIOS3_TABLE_GUID;
+	efi_guid_t smbios = SMBIOS_TABLE_GUID;
+	efi_guid_t smbios3 = SMBIOS3_TABLE_GUID;
 	uint i;
 
 	for (i = 0; i < sys_table->nr_tables; i++) {
@@ -172,9 +174,31 @@ static void scan_tables(struct efi_system_table *sys_table)
 
 		if (!memcmp(&tab->guid, &acpi, sizeof(efi_guid_t)))
 			gd_set_acpi_start(map_to_sysmem(tab->table));
-		else if (!memcmp(&tab->guid, &smbios, sizeof(efi_guid_t)))
-			gd->arch.smbios_start = map_to_sysmem(tab->table);
+		else if (!memcmp(&tab->guid, &smbios, sizeof(efi_guid_t)) ||
+			 !memcmp(&tab->guid, &smbios3, sizeof(efi_guid_t)))
+			gd_set_smbios_start(map_to_sysmem(tab->table));
 	}
+}
+
+static bool detect_emulator(void)
+{
+	struct smbios_info info;
+	struct smbios_type1 *t1;
+	const char *manufacturer;
+
+	/* Check if running in QEMU by looking at SMBIOS manufacturer */
+	if (!smbios_locate(gd_smbios_start(), &info)) {
+		t1 = (void *)smbios_get_header(&info,
+					SMBIOS_SYSTEM_INFORMATION);
+		if (t1) {
+			manufacturer = smbios_get_string(&t1->hdr,
+						t1->manufacturer);
+			if (manufacturer && !strcmp(manufacturer, "QEMU"))
+				return true;
+		}
+	}
+
+	return false;
 }
 
 static void find_protocols(struct efi_priv *priv)
@@ -413,7 +437,8 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 
 	printf("starting\n");
 
-	board_init_f(GD_FLG_SKIP_RELOC);
+	board_init_f(GD_FLG_SKIP_RELOC |
+		     (detect_emulator() ? GD_FLG_EMUL : 0));
 	gd = gd->new_gd;
 	board_init_r(NULL, 0);
 	free_memory(priv);

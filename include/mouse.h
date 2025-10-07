@@ -27,15 +27,11 @@ enum mouse_state_t {
 	BUTTON_SCROLL_MINUS	= 1 << 4,
 };
 
-enum mouse_press_state_t {
-	BUTTON_RELEASED		= 0,
-	BUTTON_PRESSED,
-};
-
 /**
- * struct mouse_uc_priv - private data for mouse uclass
+ * struct mouse_uc_priv - pre-device private data for mouse uclass
  *
- * @left_button_state: Current state of left button (BUTTON_PRESSED/BUTTON_RELEASED)
+ * @left_pressed: True if left button is currently pressed
+ * @click_pending: True if a click has occurred but not yet retrieved
  * @click_pos: Position where the click occurred
  * @last_pos: Last position received from mouse
  * @video_dev: Video device for coordinate scaling
@@ -43,7 +39,8 @@ enum mouse_press_state_t {
  * @video_height: Height of video display
  */
 struct mouse_uc_priv {
-	enum mouse_press_state_t left_button_state;
+	bool left_pressed;
+	bool click_pending;
 	struct vid_pos click_pos;
 	struct vid_pos last_pos;
 	struct udevice *video_dev;
@@ -76,14 +73,14 @@ struct mouse_event {
 
 		/**
 		 * @button: Button number that was pressed/released (BUTTON_...)
-		 * @state: BUTTON_PRESSED / BUTTON_RELEASED
+		 * @pressed: True if button was pressed, false if released
 		 * @clicks: number of clicks (normally 1; 2 = double-click)
 		 * @x: X position of mouse
 		 * @y: Y position of mouse
 		 */
 		struct mouse_button {
 			unsigned char button;
-			unsigned char press_state;
+			bool pressed;
 			unsigned char clicks;
 			unsigned short x;
 			unsigned short y;

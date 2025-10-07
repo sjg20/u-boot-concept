@@ -14,6 +14,7 @@
 #include <command.h>
 #include <console.h>
 #include <env.h>
+#include <event.h>
 #include <fdtdec.h>
 #include <init.h>
 #include <net.h>
@@ -38,10 +39,35 @@ static void run_preboot_environment_command(void)
 	}
 }
 
+static const char *get_autoboot_cmd(char *buf, int size)
+{
+	const char *s = NULL;
+
+	if (IS_ENABLED(CONFIG_EVENT)) {
+		struct event_bootcmd event_bootcmd;
+		int ret;
+
+		event_bootcmd.bootcmd = buf;
+		event_bootcmd.size = size;
+		buf[0] = '\0';
+
+		ret = event_notify(EVT_BOOTCMD, &event_bootcmd,
+				   sizeof(event_bootcmd));
+		if (ret)
+			return NULL;
+
+		if (buf[0] != '\0')
+			s = buf;
+	}
+
+	return s;
+}
+
 /* We come here after U-Boot is initialised and ready to process commands */
 void main_loop(void)
 {
 	const char *s;
+	char bootcmd_buf[CONFIG_SYS_CBSIZE];
 
 	bootstage_mark_name(BOOTSTAGE_ID_MAIN_LOOP, "main_loop");
 
@@ -64,7 +90,11 @@ void main_loop(void)
 
 	process_button_cmds();
 
-	s = bootdelay_process();
+	/* Allow platform code to provide bootcmd via event */
+	s = get_autoboot_cmd(bootcmd_buf, sizeof(bootcmd_buf));
+	if (!s)
+		s = bootdelay_process();
+
 	if (cli_process_fdt(&s))
 		cli_secure_boot_cmd(s);
 

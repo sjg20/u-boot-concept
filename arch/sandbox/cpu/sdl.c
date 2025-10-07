@@ -110,9 +110,7 @@ static void sandbox_sdl_poll_events(void)
 				m->button.button = BUTTON_MIDDLE;
 			else if (event.button.button == SDL_BUTTON_RIGHT)
 				m->button.button = BUTTON_RIGHT;
-			m->button.press_state = event.type ==
-				SDL_MOUSEBUTTONDOWN ?
-				BUTTON_PRESSED : BUTTON_RELEASED;
+			m->button.pressed = event.type == SDL_MOUSEBUTTONDOWN;
 			m->button.x = event.button.x;
 			m->button.y = event.motion.y;
 			break;

@@ -29,7 +29,8 @@ int init_cache_f_r(void)
 	 *	the MTRRs here
 	 */
 	do_mtrr &= !IS_ENABLED(CONFIG_FSP_VERSION1) &&
-		!IS_ENABLED(CONFIG_SYS_SLIMBOOTLOADER);
+		!IS_ENABLED(CONFIG_SYS_SLIMBOOTLOADER) &&
+		!IS_ENABLED(CONFIG_EFI_APP);
 
 	if (do_mtrr) {
 		ret = mtrr_commit(false);

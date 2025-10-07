@@ -173,6 +173,16 @@ enum event_t {
 	EVT_MAIN_LOOP,
 
 	/**
+	 * @EVT_BOOTCMD:
+	 * This event is triggered in main_loop() before autoboot_command().
+	 * It allows platform code to provide a custom bootcmd string.
+	 * Its parameter is of type struct event_bootcmd.
+	 * The event handler can write the bootcmd to the provided buffer.
+	 * A non-zero return value causes the boot to fail.
+	 */
+	EVT_BOOTCMD,
+
+	/**
 	 * @EVT_BOOT_OS_ADDR:
 	 * Triggered immediately before the OS is loaded into its final address
 	 * in memory. This even may be used to relocate the OS, e.g. by updating
@@ -270,6 +280,18 @@ union event_data {
 	struct event_bootm_final {
 		enum bootm_final_t flags;
 	} bootm_final;
+
+	/**
+	 * struct event_bootcmd - bootcmd override
+	 *
+	 * @bootcmd: Buffer for bootcmd string (provided by caller, must be an
+	 * empty string on entry)
+	 * @size: Size of bootcmd buffer
+	 */
+	struct event_bootcmd {
+		char *bootcmd;
+		int size;
+	} bootcmd;
 };
 
 /**
