@@ -7,6 +7,7 @@
 #include <command.h>
 #include <dm.h>
 #include <expo.h>
+#include <expo_test.h>
 #include <menu.h>
 #include <video.h>
 #include <linux/input.h>
@@ -1097,3 +1098,125 @@ static int expo_mouse_click(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(expo_mouse_click, UTF_DM | UTF_SCAN_FDT);
+
+static int expo_test_mode(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct udevice *dev;
+	struct scene *scn;
+	struct expo *exp;
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+	dev = exp->display;
+
+	/* Check test mode is initially off */
+	ut_asserteq(false, exp->test->enabled);
+
+	/* Entering expo mode without expotest env var keeps it off */
+	expo_enter_mode(exp);
+	ut_asserteq(false, exp->test->enabled);
+	expo_exit_mode(exp);
+
+	/* Enable test mode */
+	ut_assertok(env_set("expotest", "1"));
+	expo_enter_mode(exp);
+	ut_asserteq(true, exp->test->enabled);
+
+	/* Check initial render count */
+	ut_asserteq(0, exp->test->render_count);
+
+	/* Render and check count increments */
+	ut_assertok(expo_set_scene_id(exp, scn->id));
+	ut_assertok(scene_arrange(scn));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(1, exp->test->render_count);
+
+	ut_assertok(expo_render(exp));
+	ut_asserteq(2, exp->test->render_count);
+
+	/* Test that expo_enter_mode() resets the counter */
+	expo_exit_mode(exp);
+	expo_enter_mode(exp);
+	ut_asserteq(0, exp->test->render_count);
+	ut_assertok(expo_render(exp));
+	ut_asserteq(1, exp->test->render_count);
+	expo_exit_mode(exp);
+
+	/* Disable test mode */
+	ut_assertok(env_set("expotest", "0"));
+	expo_enter_mode(exp);
+	ut_asserteq(false, exp->test->enabled);
+	expo_exit_mode(exp);
+
+	/* Check test mode is off when env var is unset */
+	ut_assertok(env_set("expotest", NULL));
+	expo_enter_mode(exp);
+	ut_asserteq(false, exp->test->enabled);
+	expo_exit_mode(exp);
+
+	ut_assertok(env_set("expotest", NULL));
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_test_mode, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);
+
+static int expo_test_calc_fps(struct unit_test_state *uts)
+{
+	struct expo_test_mode test;
+	int fps;
+
+	memset(&test, 0, sizeof(test));
+
+	/* No data - should return 0 */
+	fps = expo_calc_fps(&test);
+	ut_asserteq(0, fps);
+
+	/* Single data point - should return 0 */
+	test.fps_index = 0;
+	test.fps_timestamps_ms[0] = 0;
+	test.fps_frame_counts[0] = 0;
+	fps = expo_calc_fps(&test);
+	ut_asserteq(0, fps);
+
+	/* Two data points: 100 frames in 1000ms = 100 FPS */
+	test.fps_index = 1;
+	test.fps_timestamps_ms[0] = 0;
+	test.fps_frame_counts[0] = 0;
+	test.fps_timestamps_ms[1] = 1000;
+	test.fps_frame_counts[1] = 100;
+	fps = expo_calc_fps(&test);
+	ut_asserteq(100, fps);
+
+	/* Three data points spanning 2 seconds: 240 frames in 2000ms = 120 FPS */
+	test.fps_index = 2;
+	test.fps_timestamps_ms[0] = 0;
+	test.fps_frame_counts[0] = 0;
+	test.fps_timestamps_ms[1] = 1000;
+	test.fps_frame_counts[1] = 100;
+	test.fps_timestamps_ms[2] = 2000;
+	test.fps_frame_counts[2] = 240;
+	fps = expo_calc_fps(&test);
+	ut_asserteq(120, fps);
+
+	/* Test wraparound: index at 1, with data at indices 2,3,4,0,1 */
+	test.fps_index = 1;
+	test.fps_timestamps_ms[2] = 0;
+	test.fps_frame_counts[2] = 0;
+	test.fps_timestamps_ms[3] = 1000;
+	test.fps_frame_counts[3] = 60;
+	test.fps_timestamps_ms[4] = 2000;
+	test.fps_frame_counts[4] = 120;
+	test.fps_timestamps_ms[0] = 3000;
+	test.fps_frame_counts[0] = 180;
+	test.fps_timestamps_ms[1] = 4000;
+	test.fps_frame_counts[1] = 240;
+	fps = expo_calc_fps(&test);
+	ut_asserteq(60, fps);  /* 240 frames in 4000ms = 60 FPS */
+
+	return 0;
+}
+BOOTSTD_TEST(expo_test_calc_fps, 0);

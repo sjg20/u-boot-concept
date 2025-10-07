@@ -47,10 +47,32 @@
  * @size and @align information and this time video_post_bind() checks that
  * the drivers does not overflow the allocated memory.
  *
- * The frame buffer address is actually set (to plat->base) in
- * video_post_probe(). This function also clears the frame buffer and
- * allocates a suitable text console device. This can then be used to write
- * text to the video device.
+ * The driver's probe() function is called, which should set up the hardware
+ * and fill in any required fields in struct video_uc_plat and
+ * struct video_priv.
+ *
+ * After the driver's probe() completes, video_post_probe() is called. This
+ * converts the framebuffer addresses (plat->base and plat->copy_base) to
+ * pointers (priv->fb and priv->copy_fb), clears the frame buffer, and
+ * allocates a suitable text-console device. The console can then be used to
+ * write text to the video device.
+ *
+ * Copy framebuffer (CONFIG_VIDEO_COPY):
+ *
+ * To avoid flicker, some drivers need to draw to an off-screen buffer and
+ * then copy to the visible framebuffer. Drivers can enable this in two ways:
+ *
+ * 1) If the framebuffer is in fixed memory (common on x86 hardware), in
+ * bind() leave plat->size as 0 but set up plat->copy_size. This will allocate a
+ * copy buffer. The driver must then set copy_base to the fixed-memory address
+ * and base to the allocated copy_base. See for example vesa_setup_video_priv().
+ *
+ * 2) Otherwise, since plat->size to the required value. The off-screen
+ * framebuffer will be allocated. The driver must then set up copy_base in the
+ * probe() method.
+ *
+ * In both cases, U-Boot draws to priv->fb and video_sync() copies the
+ * damaged regions from priv->fb to priv->copy_fb to make them visible.
  */
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -519,11 +541,6 @@ int video_manual_sync(struct udevice *vid, uint flags)
 
 	video_flush_dcache(vid, false);
 
-	if (IS_ENABLED(CONFIG_VIDEO_COPY) && (flags & VIDSYNC_COPY))
-		video_flush_dcache(vid, true);
-
-	priv->last_sync = get_timer(0);
-
 	if (IS_ENABLED(CONFIG_VIDEO_DAMAGE)) {
 		struct vid_bbox *damage = &priv->damage;
 
@@ -542,6 +559,7 @@ int video_sync(struct udevice *vid, bool force)
 	struct video_priv *priv = dev_get_uclass_priv(vid);
 	struct video_uc_priv *uc_priv = uclass_get_priv(vid->uclass);
 	uint flags = 0;
+	int ret;
 
 	/* Skip sync if manual-sync mode is active */
 	if (uc_priv->manual_sync)
@@ -558,7 +576,13 @@ int video_sync(struct udevice *vid, bool force)
 	if (IS_ENABLED(CONFIG_VIDEO_COPY))
 		flags |= VIDSYNC_COPY;
 
-	return video_manual_sync(vid, flags);
+	ret = video_manual_sync(vid, flags);
+	if (ret)
+		return ret;
+
+	priv->last_sync = get_timer(0);
+
+	return 0;
 }
 
 void video_sync_all(void)

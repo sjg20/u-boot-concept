@@ -378,4 +378,12 @@ void sandbox_mouse_set_test_mode(struct udevice *dev, bool test_mode);
  */
 void sandbox_mouse_inject(struct udevice *dev, struct mouse_event *event);
 
+/**
+ * sandbox_mouse_get_ptr_visible() - Get pointer visibility state
+ *
+ * @dev: Mouse device
+ * Return: true if pointer is visible, false if hidden
+ */
+bool sandbox_mouse_get_ptr_visible(struct udevice *dev);
+
 #endif

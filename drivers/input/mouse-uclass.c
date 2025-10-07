@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <errno.h>
 #include <mouse.h>
+#include <video.h>
 
 int mouse_get_event(struct udevice *dev, struct mouse_event *evt)
 {
@@ -79,6 +80,32 @@ int mouse_get_pos(struct udevice *dev, struct vid_pos *pos)
 	struct mouse_uc_priv *uc_priv = dev_get_uclass_priv(dev);
 
 	*pos = uc_priv->last_pos;
+
+	return 0;
+}
+
+int mouse_set_ptr_visible(struct udevice *dev, bool visible)
+{
+	struct mouse_ops *ops = mouse_get_ops(dev);
+
+	if (!ops->set_ptr_visible)
+		return -ENOSYS;
+
+	return ops->set_ptr_visible(dev, visible);
+}
+
+int mouse_set_video(struct udevice *dev, struct udevice *video_dev)
+{
+	struct mouse_uc_priv *uc_priv = dev_get_uclass_priv(dev);
+
+	uc_priv->video_dev = video_dev;
+	if (video_dev) {
+		uc_priv->video_width = video_get_xsize(video_dev);
+		uc_priv->video_height = video_get_ysize(video_dev);
+	} else {
+		uc_priv->video_width = 0;
+		uc_priv->video_height = 0;
+	}
 
 	return 0;
 }

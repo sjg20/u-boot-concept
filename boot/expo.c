@@ -10,6 +10,7 @@
 
 #include <dm.h>
 #include <expo.h>
+#include <expo_test.h>
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
@@ -23,6 +24,7 @@
 int expo_new(const char *name, void *priv, struct expo **expp)
 {
 	struct expo *exp;
+	int ret;
 
 	exp = calloc(1, sizeof(struct expo));
 	if (!exp)
@@ -31,6 +33,12 @@ int expo_new(const char *name, void *priv, struct expo **expp)
 	if (!exp->name) {
 		free(exp);
 		return log_msg_ret("name", -ENOMEM);
+	}
+	ret = expo_test_init(exp);
+	if (ret) {
+		free(exp->name);
+		free(exp);
+		return log_msg_ret("tst", ret);
 	}
 	exp->priv = priv;
 	INIT_LIST_HEAD(&exp->scene_head);
@@ -53,6 +61,7 @@ void expo_destroy(struct expo *exp)
 	struct scene *scn, *next;
 	struct expo_string *estr, *enext;
 
+	expo_test_uninit(exp);
 	list_for_each_entry_safe(scn, next, &exp->scene_head, sibling)
 		scene_destroy(scn);
 
@@ -177,6 +186,11 @@ int expo_set_mouse_enable(struct expo *exp, bool enable)
 	ret = uclass_first_device_err(UCLASS_MOUSE, &exp->mouse);
 	if (ret)
 		return log_msg_ret("sme", ret);
+
+	/* Tell the mouse driver about the video device for coordinate scaling */
+	ret = mouse_set_video(exp->mouse, exp->display);
+	if (ret)
+		return log_msg_ret("msv", ret);
 
 	/* Get mouse pointer image and dimensions */
 	exp->mouse_ptr = video_image_getptr(riscos_arrow);
@@ -309,6 +323,9 @@ static int expo_render_(struct expo *exp, bool dirty_only)
 	u32 colour;
 	int ret;
 
+	expo_test_mark(exp);
+	expo_test_update(exp);
+
 	back = vid_priv->white_on_black ? VID_BLACK : VID_WHITE;
 	colour = video_index_to_colour(vid_priv, back);
 	ret = video_fill(dev, colour);
@@ -330,7 +347,13 @@ static int expo_render_(struct expo *exp, bool dirty_only)
 	if (ret)
 		return log_msg_ret("mou", ret);
 
-	video_sync(dev, true);
+	/* Render test-mode info if enabled */
+	ret = expo_test_render(exp);
+	if (ret)
+		return log_msg_ret("tst", ret);
+
+	video_manual_sync(dev, VIDSYNC_COPY | VIDSYNC_FLUSH);
+	expo_test_sync(exp);
 
 	return scn ? 0 : -ECHILD;
 }
@@ -507,6 +530,8 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 {
 	int key, ret = -EAGAIN;
 
+	expo_test_mark(exp);
+
 	/* update mouse position if mouse is enabled */
 	update_mouse_position(exp);
 
@@ -520,11 +545,16 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 		if (!ret)
 			ret = expo_send_click(exp, pos.x, pos.y);
 	}
-	if (ret)
+	if (ret) {
+		expo_test_poll(exp);
 		return log_msg_ret("epk", ret);
+	}
 
 	/* get the action (either a key or a click) */
 	ret = expo_action_get(exp, act);
+
+	expo_test_poll(exp);
+
 	if (ret)
 		return log_msg_ret("eag", ret);
 
@@ -539,12 +569,18 @@ void expo_req_size(struct expo *exp, int width, int height)
 
 void expo_enter_mode(struct expo *exp)
 {
-	video_manual_sync(exp->display, true);
+	video_set_manual_sync(true);
+	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled)
+		mouse_set_ptr_visible(exp->mouse, false);
+
+	expo_test_checkenv(exp);
 }
 
 void expo_exit_mode(struct expo *exp)
 {
-	video_manual_sync(exp->display, false);
+	video_set_manual_sync(false);
+	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled)
+		mouse_set_ptr_visible(exp->mouse, true);
 }
 
 void expo_damage_reset(struct expo *exp)

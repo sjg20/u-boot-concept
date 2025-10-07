@@ -214,3 +214,25 @@ static int dm_test_mouse_right_button(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_mouse_right_button, UTF_SCAN_PDATA | UTF_SCAN_FDT);
+
+static int dm_test_mouse_ptr_visible(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(uclass_first_device_err(UCLASS_MOUSE, &dev));
+
+	/* test hiding the pointer */
+	ut_assertok(mouse_set_ptr_visible(dev, false));
+	ut_asserteq(false, sandbox_mouse_get_ptr_visible(dev));
+
+	/* test showing the pointer */
+	ut_assertok(mouse_set_ptr_visible(dev, true));
+	ut_asserteq(true, sandbox_mouse_get_ptr_visible(dev));
+
+	/* test hiding again */
+	ut_assertok(mouse_set_ptr_visible(dev, false));
+	ut_asserteq(false, sandbox_mouse_get_ptr_visible(dev));
+
+	return 0;
+}
+DM_TEST(dm_test_mouse_ptr_visible, UTF_SCAN_PDATA | UTF_SCAN_FDT);
