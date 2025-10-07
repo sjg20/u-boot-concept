@@ -27,9 +27,6 @@ enum mouse_state_t {
 	BUTTON_SCROLL_MINUS	= 1 << 4,
 };
 
-#define BUTTON_RELEASED		0
-#define BUTTON_PRESSED		1
-
 /**
  * struct mouse_uc_priv - pre-device private data for mouse uclass
  *
@@ -74,14 +71,14 @@ struct mouse_event {
 
 		/**
 		 * @button: Button number that was pressed/released (BUTTON_...)
-		 * @state: BUTTON_PRESSED / BUTTON_RELEASED
+		 * @pressed: True if button was pressed, false if released
 		 * @clicks: number of clicks (normally 1; 2 = double-click)
 		 * @x: X position of mouse
 		 * @y: Y position of mouse
 		 */
 		struct mouse_button {
 			unsigned char button;
-			unsigned char press_state;
+			bool pressed;
 			unsigned char clicks;
 			unsigned short x;
 			unsigned short y;

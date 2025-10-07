@@ -78,7 +78,7 @@ static int efi_mouse_get_event(struct udevice *dev, struct mouse_event *event)
 			u8 mask = 1 << i;
 			if (diff & mask) {
 				but->button = i;
-				but->press_state = (new_buttons & mask) ? 1 : 0;
+				but->pressed = (new_buttons & mask) ? true : false;
 				but->clicks = 1;
 				but->x = priv->x;
 				but->y = priv->y;
