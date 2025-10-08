@@ -261,3 +261,43 @@ static int lib_test_membuf_init(struct unit_test_state *uts)
 	return 0;
 }
 LIB_TEST(lib_test_membuf_init, 0);
+
+/* test membuf_printf() */
+static int lib_test_membuf_printf(struct unit_test_state *uts)
+{
+	struct membuf mb;
+	int ret, exp_len;
+	char buf[100];
+	char out[100];
+
+	/* Initialize membuf with a buffer */
+	membuf_init(&mb, buf, sizeof(buf));
+
+	/* Test simple string */
+	ret = membuf_printf(&mb, "Hello");
+	ut_asserteq(5, ret);
+	ut_asserteq(5, membuf_get(&mb, out, sizeof(out)));
+	out[5] = '\0';
+	ut_asserteq_str("Hello", out);
+
+	/* Test formatted string with integers */
+	exp_len = 9;
+	membuf_purge(&mb);
+	ret = membuf_printf(&mb, "Value: %d", 42);
+	ut_asserteq(exp_len, ret);
+	ut_asserteq(exp_len, membuf_get(&mb, out, sizeof(out)));
+	out[exp_len] = '\0';
+	ut_asserteq_str("Value: 42", out);
+
+	/* Test formatted string with multiple arguments */
+	membuf_purge(&mb);
+	exp_len = 10;
+	ret = membuf_printf(&mb, "x=%d y=%d", 10, 200);
+	ut_asserteq(exp_len, ret);
+	ut_asserteq(exp_len, membuf_get(&mb, out, sizeof(out)));
+	out[exp_len] = '\0';
+	ut_asserteq_str("x=10 y=200", out);
+
+	return 0;
+}
+LIB_TEST(lib_test_membuf_printf, 0);
