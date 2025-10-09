@@ -24,6 +24,7 @@
  * @ITEM_KEY: Keypress to select this item, e.g. "1"
  * @ITEM_PREVIEW: Preview image for the OS
  * @ITEM_VERSION_NAME: Distro's name for the version, e.g. 'Noble Numbat'
+ * @ITEM_BOX: Box around the item (normally hidden)
  */
 enum boomenu_id_t {
 	START,
@@ -66,6 +67,7 @@ enum boomenu_id_t {
 	ITEM_KEY = 900,
 	ITEM_PREVIEW = 1000,
 	ITEM_VERSION_NAME = 1100,
+	ITEM_BOX = 1200,
 
 	/* left margin for the main menu */
 	MARGIN_LEFT	 = 100,
