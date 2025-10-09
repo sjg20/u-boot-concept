@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <expo.h>
 #include <expo_test.h>
+#include <membuf.h>
 #include <menu.h>
 #include <video.h>
 #include <linux/input.h>
@@ -1258,3 +1259,48 @@ static int expo_scene_obj_type_name(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(expo_scene_obj_type_name, 0);
+
+/* Test expo_dump() */
+static int expo_dump_test(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct scene *scn;
+	struct expo *exp;
+	struct membuf mb;
+	char mb_buf[4096];
+	char *data;
+	int len;
+
+	membuf_init(&mb, mb_buf, sizeof(mb_buf));
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+
+	/* Arrange the scene so objects have proper dimensions */
+	ut_assertok(scene_arrange(scn));
+
+	/* Dump the expo */
+	expo_dump(exp, &mb);
+
+	/* Get the dumped data */
+	len = membuf_getraw(&mb, sizeof(mb_buf), false, &data);
+	ut_assert(len > 0);
+	ut_assertnonnull(data);
+
+	/* Nul-terminate for strstr to work */
+	if (len < sizeof(mb_buf))
+		data[len] = '\0';
+
+	/* Check for a few elements in the output */
+	ut_assert(strstr(data, "Expo: name"));
+	ut_assert(strstr(data, "my menus"));
+	ut_assert(strstr(data, "Scene"));
+	ut_assert(strstr(data, "main"));
+
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_dump_test, UTF_DM | UTF_SCAN_FDT);

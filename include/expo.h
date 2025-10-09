@@ -14,6 +14,7 @@
 #include <linux/bitops.h>
 #include <linux/list.h>
 
+struct membuf;
 struct udevice;
 
 #include <cli.h>
@@ -1239,5 +1240,22 @@ void expo_damage_reset(struct expo *exp);
  * If there is no existing damage, the damage area is set to the new region.
  */
 void expo_damage_add(struct expo *exp, const struct vid_bbox *bbox);
+
+/**
+ * expo_dump() - Dump expo structure to a membuf
+ *
+ * @mb: membuf to write to
+ * @exp: Expo to dump
+ */
+void expo_dump(struct expo *exp, struct membuf *mb);
+
+/**
+ * scene_dump() - Dump scene structure to a membuf
+ *
+ * @mb: membuf to write to
+ * @scn: Scene to dump
+ * @indent: Indentation level
+ */
+void scene_dump(struct membuf *mb, struct scene *scn, int indent);
 
 #endif /*__EXPO_H */
