@@ -485,6 +485,15 @@ config CMD_CEDIT
 	  providing a UI for the user to adjust settings. Subcommands allow
 	  loading and saving of configuration as well as showing an editor.
 
+config CMD_CEDIT_DUMP
+	bool "Allow dumping the contents of a cedit expo"
+	depends on CMD_CEDIT && EXPO_DUMP
+	default y
+	help
+	  Provides a 'cedit dump' command to dump the expo in a human-readable
+	  format. This can be useful for debugging or for checking that the
+	  expo contains the expected objects.
+
 config CMD_ELF
 	bool "bootelf"
 	default y

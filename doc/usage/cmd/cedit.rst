@@ -19,6 +19,7 @@ Synopsis
     cedit read_env [-v]
     cedit write_cmos [-v] [dev]
     cedit cb_load
+    cedit dump
 
 Description
 -----------
@@ -100,6 +101,20 @@ cedit cb_load
 
 This is supported only on x86 devices booted from coreboot. It creates a new
 configuration editor which can be used to edit CMOS settings.
+
+cedit dump
+~~~~~~~~~~
+
+Dumps the current expo structure to the console. This shows the expo, its
+scenes, objects, and their properties in a human-readable format. This is useful
+for debugging and understanding the structure of the configuration editor.
+
+Configuration
+-------------
+
+The cedit command is only available if CONFIG_CMD_CEDIT=y.
+
+The 'cedit dump' subcommand is only available if CONFIG_CMD_CEDIT_DUMP=y.
 
 Example
 -------
@@ -234,3 +249,129 @@ Update the checksum in CMOS RAM::
     Checksum 7100 written
     => cbcmos check
     =>
+
+This shows dumping the cedit::
+
+    Expo: name 'name'
+    display (null)
+    cons (none)
+    mouse (none)
+    scene_id 0
+    next_id 42
+    req_width 0
+    req_height 0
+    text_mode 0
+    popup 0
+    show_highlight 0
+    mouse_enabled 0
+    mouse_ptr 0000000000000000
+    mouse_size 0x0
+    mouse_pos (0,0)
+    damage (0,0)-(0,0)
+    done 0
+    save 0
+    last_key_ms 271450936
+    Theme:
+        font_size 0
+        white_on_black 0
+        menu_inset 0
+        menuitem_gap_y 0
+
+    Scenes:
+    Scene 6: name 'main'
+        title_id 19 (title)
+        highlight_id 0 ((none))
+        Object 19 (title): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 20 font_name '(default)' font_size 0
+            str 'Test Configuration'
+        Object 21 (prompt): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 22 font_name '(default)' font_size 0
+            str 'UP and DOWN to choose, ENTER to select'
+        Object 8 (cpu-speed): type menu
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Menu: pointer_id 0 title_id 23 manual 0
+            Item 10: name '00' label_id 25 desc_id 0
+            Item 11: name '01' label_id 27 desc_id 0
+            Item 12: name '02' label_id 29 desc_id 0
+        Object 23 (title): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 24 font_name '(default)' font_size 0
+            str 'CPU speed'
+        Object 25 (item-label): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 26 font_name '(default)' font_size 0
+            str '2 GHz'
+        Object 27 (item-label): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 28 font_name '(default)' font_size 0
+            str '2.5 GHz'
+        Object 29 (item-label): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 30 font_name '(default)' font_size 0
+            str '3 GHz'
+        Object 13 (power-loss): type menu
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Menu: pointer_id 0 title_id 31 manual 0
+            Item 14: name '00' label_id 33 desc_id 0
+            Item 15: name '01' label_id 35 desc_id 0
+            Item 16: name '02' label_id 37 desc_id 0
+        Object 31 (title): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 32 font_name '(default)' font_size 0
+            str 'AC Power'
+        Object 33 (item-label): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 34 font_name '(default)' font_size 0
+            str 'Always Off'
+        Object 35 (item-label): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 36 font_name '(default)' font_size 0
+            str 'Always On'
+        Object 37 (item-label): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 38 font_name '(default)' font_size 0
+            str 'Memory'
+        Object 17 (machine-name): type textline
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Textline: label_id 39 edit_id 18
+            max_chars 20 pos 20
+        Object 39 (title): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 40 font_name '(default)' font_size 0
+            str 'Machine name'
+        Object 18 (edit): type text
+        flags
+        bbox: (0,0)-(0,0)
+        dims: 0x0
+        Text: str_id 41 font_name '(default)' font_size 0
+            str ''
