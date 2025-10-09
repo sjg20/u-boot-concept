@@ -486,17 +486,17 @@ int expo_iter_scene_objs(struct expo *exp, expo_scene_obj_iterator iter,
 
 static int poll_keys(struct expo *exp)
 {
-	int ichar, key;
+	int ch = 0, ichar, key;
 
 	ichar = cli_ch_process(&exp->cch, 0);
 	if (!ichar) {
 		/* Check once for available input */
 		if (tstc()) {
-			ichar = getchar();
-			ichar = cli_ch_process(&exp->cch, ichar);
+			ch = getchar();
+			ichar = cli_ch_process(&exp->cch, ch);
 		}
 
-		if (!ichar && get_timer(exp->last_key_ms) >= 10)
+		if (!ch && get_timer(exp->last_key_ms) >= 10)
 			ichar = cli_ch_process(&exp->cch, -ETIMEDOUT);
 	}
 
