@@ -1289,19 +1289,19 @@ static int expo_find_obj_within(struct unit_test_state *uts)
 	 * Check finding a menu by 'clicking' on a menu item label - menu items
 	 * are at (50,436) for ITEM1 and (50,454) for ITEM2
 	 */
-	obj = scene_find_obj_within(scn, 60, 440);
+	obj = scene_find_obj_within(scn, 60, 440, false);
 	ut_assertnonnull(obj);
 	ut_asserteq(OBJ_MENU, obj->id);
 
 	/* logo and text are not highlightable, so they should not be found */
-	ut_assertnull(scene_find_obj_within(scn, 60, 30));
-	ut_assertnull(scene_find_obj_within(scn, 410, 110));
+	ut_assertnull(scene_find_obj_within(scn, 60, 30, false));
+	ut_assertnull(scene_find_obj_within(scn, 410, 110, false));
 
 	/* empty space */
-	ut_assertnull(scene_find_obj_within(scn, 10, 10));
+	ut_assertnull(scene_find_obj_within(scn, 10, 10, false));
 
 	/* way outside bounds */
-	ut_assertnull(scene_find_obj_within(scn, 9999, 9999));
+	ut_assertnull(scene_find_obj_within(scn, 9999, 9999, false));
 
 	abuf_uninit(&buf);
 	abuf_uninit(&logo_copy);

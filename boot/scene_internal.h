@@ -562,8 +562,11 @@ const char *scene_obj_type_name(enum scene_obj_t type);
  * @scn: Scene to check
  * @x: X coordinates of the click
  * @y: Y coordinate of the click
+ * @reverse: true to search from top to bottom (reverse order), false for
+ *	bottom to top
  * Return: object that is being clicked on, NULL if none
  */
-struct scene_obj *scene_find_obj_within(const struct scene *scn, int x, int y);
+struct scene_obj *scene_find_obj_within(const struct scene *scn, int x, int y,
+					bool reverse);
 
 #endif /* __SCENE_INTERNAL_H */
