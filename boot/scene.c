@@ -1129,6 +1129,22 @@ int scene_send_key(struct scene *scn, int key, struct expo_action *event)
 	return 0;
 }
 
+/**
+ * is_within() - check if a point is considered within an object ID
+ *
+ * @scn: Scene to check
+ * @obj: object to check
+ * @x: X coordinate of the point
+ * @y: Y coordinate of the point
+ * Return: true if the point is considered within the object, false if not
+ */
+static bool is_within(const struct scene_obj *obj, int x, int y)
+{
+	/* Check if point (x, y) is within object's bounding box */
+	return (x >= obj->bbox.x0 && x <= obj->bbox.x1 &&
+		y >= obj->bbox.y0 && y <= obj->bbox.y1);
+}
+
 bool scene_within(const struct scene *scn, uint id, int x, int y)
 {
 	struct scene_obj *obj;
@@ -1141,9 +1157,7 @@ bool scene_within(const struct scene *scn, uint id, int x, int y)
 	log_debug("- id %d: '%s' bbox x0 %d y0 %d x1 %d y1 %d\n", id, obj->name,
 		  obj->bbox.x0, obj->bbox.y0, obj->bbox.x1, obj->bbox.x1);
 
-	/* Check if point (x, y) is within object's bounding box */
-	return (x >= obj->bbox.x0 && x <= obj->bbox.x1 &&
-		y >= obj->bbox.y0 && y <= obj->bbox.y1);
+	return is_within(obj, x, y);
 }
 
 bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
