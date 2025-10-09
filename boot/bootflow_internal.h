@@ -12,6 +12,8 @@
 /**
  * enum boomenu_id_t - expo IDs for elements of the bootflow menu
  *
+ * @OBJ_OTHER_LOGO: Second logo (separate from the U-Boot logo)
+ *
  * The ranges below are as follows:
  *
  * @ITEM: Menu items
@@ -44,6 +46,7 @@ enum boomenu_id_t {
 	OBJ_MENU_TITLE,
 	OBJ_POINTER,
 	OBJ_AUTOBOOT,
+	OBJ_OTHER_LOGO,
 
 	/* strings for menu items */
 	STR_LABEL = 100,
