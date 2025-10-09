@@ -23,6 +23,7 @@
  * @ITEM_DESC: Longer description or pretty name, e.g. "Ubuntu 2024.04 LTS"
  * @ITEM_KEY: Keypress to select this item, e.g. "1"
  * @ITEM_PREVIEW: Preview image for the OS
+ * @ITEM_VERSION_NAME: Distro's name for the version, e.g. 'Noble Numbat'
  */
 enum boomenu_id_t {
 	START,
@@ -56,13 +57,15 @@ enum boomenu_id_t {
 	STR_LABEL = 100,
 	STR_DESC = 200,
 	STR_KEY = 300,
+	STR_VERSION_NAME = 400,
 
 	/* menu items / components (bootflow number is added to these) */
-	ITEM = 400,
-	ITEM_LABEL = 500,
-	ITEM_DESC = 600,
-	ITEM_KEY = 700,
-	ITEM_PREVIEW = 800,
+	ITEM = 600,
+	ITEM_LABEL = 700,
+	ITEM_DESC = 800,
+	ITEM_KEY = 900,
+	ITEM_PREVIEW = 1000,
+	ITEM_VERSION_NAME = 1100,
 
 	/* left margin for the main menu */
 	MARGIN_LEFT	 = 100,
