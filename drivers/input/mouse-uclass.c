@@ -57,15 +57,14 @@ int mouse_get_click(struct udevice *dev, struct vid_pos *pos)
 
 	/* Process all available events until we find a click */
 	while (true) {
-		if (mouse_get_event(dev, &event))
-			return -EAGAIN;  /* No more events */
-
-		/* Check if this event resulted in a click */
 		if (uc_priv->click_pending) {
 			*pos = uc_priv->click_pos;
 			uc_priv->click_pending = false;
 			break;
 		}
+
+		if (mouse_get_event(dev, &event))
+			return -EAGAIN;  /* No more events */
 	}
 
 	return 0;
