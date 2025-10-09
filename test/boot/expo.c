@@ -1220,3 +1220,41 @@ static int expo_test_calc_fps(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(expo_test_calc_fps, 0);
+
+/* Test scene_flag_name() */
+static int expo_scene_flag_name(struct unit_test_state *uts)
+{
+	/* Test valid flags */
+	ut_asserteq_str("hide", scene_flag_name(SCENEOF_HIDE));
+	ut_asserteq_str("point", scene_flag_name(SCENEOF_POINT));
+	ut_asserteq_str("open", scene_flag_name(SCENEOF_OPEN));
+	ut_asserteq_str("manual", scene_flag_name(SCENEOF_MANUAL));
+
+	/* Test invalid flag (0) */
+	ut_asserteq_str("(none)", scene_flag_name(0));
+
+	/* Test invalid flag (out of range) */
+	ut_asserteq_str("(none)", scene_flag_name(BIT(20)));
+
+	return 0;
+}
+BOOTSTD_TEST(expo_scene_flag_name, 0);
+
+/* Test scene_obj_type_name() */
+static int expo_scene_obj_type_name(struct unit_test_state *uts)
+{
+	/* Test all valid object types */
+	ut_asserteq_str("none", scene_obj_type_name(SCENEOBJT_NONE));
+	ut_asserteq_str("image", scene_obj_type_name(SCENEOBJT_IMAGE));
+	ut_asserteq_str("text", scene_obj_type_name(SCENEOBJT_TEXT));
+	ut_asserteq_str("box", scene_obj_type_name(SCENEOBJT_BOX));
+	ut_asserteq_str("menu", scene_obj_type_name(SCENEOBJT_MENU));
+	ut_asserteq_str("textline", scene_obj_type_name(SCENEOBJT_TEXTLINE));
+	ut_asserteq_str("textedit", scene_obj_type_name(SCENEOBJT_TEXTEDIT));
+
+	/* Test invalid type (out of range) */
+	ut_asserteq_str("unknown", scene_obj_type_name(SCENEOBJT_TEXTLINE + 1));
+
+	return 0;
+}
+BOOTSTD_TEST(expo_scene_obj_type_name, 0);

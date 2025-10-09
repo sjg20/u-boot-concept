@@ -19,6 +19,29 @@
 #include <linux/input.h>
 #include "scene_internal.h"
 
+static const char *const scene_flag_names[] = {
+	"hide",
+	"point",
+	"open",
+	"size_valid",
+	"sync_pos",
+	"sync_size",
+	"sync_width",
+	"sync_bbox",
+	"manual",
+	"dirty",
+};
+
+static const char *const scene_obj_type_names[] = {
+	"none",
+	"image",
+	"text",
+	"box",
+	"textedit",
+	"menu",
+	"textline",
+};
+
 int scene_new(struct expo *exp, const char *name, uint id, struct scene **scnp)
 {
 	struct scene *scn;
@@ -1633,4 +1656,23 @@ int scene_dims_union(struct scene *scn, uint id, struct scene_obj_dims *dims)
 	scene_dims_join(&obj->dims, dims);
 
 	return 0;
+}
+
+const char *scene_flag_name(uint flag)
+{
+	int bit;
+
+	bit = ffs(flag) - 1;
+	if (bit < 0 || bit >= ARRAY_SIZE(scene_flag_names))
+		return "(none)";
+
+	return scene_flag_names[bit];
+}
+
+const char *scene_obj_type_name(enum scene_obj_t type)
+{
+	if (type >= ARRAY_SIZE(scene_obj_type_names))
+		return "unknown";
+
+	return scene_obj_type_names[type];
 }
