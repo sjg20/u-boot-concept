@@ -14,6 +14,7 @@
  *
  * @OBJ_OTHER_LOGO: Second logo (separate from the U-Boot logo)
  * @OBJ_SETTINGS: Select settings / change layout
+ * @OBJ_HELP: Select help
  *
  * The ranges below are as follows:
  *
@@ -49,6 +50,7 @@ enum boomenu_id_t {
 	OBJ_AUTOBOOT,
 	OBJ_OTHER_LOGO,
 	OBJ_SETTINGS,
+	OBJ_HELP,
 
 	/* strings for menu items */
 	STR_LABEL = 100,
