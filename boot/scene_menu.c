@@ -485,6 +485,9 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 			log_debug("menu quit\n");
 		}
 		break;
+	case ' ':
+		event->type = EXPOACT_SETTINGS;
+		break;
 	case '0'...'9':
 		key_item = scene_menu_find_key(scn, menu, key);
 		if (key_item) {

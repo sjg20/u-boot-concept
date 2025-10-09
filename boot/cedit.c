@@ -221,6 +221,7 @@ int cedit_do_action(struct expo *exp, struct scene *scn,
 		exp->done = true;
 		break;
 	case EXPOACT_CLICK:
+	case EXPOACT_SETTINGS:
 		/* not supported by cedit */
 		break;
 	}

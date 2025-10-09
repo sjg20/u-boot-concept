@@ -57,6 +57,7 @@ enum expo_id_t {
  * the menu closed, @id indicates menu opened)
  * @EXPOACT_QUIT: request to exit the menu
  * @EXPOACT_CLICK: click on an object
+ * @EXPOACT_SETTINGS: select menu settings
  */
 enum expoact_type {
 	EXPOACT_NONE,
@@ -70,6 +71,7 @@ enum expoact_type {
 	EXPOACT_REPOINT_OPEN,
 	EXPOACT_QUIT,
 	EXPOACT_CLICK,
+	EXPOACT_SETTINGS,
 };
 
 /**
