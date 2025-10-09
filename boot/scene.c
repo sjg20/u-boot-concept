@@ -1167,9 +1167,11 @@ bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
 
 	switch (obj->type) {
 	case SCENEOBJT_NONE:
+		break;
 	case SCENEOBJT_IMAGE:
 	case SCENEOBJT_TEXT:
 	case SCENEOBJT_BOX:
+		within = is_within(obj, x, y);
 		break;
 	case SCENEOBJT_MENU: {
 		struct scene_obj_menu *menu;
@@ -1344,15 +1346,21 @@ int scene_send_click(struct scene *scn, int x, int y, struct expo_action *event)
 	obj = scene_find_obj_within(scn, x, y, false, false);
 	log_debug("non-popup obj %d '%s'\n", obj ? obj->id : -1,
 		  obj ? obj->name : "(none)");
-	if (!obj)
-		return 0;
+	if (!obj) {
+		obj = scene_find_obj_within(scn, x, y, true, true);
+		log_debug("non-popup any obj %d '%s'\n", obj ? obj->id : -1,
+			  obj ? obj->name : "(none)");
+		if (!obj)
+			return 0;
+	}
 
 	switch (obj->type) {
 	case SCENEOBJT_NONE:
 	case SCENEOBJT_IMAGE:
 	case SCENEOBJT_TEXT:
 	case SCENEOBJT_BOX:
-		/* These objects don't handle clicks directly */
+		event->type = EXPOACT_CLICK;
+		event->select.id = obj->id;
 		break;
 	case SCENEOBJT_MENU: {
 		struct scene_obj_menu *menu;

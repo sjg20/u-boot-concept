@@ -313,6 +313,7 @@ int bootflow_menu_poll(struct expo *exp, int *seqp)
 	}
 	case EXPOACT_QUIT:
 		return -EPIPE;
+	case EXPOACT_CLICK:
 	default:
 		return -EAGAIN;
 	}
