@@ -1194,18 +1194,19 @@ bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
 }
 
 struct scene_obj *scene_find_obj_within(const struct scene *scn, int x, int y,
-					bool reverse)
+					bool reverse, bool allow_any)
 {
 	struct scene_obj *obj;
 
-	log_debug("within: x %d y %d reverse %d\n", x, y, reverse);
+	log_debug("within: x %d y %d reverse %d allow_any %d\n", x, y, reverse,
+		  allow_any);
 	if (reverse) {
 		list_for_each_entry_reverse(obj, &scn->obj_head, sibling) {
 			log_debug(" - obj %d '%s' can_highlight %d within %d\n",
 				  obj->id, obj->name,
 				  scene_obj_can_highlight(obj),
 				  scene_obj_within(scn, obj, x, y));
-			if (scene_obj_can_highlight(obj) &&
+			if ((allow_any || scene_obj_can_highlight(obj)) &&
 			    scene_obj_within(scn, obj, x, y)) {
 				log_debug("- returning obj %d '%s'\n", obj->id,
 					  obj->name);
@@ -1218,7 +1219,7 @@ struct scene_obj *scene_find_obj_within(const struct scene *scn, int x, int y,
 				  obj->id, obj->name,
 				  scene_obj_can_highlight(obj),
 				  scene_obj_within(scn, obj, x, y));
-			if (scene_obj_can_highlight(obj) &&
+			if ((allow_any || scene_obj_can_highlight(obj)) &&
 			    scene_obj_within(scn, obj, x, y)) {
 				log_debug("- returning obj %d '%s'\n", obj->id,
 					  obj->name);
@@ -1255,7 +1256,7 @@ static void send_click_obj(struct scene *scn, struct scene_obj *obj, int x,
 	}
 
 	log_debug("no object; finding...\n");
-	obj = scene_find_obj_within(scn, x, y, false);
+	obj = scene_find_obj_within(scn, x, y, false, false);
 	if (obj) {
 		event->type = EXPOACT_POINT_OPEN;
 		event->select.id = obj->id;
@@ -1281,7 +1282,7 @@ static int scene_click_popup(struct scene *scn, int x, int y,
 	}
 
 	/* check that the click is within our object */
-	chk = scene_find_obj_within(scn, x, y, false);
+	chk = scene_find_obj_within(scn, x, y, false, false);
 	log_debug("chk %d '%s' (obj %d '%s')\n", chk ? chk->id : -1,
 		  chk ? chk->name : "(none)", obj->id, obj->name);
 	if (!chk) {
@@ -1340,7 +1341,7 @@ int scene_send_click(struct scene *scn, int x, int y, struct expo_action *event)
 		return 0;
 	}
 
-	obj = scene_find_obj_within(scn, x, y, false);
+	obj = scene_find_obj_within(scn, x, y, false, false);
 	log_debug("non-popup obj %d '%s'\n", obj ? obj->id : -1,
 		  obj ? obj->name : "(none)");
 	if (!obj)

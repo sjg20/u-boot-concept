@@ -1289,19 +1289,56 @@ static int expo_find_obj_within(struct unit_test_state *uts)
 	 * Check finding a menu by 'clicking' on a menu item label - menu items
 	 * are at (50,436) for ITEM1 and (50,454) for ITEM2
 	 */
-	obj = scene_find_obj_within(scn, 60, 440, false);
+	obj = scene_find_obj_within(scn, 60, 440, false, false);
 	ut_assertnonnull(obj);
 	ut_asserteq(OBJ_MENU, obj->id);
 
-	/* logo and text are not highlightable, so they should not be found */
-	ut_assertnull(scene_find_obj_within(scn, 60, 30, false));
-	ut_assertnull(scene_find_obj_within(scn, 410, 110, false));
+	/*
+	 * Check with allow_any=false for non-highlightable objects - logo and
+	 * text are not highlightable, so they should not be found
+	 */
+	ut_assertnull(scene_find_obj_within(scn, 60, 30, false, false));
+	ut_assertnull(scene_find_obj_within(scn, 410, 110, false, false));
+
+	/* Test with allow_any=true for non-highlightable objects */
+	obj = scene_find_obj_within(scn, 60, 30, false, true);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_LOGO, obj->id);
+
+	/*
+	 * Check reversing search order with allow_any=true at the overlapping
+	 * position. OBJ_TEXT was created first at (400, 100), and the
+	 * "overlap" text object was created second at (405, 105). They
+	 * overlap at position (410, 110).
+	 *
+	 * With reverse=false, we search from start of list (bottom to top) and
+	 * find OBJ_TEXT first.
+	 */
+	obj = scene_find_obj_within(scn, 410, 110, false, true);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_TEXT, obj->id);
+
+	/*
+	 * With reverse=true, we search from end of list (top to bottom) and
+	 * find the OBJ_OVERLAP_TEST object first.
+	 */
+	obj = scene_find_obj_within(scn, 410, 110, true, true);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_OVERLAP, obj->id);
+
+	/*
+	 * Test reverse=true with a non-overlapping object - should get same
+	 * result as reverse=false
+	 */
+	obj = scene_find_obj_within(scn, 60, 30, true, true);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_LOGO, obj->id);
 
 	/* empty space */
-	ut_assertnull(scene_find_obj_within(scn, 10, 10, false));
+	ut_assertnull(scene_find_obj_within(scn, 10, 10, false, false));
 
 	/* way outside bounds */
-	ut_assertnull(scene_find_obj_within(scn, 9999, 9999, false));
+	ut_assertnull(scene_find_obj_within(scn, 9999, 9999, false, false));
 
 	abuf_uninit(&buf);
 	abuf_uninit(&logo_copy);
