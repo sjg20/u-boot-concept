@@ -151,6 +151,17 @@ int expo_set_display(struct expo *exp, struct udevice *dev)
 	exp->display = dev;
 	exp->cons = cons;
 
+	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled) {
+		/*
+		 * Tell the mouse driver about the video device for coordinate
+		 * scaling
+		 */
+		ret = mouse_set_video(exp->mouse, exp->display);
+		if (ret)
+			return log_msg_ret("msv", ret);
+		mouse_get_pos(exp->mouse, &exp->mouse_pos);
+	}
+
 	return 0;
 }
 
@@ -188,11 +199,6 @@ int expo_set_mouse_enable(struct expo *exp, bool enable)
 	ret = uclass_first_device_err(UCLASS_MOUSE, &exp->mouse);
 	if (ret)
 		return log_msg_ret("sme", ret);
-
-	/* Tell the mouse driver about the video device for coordinate scaling */
-	ret = mouse_set_video(exp->mouse, exp->display);
-	if (ret)
-		return log_msg_ret("msv", ret);
 
 	/* Get mouse pointer image and dimensions */
 	exp->mouse_ptr = video_image_getptr(riscos_arrow);
