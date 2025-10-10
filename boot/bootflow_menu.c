@@ -32,6 +32,22 @@ struct menu_priv {
 	struct udevice *last_bootdev;
 };
 
+static int bootflow_menu_set_item_props(struct scene *scn,
+					int i, const struct bootflow *bflow)
+{
+	int ret;
+
+	scene_obj_set_hide(scn, ITEM_PREVIEW + i, true);
+	ret = scene_obj_set_hide(scn, ITEM_BOX + i, true);
+	ret |= scene_obj_set_hide(scn, ITEM_VERSION_NAME + i, true);
+	scene_obj_set_hide(scn, ITEM_VERIFIED + i, true);
+	ret |= scene_obj_set_hide(scn, ITEM_KEY + i, false);
+	if (ret)
+		return log_msg_ret("msp", ret);
+
+	return 0;
+}
+
 int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
 			    const char *title)
 {
@@ -216,6 +232,10 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 			    bflow->name, NULL);
 	ret |= scene_txt_str(scn, "key", ITEM_KEY + seq, STR_KEY + seq, key,
 			      NULL);
+	ret |= scene_box(scn, "item-box", ITEM_BOX + seq, 1, false, NULL);
+	ret |= scene_txt_str(scn, "version", ITEM_VERSION_NAME + seq,
+			     STR_VERSION_NAME + seq, "", NULL);
+
 	preview_id = 0;
 	if (bflow->logo) {
 		preview_id = ITEM_PREVIEW + seq;
@@ -227,9 +247,13 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 				  ITEM_DESC + seq, preview_id,
 				  add_gap ? SCENEMIF_GAP_BEFORE : 0,
 				  NULL);
-
 	if (ret < 0)
 		return log_msg_ret("itm", -EINVAL);
+
+	ret = bootflow_menu_set_item_props(scn, seq, bflow);
+	if (ret)
+		return log_msg_ret("itp", -EINVAL);
+
 	priv->num_bootflows++;
 	*scnp = scn;
 
