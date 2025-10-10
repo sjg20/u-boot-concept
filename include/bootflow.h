@@ -560,6 +560,18 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
  */
 int bootflow_menu_apply_theme(struct expo *exp, ofnode node);
 
+/**
+ * bootflow_menu_set_props() - Apply properties for the menu
+ *
+ * This sets up the positions of the objects in the basic menu. It also
+ * enables show_highlight
+ *
+ * @exp: Expo to update
+ * @scn: Scene to update
+ * @has_logo: true if a logo should be visible
+ */
+int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo);
+
 #define BOOTFLOWCL_EMPTY	((void *)1)
 
 /**
