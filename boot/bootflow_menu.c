@@ -35,6 +35,8 @@ struct menu_priv {
 static int bootflow_menu_set_item_props(struct scene *scn,
 					int i, const struct bootflow *bflow)
 {
+	struct expo *exp = scn->expo;
+	struct abuf *buf;
 	int ret;
 
 	scene_obj_set_hide(scn, ITEM_PREVIEW + i, true);
@@ -44,6 +46,15 @@ static int bootflow_menu_set_item_props(struct scene *scn,
 	ret |= scene_obj_set_hide(scn, ITEM_KEY + i, false);
 	if (ret)
 		return log_msg_ret("msp", ret);
+
+	ret = expo_edit_str(exp, STR_DESC + i, NULL, &buf);
+	if (ret)
+		return log_msg_ret("msr", ret);
+	abuf_printf(buf, "%s", bflow->os_name ? bflow->os_name : bflow->name);
+
+	ret = expo_edit_str(exp, STR_LABEL + i, NULL, &buf);
+	if (!ret)
+		abuf_printf(buf, "%s", bootflow_guess_label(bflow));
 
 	return 0;
 }
@@ -190,9 +201,8 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 		      struct scene **scnp)
 {
 	struct menu_priv *priv = exp->priv;
-	char str[2], *label, *key;
+	char str[2], *key;
 	struct scene *scn;
-	const char *name;
 	uint preview_id;
 	uint scene_id;
 	bool add_gap;
@@ -210,14 +220,6 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 	if (!key)
 		return log_msg_ret("key", -ENOMEM);
 
-	name = bootflow_guess_label(bflow);
-	label = strdup(name);
-
-	if (!label) {
-		free(key);
-		return log_msg_ret("nam", -ENOMEM);
-	}
-
 	add_gap = priv->last_bootdev != bflow->dev;
 
 	/* disable this gap for now, since it looks a little ugly */
@@ -226,10 +228,9 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 
 	ret = expo_str(exp, "prompt", STR_POINTER, ">");
 	ret |= scene_txt_str(scn, "label", ITEM_LABEL + seq,
-			      STR_LABEL + seq, label, NULL);
+			      STR_LABEL + seq, "", NULL);
 	ret |= scene_txt_str(scn, "desc", ITEM_DESC + seq, STR_DESC + seq,
-			    bflow->os_name ? bflow->os_name :
-			    bflow->name, NULL);
+			     "", NULL);
 	ret |= scene_txt_str(scn, "key", ITEM_KEY + seq, STR_KEY + seq, key,
 			      NULL);
 	ret |= scene_box(scn, "item-box", ITEM_BOX + seq, 1, false, NULL);
