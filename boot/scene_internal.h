@@ -556,4 +556,14 @@ const char *scene_flag_name(uint flag);
  */
 const char *scene_obj_type_name(enum scene_obj_t type);
 
+/**
+ * scene_find_obj_within() - Find an object that is within the coords
+ *
+ * @scn: Scene to check
+ * @x: X coordinates of the click
+ * @y: Y coordinate of the click
+ * Return: object that is being clicked on, NULL if none
+ */
+struct scene_obj *scene_find_obj_within(const struct scene *scn, int x, int y);
+
 #endif /* __SCENE_INTERNAL_H */

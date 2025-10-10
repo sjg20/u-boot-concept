@@ -1193,16 +1193,7 @@ bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
 	return within;
 }
 
-/**
- * scene_find_obj_within() - Find an object that is within the coords
- *
- * @scn: Scene to check
- * @x: X coordinates of the click
- * @y: Y coordinate of the click
- * Return: object that is being clicked on, NULL if none
- */
-static struct scene_obj *scene_find_obj_within(const struct scene *scn, int x,
-					       int y)
+struct scene_obj *scene_find_obj_within(const struct scene *scn, int x, int y)
 {
 	struct scene_obj *obj;
 
