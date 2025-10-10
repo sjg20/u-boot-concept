@@ -1163,9 +1163,10 @@ int expo_setup_theme(struct expo *exp, ofnode node);
  * The theme to be applied must be set up exp->theme
  *
  * @exp: Expo to update
+ * @do_objs: Apply theme to objects as well (normally this should be true)
  * Returns: 0 if OK, -ve on error
  */
-int expo_apply_theme(struct expo *exp);
+int expo_apply_theme(struct expo *exp, bool do_objs);
 
 /**
  * expo_build() - Build an expo from an FDT description
