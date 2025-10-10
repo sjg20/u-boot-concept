@@ -40,6 +40,7 @@ int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
 	bool use_font;
 
 	ret |= scene_obj_set_bbox(scn, OBJ_BOX, 30, 90, 1366 - 30, 720);
+	scene_box_set_fill(scn, OBJ_BOX, false);
 	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
 	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 32,
 				  1366, 60);
@@ -92,6 +93,17 @@ int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
 		abuf_printf(buf, "Press enter to boot the selected OS, 'e' to "
 			    "edit the commands before booting or 'c' for a "
 			    "command-line. ESC to return to previous menu");
+
+	/* hide a few things we don't use */
+	scene_obj_set_hide(scn, OBJ_OTHER_LOGO, true);
+	scene_obj_set_hide(scn, OBJ_SETTINGS, true);
+	scene_obj_set_hide(scn, OBJ_HELP, true);
+
+	/* select the menu and hide the pointer */
+	scene_set_highlight_id(scn, OBJ_MENU);
+	scene_obj_set_hide(scn, OBJ_POINTER, false);
+
+	expo_set_mouse_enable(exp, false);
 
 	exp->show_highlight = true;
 
