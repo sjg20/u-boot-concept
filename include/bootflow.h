@@ -569,8 +569,10 @@ int bootflow_menu_apply_theme(struct expo *exp, ofnode node);
  * @exp: Expo to update
  * @scn: Scene to update
  * @has_logo: true if a logo should be visible
+ * @title: Title to use for the boot menu
  */
-int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo);
+int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
+			    const char *title);
 
 #define BOOTFLOWCL_EMPTY	((void *)1)
 

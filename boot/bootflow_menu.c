@@ -32,8 +32,10 @@ struct menu_priv {
 	struct udevice *last_bootdev;
 };
 
-int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo)
+int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
+			    const char *title)
 {
+	struct abuf *buf;
 	int ret = 0;
 	bool use_font;
 
@@ -68,6 +70,28 @@ int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo)
 	scene_obj_set_hide(scn, OBJ_PROMPT1A, use_font);
 	scene_obj_set_hide(scn, OBJ_PROMPT1B, !use_font);
 	scene_obj_set_hide(scn, OBJ_AUTOBOOT, use_font);
+
+	/* Set the title and prompt texts */
+	ret = expo_edit_str(exp, STR_MENU_TITLE, NULL, &buf);
+	if (ret)
+		return log_msg_ret("mss", ret);
+	abuf_printf(buf, "%s", title);
+
+	ret = expo_edit_str(exp, STR_PROMPT1A, NULL, &buf);
+	if (!ret)
+		abuf_printf(buf, "Use the \x18 and \x19 keys to select which "
+			    "entry is highlighted.");
+
+	ret = expo_edit_str(exp, STR_PROMPT1B, NULL, &buf);
+	if (!ret)
+		abuf_printf(buf, "Use the UP and DOWN keys to select which "
+			    "entry is highlighted.");
+
+	ret = expo_edit_str(exp, STR_PROMPT2, NULL, &buf);
+	if (!ret)
+		abuf_printf(buf, "Press enter to boot the selected OS, 'e' to "
+			    "edit the commands before booting or 'c' for a "
+			    "command-line. ESC to return to previous menu");
 
 	exp->show_highlight = true;
 
@@ -104,22 +128,18 @@ int bootflow_menu_new(struct expo **expp)
 
 	ret = scene_menu(scn, "main", OBJ_MENU, &menu);
 	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
-			     "U-Boot - Boot Menu", NULL);
+			     "", NULL);
 
 	logo = video_get_u_boot_logo(NULL);
 	if (logo)
 		ret |= scene_img(scn, "ulogo", OBJ_U_BOOT_LOGO, logo, NULL);
 
 	ret |= scene_txt_str(scn, "prompt1a", OBJ_PROMPT1A, STR_PROMPT1A,
-	     "Use the \x18 and \x19 keys to select which entry is highlighted.",
-	     NULL);
+	     "", NULL);
 	ret |= scene_txt_str(scn, "prompt1b", OBJ_PROMPT1B, STR_PROMPT1B,
-	     "Use the UP and DOWN keys to select which entry is highlighted.",
-	     NULL);
+	     "", NULL);
 	ret |= scene_txt_str(scn, "prompt2", OBJ_PROMPT2, STR_PROMPT2,
-	     "Press enter to boot the selected OS, 'e' to edit the commands "
-	     "before booting or 'c' for a command-line. ESC to return to "
-	     "previous menu", NULL);
+	     "", NULL);
 	ret |= scene_txt_str(scn, "autoboot", OBJ_AUTOBOOT, STR_AUTOBOOT,
 	     "The highlighted entry will be executed automatically in %ds.",
 	     NULL);
@@ -129,7 +149,7 @@ int bootflow_menu_new(struct expo **expp)
 	if (ret < 0)
 		return log_msg_ret("new", -EINVAL);
 
-	ret = bootflow_menu_set_props(exp, scn, logo);
+	ret = bootflow_menu_set_props(exp, scn, logo, "U-Boot - Boot Menu");
 	if (ret < 0)
 		return log_msg_ret("nep", -EINVAL);
 
