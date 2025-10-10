@@ -169,9 +169,10 @@ int video_compress_fb(struct unit_test_state *uts, struct udevice *dev,
 		snprintf(filename, sizeof(filename), "%s/frame%d.bmp",
 			 state->video_frames_dir, state->video_frame_count++);
 		ret = video_write_bmp(uts, dev, filename);
-		if (ret)
-			printf("Failed to write frame to %s: %d\n", filename,
-			       ret);
+		if (ret) {
+			ut_reportf("Failed to write frame to %s: %d",
+				   filename, ret);
+		}
 	}
 
 	/* provide a useful delay if -V flag is used or LOG_DEBUG is set */
