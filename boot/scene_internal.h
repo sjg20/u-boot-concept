@@ -540,4 +540,34 @@ int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr);
 int scene_txt_generic_init(struct expo *exp, struct scene_txt_generic *gen,
 			   const char *name, uint str_id, const char *str);
 
+/**
+ * scene_flag_name() - Get the name of a scene flag
+ *
+ * @flag: Single-bit flag mask (e.g. BIT(7))
+ * Return: Flag name, or "(none)" if flag is 0 or out of range
+ */
+const char *scene_flag_name(uint flag);
+
+/**
+ * scene_obj_type_name() - Get the name of a scene object type
+ *
+ * @type: Object type
+ * Return: Type name, or "unknown" if out of range
+ */
+const char *scene_obj_type_name(enum scene_obj_t type);
+
+/**
+ * scene_find_obj_within() - Find an object that is within the coords
+ *
+ * @scn: Scene to check
+ * @x: X coordinates of the click
+ * @y: Y coordinate of the click
+ * @reverse: true to search from top to bottom (reverse order), false for
+ *	bottom to top
+ * @allow_any: true to allow searching non-highlight objects
+ * Return: object that is being clicked on, NULL if none
+ */
+struct scene_obj *scene_find_obj_within(const struct scene *scn, int x, int y,
+					bool reverse, bool allow_any);
+
 #endif /* __SCENE_INTERNAL_H */

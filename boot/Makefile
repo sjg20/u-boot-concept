@@ -57,6 +57,7 @@ obj-$(CONFIG_CMD_ADTIMG) += image-android-dt.o
 obj-$(CONFIG_$(PHASE_)LOAD_FIT) += common_fit.o
 
 obj-$(CONFIG_$(PHASE_)EXPO) += expo.o scene.o expo_build.o
+obj-$(CONFIG_$(PHASE_)EXPO_DUMP) += expo_dump.o
 obj-$(CONFIG_$(PHASE_)EXPO) += scene_menu.o scene_textline.o scene_textedit.o
 obj-$(CONFIG_$(PHASE_)EXPO_TEST) += expo_test.o
 ifdef CONFIG_COREBOOT_SYSINFO

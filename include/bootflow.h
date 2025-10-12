@@ -743,7 +743,8 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
  * Return: 0 if a bootflow was chosen, -EAGAIN if nothing is chosen yet, -EPIPE
  *	if the user quit, -EREMCHG if the expo needs refreshing, -ERESTART if
  *	the user tried to move to a new selection but was unable (e.g. already
- *	at the top and tried to move up)
+ *	at the top and tried to move up), -ECOMM if the user requests settings
+ *	to be opened
  */
 int bootflow_menu_poll(struct expo *exp, int *seqp);
 

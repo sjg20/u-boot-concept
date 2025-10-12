@@ -220,6 +220,10 @@ int cedit_do_action(struct expo *exp, struct scene *scn,
 		log_debug("quitting\n");
 		exp->done = true;
 		break;
+	case EXPOACT_CLICK:
+	case EXPOACT_SETTINGS:
+		/* not supported by cedit */
+		break;
 	}
 
 	return 0;

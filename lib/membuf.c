@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <log.h>
 #include <malloc.h>
+#include <vsprintf.h>
 #include "membuf.h"
 
 static inline bool is_full(const struct membuf *mb)
@@ -434,4 +435,17 @@ void membuf_dispose(struct membuf *mb)
 {
 	free(mb->start);
 	membuf_uninit(mb);
+}
+
+int membuf_printf(struct membuf *mb, const char *fmt, ...)
+{
+	char buf[256];
+	va_list args;
+	int len;
+
+	va_start(args, fmt);
+	len = vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+
+	return membuf_put(mb, buf, len);
 }

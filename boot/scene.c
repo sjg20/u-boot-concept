@@ -19,6 +19,29 @@
 #include <linux/input.h>
 #include "scene_internal.h"
 
+static const char *const scene_flag_names[] = {
+	"hide",
+	"point",
+	"open",
+	"size_valid",
+	"sync_pos",
+	"sync_size",
+	"sync_width",
+	"sync_bbox",
+	"manual",
+	"dirty",
+};
+
+static const char *const scene_obj_type_names[] = {
+	"none",
+	"image",
+	"text",
+	"box",
+	"textedit",
+	"menu",
+	"textline",
+};
+
 int scene_new(struct expo *exp, const char *name, uint id, struct scene **scnp)
 {
 	struct scene *scn;
@@ -1106,6 +1129,22 @@ int scene_send_key(struct scene *scn, int key, struct expo_action *event)
 	return 0;
 }
 
+/**
+ * is_within() - check if a point is considered within an object ID
+ *
+ * @scn: Scene to check
+ * @obj: object to check
+ * @x: X coordinate of the point
+ * @y: Y coordinate of the point
+ * Return: true if the point is considered within the object, false if not
+ */
+static bool is_within(const struct scene_obj *obj, int x, int y)
+{
+	/* Check if point (x, y) is within object's bounding box */
+	return (x >= obj->bbox.x0 && x <= obj->bbox.x1 &&
+		y >= obj->bbox.y0 && y <= obj->bbox.y1);
+}
+
 bool scene_within(const struct scene *scn, uint id, int x, int y)
 {
 	struct scene_obj *obj;
@@ -1118,9 +1157,7 @@ bool scene_within(const struct scene *scn, uint id, int x, int y)
 	log_debug("- id %d: '%s' bbox x0 %d y0 %d x1 %d y1 %d\n", id, obj->name,
 		  obj->bbox.x0, obj->bbox.y0, obj->bbox.x1, obj->bbox.x1);
 
-	/* Check if point (x, y) is within object's bounding box */
-	return (x >= obj->bbox.x0 && x <= obj->bbox.x1 &&
-		y >= obj->bbox.y0 && y <= obj->bbox.y1);
+	return is_within(obj, x, y);
 }
 
 bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
@@ -1130,9 +1167,11 @@ bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
 
 	switch (obj->type) {
 	case SCENEOBJT_NONE:
+		break;
 	case SCENEOBJT_IMAGE:
 	case SCENEOBJT_TEXT:
 	case SCENEOBJT_BOX:
+		within = is_within(obj, x, y);
 		break;
 	case SCENEOBJT_MENU: {
 		struct scene_obj_menu *menu;
@@ -1156,29 +1195,38 @@ bool scene_obj_within(const struct scene *scn, struct scene_obj *obj, int x,
 	return within;
 }
 
-/**
- * scene_find_obj_within() - Find an object that is within the coords
- *
- * @scn: Scene to check
- * @x: X coordinates of the click
- * @y: Y coordinate of the click
- * Return: object that is being clicked on, NULL if none
- */
-static struct scene_obj *scene_find_obj_within(const struct scene *scn, int x,
-					       int y)
+struct scene_obj *scene_find_obj_within(const struct scene *scn, int x, int y,
+					bool reverse, bool allow_any)
 {
 	struct scene_obj *obj;
 
-	log_debug("within: x %d y %d\n", x, y);
-	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		log_debug(" - obj %d '%s' can_highlight %d within %d\n",
-			  obj->id, obj->name, scene_obj_can_highlight(obj),
-			  scene_obj_within(scn, obj, x, y));
-		if (scene_obj_can_highlight(obj) &&
-		    scene_obj_within(scn, obj, x, y)) {
-			log_debug("- returning obj %d '%s'\n", obj->id,
-				  obj->name);
-			return obj;
+	log_debug("within: x %d y %d reverse %d allow_any %d\n", x, y, reverse,
+		  allow_any);
+	if (reverse) {
+		list_for_each_entry_reverse(obj, &scn->obj_head, sibling) {
+			log_debug(" - obj %d '%s' can_highlight %d within %d\n",
+				  obj->id, obj->name,
+				  scene_obj_can_highlight(obj),
+				  scene_obj_within(scn, obj, x, y));
+			if ((allow_any || scene_obj_can_highlight(obj)) &&
+			    scene_obj_within(scn, obj, x, y)) {
+				log_debug("- returning obj %d '%s'\n", obj->id,
+					  obj->name);
+				return obj;
+			}
+		}
+	} else {
+		list_for_each_entry(obj, &scn->obj_head, sibling) {
+			log_debug(" - obj %d '%s' can_highlight %d within %d\n",
+				  obj->id, obj->name,
+				  scene_obj_can_highlight(obj),
+				  scene_obj_within(scn, obj, x, y));
+			if ((allow_any || scene_obj_can_highlight(obj)) &&
+			    scene_obj_within(scn, obj, x, y)) {
+				log_debug("- returning obj %d '%s'\n", obj->id,
+					  obj->name);
+				return obj;
+			}
 		}
 	}
 	log_debug("- no object\n");
@@ -1210,7 +1258,7 @@ static void send_click_obj(struct scene *scn, struct scene_obj *obj, int x,
 	}
 
 	log_debug("no object; finding...\n");
-	obj = scene_find_obj_within(scn, x, y);
+	obj = scene_find_obj_within(scn, x, y, false, false);
 	if (obj) {
 		event->type = EXPOACT_POINT_OPEN;
 		event->select.id = obj->id;
@@ -1236,7 +1284,7 @@ static int scene_click_popup(struct scene *scn, int x, int y,
 	}
 
 	/* check that the click is within our object */
-	chk = scene_find_obj_within(scn, x, y);
+	chk = scene_find_obj_within(scn, x, y, false, false);
 	log_debug("chk %d '%s' (obj %d '%s')\n", chk ? chk->id : -1,
 		  chk ? chk->name : "(none)", obj->id, obj->name);
 	if (!chk) {
@@ -1295,18 +1343,24 @@ int scene_send_click(struct scene *scn, int x, int y, struct expo_action *event)
 		return 0;
 	}
 
-	obj = scene_find_obj_within(scn, x, y);
+	obj = scene_find_obj_within(scn, x, y, false, false);
 	log_debug("non-popup obj %d '%s'\n", obj ? obj->id : -1,
 		  obj ? obj->name : "(none)");
-	if (!obj)
-		return 0;
+	if (!obj) {
+		obj = scene_find_obj_within(scn, x, y, true, true);
+		log_debug("non-popup any obj %d '%s'\n", obj ? obj->id : -1,
+			  obj ? obj->name : "(none)");
+		if (!obj)
+			return 0;
+	}
 
 	switch (obj->type) {
 	case SCENEOBJT_NONE:
 	case SCENEOBJT_IMAGE:
 	case SCENEOBJT_TEXT:
 	case SCENEOBJT_BOX:
-		/* These objects don't handle clicks directly */
+		event->type = EXPOACT_CLICK;
+		event->select.id = obj->id;
 		break;
 	case SCENEOBJT_MENU: {
 		struct scene_obj_menu *menu;
@@ -1633,4 +1687,23 @@ int scene_dims_union(struct scene *scn, uint id, struct scene_obj_dims *dims)
 	scene_dims_join(&obj->dims, dims);
 
 	return 0;
+}
+
+const char *scene_flag_name(uint flag)
+{
+	int bit;
+
+	bit = ffs(flag) - 1;
+	if (bit < 0 || bit >= ARRAY_SIZE(scene_flag_names))
+		return "(none)";
+
+	return scene_flag_names[bit];
+}
+
+const char *scene_obj_type_name(enum scene_obj_t type)
+{
+	if (type >= ARRAY_SIZE(scene_obj_type_names))
+		return "unknown";
+
+	return scene_obj_type_names[type];
 }

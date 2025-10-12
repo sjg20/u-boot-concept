@@ -944,6 +944,8 @@ F:	boot/bootflow.c
 F:	boot/bootm_final.c
 F:	boot/bootmeth*.c
 F:	boot/bootstd.c
+F:	boot/expo*.c
+F:	boot/scene*.c
 F:	cmd/bootdev.c
 F:	cmd/bootflow.c
 F:	doc/develop/bootstd/
@@ -955,6 +957,7 @@ F:	include/bootdev.h
 F:	include/bootflow.h
 F:	include/bootmeth.h
 F:	include/bootstd.h
+F:	include/expo.h
 F:	net/eth_bootdevice.c
 F:	test/boot/
 

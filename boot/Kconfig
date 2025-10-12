@@ -982,6 +982,15 @@ config EXPO
 	  The expo can be presented in graphics form using a vidconsole, or in
 	  text form on a serial console.
 
+config EXPO_DUMP
+	bool "Allow dumping the contents of an expo"
+	depends on EXPO
+	default y if SANDBOX
+	help
+	  This provides a way to dump an expo as test, including most of the
+	  details in the structures. This can be useful when debugging or
+	  comparing two expos.
+
 config EXPO_TEST
 	bool "Enable test mode for expo"
 	depends on EXPO

@@ -14,6 +14,7 @@
 #include <fs_legacy.h>
 #include <malloc.h>
 #include <mapmem.h>
+#include <membuf.h>
 #include <dm/ofnode.h>
 #include <linux/sizes.h>
 
@@ -291,6 +292,37 @@ static int do_cedit_run(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+#ifdef CONFIG_CMD_EDIT_DUMP
+static int do_cedit_dump(struct cmd_tbl *cmdtp, int flag, int argc,
+			 char *const argv[])
+{
+	struct membuf mb;
+	char buf[256];
+	int len;
+
+	if (check_cur_expo())
+		return CMD_RET_FAILURE;
+
+	if (membuf_new(&mb, 131072)) {
+		printf("Failed to allocate membuf\n");
+		return CMD_RET_FAILURE;
+	}
+
+	expo_dump(cur_exp, &mb);
+
+	/* Output the data in chunks */
+	do {
+		len = membuf_get(&mb, buf, sizeof(buf) - 1);
+		buf[len] = '\0';
+		puts(buf);
+	} while (len);
+
+	membuf_dispose(&mb);
+
+	return 0;
+}
+#endif /* CONFIG_CMD_EDIT_DUMP */
+
 U_BOOT_LONGHELP(cedit,
 	"load <interface> <dev[:part]> <filename>   - load config editor\n"
 #ifdef CONFIG_COREBOOT_SYSINFO
@@ -302,6 +334,9 @@ U_BOOT_LONGHELP(cedit,
 	"cedit write_env [-v]                             - write settings to env vars\n"
 	"cedit read_cmos [-v] [dev]                       - read settings from CMOS RAM\n"
 	"cedit write_cmos [-v] [dev]                      - write settings to CMOS RAM\n"
+#ifdef CONFIG_CMD_EDIT_DUMP
+	"cedit dump                                       - dump expo structure\n"
+#endif
 	"cedit run                                        - run config editor");
 
 U_BOOT_CMD_WITH_SUBCMDS(cedit, "Configuration editor", cedit_help_text,
@@ -315,5 +350,8 @@ U_BOOT_CMD_WITH_SUBCMDS(cedit, "Configuration editor", cedit_help_text,
 	U_BOOT_SUBCMD_MKENT(write_env, 2, 1, do_cedit_write_env),
 	U_BOOT_SUBCMD_MKENT(read_cmos, 2, 1, do_cedit_read_cmos),
 	U_BOOT_SUBCMD_MKENT(write_cmos, 2, 1, do_cedit_write_cmos),
+#ifdef CONFIG_CMD_EDIT_DUMP
+	U_BOOT_SUBCMD_MKENT(dump, 1, 1, do_cedit_dump),
+#endif
 	U_BOOT_SUBCMD_MKENT(run, 1, 1, do_cedit_run),
 );

@@ -268,4 +268,17 @@ int membuf_new(struct membuf *mb, int size);
  */
 void membuf_dispose(struct membuf *mb);
 
+/**
+ * membuf_printf() - write a formatted string to a membuff
+ *
+ * Formats a string and writes it to the membuff. Returns the number of bytes
+ * written (not including the terminating nul).
+ *
+ * @mb: membuff to write to
+ * @fmt: format string
+ * @...: arguments for format string
+ * Return: number of bytes written, or negative error
+ */
+int membuf_printf(struct membuf *mb, const char *fmt, ...);
+
 #endif

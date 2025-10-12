@@ -70,7 +70,7 @@ static int video_write_bmp(struct unit_test_state *uts, struct udevice *dev,
 	void *bmp_data;
 	int ret, y;
 
-	/* Support 16bpp and 32bpp */
+	/* Support 16bpp (converted to 15bpp for BMP) and 32bpp */
 	switch (priv->bpix) {
 	case VIDEO_BPP16:
 		bpp = 16;
@@ -112,7 +112,24 @@ static int video_write_bmp(struct unit_test_state *uts, struct udevice *dev,
 		void *src = priv->fb + (height - 1 - y) * priv->line_length;
 		void *dst = bmp_data + y * row_bytes;
 
-		memcpy(dst, src, width * bytes_per_pixel);
+		if (bpp == 16) {
+			/* Convert RGB565 to RGB555 for BMP format */
+			u16 *src16 = (u16 *)src;
+			u16 *dst16 = (u16 *)dst;
+			int x;
+
+			for (x = 0; x < width; x++) {
+				u16 pixel = src16[x];
+				/* Extract RGB565 components */
+				u16 r = (pixel >> 11) & 0x1f;  /* 5 bits */
+				u16 g = (pixel >> 5) & 0x3f;   /* 6 bits */
+				u16 b = pixel & 0x1f;          /* 5 bits */
+				/* Convert to RGB555: drop LSB of green */
+				dst16[x] = (r << 10) | ((g >> 1) << 5) | b;
+			}
+		} else {
+			memcpy(dst, src, width * bytes_per_pixel);
+		}
 	}
 
 	ret = os_write_file(fname, bmp, bmp_size);

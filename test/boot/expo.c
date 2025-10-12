@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <expo.h>
 #include <expo_test.h>
+#include <membuf.h>
 #include <menu.h>
 #include <video.h>
 #include <linux/input.h>
@@ -33,6 +34,7 @@ enum {
 	OBJ_BOX,
 	OBJ_BOX2,
 	OBJ_TEXTED,
+	OBJ_OVERLAP,
 
 	/* strings */
 	STR_SCENE_TITLE,
@@ -53,6 +55,8 @@ enum {
 	STR_ITEM2_DESC,
 	STR_ITEM2_KEY,
 	STR_ITEM2_PREVIEW,
+
+	STR_OVERLAP,
 
 	/* menu items */
 	ITEM1,
@@ -598,6 +602,14 @@ static int create_test_expo(struct unit_test_state *uts, struct expo **expp,
 	abuf_printf(text, "This\nis the initial contents of the text editor "
 		"but it is quite likely that more will be added later");
 
+	/*
+	 * Add an extra text object that overlaps with OBJ_TEXT to test reverse
+	 * search order. OBJ_TEXT is at (400, 100), so let's add one nearby
+	 */
+	ut_assert(scene_txt_str(scn, "overlap", OBJ_OVERLAP, STR_OVERLAP,
+				"overlap text", NULL) > 0);
+	ut_assertok(scene_obj_set_pos(scn, OBJ_OVERLAP, 405, 105));
+
 	*expp = exp;
 	*scnp = scn;
 	*menup = menu;
@@ -719,17 +731,17 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* render it */
 	expo_set_scene_id(exp, SCENE1);
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18782, video_compress_fb(uts, dev, false));
+	ut_asserteq(19065, video_compress_fb(uts, dev, false));
 
 	ut_asserteq(0, scn->highlight_id);
 	ut_assertok(scene_arrange(scn));
 	ut_asserteq(0, scn->highlight_id);
 	ut_assertok(expo_render(exp));
-	ut_asserteq(20373, video_compress_fb(uts, dev, false));
+	ut_asserteq(20707, video_compress_fb(uts, dev, false));
 
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(20373, video_compress_fb(uts, dev, false));
+	ut_asserteq(20707, video_compress_fb(uts, dev, false));
 
 	scene_set_highlight_id(scn, OBJ_MENU);
 	ut_asserteq(OBJ_MENU, scn->highlight_id);
@@ -741,7 +753,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assert(!(obj->flags & SCENEOF_HIDE));
 
 	ut_assertok(expo_render(exp));
-	ut_asserteq(20373, video_compress_fb(uts, dev, false));
+	ut_asserteq(20707, video_compress_fb(uts, dev, false));
 
 	/* move down */
 	ut_assertok(expo_send_key(exp, BKEY_DOWN));
@@ -754,7 +766,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_asserteq(ITEM2, scene_menu_get_cur_item(scn, OBJ_MENU));
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(19649, video_compress_fb(uts, dev, false));
+	ut_asserteq(19953, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	/* hide the text editor since the following tests don't need it */
@@ -763,18 +775,18 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* do some alignment checks */
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_CENTRE));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(16323, video_compress_fb(uts, dev, false));
+	ut_asserteq(16626, video_compress_fb(uts, dev, false));
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_RIGHT));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(16240, video_compress_fb(uts, dev, false));
+	ut_asserteq(16634, video_compress_fb(uts, dev, false));
 
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_LEFT));
 	ut_assertok(scene_obj_set_valign(scn, OBJ_TEXT3, SCENEOA_CENTRE));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18714, video_compress_fb(uts, dev, false));
+	ut_asserteq(19056, video_compress_fb(uts, dev, false));
 	ut_assertok(scene_obj_set_valign(scn, OBJ_TEXT3, SCENEOA_BOTTOM));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18670, video_compress_fb(uts, dev, false));
+	ut_asserteq(19024, video_compress_fb(uts, dev, false));
 
 	/* make sure only the preview for the second item is shown */
 	obj = scene_obj_find(scn, ITEM1_PREVIEW, SCENEOBJT_NONE);
@@ -800,7 +812,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	exp->show_highlight = true;
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18830, video_compress_fb(uts, dev, false));
+	ut_asserteq(19181, video_compress_fb(uts, dev, false));
 
 	/* now try in text mode */
 	expo_set_text_mode(exp, true);
@@ -1220,3 +1232,163 @@ static int expo_test_calc_fps(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(expo_test_calc_fps, 0);
+
+/* Test scene_flag_name() */
+static int expo_scene_flag_name(struct unit_test_state *uts)
+{
+	/* Test valid flags */
+	ut_asserteq_str("hide", scene_flag_name(SCENEOF_HIDE));
+	ut_asserteq_str("point", scene_flag_name(SCENEOF_POINT));
+	ut_asserteq_str("open", scene_flag_name(SCENEOF_OPEN));
+	ut_asserteq_str("manual", scene_flag_name(SCENEOF_MANUAL));
+
+	/* Test invalid flag (0) */
+	ut_asserteq_str("(none)", scene_flag_name(0));
+
+	/* Test invalid flag (out of range) */
+	ut_asserteq_str("(none)", scene_flag_name(BIT(20)));
+
+	return 0;
+}
+BOOTSTD_TEST(expo_scene_flag_name, 0);
+
+/* Test scene_obj_type_name() */
+static int expo_scene_obj_type_name(struct unit_test_state *uts)
+{
+	/* Test all valid object types */
+	ut_asserteq_str("none", scene_obj_type_name(SCENEOBJT_NONE));
+	ut_asserteq_str("image", scene_obj_type_name(SCENEOBJT_IMAGE));
+	ut_asserteq_str("text", scene_obj_type_name(SCENEOBJT_TEXT));
+	ut_asserteq_str("box", scene_obj_type_name(SCENEOBJT_BOX));
+	ut_asserteq_str("menu", scene_obj_type_name(SCENEOBJT_MENU));
+	ut_asserteq_str("textline", scene_obj_type_name(SCENEOBJT_TEXTLINE));
+	ut_asserteq_str("textedit", scene_obj_type_name(SCENEOBJT_TEXTEDIT));
+
+	/* Test invalid type (out of range) */
+	ut_asserteq_str("unknown", scene_obj_type_name(SCENEOBJT_TEXTLINE + 1));
+
+	return 0;
+}
+BOOTSTD_TEST(expo_scene_obj_type_name, 0);
+
+/* Test scene_find_obj_within() */
+static int expo_find_obj_within(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct scene_obj *obj;
+	struct scene *scn;
+	struct expo *exp;
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+
+	/* Arrange the scene so objects have proper bounding boxes */
+	ut_assertok(scene_arrange(scn));
+
+	/*
+	 * Check finding a menu by 'clicking' on a menu item label - menu items
+	 * are at (50,436) for ITEM1 and (50,454) for ITEM2
+	 */
+	obj = scene_find_obj_within(scn, 60, 440, false, false);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_MENU, obj->id);
+
+	/*
+	 * Check with allow_any=false for non-highlightable objects - logo and
+	 * text are not highlightable, so they should not be found
+	 */
+	ut_assertnull(scene_find_obj_within(scn, 60, 30, false, false));
+	ut_assertnull(scene_find_obj_within(scn, 410, 110, false, false));
+
+	/* Test with allow_any=true for non-highlightable objects */
+	obj = scene_find_obj_within(scn, 60, 30, false, true);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_LOGO, obj->id);
+
+	/*
+	 * Check reversing search order with allow_any=true at the overlapping
+	 * position. OBJ_TEXT was created first at (400, 100), and the
+	 * "overlap" text object was created second at (405, 105). They
+	 * overlap at position (410, 110).
+	 *
+	 * With reverse=false, we search from start of list (bottom to top) and
+	 * find OBJ_TEXT first.
+	 */
+	obj = scene_find_obj_within(scn, 410, 110, false, true);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_TEXT, obj->id);
+
+	/*
+	 * With reverse=true, we search from end of list (top to bottom) and
+	 * find the OBJ_OVERLAP_TEST object first.
+	 */
+	obj = scene_find_obj_within(scn, 410, 110, true, true);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_OVERLAP, obj->id);
+
+	/*
+	 * Test reverse=true with a non-overlapping object - should get same
+	 * result as reverse=false
+	 */
+	obj = scene_find_obj_within(scn, 60, 30, true, true);
+	ut_assertnonnull(obj);
+	ut_asserteq(OBJ_LOGO, obj->id);
+
+	/* empty space */
+	ut_assertnull(scene_find_obj_within(scn, 10, 10, false, false));
+
+	/* way outside bounds */
+	ut_assertnull(scene_find_obj_within(scn, 9999, 9999, false, false));
+
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_find_obj_within, UTF_DM | UTF_SCAN_FDT);
+
+/* Test expo_dump() */
+static int expo_dump_test(struct unit_test_state *uts)
+{
+	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
+	struct scene *scn;
+	struct expo *exp;
+	struct membuf mb;
+	char mb_buf[4096];
+	char *data;
+	int len;
+
+	membuf_init(&mb, mb_buf, sizeof(mb_buf));
+
+	ut_assertok(create_test_expo(uts, &exp, &scn, &menu, &buf, &logo_copy));
+
+	/* Arrange the scene so objects have proper dimensions */
+	ut_assertok(scene_arrange(scn));
+
+	/* Dump the expo */
+	expo_dump(exp, &mb);
+
+	/* Get the dumped data */
+	len = membuf_getraw(&mb, sizeof(mb_buf), false, &data);
+	ut_assert(len > 0);
+	ut_assertnonnull(data);
+
+	/* Nul-terminate for strstr to work */
+	if (len < sizeof(mb_buf))
+		data[len] = '\0';
+
+	/* Check for a few elements in the output */
+	ut_assert(strstr(data, "Expo: name"));
+	ut_assert(strstr(data, "my menus"));
+	ut_assert(strstr(data, "Scene"));
+	ut_assert(strstr(data, "main"));
+
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
+	expo_destroy(exp);
+
+	return 0;
+}
+BOOTSTD_TEST(expo_dump_test, UTF_DM | UTF_SCAN_FDT);
