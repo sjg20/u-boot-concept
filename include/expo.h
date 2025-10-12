@@ -444,7 +444,7 @@ struct scene_obj_txt {
  * - a preview object which shows an image related to the current item
  *
  * @obj: Basic object information
- * @title_id: ID of the title text, or 0 if none
+ * @title_id: ID of the title text object (not string ID), or 0 if none
  * @cur_item_id: ID of the current menu item, or 0 if none
  * @pointer_id: ID of the object pointing to the current selection
  * @pointer_xofs: x position of pointer relative to the left side of the menu
@@ -504,8 +504,8 @@ struct scene_menitem {
  * A textline has a prompt and a line of editable text
  *
  * @obj: Basic object information
- * @label_id: ID of the label text, or 0 if none
- * @edit_id: ID of the editable text
+ * @label_id: ID of the label text object (not string ID), or 0 if none
+ * @edit_id: ID of the editable text object (not string ID)
  * @max_chars: Maximum number of characters allowed
  * @buf: Text buffer containing current text
  * @pos: Cursor position
