@@ -803,10 +803,12 @@ static int scene_set_default_bbox(struct scene *scn)
 		switch (obj->type) {
 		case SCENEOBJT_IMAGE:
 		case SCENEOBJT_TEXT:
-			if (!(obj->flags & SCENEOF_SIZE_VALID)) {
-				scene_obj_set_size(scn, obj->id, obj->dims.x,
-						   obj->dims.y);
-			}
+			if (obj->flags & SCENEOF_SIZE_VALID)
+				break;
+			obj->req_bbox.x1 = obj->req_bbox.x0 + obj->dims.x;
+			obj->req_bbox.y1 = obj->req_bbox.y0 + obj->dims.y;
+			obj->flags |= SCENEOF_SYNC_SIZE;
+			break;
 		default:
 			break;
 		}
