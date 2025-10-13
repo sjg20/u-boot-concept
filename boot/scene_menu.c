@@ -359,13 +359,14 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			y += height + theme->menuitem_gap_y;
 	}
 
+	/* line up the right size of each set of items */
 	list_for_each_entry(item, &menu->item_head, sibling) {
-		scene_obj_set_width(menu->obj.scene, item->label_id,
-				    dims[SCENEBB_label].x);
-		scene_obj_set_width(menu->obj.scene, item->key_id,
-				    dims[SCENEBB_key].x);
-		scene_obj_set_width(menu->obj.scene, item->desc_id,
-				    dims[SCENEBB_desc].x);
+		scene_obj_set_width_flags(menu->obj.scene, item->label_id,
+					  dims[SCENEBB_label].x, 0);
+		scene_obj_set_width_flags(menu->obj.scene, item->key_id,
+					  dims[SCENEBB_key].x, 0);
+		scene_obj_set_width_flags(menu->obj.scene, item->desc_id,
+					  dims[SCENEBB_desc].x, 0);
 	}
 
 	if (sel_id)

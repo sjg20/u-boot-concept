@@ -316,7 +316,7 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h)
 	return 0;
 }
 
-int scene_obj_set_width(struct scene *scn, uint id, int w)
+int scene_obj_set_width_flags(struct scene *scn, uint id, int w, uint flags)
 {
 	struct scene_obj *obj;
 
@@ -324,9 +324,14 @@ int scene_obj_set_width(struct scene *scn, uint id, int w)
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
 	obj->req_bbox.x1 = obj->req_bbox.x0 + w;
-	obj->flags |= SCENEOF_SYNC_WIDTH;
+	obj->flags |= flags;
 
 	return 0;
+}
+
+int scene_obj_set_width(struct scene *scn, uint id, int w)
+{
+	return scene_obj_set_width_flags(scn, id, w, SCENEOF_SYNC_WIDTH);
 }
 
 int scene_obj_set_bbox(struct scene *scn, uint id, int x0, int y0, int x1,

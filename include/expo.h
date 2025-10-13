@@ -944,6 +944,20 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y);
 int scene_obj_set_size(struct scene *scn, uint id, int w, int h);
 
 /**
+ * scene_obj_set_width_flags() - Set the width of an object, with flags
+ *
+ * The given width is marked as 'requested' and will be applied when the scene
+ * is next arranged. The object flags are ORed with @flags
+ *
+ * @scn: Scene to update
+ * @id: ID of object to update
+ * @w: width in pixels
+ * @flags: Flags to OR with the current flags
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_obj_set_width_flags(struct scene *scn, uint id, int w, uint flags);
+
+/**
  * scene_obj_set_width() - Set the width of an object
  *
  * The given width is marked as 'requested' and will be applied when the scene
