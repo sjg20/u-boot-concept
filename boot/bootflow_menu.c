@@ -62,6 +62,7 @@ static int bootflow_menu_set_item_props(struct scene *scn,
 int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
 			    const char *title)
 {
+	struct expo_theme *theme = &exp->theme;
 	struct abuf *buf;
 	int ret = 0;
 	bool use_font;
@@ -132,6 +133,13 @@ int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
 
 	/* tell the menu to lay out its objects */
 	scene_obj_set_manual(scn, OBJ_MENU, false);
+
+	scene_obj_set_hide(scn, OBJ_POINTER, false);
+
+	theme->white_on_black = true;
+	ret = expo_apply_theme(exp, true);
+	if (ret)
+		return log_msg_ret("mat", ret);
 
 	expo_set_mouse_enable(exp, false);
 
