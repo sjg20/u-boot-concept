@@ -130,6 +130,9 @@ int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
 	scene_set_highlight_id(scn, OBJ_MENU);
 	scene_obj_set_hide(scn, OBJ_POINTER, false);
 
+	/* tell the menu to lay out its objects */
+	scene_obj_set_manual(scn, OBJ_MENU, false);
+
 	expo_set_mouse_enable(exp, false);
 
 	exp->show_highlight = true;
