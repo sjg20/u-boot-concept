@@ -63,8 +63,10 @@ int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
 			    const char *title)
 {
 	struct expo_theme *theme = &exp->theme;
+	struct menu_priv *priv = exp->priv;
+	struct bootstd_priv *std;
 	struct abuf *buf;
-	int ret = 0;
+	int i, ret = 0;
 	bool use_font;
 
 	ret |= scene_obj_set_bbox(scn, OBJ_BOX, 30, 90, 1366 - 30, 720);
@@ -144,6 +146,21 @@ int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
 	expo_set_mouse_enable(exp, false);
 
 	exp->show_highlight = true;
+
+	ret = bootstd_get_priv(&std);
+	if (ret)
+		return ret;
+
+	for (i = 0; i < priv->num_bootflows; i++) {
+		const struct bootflow *bflow;
+
+		bflow = alist_get(&std->bootflows, i, struct bootflow);
+		if (!bflow)
+			return log_msg_ret("bmb", -ENOENT);
+		ret = bootflow_menu_set_item_props(scn, i, bflow);
+		if (ret)
+			return log_msg_ret("mst", ret);
+	}
 
 	return 0;
 }
