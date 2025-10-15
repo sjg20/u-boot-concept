@@ -444,7 +444,7 @@ struct scene_obj_txt {
  * - a preview object which shows an image related to the current item
  *
  * @obj: Basic object information
- * @title_id: ID of the title text, or 0 if none
+ * @title_id: ID of the title text object (not string ID), or 0 if none
  * @cur_item_id: ID of the current menu item, or 0 if none
  * @pointer_id: ID of the object pointing to the current selection
  * @pointer_xofs: x position of pointer relative to the left side of the menu
@@ -504,8 +504,8 @@ struct scene_menitem {
  * A textline has a prompt and a line of editable text
  *
  * @obj: Basic object information
- * @label_id: ID of the label text, or 0 if none
- * @edit_id: ID of the editable text
+ * @label_id: ID of the label text object (not string ID), or 0 if none
+ * @edit_id: ID of the editable text object (not string ID)
  * @max_chars: Maximum number of characters allowed
  * @buf: Text buffer containing current text
  * @pos: Cursor position
@@ -944,6 +944,20 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y);
 int scene_obj_set_size(struct scene *scn, uint id, int w, int h);
 
 /**
+ * scene_obj_set_width_flags() - Set the width of an object, with flags
+ *
+ * The given width is marked as 'requested' and will be applied when the scene
+ * is next arranged. The object flags are ORed with @flags
+ *
+ * @scn: Scene to update
+ * @id: ID of object to update
+ * @w: width in pixels
+ * @flags: Flags to OR with the current flags
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_obj_set_width_flags(struct scene *scn, uint id, int w, uint flags);
+
+/**
  * scene_obj_set_width() - Set the width of an object
  *
  * The given width is marked as 'requested' and will be applied when the scene
@@ -1149,9 +1163,10 @@ int expo_setup_theme(struct expo *exp, ofnode node);
  * The theme to be applied must be set up exp->theme
  *
  * @exp: Expo to update
+ * @do_objs: Apply theme to objects as well (normally this should be true)
  * Returns: 0 if OK, -ve on error
  */
-int expo_apply_theme(struct expo *exp);
+int expo_apply_theme(struct expo *exp, bool do_objs);
 
 /**
  * expo_build() - Build an expo from an FDT description

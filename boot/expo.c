@@ -151,6 +151,17 @@ int expo_set_display(struct expo *exp, struct udevice *dev)
 	exp->display = dev;
 	exp->cons = cons;
 
+	if (IS_ENABLED(CONFIG_MOUSE) && exp->mouse_enabled) {
+		/*
+		 * Tell the mouse driver about the video device for coordinate
+		 * scaling
+		 */
+		ret = mouse_set_video(exp->mouse, exp->display);
+		if (ret)
+			return log_msg_ret("msv", ret);
+		mouse_get_pos(exp->mouse, &exp->mouse_pos);
+	}
+
 	return 0;
 }
 
@@ -188,11 +199,6 @@ int expo_set_mouse_enable(struct expo *exp, bool enable)
 	ret = uclass_first_device_err(UCLASS_MOUSE, &exp->mouse);
 	if (ret)
 		return log_msg_ret("sme", ret);
-
-	/* Tell the mouse driver about the video device for coordinate scaling */
-	ret = mouse_set_video(exp->mouse, exp->display);
-	if (ret)
-		return log_msg_ret("msv", ret);
 
 	/* Get mouse pointer image and dimensions */
 	exp->mouse_ptr = video_image_getptr(riscos_arrow);
@@ -426,7 +432,7 @@ int expo_action_get(struct expo *exp, struct expo_action *act)
 	return act->type == EXPOACT_NONE ? -EAGAIN : 0;
 }
 
-int expo_apply_theme(struct expo *exp)
+int expo_apply_theme(struct expo *exp, bool do_objs)
 {
 	struct expo_theme *theme = &exp->theme;
 	struct scene *scn;
@@ -434,12 +440,14 @@ int expo_apply_theme(struct expo *exp)
 	if (exp->display)
 		video_set_white_on_black(exp->display, theme->white_on_black);
 
-	list_for_each_entry(scn, &exp->scene_head, sibling) {
-		int ret;
+	if (do_objs) {
+		list_for_each_entry(scn, &exp->scene_head, sibling) {
+			int ret;
 
-		ret = scene_apply_theme(scn, theme);
-		if (ret)
-			return log_msg_ret("asn", ret);
+			ret = scene_apply_theme(scn, theme);
+			if (ret)
+				return log_msg_ret("asn", ret);
+		}
 	}
 
 	return 0;
@@ -462,7 +470,7 @@ int expo_setup_theme(struct expo *exp, ofnode node)
 			&theme->textline_label_margin_x);
 	theme->white_on_black = ofnode_read_bool(node, "white-on-black");
 
-	ret = expo_apply_theme(exp);
+	ret = expo_apply_theme(exp, true);
 	if (ret)
 		return log_msg_ret("asn", ret);
 

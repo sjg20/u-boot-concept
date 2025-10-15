@@ -168,6 +168,8 @@ int mouse_set_ptr_visible(struct udevice *dev, bool visible);
  * Sets up the video device in the mouse uclass private data so mouse drivers
  * can scale coordinates to match the display resolution.
  *
+ * This also places the mouse in the middle of the display
+ *
  * @dev: Mouse device
  * @video_dev: Video device
  * Returns: 0 if OK, -ve on error

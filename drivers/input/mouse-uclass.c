@@ -97,6 +97,8 @@ int mouse_set_video(struct udevice *dev, struct udevice *video_dev)
 	if (video_dev) {
 		uc_priv->video_width = video_get_xsize(video_dev);
 		uc_priv->video_height = video_get_ysize(video_dev);
+		uc_priv->last_pos.x = uc_priv->video_width / 2;
+		uc_priv->last_pos.y = uc_priv->video_height / 2;
 	} else {
 		uc_priv->video_width = 0;
 		uc_priv->video_height = 0;

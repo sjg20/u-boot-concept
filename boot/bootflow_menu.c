@@ -32,13 +32,145 @@ struct menu_priv {
 	struct udevice *last_bootdev;
 };
 
+static int bootflow_menu_set_item_props(struct scene *scn,
+					int i, const struct bootflow *bflow)
+{
+	struct expo *exp = scn->expo;
+	struct abuf *buf;
+	int ret;
+
+	scene_obj_set_hide(scn, ITEM_PREVIEW + i, true);
+	ret = scene_obj_set_hide(scn, ITEM_BOX + i, true);
+	ret |= scene_obj_set_hide(scn, ITEM_VERSION_NAME + i, true);
+	scene_obj_set_hide(scn, ITEM_VERIFIED + i, true);
+	ret |= scene_obj_set_hide(scn, ITEM_KEY + i, false);
+	if (ret)
+		return log_msg_ret("msp", ret);
+
+	ret = expo_edit_str(exp, STR_DESC + i, NULL, &buf);
+	if (ret)
+		return log_msg_ret("msr", ret);
+	abuf_printf(buf, "%s", bflow->os_name ? bflow->os_name : bflow->name);
+
+	ret = expo_edit_str(exp, STR_LABEL + i, NULL, &buf);
+	if (!ret)
+		abuf_printf(buf, "%s", bootflow_guess_label(bflow));
+
+	return 0;
+}
+
+int bootflow_menu_set_props(struct expo *exp, struct scene *scn, bool has_logo,
+			    const char *title)
+{
+	struct expo_theme *theme = &exp->theme;
+	struct menu_priv *priv = exp->priv;
+	struct bootstd_priv *std;
+	struct abuf *buf;
+	int i, ret = 0;
+	bool use_font;
+
+	ret |= scene_obj_set_bbox(scn, OBJ_BOX, 30, 90, 1366 - 30, 720);
+	scene_box_set_fill(scn, OBJ_BOX, false);
+	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
+	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 32,
+				  1366, 60);
+	ret |= scene_obj_set_halign(scn, OBJ_MENU_TITLE, SCENEOA_CENTRE);
+
+	if (has_logo)
+		ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1165, 100);
+
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 590,
+				  1366, 590 + 40);
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 620,
+				  1366, 620 + 40);
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 100, 650,
+				  1366 - 100, 700);
+	ret |= scene_obj_set_bbox(scn, OBJ_AUTOBOOT, 0, 720,
+				  1366, 750);
+	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1A, SCENEOA_CENTRE);
+	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1B, SCENEOA_CENTRE);
+	ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
+	ret |= scene_obj_set_valign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
+	ret |= scene_obj_set_halign(scn, OBJ_AUTOBOOT, SCENEOA_CENTRE);
+	ret |= scene_menu_set_pointer(scn, OBJ_MENU, OBJ_POINTER);
+
+	if (ret)
+		return log_msg_ret("msp", ret);
+
+	use_font = IS_ENABLED(CONFIG_CONSOLE_TRUETYPE);
+	scene_obj_set_hide(scn, OBJ_PROMPT1A, use_font);
+	scene_obj_set_hide(scn, OBJ_PROMPT1B, !use_font);
+	scene_obj_set_hide(scn, OBJ_AUTOBOOT, use_font);
+
+	/* Set the title and prompt texts */
+	ret = expo_edit_str(exp, STR_MENU_TITLE, NULL, &buf);
+	if (ret)
+		return log_msg_ret("mss", ret);
+	abuf_printf(buf, "%s", title);
+
+	ret = expo_edit_str(exp, STR_PROMPT1A, NULL, &buf);
+	if (!ret)
+		abuf_printf(buf, "Use the \x18 and \x19 keys to select which "
+			    "entry is highlighted.");
+
+	ret = expo_edit_str(exp, STR_PROMPT1B, NULL, &buf);
+	if (!ret)
+		abuf_printf(buf, "Use the UP and DOWN keys to select which "
+			    "entry is highlighted.");
+
+	ret = expo_edit_str(exp, STR_PROMPT2, NULL, &buf);
+	if (!ret)
+		abuf_printf(buf, "Press enter to boot the selected OS, 'e' to "
+			    "edit the commands before booting or 'c' for a "
+			    "command-line. ESC to return to previous menu");
+
+	/* hide a few things we don't use */
+	scene_obj_set_hide(scn, OBJ_OTHER_LOGO, true);
+	scene_obj_set_hide(scn, OBJ_SETTINGS, true);
+	scene_obj_set_hide(scn, OBJ_HELP, true);
+
+	/* select the menu and hide the pointer */
+	scene_set_highlight_id(scn, OBJ_MENU);
+	scene_obj_set_hide(scn, OBJ_POINTER, false);
+
+	/* tell the menu to lay out its objects */
+	scene_obj_set_manual(scn, OBJ_MENU, false);
+
+	scene_obj_set_hide(scn, OBJ_POINTER, false);
+
+	theme->white_on_black = true;
+	ret = expo_apply_theme(exp, true);
+	if (ret)
+		return log_msg_ret("mat", ret);
+
+	expo_set_mouse_enable(exp, false);
+
+	exp->show_highlight = true;
+
+	ret = bootstd_get_priv(&std);
+	if (ret)
+		return ret;
+
+	for (i = 0; i < priv->num_bootflows; i++) {
+		const struct bootflow *bflow;
+
+		bflow = alist_get(&std->bootflows, i, struct bootflow);
+		if (!bflow)
+			return log_msg_ret("bmb", -ENOENT);
+		ret = bootflow_menu_set_item_props(scn, i, bflow);
+		if (ret)
+			return log_msg_ret("mst", ret);
+	}
+
+	return 0;
+}
+
 int bootflow_menu_new(struct expo **expp)
 {
 	struct scene_obj_menu *menu;
 	struct menu_priv *priv;
 	struct scene *scn;
 	struct expo *exp;
-	bool use_font;
 	void *logo;
 	int ret;
 
@@ -60,61 +192,33 @@ int bootflow_menu_new(struct expo **expp)
 	ret = scene_box(scn, "box", OBJ_BOX, 2, false, NULL);
 	if (ret < 0)
 		return log_msg_ret("bmb", ret);
-	ret |= scene_obj_set_bbox(scn, OBJ_BOX, 30, 90, 1366 - 30, 720);
 
 	ret = scene_menu(scn, "main", OBJ_MENU, &menu);
-	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
 	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
-			     "U-Boot - Boot Menu", NULL);
-	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 32,
-				  1366, 60);
-	ret |= scene_obj_set_halign(scn, OBJ_MENU_TITLE, SCENEOA_CENTRE);
+			     "", NULL);
 
 	logo = video_get_u_boot_logo(NULL);
-	if (logo) {
+	if (logo)
 		ret |= scene_img(scn, "ulogo", OBJ_U_BOOT_LOGO, logo, NULL);
-		ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1165, 100);
-	}
 
 	ret |= scene_txt_str(scn, "prompt1a", OBJ_PROMPT1A, STR_PROMPT1A,
-	     "Use the \x18 and \x19 keys to select which entry is highlighted.",
-	     NULL);
+	     "", NULL);
 	ret |= scene_txt_str(scn, "prompt1b", OBJ_PROMPT1B, STR_PROMPT1B,
-	     "Use the UP and DOWN keys to select which entry is highlighted.",
-	     NULL);
+	     "", NULL);
 	ret |= scene_txt_str(scn, "prompt2", OBJ_PROMPT2, STR_PROMPT2,
-	     "Press enter to boot the selected OS, 'e' to edit the commands "
-	     "before booting or 'c' for a command-line. ESC to return to "
-	     "previous menu", NULL);
+	     "", NULL);
 	ret |= scene_txt_str(scn, "autoboot", OBJ_AUTOBOOT, STR_AUTOBOOT,
 	     "The highlighted entry will be executed automatically in %ds.",
 	     NULL);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 590,
-				  1366, 590 + 40);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 620,
-				  1366, 620 + 40);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 100, 650,
-				  1366 - 100, 700);
-	ret |= scene_obj_set_bbox(scn, OBJ_AUTOBOOT, 0, 720,
-				  1366, 750);
-	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1A, SCENEOA_CENTRE);
-	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1B, SCENEOA_CENTRE);
-	ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
-	ret |= scene_obj_set_valign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
-	ret |= scene_obj_set_halign(scn, OBJ_AUTOBOOT, SCENEOA_CENTRE);
-
-	use_font = IS_ENABLED(CONFIG_CONSOLE_TRUETYPE);
-	scene_obj_set_hide(scn, OBJ_PROMPT1A, use_font);
-	scene_obj_set_hide(scn, OBJ_PROMPT1B, !use_font);
-	scene_obj_set_hide(scn, OBJ_AUTOBOOT, use_font);
 
 	ret |= scene_txt_str(scn, "cur_item", OBJ_POINTER, STR_POINTER, ">",
 			     NULL);
-	ret |= scene_menu_set_pointer(scn, OBJ_MENU, OBJ_POINTER);
 	if (ret < 0)
 		return log_msg_ret("new", -EINVAL);
 
-	exp->show_highlight = true;
+	ret = bootflow_menu_set_props(exp, scn, logo, "U-Boot - Boot Menu");
+	if (ret < 0)
+		return log_msg_ret("nep", -EINVAL);
 
 	*expp = exp;
 
@@ -125,9 +229,8 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 		      struct scene **scnp)
 {
 	struct menu_priv *priv = exp->priv;
-	char str[2], *label, *key;
+	char str[2], *key;
 	struct scene *scn;
-	const char *name;
 	uint preview_id;
 	uint scene_id;
 	bool add_gap;
@@ -145,14 +248,6 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 	if (!key)
 		return log_msg_ret("key", -ENOMEM);
 
-	name = bootflow_guess_label(bflow);
-	label = strdup(name);
-
-	if (!label) {
-		free(key);
-		return log_msg_ret("nam", -ENOMEM);
-	}
-
 	add_gap = priv->last_bootdev != bflow->dev;
 
 	/* disable this gap for now, since it looks a little ugly */
@@ -161,12 +256,15 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 
 	ret = expo_str(exp, "prompt", STR_POINTER, ">");
 	ret |= scene_txt_str(scn, "label", ITEM_LABEL + seq,
-			      STR_LABEL + seq, label, NULL);
+			      STR_LABEL + seq, "", NULL);
 	ret |= scene_txt_str(scn, "desc", ITEM_DESC + seq, STR_DESC + seq,
-			    bflow->os_name ? bflow->os_name :
-			    bflow->name, NULL);
+			     "", NULL);
 	ret |= scene_txt_str(scn, "key", ITEM_KEY + seq, STR_KEY + seq, key,
 			      NULL);
+	ret |= scene_box(scn, "item-box", ITEM_BOX + seq, 1, false, NULL);
+	ret |= scene_txt_str(scn, "version", ITEM_VERSION_NAME + seq,
+			     STR_VERSION_NAME + seq, "", NULL);
+
 	preview_id = 0;
 	if (bflow->logo) {
 		preview_id = ITEM_PREVIEW + seq;
@@ -178,9 +276,13 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 				  ITEM_DESC + seq, preview_id,
 				  add_gap ? SCENEMIF_GAP_BEFORE : 0,
 				  NULL);
-
 	if (ret < 0)
 		return log_msg_ret("itm", -EINVAL);
+
+	ret = bootflow_menu_set_item_props(scn, seq, bflow);
+	if (ret)
+		return log_msg_ret("itp", -EINVAL);
+
 	priv->num_bootflows++;
 	*scnp = scn;
 
