@@ -60,6 +60,7 @@ static int simple_ui_show(struct udevice *dev)
 {
 	struct bc_ui_priv *upriv = dev_get_uclass_priv(dev);
 	struct logic_priv *lpriv = upriv->lpriv;
+	struct expo_theme *theme;
 	struct bootstd_priv *std;
 	struct scene *scn;
 	struct abuf *buf;
@@ -107,6 +108,12 @@ static int simple_ui_show(struct udevice *dev)
 		if (ret)
 			return log_msg_ret("thm", ret);
 	}
+	theme = &upriv->expo->theme;
+	theme->white_on_black = true;
+
+	ret = expo_apply_theme(upriv->expo, true);
+	if (ret)
+		return log_msg_ret("asn", ret);
 
 	ret = scene_arrange(scn);
 	if (ret)
@@ -144,11 +151,11 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 	ret = bootstd_get_priv(&std);
 	if (ret)
 		return log_msg_ret("sup", ret);
-	if (ofnode_valid(std->theme)) {
-		ret = expo_setup_theme(upriv->expo, std->theme);
-		if (ret)
-			return log_msg_ret("thm", ret);
-	}
+
+	ret = expo_apply_theme(upriv->expo, true);
+	if (ret)
+		return log_msg_ret("asn", ret);
+
 	ret = expo_calc_dims(upriv->expo);
 	if (ret)
 		return log_msg_ret("ecd", ret);
