@@ -115,10 +115,17 @@
 #endif
 	};
 
-	ui {
+	ui-multi {
 		compatible = "bootctl,multiboot-ui", "bootctl,simple-ui",
 			"bootctl,ui";
 		graphical = "if-available";
 		textual = "if-available";
 	};
+
+	ui-simple {
+		compatible = "bootctl,simple-ui", "bootctl,ui";
+		graphical = "if-available";
+		textual = "if-available";
+	};
+
 };
