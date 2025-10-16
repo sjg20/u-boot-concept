@@ -11,14 +11,21 @@
 
 #include <stdbool.h>
 #include <bootctl.h>
+#include <bootflow.h>
 #include <bootmeth.h>
+#include <bootstd.h>
 #include <dm.h>
+#include <expo.h>
 #include <os.h>
 #include <test/ut.h>
+#include <test/video.h>
 #include "bootctl_common.h"
+#include <bootctl/logic.h>
 #include <bootctl/measure.h>
 #include <bootctl/oslist.h>
 #include <bootctl/state.h>
+#include <bootctl/ui.h>
+#include <dm/lists.h>
 #include "../bootstd_common.h"
 
 /* test that expected devices are available and can be probed */
@@ -27,10 +34,10 @@ static int bootctl_base(struct unit_test_state *uts)
 	struct udevice *dev;
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_UI, &dev));
-	ut_asserteq_str("ui", dev->name);
+	ut_asserteq_str("ui-multi", dev->name);
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &dev));
-	ut_asserteq_str("oslist", dev->name);
+	ut_asserteq_str("oslist-extlinux", dev->name);
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
 	ut_asserteq_str("state", dev->name);
@@ -48,7 +55,7 @@ static int bootctl_oslist(struct unit_test_state *uts)
 	struct udevice *dev;
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &dev));
-	ut_asserteq_str("oslist", dev->name);
+	ut_asserteq_str("oslist-extlinux", dev->name);
 
 	/* initially we should only see Fedora */
 	bc_oslist_setup_iter(&iter);
@@ -74,7 +81,7 @@ static int bootctl_oslist_usb(struct unit_test_state *uts)
 	bootstd_reset_usb();
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &dev));
-	ut_asserteq_str("oslist", dev->name);
+	ut_asserteq_str("oslist-extlinux", dev->name);
 
 	/* include usb in the bootdev order */
 	ut_assertok(bootdev_set_order("mmc usb"));
@@ -325,3 +332,169 @@ static int bootctl_simple_measure(struct unit_test_state *uts)
 	return 0;
 }
 BOOTCTL_TEST(bootctl_simple_measure, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);
+
+static int check_multiboot_ui(struct unit_test_state *uts,
+			      struct bootstd_priv *std)
+{
+	struct udevice *oslist_dev, *ui_dev, *vid_dev;
+	struct membuf buf1, buf2, buf3, buf4;
+	char *data1, *data2, *data3, *data4;
+	struct bc_ui_priv *uc_priv;
+	struct udevice *logic_dev;
+	struct logic_priv *lpriv;
+	struct oslist_iter iter;
+	struct osinfo info[2];
+	int len;
+
+	test_set_skip_delays(true);
+	bootstd_reset_usb();
+
+	/* get the oslist device and find two OSes */
+	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &oslist_dev));
+	ut_asserteq_str("oslist-extlinux", oslist_dev->name);
+
+	bc_oslist_setup_iter(&iter);
+	ut_assertok(bc_oslist_next(oslist_dev, &iter, &info[0]));
+	ut_asserteq_str("mmc11.bootdev.part_1", info[0].bflow.name);
+
+	ut_assertok(bc_oslist_next(oslist_dev, &iter, &info[1]));
+	ut_asserteq_str("hub1.p4.usb_mass_storage.lun0.bootdev.part_1",
+			info[1].bflow.name);
+
+	test_set_skip_delays(false);
+
+	/* first use simple_ui as baseline */
+	ut_assertok(uclass_get_device_by_name(UCLASS_BOOTCTL_UI, "ui-simple",
+					      &ui_dev));
+	ut_assertok(bc_ui_show(ui_dev));
+	ut_assertok(bc_ui_add(ui_dev, &info[0]));
+	ut_assertok(bc_ui_add(ui_dev, &info[1]));
+	ut_assertok(bc_ui_render(ui_dev));
+	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &vid_dev));
+	ut_asserteq(22656, video_compress_fb(uts, vid_dev, false));
+
+	/* dump the simple_ui expo - buf1 is golden for simple_ui */
+	uc_priv = dev_get_uclass_priv(ui_dev);
+	ut_assertok(membuf_new(&buf1, 4096));
+	expo_dump(uc_priv->expo, &buf1);
+	len = membuf_getraw(&buf1, -1, false, &data1);
+	ut_assert(len > 0);
+	if (_DEBUG)
+		ut_assertok(os_write_file("simple_ui.txt", data1, len));
+
+	/* clear out osinfo and bootflows before using ui2 */
+	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL, &logic_dev));
+	lpriv = dev_get_priv(logic_dev);
+	alist_empty(&lpriv->osinfo);
+
+	alist_empty(&std->bootflows);
+
+	/* now use multiboot_ui - this is the initial multiboot state */
+	ut_assertok(uclass_get_device_by_name(UCLASS_BOOTCTL_UI, "ui-multi",
+					      &ui_dev));
+	ut_assertok(bc_ui_show(ui_dev));
+	ut_assertok(bc_ui_add(ui_dev, &info[0]));
+	ut_assertok(bc_ui_add(ui_dev, &info[1]));
+	ut_assertok(bc_ui_render(ui_dev));
+	ut_asserteq(16645, video_compress_fb(uts, vid_dev, false));
+
+	/* dump after render - buf2 is golden for multiboot_ui */
+	uc_priv = dev_get_uclass_priv(ui_dev);
+	ut_assertok(membuf_new(&buf2, 4096));
+	expo_dump(uc_priv->expo, &buf2);
+	len = membuf_getraw(&buf2, -1, false, &data2);
+	ut_assert(len > 0);
+	if (_DEBUG)
+		ut_assertok(os_write_file("multiboot_ui.txt", data2, len));
+
+	/* switch to simple_ui layout and check against buf1 */
+	ut_assertok(bc_ui_switch_layout(ui_dev));
+	ut_assertok(bc_ui_render(ui_dev));
+	ut_asserteq(22656, video_compress_fb(uts, vid_dev, false));
+
+	/* dump after switch to simple_ui - buf3 should match buf1 */
+	ut_assertok(membuf_new(&buf3, 4096));
+	expo_dump(uc_priv->expo, &buf3);
+	len = membuf_getraw(&buf3, -1, false, &data3);
+	ut_assert(len > 0);
+	if (_DEBUG)
+		ut_assertok(os_write_file("multiboot_ui_switched.txt", data3,
+					  len));
+
+	/* compare buf3 against buf1 (simple_ui golden) */
+	if (strcmp(data1, data3)) {
+		printf("Expo dumps differ after switch to simple_ui!\n");
+		if (_DEBUG) {
+			puts("simple_ui:\n");
+			puts(data1);
+			puts("multiboot_ui_switched:\n");
+			puts(data3);
+		}
+	}
+
+	/* switch back to multiboot UI style and check against buf2 */
+	ut_assertok(bc_ui_switch_layout(ui_dev));
+	ut_assertok(bc_ui_render(ui_dev));
+	ut_asserteq(16645, video_compress_fb(uts, vid_dev, false));
+
+	/* dump after switch back to multiboot - buf4 should match buf2 */
+	ut_assertok(membuf_new(&buf4, 4096));
+	expo_dump(uc_priv->expo, &buf4);
+	len = membuf_getraw(&buf4, -1, false, &data4);
+	ut_assert(len > 0);
+	if (_DEBUG)
+		ut_assertok(os_write_file("multiboot_ui_switched_back.txt",
+					  data4, len));
+
+	/* compare buf4 against buf2 (multiboot_ui golden) */
+	if (strcmp(data2, data4)) {
+		printf("Expo dumps differ after switch back to multiboot!\n");
+		if (_DEBUG) {
+			puts("multiboot_ui:\n");
+			puts(data2);
+			puts("multiboot_ui_switched_back:\n");
+			puts(data4);
+		}
+	}
+
+	membuf_dispose(&buf1);
+	membuf_dispose(&buf2);
+	membuf_dispose(&buf3);
+	membuf_dispose(&buf4);
+
+	return 0;
+}
+
+/* test creating multiboot_ui with two OSes */
+static int bootctl_multiboot_ui(struct unit_test_state *uts)
+{
+	static const char *order[3];
+	struct bootstd_priv *std;
+	const char **old_order;
+	struct udevice *dev;
+	ofnode root, node;
+	int ret;
+
+	order[0] = "mmc11";
+	order[1] = "usb3";
+	order[2] = NULL;
+
+	/* Enable the requested mmc node since we need a second bootflow */
+	root = oftree_root(oftree_default());
+	node = ofnode_find_subnode(root, "mmc11");
+	ut_assert(ofnode_valid(node));
+	ut_assertok(lists_bind_fdt(gd->dm_root, node, &dev, NULL, false));
+
+	/* Change the order to include the device */
+	ut_assertok(bootstd_get_priv(&std));
+	old_order = std->bootdev_order;
+	std->bootdev_order = order;
+
+	ret = check_multiboot_ui(uts, std);
+
+	std->bootdev_order = old_order;
+	ut_assertok(ret);
+
+	return 0;
+}
+BOOTCTL_TEST(bootctl_multiboot_ui, UTF_DM | UTF_SCAN_FDT);
