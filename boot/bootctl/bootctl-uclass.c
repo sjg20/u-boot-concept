@@ -10,6 +10,7 @@
 
 #include <bootctl.h>
 #include <dm.h>
+#include <bootctl/ui.h>
 
 UCLASS_DRIVER(bootctrl) = {
 	.id		= UCLASS_BOOTCTL,
@@ -42,4 +43,5 @@ UCLASS_DRIVER(bootctrl_ui) = {
 	.id		= UCLASS_BOOTCTL_UI,
 	.name		= "bootctrl_ui",
 	.per_device_plat_auto	= sizeof(struct bootctl_uc_plat),
+	.per_device_auto	= sizeof(struct bc_ui_priv),
 };
