@@ -95,6 +95,21 @@ int bc_ui_poll(struct udevice *disp, int *seqp, bool *selectedp)
 	return ret;
 }
 
+int bc_ui_switch_layout(struct udevice *dev)
+{
+	struct bc_ui_ops *ops = bc_ui_get_ops(dev);
+	int ret;
+
+	if (!ops->switch_layout)
+		return -ENOSYS;
+
+	ret = ops->switch_layout(dev);
+	if (ret)
+		return log_msg_ret("bsl", ret);
+
+	return 0;
+}
+
 void bc_oslist_setup_iter(struct oslist_iter *iter)
 {
 	memset(iter, '\0', sizeof(struct oslist_iter));

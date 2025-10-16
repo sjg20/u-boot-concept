@@ -91,6 +91,14 @@ struct bc_ui_ops {
 	 *	-ve on error
 	 */
 	int (*poll)(struct udevice *dev, int *seqp, bool *selectedp);
+
+	/**
+	 * switch_layout() - Switch between different UI layout modes
+	 *
+	 * @dev: Display device
+	 * Return 0 if OK, -ve on error
+	 */
+	int (*switch_layout)(struct udevice *dev);
 };
 
 #define bc_ui_get_ops(dev)  ((struct bc_ui_ops *)(dev)->driver->ops)
@@ -131,5 +139,13 @@ int bc_ui_render(struct udevice *dev);
  *	-ve on error
  */
 int bc_ui_poll(struct udevice *dev, int *seqp, bool *selectedp);
+
+/**
+ * bc_ui_switch_layout() - Switch between different UI layout modes
+ *
+ * @dev: Display device
+ * Return 0 if OK, -ve on error
+ */
+int bc_ui_switch_layout(struct udevice *dev);
 
 #endif
