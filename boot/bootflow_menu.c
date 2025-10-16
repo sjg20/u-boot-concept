@@ -418,6 +418,8 @@ int bootflow_menu_poll(struct expo *exp, int *seqp)
 	case EXPOACT_CLICK:
 		if (act.select.id == OBJ_SETTINGS)
 			return -ECOMM;  /* layout change request */
+	case EXPOACT_SETTINGS:
+		return -ECOMM;  /* layout change request */
 	default:
 		return -EAGAIN;
 	}
