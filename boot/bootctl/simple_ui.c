@@ -59,6 +59,7 @@ static int simple_ui_print(struct udevice *dev, const char *msg)
 static int simple_ui_show(struct udevice *dev)
 {
 	struct bc_ui_priv *upriv = dev_get_uclass_priv(dev);
+	struct logic_priv *lpriv = upriv->lpriv;
 	struct bootstd_priv *std;
 	struct scene *scn;
 	struct abuf *buf;
@@ -78,7 +79,7 @@ static int simple_ui_show(struct udevice *dev)
 	scene_id = ret;
 	scn = expo_lookup_scene_id(upriv->expo, scene_id);
 
-	scene_obj_set_hide(scn, OBJ_AUTOBOOT, false);
+	scene_obj_set_hide(scn, OBJ_AUTOBOOT, !lpriv->opt_autoboot);
 	ret = expo_edit_str(upriv->expo, STR_AUTOBOOT,
 			    &upriv->autoboot_template,
 			    &upriv->autoboot_str);
