@@ -26,6 +26,7 @@ struct udevice;
  * be used to boot
  * @opt_autoboot: true to autoboot the default OS after a timeout
  * @opt_measure: true to measure loaded images, etc.
+ * @opt_slow_refresh: refresh the UI only when needed
  *
  * @state_loaded: true if the state information has been loaded
  * @scanning: true if scanning for new OSes
@@ -55,6 +56,7 @@ struct logic_priv {
 	const char *opt_labels;
 	bool opt_autoboot;
 	bool opt_measure;
+	bool opt_slow_refresh;
 
 	bool state_loaded;
 	bool state_saved;
