@@ -149,6 +149,7 @@ enum uclass_id {
 	UCLASS_SYSINFO,		/* Device information from hardware */
 	UCLASS_SYSRESET,	/* System reset device */
 	UCLASS_TCPM,		/* TypeC port manager */
+	UCLASS_TKEY,		/* Tillitis TKey security token */
 	UCLASS_TEE,		/* Trusted Execution Environment device */
 	UCLASS_THERMAL,		/* Thermal sensor */
 	UCLASS_TIMER,		/* Timer device */
