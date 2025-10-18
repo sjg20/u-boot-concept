@@ -121,6 +121,10 @@ def get_next_line(tree, name):
 @pytest.mark.buildconfigspec('cmd_bind')
 @pytest.mark.singlethread
 def test_bind_unbind_with_uclass(ubman):
+    # Ensure /bind-test is unbound, since it may be bound from DT or the
+    # previous tests
+    ubman.run_command('unbind /bind-test')
+
     #bind /bind-test
     response = ubman.run_command('bind  /bind-test simple_bus')
     assert response == ''
