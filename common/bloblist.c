@@ -63,6 +63,7 @@ static struct tag_name {
 	{ BLOBLISTT_U_BOOT_SPL_HANDOFF, "SPL hand-off" },
 	{ BLOBLISTT_VBE, "VBE" },
 	{ BLOBLISTT_U_BOOT_VIDEO, "SPL video handoff" },
+	{ BLOBLISTT_EFI_LOG, "EFI-call log" },
 
 	/* BLOBLISTT_VENDOR_AREA */
 };
