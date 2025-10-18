@@ -23,6 +23,11 @@ struct udevice;
 #define TKEY_DISK_KEY_SIZE		32
 #define TKEY_HASH_SIZE			32
 
+/* Embedded TKey signer binary */
+extern char __signer_1_0_0_begin[];
+extern char __signer_1_0_0_end[];
+#define TKEY_SIGNER_SIZE	(__signer_1_0_0_end - __signer_1_0_0_begin)
+
 /**
  * struct tkey_ops - The functions that a TKey driver must implement.
  *

@@ -6,6 +6,7 @@
 obj-$(CONFIG_$(PHASE_)MISC) += misc-uclass.o
 obj-$(CONFIG_$(PHASE_)NVMEM) += nvmem.o
 obj-$(CONFIG_TKEY) += tkey-uclass.o
+obj-$(CONFIG_TKEY) += signer-1.0.0.o
 
 obj-$(CONFIG_$(PHASE_)CROS_EC) += cros_ec.o
 obj-$(CONFIG_$(PHASE_)CROS_EC_SANDBOX) += cros_ec_sandbox.o
