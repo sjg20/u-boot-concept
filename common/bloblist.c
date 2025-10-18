@@ -356,6 +356,38 @@ int bloblist_resize(uint tag, int new_size)
 	return 0;
 }
 
+int bloblist_remove(uint tag)
+{
+	struct bloblist_hdr *hdr = gd->bloblist;
+	struct bloblist_rec *rec;
+	ulong rec_start;	/* offset where record starts */
+	ulong next_ofs;		/* offset of the record after @rec */
+	ulong removed_size;	/* total size to remove, including alignment */
+
+	rec = bloblist_findrec(tag);
+	if (!rec)
+		return log_msg_ret("find", -ENOENT);
+
+	/* Calculate where this record starts and where the next one begins */
+	rec_start = (void *)rec - (void *)hdr;
+	next_ofs = bloblist_blob_end_ofs(hdr, rec);
+
+	/* Calculate total size to remove (record + alignment) */
+	removed_size = next_ofs - rec_start;
+
+	/* Move all following blobs backward to fill the gap */
+	if (next_ofs < hdr->used_size) {
+		memmove((void *)hdr + rec_start,
+			(void *)hdr + next_ofs,
+			hdr->used_size - next_ofs);
+	}
+
+	/* Update the used size */
+	hdr->used_size -= removed_size;
+
+	return 0;
+}
+
 static u32 bloblist_calc_chksum(struct bloblist_hdr *hdr)
 {
 	u8 chksum;
