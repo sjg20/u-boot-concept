@@ -27,6 +27,7 @@ def in_tree(response, name, uclass, drv, depth, last_child):
 
 @pytest.mark.boardspec('sandbox')
 @pytest.mark.buildconfigspec('cmd_bind')
+@pytest.mark.slow
 def test_bind_unbind_with_node(ubman):
 
     tree = ubman.run_command('dm tree')
