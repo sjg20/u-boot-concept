@@ -5,7 +5,7 @@
 # (C) Copyright 2000-2003
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
-obj-y	:= cache.o cpu.o mem.o state.o os.o
+obj-y	:= cache.o cpu.o mem.o state.o os.o tty.o
 ifdef CONFIG_FUZZ
 obj-y	+= fuzz.o
 else
@@ -17,7 +17,7 @@ obj-$(CONFIG_XPL_BUILD)	+= spl.o
 obj-$(CONFIG_ETH_SANDBOX_RAW)	+= eth-raw-os.o
 
 # Compile these files with system headers
-CFLAGS_USE_SYSHDRS := eth-raw-os.o fuzz.o main.o os.o sdl.o
+CFLAGS_USE_SYSHDRS := eth-raw-os.o fuzz.o main.o os.o sdl.o tty.o
 
 # sdl.c fails to build with -fshort-wchar using musl
 cmd_cc_sdl.o = $(CC) $(filter-out -nostdinc -fshort-wchar, \
