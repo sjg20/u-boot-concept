@@ -356,6 +356,11 @@
 		clock-frequency = <1000000>;
 	};
 
+	tkey-test {
+		compatible = "sandbox,tkey";
+		sandbox,device-path = "/dev/ttyACM0";
+	};
+
 	tpm {
 		compatible = "google,sandbox-tpm";
 	};

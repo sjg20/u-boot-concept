@@ -426,6 +426,9 @@ static int ns16550_serial_setbrg(struct udevice *dev, int baudrate)
 	struct ns16550_plat *plat = com_port->plat;
 	int clock_divisor;
 
+	if (plat->skip_init)
+		return 0;
+
 	clock_divisor = ns16550_calc_divisor(com_port, plat->clock, baudrate);
 
 	ns16550_setbrg(com_port, clock_divisor);
@@ -436,10 +439,14 @@ static int ns16550_serial_setbrg(struct udevice *dev, int baudrate)
 static int ns16550_serial_setconfig(struct udevice *dev, uint serial_config)
 {
 	struct ns16550 *const com_port = dev_get_priv(dev);
+	struct ns16550_plat *plat = com_port->plat;
 	int lcr_val = UART_LCR_WLS_8;
 	uint parity = SERIAL_GET_PARITY(serial_config);
 	uint bits = SERIAL_GET_BITS(serial_config);
 	uint stop = SERIAL_GET_STOP(serial_config);
+
+	if (plat->skip_init)
+		return 0;
 
 	/*
 	 * only parity config is implemented, check if other serial settings
@@ -533,7 +540,8 @@ int ns16550_serial_probe(struct udevice *dev)
 		reset_deassert_bulk(&reset_bulk);
 
 	com_port->plat = dev_get_plat(dev);
-	ns16550_init(com_port, -1);
+	if (!plat->skip_init)
+		ns16550_init(com_port, -1);
 
 	return 0;
 }
@@ -588,6 +596,8 @@ int ns16550_serial_of_to_plat(struct udevice *dev)
 	plat->fcr = UART_FCR_DEFVAL;
 	if (port_type == PORT_JZ4780)
 		plat->fcr |= UART_FCR_UME;
+
+	plat->skip_init = dev_read_bool(dev, "skip-init");
 
 	return 0;
 }

@@ -502,6 +502,26 @@ cmd_S_ttf=						\
 $(obj)/%.S: $(src)/%.ttf
 	$(call cmd,S_ttf)
 
+# TKey signer binary
+# ---------------------------------------------------------------------------
+
+# Generate an assembly file to wrap the TKey signer binary
+quiet_cmd_S_signer= SIGNER  $@
+cmd_S_signer=						\
+(							\
+	echo '.section .rodata.signer.init,"a"';	\
+	echo '.balign 16';				\
+	echo '.global __signer_$(subst .,_,$(*F))_begin';		\
+	echo '__signer_$(subst .,_,$(*F))_begin:';			\
+	echo '.incbin "$<" ';				\
+	echo '__signer_$(subst .,_,$(*F))_end:';			\
+	echo '.global __signer_$(subst .,_,$(*F))_end';		\
+	echo '.balign 16';				\
+) > $@
+
+$(obj)/signer-%.S: $(src)/signer.bin-v%
+	$(call cmd,S_signer)
+
 # Splash logos
 # ---------------------------------------------------------------------------
 

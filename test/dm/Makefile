@@ -121,6 +121,7 @@ obj-$(CONFIG_SYSINFO) += sysinfo.o
 obj-$(CONFIG_SYSINFO_GPIO) += sysinfo-gpio.o
 obj-$(CONFIG_UT_DM) += tag.o
 obj-$(CONFIG_TEE) += tee.o
+obj-$(CONFIG_TKEY) += tkey.o
 obj-$(CONFIG_TIMER) += timer.o
 obj-$(CONFIG_TPM_V2) += tpm.o
 obj-$(CONFIG_DM_USB) += usb.o

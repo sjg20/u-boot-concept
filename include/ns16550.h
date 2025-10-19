@@ -66,6 +66,7 @@ enum ns16550_flags {
  * @fcr:		Offset of FCR register (normally UART_FCR_DEFVAL)
  * @flags:		A few flags (enum ns16550_flags)
  * @bdf:		PCI slot/function (pci_dev_t)
+ * @skip_init:		Skip UART initialization (preserve existing settings)
  */
 struct ns16550_plat {
 	ulong base;
@@ -79,6 +80,7 @@ struct ns16550_plat {
 #if defined(CONFIG_PCI) && defined(CONFIG_SPL)
 	int bdf;
 #endif
+	bool skip_init;
 };
 
 struct udevice;

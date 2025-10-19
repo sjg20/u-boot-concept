@@ -33,6 +33,17 @@ config TPL_MISC
 	  set of generic read, write and ioctl methods may be used to
 	  access the device.
 
+config TKEY
+	bool "TKey security token support"
+	depends on DM
+	default y if SANDBOX
+	select BLAKE2
+	help
+	  Enable driver model support for Tillitis TKey security tokens.
+	  This provides a common interface for TKey operations including
+	  reading device information, getting the unique device identifier
+	  (UDI), and communicating with the device.
+
 config VPL_MISC
 	bool "Enable Driver Model for Misc drivers in VPL"
 	depends on VPL_DM

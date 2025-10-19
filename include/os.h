@@ -186,6 +186,18 @@ void os_raise_sigalrm(void);
 void os_tty_raw(int fd, bool allow_sigs);
 
 /**
+ * os_tty_set_params() - configure terminal parameters
+ *
+ * Configure the terminal device for serial communication with specific
+ * baud rate, data bits, parity, and flow control suitable for embedded
+ * device protocols like TKey.
+ *
+ * @fd:		file descriptor of terminal device
+ * Return:	0 on success, -errno on error
+ */
+int os_tty_set_params(int fd);
+
+/**
  * os_fd_restore() - restore the tty to its original mode
  *
  * Call this to restore the original terminal mode, after it has been changed

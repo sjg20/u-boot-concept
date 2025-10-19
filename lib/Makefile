@@ -79,7 +79,7 @@ obj-$(CONFIG_$(PHASE_)ACPI) += acpi/
 obj-$(CONFIG_ECDSA) += ecdsa/
 obj-$(CONFIG_$(PHASE_)RSA) += rsa/
 obj-$(CONFIG_HASH) += hash-checksum.o
-obj-$(CONFIG_BLAKE2) += blake2/blake2b.o
+obj-$(CONFIG_BLAKE2) += blake2/blake2b.o blake2/blake2s.o
 
 obj-$(CONFIG_$(PHASE_)MD5_LEGACY) += md5.o
 obj-$(CONFIG_$(PHASE_)SHA1_LEGACY) += sha1.o

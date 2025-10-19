@@ -5,6 +5,8 @@
 
 obj-$(CONFIG_$(PHASE_)MISC) += misc-uclass.o
 obj-$(CONFIG_$(PHASE_)NVMEM) += nvmem.o
+obj-$(CONFIG_TKEY) += tkey-uclass.o
+obj-$(CONFIG_TKEY) += signer-1.0.0.o
 
 obj-$(CONFIG_$(PHASE_)CROS_EC) += cros_ec.o
 obj-$(CONFIG_$(PHASE_)CROS_EC_SANDBOX) += cros_ec_sandbox.o
@@ -16,6 +18,10 @@ obj-$(CONFIG_CROS_EC_I2C) += cros_ec_i2c.o
 obj-$(CONFIG_CROS_EC_SPI) += cros_ec_spi.o
 obj-$(CONFIG_SANDBOX) += p2sb_sandbox.o p2sb_emul.o
 obj-$(CONFIG_SANDBOX) += swap_case.o
+ifdef CONFIG_SANDBOX
+obj-$(CONFIG_TKEY) += tkey_emul.o
+obj-$(CONFIG_TKEY) += tkey_sandbox.o
+endif
 endif
 
 ifdef CONFIG_$(PHASE_)DM_I2C

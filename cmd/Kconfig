@@ -2390,6 +2390,16 @@ config CMD_MP
 	  This enables commands to bringup different processors
 	  in multiprocessor cases.
 
+config CMD_TKEY
+	bool "tkey - Tillitis TKey operations"
+	depends on TKEY
+	default y
+	help
+	  The allows interacting with a Tillitis TKey security token,
+	  including connecting to the device, getting device information and
+	  creating cryptographic wrapping keys from passwords combined with
+	  device secrets.
+
 config CMD_TIMER
 	bool "timer"
 	help
