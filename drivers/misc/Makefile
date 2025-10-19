@@ -20,6 +20,7 @@ obj-$(CONFIG_SANDBOX) += p2sb_sandbox.o p2sb_emul.o
 obj-$(CONFIG_SANDBOX) += swap_case.o
 ifdef CONFIG_SANDBOX
 obj-$(CONFIG_TKEY) += tkey_emul.o
+obj-$(CONFIG_TKEY) += tkey_sandbox.o
 endif
 endif
 
