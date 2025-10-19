@@ -11,4 +11,5 @@ obj-y += logic.o
 obj-y += simple_meas.o
 obj-y += simple_state.o
 obj-y += simple_ui.o
+obj-y += multi_ui.o
 obj-y += util.o

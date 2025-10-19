@@ -411,6 +411,7 @@ def _check_template_change(env, prev_esl_mtime, prev_dtsi_mtime):
 
 
 @pytest.mark.boardspec('sandbox')
+@pytest.mark.slow
 def test_dep_hwids(ubman):
     """Test that Makefile dependency tracking works without FORCE
 
@@ -432,6 +433,7 @@ def test_dep_hwids(ubman):
 
 
 @pytest.mark.boardspec('sandbox')
+@pytest.mark.slow
 def test_dep_dtbo(ubman):
     """Test that dtbo dependency tracking works without FORCE
 
@@ -450,6 +452,7 @@ def test_dep_dtbo(ubman):
 
 
 @pytest.mark.boardspec('sandbox')
+@pytest.mark.slow
 def test_dep_esl(ubman):
     """Test that ESL dependency tracking works without FORCE
 

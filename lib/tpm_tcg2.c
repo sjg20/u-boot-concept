@@ -671,7 +671,7 @@ void tcg2_measurement_term(struct udevice *dev, struct tcg2_event_log *elog,
 		unmap_physmem(elog->log, MAP_NOCACHE);
 }
 
-__weak int tcg2_platform_get_log(struct udevice *dev, void **addr, u32 *size)
+__weak int tcg2_platform_get_log(struct udevice *dev, void **ptrp, u32 *sizep)
 {
 	const __be32 *addr_prop = NULL;
 	const __be32 *size_prop = NULL;
@@ -680,13 +680,14 @@ __weak int tcg2_platform_get_log(struct udevice *dev, void **addr, u32 *size)
 	struct ofnode_phandle_args args;
 	phys_addr_t a;
 	fdt_size_t s;
+	void *ptr;
+	int size;
 
-	*addr = NULL;
-	*size = 0;
+	ptr = bloblist_get_blob(BLOBLISTT_TPM_EVLOG, &size);
+	if (ptr && size) {
+		ulong addr = map_to_sysmem(ptr);
 
-	*addr = bloblist_get_blob(BLOBLISTT_TPM_EVLOG, size);
-	if (*addr && *size) {
-		*addr = map_physmem((uintptr_t)(*addr), *size, MAP_NOCACHE);
+		*ptrp = map_physmem(addr, size, MAP_NOCACHE);
 		return 0;
 	}
 
@@ -714,8 +715,8 @@ __weak int tcg2_platform_get_log(struct udevice *dev, void **addr, u32 *size)
 		u64 a = of_read_number(addr_prop, asize / sizeof(__be32));
 		u64 s = of_read_number(size_prop, ssize / sizeof(__be32));
 
-		*addr = map_physmem(a, s, MAP_NOCACHE);
-		*size = (u32)s;
+		*ptrp = map_physmem(a, s, MAP_NOCACHE);
+		*sizep = (u32)s;
 
 		return 0;
 	}
@@ -727,8 +728,8 @@ __weak int tcg2_platform_get_log(struct udevice *dev, void **addr, u32 *size)
 	if (a == FDT_ADDR_T_NONE)
 		return -ENOMEM;
 
-	*addr = map_physmem(a, s, MAP_NOCACHE);
-	*size = (u32)s;
+	*ptrp = map_physmem(a, s, MAP_NOCACHE);
+	*sizep = (u32)s;
 
 	return 0;
 }

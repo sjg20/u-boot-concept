@@ -10,10 +10,37 @@
 #define __bootctl_display_h
 
 #include <stdbool.h>
+#include <abuf.h>
 
+struct expo;
+struct logic_priv;
 struct osinfo;
 struct oslist_iter;
+struct scene;
 struct udevice;
+
+/**
+ * struct bc_ui_priv - Common uclass private data for UI devices
+ *
+ * @expo: Expo containing the menu
+ * @scn: Current scene being shown
+ * @lpriv: Private data of logic device
+ * @console: vidconsole device in use
+ * @autoboot_template: template string to use for autoboot
+ * @autoboot_str: current string displayed for autoboot timeout
+ * @logo: logo in bitmap format, NULL to use default
+ * @logo_size: size of the logo in bytes
+ */
+struct bc_ui_priv {
+	struct expo *expo;
+	struct scene *scn;
+	struct logic_priv *lpriv;
+	struct udevice *console;
+	struct abuf autoboot_template;
+	struct abuf *autoboot_str;
+	const void *logo;
+	int logo_size;
+};
 
 /**
  * struct bc_ui_ops - Operations for displays
@@ -64,6 +91,14 @@ struct bc_ui_ops {
 	 *	-ve on error
 	 */
 	int (*poll)(struct udevice *dev, int *seqp, bool *selectedp);
+
+	/**
+	 * switch_layout() - Switch between different UI layout modes
+	 *
+	 * @dev: Display device
+	 * Return 0 if OK, -ve on error
+	 */
+	int (*switch_layout)(struct udevice *dev);
 };
 
 #define bc_ui_get_ops(dev)  ((struct bc_ui_ops *)(dev)->driver->ops)
@@ -104,5 +139,13 @@ int bc_ui_render(struct udevice *dev);
  *	-ve on error
  */
 int bc_ui_poll(struct udevice *dev, int *seqp, bool *selectedp);
+
+/**
+ * bc_ui_switch_layout() - Switch between different UI layout modes
+ *
+ * @dev: Display device
+ * Return 0 if OK, -ve on error
+ */
+int bc_ui_switch_layout(struct udevice *dev);
 
 #endif

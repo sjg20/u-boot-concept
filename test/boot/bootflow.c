@@ -635,7 +635,7 @@ BOOTSTD_TEST(bootflow_cmd_boot, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);
  *
  * @uts: Unit test state
  * @mmc_dev: MMC device to use, e.g. "mmc4". Note that this must remain valid
- *	in the caller until
+ *	in the caller until boot scanning is finished
  * @bind_cros: true to bind the ChromiumOS and Android bootmeths
  * @old_orderp: Returns the original bootdev order, which must be restored
  * Returns 0 on success, -ve on failure

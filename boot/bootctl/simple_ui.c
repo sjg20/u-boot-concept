@@ -25,32 +25,9 @@
 /* TODO: Define to 1 to use text mode (for terminals), 0 for graphics */
 #define TEXT_MODE	0
 
-/**
- * struct ui_priv - information about the display
- *
- * @expo: Expo containing the menu
- * @scn: Current scene being shown
- * @lpriv: Private data of logic device
- * @console: vidconsole device in use
- * @autoboot_template: template string to use for autoboot
- * @autoboot_str: current string displayed for autoboot timeout
- * @logo: logo in bitmap format, NULL to use default
- * @logo_size: size of the logo in bytes
- */
-struct ui_priv {
-	struct expo *expo;
-	struct scene *scn;		/* consider dropping this */
-	struct logic_priv *lpriv;
-	struct udevice *console;
-	struct abuf autoboot_template;
-	struct abuf *autoboot_str;
-	const void *logo;
-	int logo_size;
-};
-
 static int simple_ui_probe(struct udevice *dev)
 {
-	struct ui_priv *priv = dev_get_priv(dev);
+	struct bc_ui_priv *upriv = dev_get_uclass_priv(dev);
 	struct udevice *ldev;
 	int ret;
 
@@ -58,7 +35,7 @@ static int simple_ui_probe(struct udevice *dev)
 	if (ret)
 		return log_msg_ret("sup", ret);
 
-	priv->lpriv = dev_get_priv(ldev);
+	upriv->lpriv = dev_get_priv(ldev);
 
 	return 0;
 }
@@ -81,7 +58,9 @@ static int simple_ui_print(struct udevice *dev, const char *msg)
 
 static int simple_ui_show(struct udevice *dev)
 {
-	struct ui_priv *priv = dev_get_priv(dev);
+	struct bc_ui_priv *upriv = dev_get_uclass_priv(dev);
+	struct logic_priv *lpriv = upriv->lpriv;
+	struct expo_theme *theme;
 	struct bootstd_priv *std;
 	struct scene *scn;
 	struct abuf *buf;
@@ -91,30 +70,30 @@ static int simple_ui_show(struct udevice *dev)
 	ret = bootstd_get_priv(&std);
 	if (ret)
 		return log_msg_ret("sdb", ret);
-	ret = bootflow_menu_setup(std, TEXT_MODE, &priv->expo);
+	ret = bootflow_menu_setup(std, TEXT_MODE, &upriv->expo);
 	if (ret)
 		return log_msg_ret("sds", ret);
 
-	ret = expo_first_scene_id(priv->expo);
+	ret = expo_first_scene_id(upriv->expo);
 	if (ret < 0)
 		return log_msg_ret("ufs", ret);
 	scene_id = ret;
-	scn = expo_lookup_scene_id(priv->expo, scene_id);
+	scn = expo_lookup_scene_id(upriv->expo, scene_id);
 
-	scene_obj_set_hide(scn, OBJ_AUTOBOOT, false);
-	ret = expo_edit_str(priv->expo, STR_AUTOBOOT,
-				  &priv->autoboot_template,
-				  &priv->autoboot_str);
+	scene_obj_set_hide(scn, OBJ_AUTOBOOT, !lpriv->opt_autoboot);
+	ret = expo_edit_str(upriv->expo, STR_AUTOBOOT,
+			    &upriv->autoboot_template,
+			    &upriv->autoboot_str);
 	if (ret)
 		return log_msg_ret("ses", ret);
-	ret = expo_edit_str(priv->expo, STR_MENU_TITLE, NULL, &buf);
+	ret = expo_edit_str(upriv->expo, STR_MENU_TITLE, NULL, &buf);
 	if (ret)
 		return log_msg_ret("set", ret);
 	abuf_printf(buf, "Boot control");
 
-	if (priv->logo) {
+	if (upriv->logo) {
 		ret = scene_img_set_data(scn, OBJ_U_BOOT_LOGO,
-					       priv->logo, priv->logo_size);
+					       upriv->logo, upriv->logo_size);
 		if (ret)
 			return log_msg_ret("log", ret);
 		ret = scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1135, 10);
@@ -125,32 +104,38 @@ static int simple_ui_show(struct udevice *dev)
 	log_debug("theme '%s'\n", ofnode_get_name(std->theme));
 
 	if (ofnode_valid(std->theme)) {
-		ret = expo_setup_theme(priv->expo, std->theme);
+		ret = expo_setup_theme(upriv->expo, std->theme);
 		if (ret)
 			return log_msg_ret("thm", ret);
 	}
+	theme = &upriv->expo->theme;
+	theme->white_on_black = true;
+
+	ret = expo_apply_theme(upriv->expo, true);
+	if (ret)
+		return log_msg_ret("asn", ret);
 
 	ret = scene_arrange(scn);
 	if (ret)
 		return log_msg_ret("usa", ret);
 
 	scene_set_highlight_id(scn, OBJ_MENU);
-	priv->scn = scn;
+	upriv->scn = scn;
 
-	ret = device_find_first_child_by_uclass(priv->expo->display,
-						      UCLASS_VIDEO_CONSOLE,
-						      &priv->console);
+	ret = device_find_first_child_by_uclass(upriv->expo->display,
+						UCLASS_VIDEO_CONSOLE,
+						&upriv->console);
 	if (ret)
 		return log_msg_ret("suq", ret);
-	vidconsole_set_quiet(priv->console, true);
+	vidconsole_set_quiet(upriv->console, true);
 
 	return 0;
 }
 
 static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 {
-	struct ui_priv *priv = dev_get_priv(dev);
-	struct logic_priv *lpriv = priv->lpriv;
+	struct bc_ui_priv *upriv = dev_get_uclass_priv(dev);
+	struct logic_priv *lpriv = upriv->lpriv;
 	int seq = lpriv->osinfo.count;
 	struct bootstd_priv *std;
 	struct scene *scn;
@@ -159,19 +144,19 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 	info = alist_add(&lpriv->osinfo, *info);
 	if (!info)
 		return -ENOMEM;
-	ret = bootflow_menu_add(priv->expo, &info->bflow, seq, &scn);
+	ret = bootflow_menu_add(upriv->expo, &info->bflow, seq, &scn);
 	if (ret)
 		return log_msg_ret("sda", ret);
 
 	ret = bootstd_get_priv(&std);
 	if (ret)
 		return log_msg_ret("sup", ret);
-	if (ofnode_valid(std->theme)) {
-		ret = expo_setup_theme(priv->expo, std->theme);
-		if (ret)
-			return log_msg_ret("thm", ret);
-	}
-	ret = expo_calc_dims(priv->expo);
+
+	ret = expo_apply_theme(upriv->expo, true);
+	if (ret)
+		return log_msg_ret("asn", ret);
+
+	ret = expo_calc_dims(upriv->expo);
 	if (ret)
 		return log_msg_ret("ecd", ret);
 
@@ -187,19 +172,18 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 
 static int simple_ui_render(struct udevice *dev)
 {
-	struct ui_priv *priv = dev_get_priv(dev);
+	struct bc_ui_priv *upriv = dev_get_uclass_priv(dev);
 	int ret;
 
-	ret = abuf_printf(priv->autoboot_str,
-				priv->autoboot_template.data,
-				priv->lpriv->autoboot_remain_s);
+	ret = abuf_printf(upriv->autoboot_str, upriv->autoboot_template.data,
+			  upriv->lpriv->autoboot_remain_s);
 	if (ret < 0)
 		return log_msg_ret("uip", ret);
 
-	ret = expo_arrange(priv->expo);
+	ret = expo_arrange(upriv->expo);
 	if (ret)
 		return log_msg_ret("sda", ret);
-	ret = expo_render(priv->expo);
+	ret = expo_render(upriv->expo);
 	if (ret)
 		return log_msg_ret("sdr", ret);
 
@@ -208,18 +192,18 @@ static int simple_ui_render(struct udevice *dev)
 
 static int simple_ui_poll(struct udevice *dev, int *seqp, bool *selectedp)
 {
-	struct ui_priv *priv = dev_get_priv(dev);
-	struct logic_priv *lpriv = priv->lpriv;
+	struct bc_ui_priv *upriv = dev_get_uclass_priv(dev);
+	struct logic_priv *lpriv = upriv->lpriv;
 	int seq, ret;
 	bool ok = true;
 
 	*seqp = -1;
 	*selectedp = false;
-	ret = bootflow_menu_poll(priv->expo, &seq);
+	ret = bootflow_menu_poll(upriv->expo, &seq);
 	ok = !ret;
 	if (ret == -ERESTART || ret == -EREMCHG) {
 		lpriv->autoboot_active = false;
-		scene_obj_set_hide(priv->scn, OBJ_AUTOBOOT, true);
+		scene_obj_set_hide(upriv->scn, OBJ_AUTOBOOT, true);
 		ok = true;
 	} else if (ret == -EAGAIN) {
 		ok = true;
@@ -241,9 +225,9 @@ static int simple_ui_poll(struct udevice *dev, int *seqp, bool *selectedp)
 
 static int simple_ui_of_to_plat(struct udevice *dev)
 {
-	struct ui_priv *priv = dev_get_priv(dev);
+	struct bc_ui_priv *upriv = dev_get_uclass_priv(dev);
 
-	priv->logo = dev_read_prop(dev, "logo", &priv->logo_size);
+	upriv->logo = dev_read_prop(dev, "logo", &upriv->logo_size);
 
 	return 0;
 }
@@ -270,5 +254,4 @@ U_BOOT_DRIVER(simple_ui) = {
 	.bind		= simple_ui_bind,
 	.probe		= simple_ui_probe,
 	.ops		= &ops,
-	.priv_auto	= sizeof(struct ui_priv),
 };

@@ -219,7 +219,7 @@ static int logic_poll(struct udevice *dev)
 		priv->refresh = true;
 	}
 
-	if (priv->refresh) {
+	if (!priv->opt_slow_refresh || priv->refresh) {
 		ret = bc_ui_render(priv->ui);
 		if (ret)
 			return log_msg_ret("bdr", ret);
@@ -286,6 +286,7 @@ static int logic_of_to_plat(struct udevice *dev)
 	priv->opt_labels = ofnode_read_string(node, "labels");
 	priv->opt_autoboot = ofnode_read_bool(node, "autoboot");
 	priv->opt_measure = ofnode_read_bool(node, "measure");
+	priv->opt_slow_refresh = ofnode_read_bool(node, "slow-refresh");
 
 	return 0;
 }

@@ -89,7 +89,7 @@ class BuildEfi:
         else:  # x86
             if self.helper.bitness == 64:
                 qemu_arch = 'x86_64'
-                bios = 'OVMF_CODE_4M.fd'
+                bios = 'OVMF-release-x64.fd'
             else:
                 qemu_arch = 'i386'
                 bios = 'OVMF-pure-efi.i386.fd'

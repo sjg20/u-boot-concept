@@ -605,3 +605,67 @@ static int bloblist_test_blob_maxsize(struct unit_test_state *uts)
 	return 0;
 }
 BLOBLIST_TEST(bloblist_test_blob_maxsize, UFT_BLOBLIST);
+
+/* Test removing a blob */
+static int bloblist_test_remove(struct unit_test_state *uts)
+{
+	const uint small_size = 0x20;
+	struct bloblist_hdr *hdr;
+	void *blob1, *blob2, *blob3;
+	ulong used_before, used_after;
+
+	clear_bloblist();
+	ut_assertok(bloblist_new(TEST_ADDR, TEST_BLOBLIST_SIZE, 0, 0));
+	hdr = map_sysmem(TEST_ADDR, TEST_BLOBLIST_SIZE);
+
+	/* Create three blobs */
+	blob1 = bloblist_add(TEST_TAG, small_size, 0);
+	ut_assertnonnull(blob1);
+	strcpy(blob1, test1_str);
+
+	blob2 = bloblist_add(TEST_TAG2, small_size, 0);
+	ut_assertnonnull(blob2);
+	strcpy(blob2, test2_str);
+
+	blob3 = bloblist_add(TEST_TAG_MISSING, small_size, 0);
+	ut_assertnonnull(blob3);
+
+	used_before = hdr->used_size;
+
+	/* Remove the middle blob */
+	ut_assertok(bloblist_remove(TEST_TAG2));
+
+	/* Check that the blob is gone */
+	ut_assertnull(bloblist_find(TEST_TAG2, 0));
+
+	/* Check that the first blob is still there and intact */
+	ut_asserteq_ptr(blob1, bloblist_find(TEST_TAG, small_size));
+	ut_asserteq_str(test1_str, blob1);
+
+	/* Check that the third blob is still there */
+	ut_assertnonnull(bloblist_find(TEST_TAG_MISSING, small_size));
+
+	/* Check that used_size was reduced */
+	used_after = hdr->used_size;
+	ut_assert(used_after < used_before);
+
+	/* Try to remove a non-existent blob */
+	ut_asserteq(-ENOENT, bloblist_remove(TEST_TAG2));
+
+	/* Remove the first blob */
+	ut_assertok(bloblist_remove(TEST_TAG));
+	ut_assertnull(bloblist_find(TEST_TAG, 0));
+
+	/* The third blob should still be accessible */
+	ut_assertnonnull(bloblist_find(TEST_TAG_MISSING, small_size));
+
+	/* Remove the last blob */
+	ut_assertok(bloblist_remove(TEST_TAG_MISSING));
+	ut_assertnull(bloblist_find(TEST_TAG_MISSING, 0));
+
+	/* Check that we're back to just the header */
+	ut_asserteq(sizeof(struct bloblist_hdr), hdr->used_size);
+
+	return 0;
+}
+BLOBLIST_TEST(bloblist_test_remove, UFT_BLOBLIST);

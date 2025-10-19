@@ -24,7 +24,7 @@
 		track-success;
 
 		/* auto-boot the default OS after a timeout */
-		autoboot;
+		// autoboot;
 
 		/* measure loaded images, etc. */
 #if !defined(CONFIG_QEMU) && !defined(CONFIG_EFI_APP)
@@ -115,10 +115,17 @@
 #endif
 	};
 
-	ui {
+	ui-multi {
 		compatible = "bootctl,multiboot-ui", "bootctl,simple-ui",
 			"bootctl,ui";
 		graphical = "if-available";
 		textual = "if-available";
 	};
+
+	ui-simple {
+		compatible = "bootctl,simple-ui", "bootctl,ui";
+		graphical = "if-available";
+		textual = "if-available";
+	};
+
 };

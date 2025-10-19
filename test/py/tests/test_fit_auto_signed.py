@@ -120,6 +120,7 @@ class SignedFitHelper(object):
 
 @pytest.mark.buildconfigspec('fit_signature')
 @pytest.mark.requiredtool('fdtget')
+@pytest.mark.slow
 def test_fit_auto_signed(ubman):
     """Test that mkimage generates auto-FIT with signatures/hashes as expected.
 

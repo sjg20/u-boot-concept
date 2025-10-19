@@ -351,6 +351,18 @@ int bloblist_ensure_size_ret(uint tag, int *sizep, void **blobp);
 int bloblist_resize(uint tag, int new_size);
 
 /**
+ * bloblist_remove() - remove a blob from the bloblist
+ *
+ * This removes the blob with the given tag from the bloblist. Any blobs after
+ * this one are relocated backward to fill the gap. The space is reclaimed and
+ * used_size is reduced accordingly.
+ *
+ * @tag:	Tag to remove (enum bloblist_tag_t)
+ * Return: 0 if OK, -ENOENT if the tag is not found
+ */
+int bloblist_remove(uint tag);
+
+/**
  * bloblist_new() - Create a new, empty bloblist of a given size
  *
  * @addr: Address of bloblist

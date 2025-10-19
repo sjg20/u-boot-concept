@@ -36,6 +36,11 @@ static int font_test_base(struct unit_test_state *uts)
 		ut_assert_nextline("ankacoder_c75_r");
 	if (IS_ENABLED(CONFIG_CONSOLE_TRUETYPE_CANTORAONE))
 		ut_assert_nextline("cantoraone_regular");
+	if (IS_ENABLED(CONFIG_CONSOLE_TRUETYPE_UBUNTU_LIGHT))
+		ut_assert_nextline("ubuntu_light");
+	if (IS_ENABLED(CONFIG_CONSOLE_TRUETYPE_UBUNTU_BOLD))
+		ut_assert_nextline("ubuntu_bold");
+
 	ut_assert_console_end();
 
 	ut_assertok(vidconsole_get_font_size(dev, &name, &size));

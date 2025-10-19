@@ -313,12 +313,12 @@ void tcg2_measurement_term(struct udevice *dev, struct tcg2_event_log *elog,
  * Get the platform event log address and size.
  *
  * @dev		TPM device
- * @addr	Address of the log
+ * @addr	Pointer to the log
  * @size	Size of the log
  *
  * Return: zero on success, negative errno otherwise
  */
-int tcg2_platform_get_log(struct udevice *dev, void **addr, u32 *size);
+int tcg2_platform_get_log(struct udevice *dev, void **ptrp, u32 *sizep);
 
 /**
  * Get the first TPM2 device found.

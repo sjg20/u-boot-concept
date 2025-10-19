@@ -507,8 +507,8 @@ config BOOT_DEFAULTS
 
 config BOOTCTL
 	bool "Support for boot control"
-	depends on BOOTSTD
-	default y
+	depends on EXPO && CMDLINE
+	default y if SANDBOX || EFI_APP
 	help
 	  This supports an experimental boot control, providing a way to
 	  discover and boot Operating Systems.
