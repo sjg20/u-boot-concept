@@ -1123,6 +1123,10 @@
 		};
 	};
 
+	tkey-emul {
+		compatible = "tkey,emul";
+	};
+
 	mmc2 {
 		compatible = "sandbox,mmc";
 		non-removable;
