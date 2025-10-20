@@ -1383,8 +1383,22 @@ struct acpi_fpdt_boot *acpi_get_fpdt_boot(void);
  */
 int acpi_fix_fpdt_checksum(void);
 
+/**
+ * acpi_final_fpdt() - Finalize FPDT boot performance record before OS handoff
+ *
+ * Updates the FPDT boot performance record with the final boot timing
+ * information just before handing control to the operating system. This
+ * sets the ExitBootServices entry and exit times to the current time.
+ * If FPDT table exists, the checksum is automatically recalculated.
+ *
+ * This function does nothing if the FPDT table is not present.
+ */
+void acpi_final_fpdt(void);
+
 #endif /* !__ACPI__*/
 
+#ifdef CONFIG_ACPI
 #include <asm/acpi_table.h>
+#endif
 
 #endif /* __ACPI_TABLE_H__ */

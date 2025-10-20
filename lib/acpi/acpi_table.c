@@ -15,6 +15,7 @@
 #include <mapmem.h>
 #include <tables_csum.h>
 #include <serial.h>
+#include <timer.h>
 #include <acpi/acpi_table.h>
 #include <acpi/acpi_device.h>
 #include <asm/global_data.h>
@@ -786,6 +787,24 @@ int acpi_fix_fpdt_checksum(void)
 	return 0;
 }
 
+void acpi_final_fpdt(void)
+{
+	struct acpi_fpdt_boot *fpdt;
+
+	if (IS_ENABLED(CONFIG_TARGET_QEMU_VIRT))
+		return;
+
+	fpdt = acpi_get_fpdt_boot();
+	if (fpdt) {
+		u64 time;
+
+		time = timer_get_boot_us();
+		fpdt->ebs_entry = time;
+		fpdt->ebs_exit = time;
+		acpi_fix_fpdt_checksum();
+	}
+}
+
 /* this board lacks the bootstage timer */
 #ifndef CONFIG_TARGET_QEMU_VIRT
 
@@ -799,4 +818,5 @@ static int acpi_create_fpdt(struct acpi_ctx *ctx,
 	return acpi_write_fpdt(ctx, uboot_start);
 }
 ACPI_WRITER(6fpdt, "FPDT", acpi_create_fpdt, 0);
+
 #endif

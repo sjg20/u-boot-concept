@@ -9,6 +9,7 @@
 #include <bootstage.h>
 #include <event.h>
 #include <usb.h>
+#include <acpi/acpi_table.h>
 #include <dm/root.h>
 
 __weak void board_quiesce_devices(void)
@@ -24,6 +25,11 @@ void bootm_final(enum bootm_final_t flags)
 		"(fake run for tracing)" : "");
 
 	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_HANDOFF, "start_kernel");
+
+	/* Update FPDT boot performance record if it exists */
+	if (IS_ENABLED(CONFIG_GENERATE_ACPI_TABLE) &&
+	    IS_ENABLED(CONFIG_ACPIGEN))
+		acpi_final_fpdt();
 
 	if (IS_ENABLED(CONFIG_BOOTSTAGE_FDT) && IS_ENABLED(CONFIG_CMD_FDT))
 		bootstage_fdt_add_report();
