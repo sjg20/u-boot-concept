@@ -49,6 +49,8 @@ def parse_args():
                         help='Create a partition table')
     parser.add_argument('-c', '--spice', action='store_true',
                         help='Enable SPICE for clipboard sharing')
+    parser.add_argument('-N', '--net', action='store_true',
+                        help='Enable networking (with SSH forwarding on port 2222)')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
 
@@ -142,7 +144,11 @@ class BuildEfi:
 
         cmd = [qemu]
         cmd += '-m', mem
-        cmd += '-nic', 'none'
+        if self.args.net:
+            cmd += '-netdev', 'user,id=net0,hostfwd=tcp::2222-:22'
+            cmd += '-device', 'virtio-net-pci,netdev=net0'
+        else:
+            cmd += '-nic', 'none'
         cmd += extra
         self.helper.add_qemu_args(self.args, cmd, base_hd=1)
         tout.info(' '.join(cmd))
