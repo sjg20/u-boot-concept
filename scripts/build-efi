@@ -47,6 +47,8 @@ def parse_args():
                         help='Package up the payload instead of the app')
     parser.add_argument('-P', '--partition', action='store_true',
                         help='Create a partition table')
+    parser.add_argument('-c', '--spice', action='store_true',
+                        help='Enable SPICE for clipboard sharing')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
 
@@ -115,6 +117,12 @@ class BuildEfi:
             else:  # x86
                 extra += ['-device', 'qemu-xhci', '-device', 'usb-kbd',
                           '-device', 'usb-mouse']
+
+            # This uses QEMU's GTK clipboard integration with SPICE vdagent
+            if self.args.spice:
+                extra += ['-device', 'virtio-serial-pci']
+                extra += ['-chardev', 'qemu-vdagent,id=spicechannel0,name=vdagent,clipboard=on']
+                extra += ['-device', 'virtserialport,chardev=spicechannel0,name=com.redhat.spice.0']
             extra += ['-serial', 'mon:stdio']
             serial_msg = ''
         if self.args.kvm:
