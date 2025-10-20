@@ -785,3 +785,18 @@ int acpi_fix_fpdt_checksum(void)
 
 	return 0;
 }
+
+/* this board lacks the bootstage timer */
+#ifndef CONFIG_TARGET_QEMU_VIRT
+
+static int acpi_create_fpdt(struct acpi_ctx *ctx,
+			    const struct acpi_writer *entry)
+{
+	u64 uboot_start;
+
+	uboot_start = bootstage_get_time(BOOTSTAGE_ID_START_UBOOT_F);
+
+	return acpi_write_fpdt(ctx, uboot_start);
+}
+ACPI_WRITER(6fpdt, "FPDT", acpi_create_fpdt, 0);
+#endif
