@@ -760,6 +760,49 @@ struct __packed acpi_bgrt {
 	u32 offset_y;
 };
 
+/**
+ * struct acpi_fpdt - Firmware Performance Data Table (FPDT) header
+ *
+ * See ACPI Spec v6.5 section 5.2.24 for details
+ */
+struct acpi_fpdt {
+	struct acpi_table_header header;
+};
+
+/* FPDT Performance Record Types */
+#define FPDT_REC_BOOT		0
+
+/* FPDT Performance Record Header */
+struct acpi_fpdt_hdr {
+	u16 type;
+	u8 length;
+	u8 revision;
+} __packed;
+
+/**
+ * struct acpi_fpdt_boot - Firmware Basic Boot Performance Record
+ *
+ * This record describes the boot performance from power-on to OS handoff.
+ * All timing values are in microseconds since system reset.
+ *
+ * @hdr: Record header
+ * @reserved: Reserved, must be zero
+ * @reset_end: Timer value at start of firmware (microseconds)
+ * @loader_start: Start of OS loader load (microseconds)
+ * @loader_exec: Start of OS loader execution (microseconds)
+ * @ebs_entry: Entry to ExitBootServices (microseconds)
+ * @ebs_exit: Exit from ExitBootServices (microseconds)
+ */
+struct acpi_fpdt_boot {
+	struct acpi_fpdt_hdr hdr;
+	u32 reserved;
+	u64 reset_end;
+	u64 loader_start;
+	u64 loader_exec;
+	u64 ebs_entry;
+	u64 ebs_exit;
+} __packed;
+
 /* Types for PPTT */
 #define ACPI_PPTT_TYPE_PROC		0
 #define ACPI_PPTT_TYPE_CACHE		1
@@ -952,6 +995,7 @@ enum acpi_tables {
 	ACPITAB_ECDT,
 	ACPITAB_FACS,
 	ACPITAB_FADT,
+	ACPITAB_FPDT,
 	ACPITAB_GTDT,
 	ACPITAB_HEST,
 	ACPITAB_HPET,
@@ -1306,6 +1350,38 @@ void *acpi_get_end(void);
  * the video device could not be probed, -ENOENT if there is no logo
  */
 int acpi_write_bgrt(struct acpi_ctx *ctx);
+
+/**
+ * acpi_write_fpdt() - Write a Firmware Performance Data Table (FPDT)
+ *
+ * This creates an FPDT table with firmware boot timing information
+ *
+ * @ctx: ACPI context
+ * @uboot_start: U-Boot start time in microseconds
+ * Return: 0 if OK, -ve on error
+ */
+int acpi_write_fpdt(struct acpi_ctx *ctx, u64 uboot_start);
+
+/**
+ * acpi_get_fpdt_boot() - Get pointer to FPDT boot performance record
+ *
+ * This allows the caller to update the boot performance timing fields
+ * after the FPDT table has been created. After updating, call
+ * acpi_fix_fpdt_checksum() to recalculate the table checksum.
+ *
+ * Return: pointer to boot performance record, or NULL if not found
+ */
+struct acpi_fpdt_boot *acpi_get_fpdt_boot(void);
+
+/**
+ * acpi_fix_fpdt_checksum() - Recalculate FPDT table checksum
+ *
+ * Call this after updating the boot performance record to fix the
+ * table checksum.
+ *
+ * Return: 0 if OK, -ENOENT if FPDT table not found
+ */
+int acpi_fix_fpdt_checksum(void);
 
 #endif /* !__ACPI__*/
 
