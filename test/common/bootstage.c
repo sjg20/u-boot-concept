@@ -35,6 +35,7 @@ static int test_bootstage_mark(struct unit_test_state *uts)
 	ut_asserteq_str("test_stage_mark", rec->name);
 	ut_asserteq(time, rec->time_us);
 	ut_asserteq(0, rec->flags);
+	ut_asserteq(time, bootstage_get_time(BOOTSTAGE_ID_USER + 50));
 
 	/* Restore the original count */
 	bootstage_set_rec_count(count);
@@ -110,6 +111,7 @@ static int test_bootstage_accum(struct unit_test_state *uts)
 	/* Check the total time accumulated */
 	rec = bootstage_get_rec(index);
 	ut_asserteq(rec->time_us, elapsed1 + elapsed2);
+	ut_asserteq(rec->time_us, bootstage_get_time(id));
 
 	/* Restore the original count */
 	bootstage_set_rec_count(count);

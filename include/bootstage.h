@@ -378,6 +378,14 @@ const struct bootstage_record *bootstage_get_rec(uint index);
  */
 void bootstage_set_rec_count(uint count);
 
+/*
+ * bootstage_get_time() - Get the timestamp for a bootstage ID
+ *
+ * @id: Bootstage id to look up
+ * Return: timestamp in us for that stage, or 0 if not found
+ */
+ulong bootstage_get_time(enum bootstage_id id);
+
 /* Print a report about boot time */
 void bootstage_report(void);
 
@@ -474,6 +482,11 @@ static inline uint32_t bootstage_start(enum bootstage_id id, const char *name)
 }
 
 static inline uint32_t bootstage_accum(enum bootstage_id id)
+{
+	return 0;
+}
+
+static inline ulong bootstage_get_time(enum bootstage_id id)
 {
 	return 0;
 }

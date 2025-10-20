@@ -249,6 +249,20 @@ void bootstage_set_rec_count(uint count)
 	data->rec_count = count;
 }
 
+ulong bootstage_get_time(enum bootstage_id id)
+{
+	struct bootstage_data *data = gd->bootstage;
+	struct bootstage_record *rec;
+
+	if (!data)
+		return 0;
+	rec = find_id(data, id);
+	if (!rec)
+		return 0;
+
+	return rec->time_us;
+}
+
 /**
  * Get a record name as a printable string
  *
