@@ -83,7 +83,7 @@ def test_ut_dm_init_bootstd(u_boot_config, u_boot_log):
     setup_ubuntu_image(u_boot_config, u_boot_log, 3, 'flash', '25.04')
     setup_localboot_image(u_boot_config, u_boot_log)
     setup_vbe_image(u_boot_config, u_boot_log)
-    setup_ubuntu_image(u_boot_config, u_boot_log, 11, 'mmc')
+    setup_ubuntu_image(u_boot_config, u_boot_log, 11, 'mmc', use_fde=True)
 
 def test_ut(ubman, ut_subtest):
     """Execute a "ut" subtest.
