@@ -42,7 +42,7 @@ class FsHelper:
         fs_img (str): Filename for the filesystem image; this is set to a
             default value but can be overwritten
     """
-    def __init__(self, config, fs_type, size_mb, prefix):
+    def __init__(self, config, fs_type, size_mb, prefix, part_mb=None):
         """Set up a new object
 
         Args:
@@ -51,6 +51,9 @@ class FsHelper:
                 fat12, fat16, fat32, exfat, fs_generic (which means vfat)
             size_mb (int): Size of file system in MB
             prefix (str): Prefix string of volume's file name
+            part_mb (int, optional): Size of partition in MB. If None, defaults
+                to size_mb. This can be used to make the partition larger than
+                the filesystem, to create space for disk-encryption metadata
         """
         if ('fat' not in fs_type and 'ext' not in fs_type and
              fs_type not in ['exfat', 'fs_generic']):
@@ -59,6 +62,7 @@ class FsHelper:
         self.config = config
         self.fs_type = fs_type
         self.size_mb = size_mb
+        self.partition_mb = part_mb if part_mb is not None else size_mb
         self.prefix = prefix
         self.quiet = True
 
@@ -222,10 +226,10 @@ class DiskHelper:
         for fsi, part_type, bootable in self.fs_list:
             if spec:
                 spec += '\n'
-            spec += f'type={part_type:x}, size={fsi.size_mb}M, start={pos}M'
+            spec += f'type={part_type:x}, size={fsi.partition_mb}M, start={pos}M'
             if bootable:
                 spec += ', bootable'
-            pos += fsi.size_mb
+            pos += fsi.partition_mb
 
         img_size = pos
         try:
@@ -241,7 +245,7 @@ class DiskHelper:
             check_call(
                 f'dd if={fsi.fs_img} of={self.fname} bs=1M seek={pos} conv=notrunc',
                 shell=True)
-            pos += fsi.size_mb
+            pos += fsi.partition_mb
         return self.fname
 
     def cleanup(self):
