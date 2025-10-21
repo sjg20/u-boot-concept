@@ -3,6 +3,7 @@
 
 """Common utilities for image creation"""
 
+import gzip
 import os
 
 import utils
@@ -32,7 +33,7 @@ def copy_partition(ubman, fsfile, outname):
 
 
 def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
-                         script):
+                         script, part2_size=1):
     """Create a 20MB disk image with a single FAT partition
 
     Args:
@@ -44,9 +45,8 @@ def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
         initrd (str): Ramdisk filename
         dtbdir (str or None): Devicetree filename
         script (str): Script to place in the extlinux.conf file
+        part2_size (int): Size of second partition in MB (default: 1)
     """
-    import gzip
-    
     fsh = FsHelper(config, 'vfat', 18, prefix=basename)
     fsh.setup()
 
@@ -79,8 +79,15 @@ def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
     img = DiskHelper(config, devnum, basename, True)
     img.add_fs(fsh, DiskHelper.VFAT, bootable=True)
 
-    ext4 = FsHelper(config, 'ext4', 1, prefix=basename)
+    ext4 = FsHelper(config, 'ext4', max(1, part2_size - 30), prefix=basename,
+                    part_mb=part2_size)
     ext4.setup()
+
+    bindir = os.path.join(ext4.srcdir, 'bin')
+    mkdir_cond(bindir)
+    with open(os.path.join(bindir, 'bash'), 'w', encoding='ascii') as fd:
+        print('bash', file=fd)
+
     ext4.mk_fs()
 
     img.add_fs(ext4, DiskHelper.EXT4)
