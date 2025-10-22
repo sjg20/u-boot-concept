@@ -263,6 +263,14 @@ config PANIC_HANG
 	  development since you can try to debug the conditions that lead to
 	  the situation.
 
+config PANIC_POWEROFF
+	bool "Power off the system on fatal error"
+	help
+	  Define this option to power off the system in case of a fatal error,
+	  instead of resetting. This is useful for development and testing to
+	  avoid infinite reset loops when debugging issues like stack smashing.
+	  The system will power off using sysreset.
+
 config REGEX
 	bool "Enable regular expression support"
 	default y if NET

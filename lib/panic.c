@@ -13,6 +13,9 @@
 #if !defined(CONFIG_PANIC_HANG)
 #include <command.h>
 #endif
+#if defined(CONFIG_PANIC_POWEROFF)
+#include <sysreset.h>
+#endif
 #include <linux/delay.h>
 #include <stdio.h>
 
@@ -23,6 +26,11 @@ static void panic_finish(void)
 	putc('\n');
 #if defined(CONFIG_PANIC_HANG)
 	hang();
+#elif defined(CONFIG_PANIC_POWEROFF)
+	flush();  /* flush the panic message before power off */
+
+	sysreset_walk(SYSRESET_POWER_OFF);
+	hang();  /* hang if power off fails */
 #else
 	flush();  /* flush the panic message before reset */
 
