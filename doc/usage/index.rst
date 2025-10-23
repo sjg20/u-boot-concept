@@ -93,6 +93,7 @@ Shell commands
    cmd/loads
    cmd/loadx
    cmd/loady
+   cmd/luks
    cmd/meminfo
    cmd/mbr
    cmd/md
