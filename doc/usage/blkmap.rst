@@ -109,3 +109,8 @@ Now we can access the filesystem:
 
    blkmap get sq dev devnum
    load blkmap ${devnum} ${loadaddr} /etc/version
+
+See also
+--------
+
+* :doc:`/usage/cmd/blkmap`

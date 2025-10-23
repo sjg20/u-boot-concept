@@ -34,6 +34,7 @@ Shell commands
    cmd/bdinfo
    cmd/bind
    cmd/blkcache
+   cmd/blkmap
    cmd/bootd
    cmd/bootdev
    cmd/bootefi
