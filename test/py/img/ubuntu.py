@@ -7,7 +7,7 @@ from img.common import setup_extlinux_image
 
 
 def setup_ubuntu_image(config, log, devnum, basename, version='24.04.1 LTS',
-                       use_fde=False):
+                       use_fde=0):
     """Create a Ubuntu disk image with a FAT partition and ext4 partition
 
     This creates a FAT partition containing extlinux files, kernel, etc. and a
@@ -18,7 +18,7 @@ def setup_ubuntu_image(config, log, devnum, basename, version='24.04.1 LTS',
         log (multiplexed_log.Logfile): Log to write to
         devnum (int): Device number to use, e.g. 1
         basename (str): Base name to use in the filename, e.g. 'mmc'
-        use_fde (bool): True to set up full-disk encryption
+        use_fde (int): LUKS version for full-disk encryption (0=none, 1=LUKS1, 2=LUKS2)
     """
     vmlinux = 'vmlinuz-6.8.0-53-generic'
     initrd = 'initrd.img-6.8.0-53-generic'

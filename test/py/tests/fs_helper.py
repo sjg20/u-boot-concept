@@ -38,12 +38,20 @@ class FsHelper:
                 fsh.mk_fs()
                 ...
 
-        To create an encrypted LUKS1 partition:
+        To create an encrypted LUKS2 partition (default):
 
             with FsHelper(ubman.config, 'ext4', 10, 'mmc1',
                           encrypt_passphrase='test') as fsh:
                 # create files in the fsh.srcdir directory
-                fsh.mk_fs()  # Creates and encrypts the filesystem
+                fsh.mk_fs()  # Creates and encrypts the filesystem with LUKS2
+                ...
+
+        To create an encrypted LUKS1 partition:
+
+            with FsHelper(ubman.config, 'ext4', 10, 'mmc1',
+                          encrypt_passphrase='test', luks_version=1) as fsh:
+                # create files in the fsh.srcdir directory
+                fsh.mk_fs()  # Creates and encrypts the filesystem with LUKS1
                 ...
 
     Properties:
@@ -51,7 +59,7 @@ class FsHelper:
             default value but can be overwritten
     """
     def __init__(self, config, fs_type, size_mb, prefix, part_mb=None,
-                 encrypt_passphrase=None):
+                 encrypt_passphrase=None, luks_version=2):
         """Set up a new object
 
         Args:
@@ -64,7 +72,8 @@ class FsHelper:
                 to size_mb. This can be used to make the partition larger than
                 the filesystem, to create space for disk-encryption metadata
             encrypt_passphrase (str, optional): If provided, encrypt the
-                filesystem with LUKS1 using this passphrase
+                filesystem with LUKS using this passphrase
+            luks_version (int): LUKS version to use (1 or 2). Defaults to 2.
         """
         if ('fat' not in fs_type and 'ext' not in fs_type and
              fs_type not in ['exfat', 'fs_generic']):
@@ -77,6 +86,7 @@ class FsHelper:
         self.prefix = prefix
         self.quiet = True
         self.encrypt_passphrase = encrypt_passphrase
+        self.luks_version = luks_version
 
         # Use a default filename; the caller can adjust it
         leaf = f'{prefix}.{fs_type}.img'
@@ -166,11 +176,10 @@ class FsHelper:
                 self.srcdir = self.tmpdir.name
 
     def encrypt_luks(self, passphrase):
-        """Encrypt the filesystem image with LUKS1
+        """Encrypt the filesystem image with LUKS
 
-        This replaces the filesystem image with a LUKS1-encrypted version.
-        LUKS1 is used because U-Boot's unlock implementation currently only
-        supports LUKS version 1.
+        This replaces the filesystem image with a LUKS-encrypted version.
+        The LUKS version is determined by self.luks_version.
 
         Args:
             passphrase (str): Passphrase for the LUKS container
@@ -180,11 +189,25 @@ class FsHelper:
 
         Raises:
             CalledProcessError: If cryptsetup is not available or fails
+            ValueError: If an unsupported LUKS version is specified
         """
-        # LUKS1 encryption parameters
-        cipher = 'aes-cbc-essiv:sha256'
-        key_size = 256
-        hash_alg = 'sha256'
+        # LUKS encryption parameters
+        if self.luks_version == 1:
+            # LUKS1 parameters
+            cipher = 'aes-cbc-essiv:sha256'
+            key_size = 256
+            hash_alg = 'sha256'
+            luks_type = 'luks1'
+        elif self.luks_version == 2:
+            # LUKS2 parameters (modern defaults)
+            cipher = 'aes-xts-plain64'
+            key_size = 512  # XTS uses 512-bit keys (2x256)
+            hash_alg = 'sha256'
+            luks_type = 'luks2'
+        else:
+            raise ValueError(f"Unsupported LUKS version: {self.luks_version}")
+
+        key_size_str = str(key_size)
 
         # Save the original filesystem image
         orig_fs_img = f'{self.fs_img}.orig'
@@ -214,11 +237,11 @@ class FsHelper:
             stdout=DEVNULL, stderr=DEVNULL, check=False)
 
         try:
-            # Format as LUKS1
+            # Format as LUKS (version determined by luks_type)
             run(['cryptsetup', 'luksFormat',
-                 '--type', 'luks1',
+                 '--type', luks_type,
                  '--cipher', cipher,
-                 '--key-size', str(key_size),
+                 '--key-size', key_size_str,
                  '--hash', hash_alg,
                  '--iter-time', '10',  # Very fast for testing (low security)
                  luks_img],
