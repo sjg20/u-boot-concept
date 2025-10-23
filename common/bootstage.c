@@ -26,14 +26,6 @@ enum {
 	RECORD_COUNT = CONFIG_VAL(BOOTSTAGE_RECORD_COUNT),
 };
 
-struct bootstage_record {
-	ulong time_us;
-	uint32_t start_us;
-	const char *name;
-	int flags;		/* see enum bootstage_flags */
-	enum bootstage_id id;
-};
-
 struct bootstage_data {
 	uint rec_count;
 	uint next_id;

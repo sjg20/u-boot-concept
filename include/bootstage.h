@@ -220,6 +220,24 @@ enum bootstage_id {
 	BOOTSTAGE_ID_ALLOC,
 };
 
+/**
+ * struct bootstage_record - information about a bootstage timing
+ *
+ * @time_us: time in microseconds, either the timestamp or the total accumlated
+ * time for this ID
+ * @start_us: timestamp of the current starting point for this ID
+ * @name: name of the timestamp
+ * @flags: Flags (enum bootstage_flags)
+ * @id: Bootstage ID
+ */
+struct bootstage_record {
+	ulong time_us;
+	u32 start_us;
+	const char *name;
+	int flags;
+	enum bootstage_id id;
+};
+
 /*
  * Return the time since boot in microseconds, This is needed for bootstage
  * and should be defined in CPU- or board-specific code. If undefined then
