@@ -212,6 +212,43 @@ uint32_t bootstage_accum(enum bootstage_id id)
 	return duration;
 }
 
+uint bootstage_get_rec_count(void)
+{
+	struct bootstage_data *data = gd->bootstage;
+
+	if (!data)
+		return 0;
+
+	return data->rec_count;
+}
+
+const struct bootstage_record *bootstage_get_rec(uint index)
+{
+	struct bootstage_data *data = gd->bootstage;
+
+	if (!data || index >= data->rec_count)
+		return NULL;
+
+	return &data->record[index];
+}
+
+void bootstage_set_rec_count(uint count)
+{
+	struct bootstage_data *data = gd->bootstage;
+	uint i;
+
+	if (!data || count > RECORD_COUNT)
+		return;
+
+	/* Clear any records beyond the new count */
+	for (i = count; i < data->rec_count; i++) {
+		data->record[i].time_us = 0;
+		data->record[i].start_us = 0;
+	}
+
+	data->rec_count = count;
+}
+
 /**
  * Get a record name as a printable string
  *

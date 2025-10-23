@@ -354,6 +354,30 @@ uint32_t bootstage_start(enum bootstage_id id, const char *name);
  */
 uint32_t bootstage_accum(enum bootstage_id id);
 
+/**
+ * bootstage_get_rec_count() - Get the number of bootstage records
+ *
+ * Return: number of bootstage records
+ */
+uint bootstage_get_rec_count(void);
+
+/**
+ * bootstage_get_rec() - Get a bootstage record by index
+ *
+ * @index: Index of the record to retrieve (numbered from 0)
+ * Return: pointer to the record, or NULL if @index is out of range
+ */
+const struct bootstage_record *bootstage_get_rec(uint index);
+
+/**
+ * bootstage_set_rec_count() - Set the number of bootstage records
+ *
+ * This can be used to restore the record count after testing
+ *
+ * @count: New record count (must be <= RECORD_COUNT)
+ */
+void bootstage_set_rec_count(uint count);
+
 /* Print a report about boot time */
 void bootstage_report(void);
 
