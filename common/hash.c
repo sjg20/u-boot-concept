@@ -212,6 +212,7 @@ static struct hash_algo hash_algo[] = {
 		.digest_size	= MD5_SUM_LEN,
 		.chunk_size	= CHUNKSZ_MD5,
 		.hash_func_ws	= md5_wd,
+		HASH_MBEDTLS_TYPE(MBEDTLS_MD_MD5)
 	},
 #endif
 #if CONFIG_IS_ENABLED(SHA1)
@@ -233,6 +234,7 @@ static struct hash_algo hash_algo[] = {
 		.hash_update	= hash_update_sha1,
 		.hash_finish	= hash_finish_sha1,
 #endif
+		HASH_MBEDTLS_TYPE(MBEDTLS_MD_SHA1)
 	},
 #endif
 #if CONFIG_IS_ENABLED(SHA256)
@@ -254,6 +256,7 @@ static struct hash_algo hash_algo[] = {
 		.hash_update	= hash_update_sha256,
 		.hash_finish	= hash_finish_sha256,
 #endif
+		HASH_MBEDTLS_TYPE(MBEDTLS_MD_SHA256)
 	},
 #endif
 #if CONFIG_IS_ENABLED(SHA384)
@@ -275,6 +278,7 @@ static struct hash_algo hash_algo[] = {
 		.hash_update	= hash_update_sha384,
 		.hash_finish	= hash_finish_sha384,
 #endif
+		HASH_MBEDTLS_TYPE(MBEDTLS_MD_SHA384)
 	},
 #endif
 #if CONFIG_IS_ENABLED(SHA512)
@@ -296,6 +300,7 @@ static struct hash_algo hash_algo[] = {
 		.hash_update	= hash_update_sha512,
 		.hash_finish	= hash_finish_sha512,
 #endif
+		HASH_MBEDTLS_TYPE(MBEDTLS_MD_SHA512)
 	},
 #endif
 #if CONFIG_IS_ENABLED(CRC16)
