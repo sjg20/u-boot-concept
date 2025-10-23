@@ -33,7 +33,7 @@ def copy_partition(ubman, fsfile, outname):
 
 
 def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
-                         script, part2_size=1):
+                         script, part2_size=1, use_fde=False):
     """Create a 20MB disk image with a single FAT partition
 
     Args:
@@ -46,6 +46,7 @@ def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
         dtbdir (str or None): Devicetree filename
         script (str): Script to place in the extlinux.conf file
         part2_size (int): Size of second partition in MB (default: 1)
+        use_fde (bool): True to encrypt the ext4 partition with LUKS1
     """
     fsh = FsHelper(config, 'vfat', 18, prefix=basename)
     fsh.setup()
@@ -80,7 +81,8 @@ def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
     img.add_fs(fsh, DiskHelper.VFAT, bootable=True)
 
     ext4 = FsHelper(config, 'ext4', max(1, part2_size - 30), prefix=basename,
-                    part_mb=part2_size)
+                    part_mb=part2_size,
+                    encrypt_passphrase='test' if use_fde else None)
     ext4.setup()
 
     bindir = os.path.join(ext4.srcdir, 'bin')

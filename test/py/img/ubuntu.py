@@ -49,4 +49,5 @@ label l0r
 	initrd /boot/%s
 ''' % ((version, vmlinux, initrd) * 2)
     setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
-                         script, part2_size=60 if use_fde else 1)
+                         script, part2_size=60 if use_fde else 1,
+                         use_fde=use_fde)
