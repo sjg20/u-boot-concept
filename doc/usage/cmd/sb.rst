@@ -11,6 +11,8 @@ Synopsis
 
 ::
 
+    sb devoff <node>
+    sb devon <node>
     sb handoff
     sb map
     sb state
@@ -19,7 +21,24 @@ Description
 -----------
 
 The *sb* command is used to display information about sandbox's internal
-operation. See :doc:`/arch/sandbox/index` for more information.
+operation and to manage devices. See :doc:`/arch/sandbox/index` for more
+information.
+
+sb devoff
+~~~~~~~~~
+
+This disables a device that was previously enabled with *sb devon*. The device
+is removed (deactivated) and unbound from the driver model. The parameter is
+the name of a device tree node.
+
+sb devon
+~~~~~~~~
+
+This enables a device from the device tree. The device tree node is located,
+bound to the driver model, and probed (activated). This is useful for testing
+devices that are not automatically bound at startup, i.e. those marked as
+status = "disabled" in the device tree. The parameter is the name of a root
+devicetree node.
 
 sb handoff
 ~~~~~~~~~~
@@ -53,6 +72,25 @@ command-line with which sandbox was started.
 
 Example
 -------
+
+This shows enabling a device from the `test.dts` device tree. Note that sandbox
+must be run with the -T flag to use the test device tree::
+
+    => sb devon mmc11
+    Device 'mmc11' enabled
+    => ls mmc b
+                extlinux/
+            7   initrd.img-6.8.0-53-generic
+         1616   vmlinuz-6.8.0-53-generic
+
+    2 file(s), 1 dir(s)
+
+    => sb devoff mmc11
+    Device 'mmc11' disabled
+    => ls mmc b
+    ** Bad device specification mmc b **
+    Couldn't find partition mmc b
+    =>
 
 This shows checking for the presence of SPL-handoff information. For this to
 work, ``u-boot-spl`` must be run, with build that enables ``CONFIG_SPL``, such
