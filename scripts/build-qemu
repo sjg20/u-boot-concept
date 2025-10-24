@@ -51,6 +51,8 @@ def parse_args():
                         help='Run qboot instead of U-Boot')
     parser.add_argument('-x', '--xpl', action='store_true',
                         help='Use xPL image rather than U-Boot proper')
+    parser.add_argument('-T', '--tkey', action='store_true',
+                        help='Enable TKey USB passthrough for testing')
     parser.add_argument(
         '--sct-seq',
         help='SCT sequence-file to be written into the SCT image if -e')
@@ -153,6 +155,9 @@ class BuildQemu:
             default_bios = 'u-boot.rom'
             self.helper.qemu = 'qemu-system-i386'
             self.qemu_extra.extend(['-machine', 'q35'])
+            if args.tkey:
+                # Pass through TKey USB device to QEMU
+                self.qemu_extra.extend(['-device', 'usb-host,vendorid=0x1207,productid=0x8887'])
             if self.helper.bitness == 64:
                 self.board = 'qemu-x86_64'
                 self.helper.qemu = 'qemu-system-x86_64'

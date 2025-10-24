@@ -7,6 +7,7 @@
  */
 
 #include <bloblist.h>
+#include <bootstage.h>
 #include <console.h>
 #include <dm.h>
 #include <efi_log.h>
@@ -961,3 +962,75 @@ static int dm_test_acpi_bgrt(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_bgrt, UTF_SCAN_FDT);
+
+/* Test ACPI FPDT (Firmware Performance Data Table) generation */
+static int dm_test_acpi_fpdt(struct unit_test_state *uts)
+{
+	struct acpi_fpdt_boot *rec;
+	struct acpi_fpdt *fpdt;
+	struct acpi_ctx ctx;
+	ulong addr, time;
+	void *buf;
+
+	addr = 0;
+	buf = map_sysmem(addr, BUF_SIZE);
+
+	/* Set up context with base tables (RSDP, RSDT, XSDT) */
+	ut_assertok(setup_ctx_and_base_tables(uts, &ctx, addr));
+
+	/* Save where the FPDT will be written */
+	fpdt = ctx.current;
+
+	/* Write the FPDT table with test U-Boot start time */
+	time = timer_get_boot_us();
+	ut_assertok(acpi_write_fpdt(&ctx, 1234));
+
+	/* Verify the FPDT was written at the saved location */
+	ut_asserteq_mem("FPDT", fpdt->header.signature, ACPI_NAME_LEN);
+	ut_asserteq(1, fpdt->header.revision);
+	ut_asserteq(sizeof(struct acpi_fpdt) + sizeof(struct acpi_fpdt_boot),
+		    fpdt->header.length);
+
+	/* Verify the boot performance record */
+	rec = (struct acpi_fpdt_boot *)(fpdt + 1);
+	ut_asserteq(FPDT_REC_BOOT, rec->hdr.type);
+	ut_asserteq(sizeof(struct acpi_fpdt_boot), rec->hdr.length);
+	ut_asserteq(2, rec->hdr.revision);
+
+	ut_asserteq(1234, rec->reset_end);
+	ut_assert(rec->loader_start != 0);
+	ut_assert(rec->loader_exec != 0);
+	ut_assert(rec->ebs_entry != 0);
+	ut_assert(rec->ebs_exit != 0);
+
+	/* Verify checksum is valid */
+	ut_asserteq(0, table_compute_checksum(fpdt, fpdt->header.length));
+
+	/* Get pointer to boot record and verify it matches */
+	rec = acpi_get_fpdt_boot();
+	ut_assertnonnull(rec);
+	ut_asserteq_ptr(rec, (struct acpi_fpdt_boot *)(fpdt + 1));
+	ut_asserteq(1234, rec->reset_end);
+
+	/* Update a timing field */
+	rec->ebs_entry = 123;
+	rec->ebs_exit = 456;
+
+	/* Checksum should now be invalid */
+	ut_assert(table_compute_checksum(fpdt, fpdt->header.length) != 0);
+
+	/* Fix the checksum */
+	ut_assertok(acpi_fix_fpdt_checksum());
+
+	/* Checksum should now be valid again */
+	ut_asserteq(0, table_compute_checksum(fpdt, fpdt->header.length));
+
+	/* Verify the updated values are still there */
+	ut_asserteq(123, rec->ebs_entry);
+	ut_asserteq(456, rec->ebs_exit);
+
+	unmap_sysmem(buf);
+
+	return 0;
+}
+DM_TEST(dm_test_acpi_fpdt, 0);

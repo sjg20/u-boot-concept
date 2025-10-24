@@ -220,6 +220,24 @@ enum bootstage_id {
 	BOOTSTAGE_ID_ALLOC,
 };
 
+/**
+ * struct bootstage_record - information about a bootstage timing
+ *
+ * @time_us: time in microseconds, either the timestamp or the total accumlated
+ * time for this ID
+ * @start_us: timestamp of the current starting point for this ID
+ * @name: name of the timestamp
+ * @flags: Flags (enum bootstage_flags)
+ * @id: Bootstage ID
+ */
+struct bootstage_record {
+	ulong time_us;
+	u32 start_us;
+	const char *name;
+	int flags;
+	enum bootstage_id id;
+};
+
 /*
  * Return the time since boot in microseconds, This is needed for bootstage
  * and should be defined in CPU- or board-specific code. If undefined then
@@ -336,6 +354,38 @@ uint32_t bootstage_start(enum bootstage_id id, const char *name);
  */
 uint32_t bootstage_accum(enum bootstage_id id);
 
+/**
+ * bootstage_get_rec_count() - Get the number of bootstage records
+ *
+ * Return: number of bootstage records
+ */
+uint bootstage_get_rec_count(void);
+
+/**
+ * bootstage_get_rec() - Get a bootstage record by index
+ *
+ * @index: Index of the record to retrieve (numbered from 0)
+ * Return: pointer to the record, or NULL if @index is out of range
+ */
+const struct bootstage_record *bootstage_get_rec(uint index);
+
+/**
+ * bootstage_set_rec_count() - Set the number of bootstage records
+ *
+ * This can be used to restore the record count after testing
+ *
+ * @count: New record count (must be <= RECORD_COUNT)
+ */
+void bootstage_set_rec_count(uint count);
+
+/*
+ * bootstage_get_time() - Get the timestamp for a bootstage ID
+ *
+ * @id: Bootstage id to look up
+ * Return: timestamp in us for that stage, or 0 if not found
+ */
+ulong bootstage_get_time(enum bootstage_id id);
+
 /* Print a report about boot time */
 void bootstage_report(void);
 
@@ -432,6 +482,11 @@ static inline uint32_t bootstage_start(enum bootstage_id id, const char *name)
 }
 
 static inline uint32_t bootstage_accum(enum bootstage_id id)
+{
+	return 0;
+}
+
+static inline ulong bootstage_get_time(enum bootstage_id id)
 {
 	return 0;
 }

@@ -6,6 +6,7 @@
  */
 
 #include <bloblist.h>
+#include <bootstage.h>
 #include <cpu.h>
 #include <dm.h>
 #include <efi_api.h>
@@ -14,6 +15,7 @@
 #include <mapmem.h>
 #include <tables_csum.h>
 #include <serial.h>
+#include <timer.h>
 #include <acpi/acpi_table.h>
 #include <acpi/acpi_device.h>
 #include <asm/global_data.h>
@@ -106,6 +108,8 @@ int acpi_get_table_revision(enum acpi_tables table)
 		return 1;
 	case ACPITAB_GTDT: /* ACPI 6.2: 2, ACPI 6.3: 3 */
 		return 2;
+	case ACPITAB_FPDT: /* ACPI 6.4+: 1 */
+		return 1;
 	default:
 		return -EINVAL;
 	}
@@ -709,4 +713,110 @@ static int acpi_create_bgrt(struct acpi_ctx *ctx,
 	return 0;
 }
 ACPI_WRITER(6bgrt, "BGRT", acpi_create_bgrt, 0);
+#endif
+
+int acpi_write_fpdt(struct acpi_ctx *ctx, u64 uboot_start)
+{
+	struct acpi_fpdt *fpdt;
+	struct acpi_fpdt_boot *rec;
+	struct acpi_table_header *header;
+	u64 current_time;
+	int size;
+
+	fpdt = ctx->current;
+	header = &fpdt->header;
+
+	/* Calculate total size: FPDT header + boot performance record */
+	size = sizeof(struct acpi_fpdt) + sizeof(struct acpi_fpdt_boot);
+
+	memset(fpdt, '\0', size);
+
+	/* Fill out FPDT header */
+	acpi_fill_header(header, "FPDT");
+	header->length = size;
+	header->revision = acpi_get_table_revision(ACPITAB_FPDT);
+
+	/* Add boot performance record right after FPDT header */
+	rec = (struct acpi_fpdt_boot *)(fpdt + 1);
+
+	/* Fill in record header */
+	rec->hdr.type = FPDT_REC_BOOT;
+	rec->hdr.length = sizeof(struct acpi_fpdt_boot);
+	rec->hdr.revision = 2;  /* FPDT Boot Performance Record revision */
+
+	/* Fill in timing data */
+	current_time = timer_get_boot_us();
+	rec->reset_end = uboot_start;
+	rec->loader_start = current_time;
+	rec->loader_exec = current_time;
+	rec->ebs_entry = current_time;
+	rec->ebs_exit = current_time;
+
+	header->checksum = table_compute_checksum(fpdt, header->length);
+
+	acpi_inc_align(ctx, size);
+	acpi_add_table(ctx, fpdt);
+
+	return 0;
+}
+
+struct acpi_fpdt_boot *acpi_get_fpdt_boot(void)
+{
+	struct acpi_table_header *header;
+	struct acpi_fpdt *fpdt;
+
+	header = acpi_find_table("FPDT");
+	if (!header)
+		return NULL;
+
+	fpdt = (struct acpi_fpdt *)header;
+	return (struct acpi_fpdt_boot *)(fpdt + 1);
+}
+
+int acpi_fix_fpdt_checksum(void)
+{
+	struct acpi_table_header *header;
+
+	header = acpi_find_table("FPDT");
+	if (!header)
+		return -ENOENT;
+
+	header->checksum = 0;
+	header->checksum = table_compute_checksum(header, header->length);
+
+	return 0;
+}
+
+void acpi_final_fpdt(void)
+{
+	struct acpi_fpdt_boot *fpdt;
+
+	if (IS_ENABLED(CONFIG_TARGET_QEMU_VIRT))
+		return;
+
+	fpdt = acpi_get_fpdt_boot();
+	if (fpdt) {
+		u64 time;
+
+		time = timer_get_boot_us();
+		fpdt->ebs_entry = time;
+		fpdt->ebs_exit = time;
+		acpi_fix_fpdt_checksum();
+	}
+}
+
+/* this board lacks the bootstage timer */
+#ifndef CONFIG_TARGET_QEMU_VIRT
+
+static int acpi_create_fpdt(struct acpi_ctx *ctx,
+			    const struct acpi_writer *entry)
+{
+	u64 uboot_start;
+
+	uboot_start = bootstage_get_time(BOOTSTAGE_ID_START_UBOOT_F);
+
+	return acpi_write_fpdt(ctx, uboot_start);
+}
+ACPI_WRITER(6fpdt, "FPDT", acpi_create_fpdt, 0);
+
 #endif

@@ -7,6 +7,8 @@ obj-$(CONFIG_$(PHASE_)CMDLINE) += bloblist.o
 endif
 endif
 
+obj-$(CONFIG_BOOTSTAGE) += bootstage.o
+
 obj-$(CONFIG_CONSOLE_PAGER) += console.o
 obj-$(CONFIG_CYCLIC) += cyclic.o
 obj-$(CONFIG_EVENT_DYNAMIC) += event.o

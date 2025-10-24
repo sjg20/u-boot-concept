@@ -26,14 +26,6 @@ enum {
 	RECORD_COUNT = CONFIG_VAL(BOOTSTAGE_RECORD_COUNT),
 };
 
-struct bootstage_record {
-	ulong time_us;
-	uint32_t start_us;
-	const char *name;
-	int flags;		/* see enum bootstage_flags */
-	enum bootstage_id id;
-};
-
 struct bootstage_data {
 	uint rec_count;
 	uint next_id;
@@ -218,6 +210,57 @@ uint32_t bootstage_accum(enum bootstage_id id)
 	rec->time_us += duration;
 
 	return duration;
+}
+
+uint bootstage_get_rec_count(void)
+{
+	struct bootstage_data *data = gd->bootstage;
+
+	if (!data)
+		return 0;
+
+	return data->rec_count;
+}
+
+const struct bootstage_record *bootstage_get_rec(uint index)
+{
+	struct bootstage_data *data = gd->bootstage;
+
+	if (!data || index >= data->rec_count)
+		return NULL;
+
+	return &data->record[index];
+}
+
+void bootstage_set_rec_count(uint count)
+{
+	struct bootstage_data *data = gd->bootstage;
+	uint i;
+
+	if (!data || count > RECORD_COUNT)
+		return;
+
+	/* Clear any records beyond the new count */
+	for (i = count; i < data->rec_count; i++) {
+		data->record[i].time_us = 0;
+		data->record[i].start_us = 0;
+	}
+
+	data->rec_count = count;
+}
+
+ulong bootstage_get_time(enum bootstage_id id)
+{
+	struct bootstage_data *data = gd->bootstage;
+	struct bootstage_record *rec;
+
+	if (!data)
+		return 0;
+	rec = find_id(data, id);
+	if (!rec)
+		return 0;
+
+	return rec->time_us;
 }
 
 /**
