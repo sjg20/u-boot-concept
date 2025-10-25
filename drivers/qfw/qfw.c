@@ -220,21 +220,31 @@ int qfw_locate_file(struct udevice *dev, const char *fname,
 
 	/* make sure fw_list is loaded */
 	ret = qfw_read_firmware_list(dev);
-	if (ret) {
-		printf("error: can't read firmware file list\n");
+	if (ret)
 		return -EINVAL;
-	}
 
 	file = qfw_find_file(dev, fname);
-	if (!file) {
-		printf("error: can't find %s\n", fname);
+	if (!file)
 		return -ENOENT;
-	}
 
 	*selectp = be16_to_cpu(file->cfg.select);
 	*sizep = be32_to_cpu(file->cfg.size);
 
 	return 0;
+}
+
+int qfw_locate_file_msg(struct udevice *dev, const char *fname,
+			enum fw_cfg_selector *selectp, ulong *sizep)
+{
+	int ret;
+
+	ret = qfw_locate_file(dev, fname, selectp, sizep);
+	if (ret == -EINVAL)
+		printf("error: can't read firmware file list\n");
+	else if (ret == -ENOENT)
+		printf("error: can't find %s\n", fname);
+
+	return ret;
 }
 
 int qfw_load_file(struct udevice *dev, const char *fname, ulong addr)
@@ -243,7 +253,7 @@ int qfw_load_file(struct udevice *dev, const char *fname, ulong addr)
 	ulong size;
 	int ret;
 
-	ret = qfw_locate_file(dev, fname, &select, &size);
+	ret = qfw_locate_file_msg(dev, fname, &select, &size);
 	if (ret)
 		return ret;
 
@@ -258,7 +268,7 @@ int qfw_get_file(struct udevice *dev, const char *fname, struct abuf *loader)
 	ulong size;
 	int ret;
 
-	ret = qfw_locate_file(dev, fname, &select, &size);
+	ret = qfw_locate_file_msg(dev, fname, &select, &size);
 	if (ret)
 		return ret;
 
