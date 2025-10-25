@@ -189,6 +189,11 @@ sct_mnt = /mnt/sct
         cmd.extend(['-object', 'rng-random,filename=/dev/urandom,id=rng0',
                     '-device', 'virtio-rng-pci,rng=rng0'])
 
+        # Add bootcmd via fw_cfg if specified
+        if args.bootcmd:
+            cmd.extend(['-fw_cfg',
+                        f'name=opt/u-boot/bootcmd,string={args.bootcmd}'])
+
     def setup_share(self, qemu_cmd):
         sock = Path('/tmp/virtiofs.sock')
         proc = None
@@ -285,6 +290,8 @@ def add_common_args(parser):
     """
     parser.add_argument('-a', '--arch', default='arm', choices=['arm', 'x86'],
                         help='Select architecture (arm, x86) Default: arm')
+    parser.add_argument('-b', '--bootcmd', type=str,
+                        help='U-Boot bootcmd to pass via fw_cfg')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build; assume a build exists")
     parser.add_argument('--build-dir', help='Directory to use for the build')
