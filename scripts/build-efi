@@ -13,6 +13,13 @@ OVMF-pure-efi.x64.fd at
 https://drive.google.com/file/d/1c39YI9QtpByGQ4V0UNNQtGqttEzS-eFV/view?usp=sharing
 
 Use ~/.build-efi to configure the various paths used by this script.
+
+When --bootcmd is specified, a uboot.env file is created on the EFI partition
+containing the boot command. U-Boot needs to be configured to import this file
+on startup, for example by adding to CONFIG_PREBOOT or the default bootcmd:
+
+  load ${devtype} ${devnum}:${distro_bootpart} ${loadaddr} uboot.env; \
+  env import -t ${loadaddr} ${filesize}
 """
 
 from argparse import ArgumentParser
@@ -20,6 +27,7 @@ import os
 from pathlib import Path
 import shutil
 import sys
+import tempfile
 
 import build_helper
 
@@ -168,6 +176,32 @@ class BuildEfi:
         fname = f'u-boot-{build_type}.efi'
         tools.write_file(f'{dst}/startup.nsh', f'fs0:{fname}', binary=False)
         shutil.copy(f'{self.build_dir}/{fname}', dst)
+
+        # Write U-Boot environment file if bootcmd is specified
+        if self.args.bootcmd:
+            # Check if mkenvimage is available (local build or system-wide)
+            mkenvimage = 'tools/mkenvimage'
+            if not os.path.exists(mkenvimage):
+                mkenvimage = 'mkenvimage'
+                if not shutil.which(mkenvimage):
+                    tout.error('Please install u-boot-tools package:')
+                    tout.error('  sudo apt install u-boot-tools')
+                    raise FileNotFoundError('mkenvimage not found')
+
+            # Create text environment file
+            env_content = f'bootcmd={self.args.bootcmd}\n'
+            with tempfile.NamedTemporaryFile(mode='w', delete=False,
+                                             suffix='.txt') as outf:
+                outf.write(env_content)
+                env_fname = outf.name
+
+            try:
+                # Convert to binary format with CRC using mkenvimage
+                command.run(mkenvimage, '-s', '0x1000',
+                           '-o', f'{dst}/uboot.env', env_fname)
+                print(f'Created uboot.env with bootcmd: {self.args.bootcmd}')
+            finally:
+                os.unlink(env_fname)
 
     def do_build(self, build):
         """Build U-Boot for the selected board"""
