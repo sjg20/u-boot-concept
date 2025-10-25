@@ -69,6 +69,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 	clang-18 \
 	coreutils \
 	cpio \
+	cryptsetup \
 	curl \
 	device-tree-compiler \
 	dosfstools \

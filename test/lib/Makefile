@@ -12,6 +12,7 @@ obj-$(CONFIG_EFI_LOADER) += efi_device_path.o
 obj-$(CONFIG_EFI_SECURE_BOOT) += efi_image_region.o
 obj-$(CONFIG_EFI_LOG) += efi_log.o
 obj-y += hexdump.o
+obj-$(CONFIG_JSON) += json.o
 obj-$(CONFIG_SANDBOX) += kconfig.o
 obj-y += lmb.o
 obj-$(CONFIG_HAVE_SETJMP) += longjmp.o

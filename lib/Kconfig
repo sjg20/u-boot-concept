@@ -263,6 +263,14 @@ config PANIC_HANG
 	  development since you can try to debug the conditions that lead to
 	  the situation.
 
+config PANIC_POWEROFF
+	bool "Power off the system on fatal error"
+	help
+	  Define this option to power off the system in case of a fatal error,
+	  instead of resetting. This is useful for development and testing to
+	  avoid infinite reset loops when debugging issues like stack smashing.
+	  The system will power off using sysreset.
+
 config REGEX
 	bool "Enable regular expression support"
 	default y if NET
@@ -967,6 +975,13 @@ config GETOPT
 	bool "Enable getopt"
 	help
 	  This enables functions for parsing command-line options.
+
+config JSON
+	bool "Enable JSON parsing and printing"
+	help
+	  This enables JSON (JavaScript Object Notation) parsing and pretty-
+	  printing functions. JSON is used for structured data representation,
+	  such as LUKS2 metadata.
 
 config OF_LIBFDT
 	bool "Enable the FDT library"

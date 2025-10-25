@@ -513,10 +513,11 @@ static u8 rcon[11] = {
 static u32 aes_get_rounds(u32 key_len)
 {
 	u32 rounds = AES128_ROUNDS;
+	u32 key_len_bytes = key_len / 8;  /* Convert bits to bytes */
 
-	if (key_len == AES192_KEY_LENGTH)
+	if (key_len_bytes == AES192_KEY_LENGTH)
 		rounds = AES192_ROUNDS;
-	else if (key_len == AES256_KEY_LENGTH)
+	else if (key_len_bytes == AES256_KEY_LENGTH)
 		rounds = AES256_ROUNDS;
 
 	return rounds;
@@ -525,10 +526,11 @@ static u32 aes_get_rounds(u32 key_len)
 static u32 aes_get_keycols(u32 key_len)
 {
 	u32 keycols = AES128_KEYCOLS;
+	u32 key_len_bytes = key_len / 8;  /* Convert bits to bytes */
 
-	if (key_len == AES192_KEY_LENGTH)
+	if (key_len_bytes == AES192_KEY_LENGTH)
 		keycols = AES192_KEYCOLS;
-	else if (key_len == AES256_KEY_LENGTH)
+	else if (key_len_bytes == AES256_KEY_LENGTH)
 		keycols = AES256_KEYCOLS;
 
 	return keycols;
@@ -538,12 +540,13 @@ static u32 aes_get_keycols(u32 key_len)
 void aes_expand_key(u8 *key, u32 key_len, u8 *expkey)
 {
 	u8 tmp0, tmp1, tmp2, tmp3, tmp4;
-	u32 idx, aes_rounds, aes_keycols;
+	uint idx, aes_rounds, aes_keycols;
 
 	aes_rounds = aes_get_rounds(key_len);
 	aes_keycols = aes_get_keycols(key_len);
 
-	memcpy(expkey, key, key_len);
+	/* key_len is in bits; convert to bytes */
+	memcpy(expkey, key, key_len / 8);
 
 	for (idx = aes_keycols; idx < AES_STATECOLS * (aes_rounds + 1); idx++) {
 		tmp0 = expkey[4*idx - 4];

@@ -20,7 +20,7 @@ default:
     - ${DEFAULT_TAG}
   # Grab our configured image.  The source for this is found
   # in the u-boot tree at tools/docker/Dockerfile
-  image: ${MIRROR_DOCKER}/sjg20/u-boot-gitlab-ci-runner:jammy-20250714-10Sep2025p2
+  image: ${MIRROR_DOCKER}/sjg20/u-boot-gitlab-ci-runner:jammy-20250404-24Oct2025p1
   services:
     - name: container-$(CI_JOB_ID)
       command: ["--rm"]
@@ -37,6 +37,10 @@ stages:
 .buildman_and_testpy_template: &buildman_and_testpy_dfn
   stage: test.py
   retry: 2 # QEMU may be too slow, etc.
+  # Note: These tests require device-mapper access for LUKS encryption tests.
+  # The GitLab runner must be configured with:
+  #   - privileged = true in /etc/gitlab-runner/config.toml
+  #   OR passwordless sudo for: modprobe, cryptsetup, dd
   rules:
     - if: $LAB_ONLY == "1"
       when: never

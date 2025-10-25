@@ -11,6 +11,7 @@ Use U-Boot
    environment
    fdt_overlays
    fit/index
+   luks
    netconsole
    partitions
    cmdline
@@ -34,6 +35,7 @@ Shell commands
    cmd/bdinfo
    cmd/bind
    cmd/blkcache
+   cmd/blkmap
    cmd/bootd
    cmd/bootdev
    cmd/bootefi
@@ -92,6 +94,7 @@ Shell commands
    cmd/loads
    cmd/loadx
    cmd/loady
+   cmd/luks
    cmd/meminfo
    cmd/mbr
    cmd/md
