@@ -467,14 +467,32 @@ int qfw_get_file(struct udevice *dev, const char *fname, struct abuf *loader);
 /**
  * qfw_locate_file() - Locate a file in the QEMU firmware config
  *
+ * This is the silent version that doesn't print error messages
+ *
  * @dev: UCLASS_QFW device
  * @fname: Filename to locate
  * @selectp: Returns the selector for the file
  * @sizep: Returns the size of the file
- * Return: 0 on success, -EINVAL if firmware list cannot be read or file not found
+ * Return: 0 on success, -EINVAL if firmware list cannot be read, -ENOENT if
+ * file not found
  */
 int qfw_locate_file(struct udevice *dev, const char *fname,
 		    enum fw_cfg_selector *selectp, ulong *sizep);
+
+/**
+ * qfw_locate_file_msg() - Locate a file in the QEMU firmware config
+ *
+ * This version prints error messages on failure
+ *
+ * @dev: UCLASS_QFW device
+ * @fname: Filename to locate
+ * @selectp: Returns the selector for the file
+ * @sizep: Returns the size of the file
+ * Return: 0 on success, -EINVAL if firmware list cannot be read, -ENOENT if
+ * file not found
+ */
+int qfw_locate_file_msg(struct udevice *dev, const char *fname,
+			enum fw_cfg_selector *selectp, ulong *sizep);
 
 /**
  * cmd_qfw_e820() - Execute the 'qfw e820' command for x86

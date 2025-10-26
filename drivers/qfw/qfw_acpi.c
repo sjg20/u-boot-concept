@@ -8,6 +8,7 @@
 
 #include <abuf.h>
 #include <bloblist.h>
+#include <bootstage.h>
 #include <errno.h>
 #include <malloc.h>
 #include <mapmem.h>
@@ -254,6 +255,15 @@ out:
 	if (ret) {
 		printf("error: failed to write BGRT (err=%dE)\n", ret);
 		return addr;
+	}
+
+	if (!IS_ENABLED(CONFIG_TARGET_QEMU_VIRT)) {
+		ret = acpi_write_fpdt(ctx,
+				bootstage_get_time(BOOTSTAGE_ID_START_UBOOT_F));
+		if (ret) {
+			printf("error: failed to write FPDT (err=%dE)\n", ret);
+			return addr;
+		}
 	}
 
 	return addr;
