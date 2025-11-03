@@ -576,7 +576,7 @@ cmd_S_image=						\
 	echo '\#endif';					\
 ) > $@
 
-ifneq ($(filter drivers/video/images,$(obj)),)
+ifneq ($(filter %drivers/video/images,$(obj)),)
 $(obj)/%.S: $(src)/%.bmp
 	$(call cmd,S_image)
 endif
