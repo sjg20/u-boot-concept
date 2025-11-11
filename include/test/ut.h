@@ -206,7 +206,15 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 	const char *_val1 = (expr1), *_val2 = (expr2);			\
 	int __ret = 0;							\
 									\
-	if (strcmp(_val1, _val2)) {					\
+	if (!_val1 || !_val2) {						\
+		ut_failf(uts, __FILE__, __LINE__, __func__,		\
+			 #expr1 " = " #expr2,				\
+			 "Expected \"%s\", got \"%s\"",			\
+			 _val1 ? _val1 : "(null)",			\
+			 _val2 ? _val2 : "(null)");			\
+		if (!uts->soft_fail)					\
+			return CMD_RET_FAILURE;				\
+	} else if (strcmp(_val1, _val2)) {				\
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 #expr1 " = " #expr2,				\
 			 "Expected \"%s\", got \"%s\"", _val1, _val2);	\
@@ -222,16 +230,26 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
  */
 #define ut_asserteq_strn(expr1, expr2) ({				\
 	const char *_val1 = (expr1), *_val2 = (expr2);			\
-	int _len = strlen(_val1);					\
 	int __ret = 0;							\
 									\
-	if (memcmp(_val1, _val2, _len)) {				\
+	if (!_val1 || !_val2) {						\
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 #expr1 " = " #expr2,				\
-			 "Expected \"%.*s\", got \"%.*s\"",		\
-			 _len, _val1, _len, _val2);			\
+			 "Expected \"%s\", got \"%s\"",			\
+			 _val1 ? _val1 : "(null)",			\
+			 _val2 ? _val2 : "(null)");			\
 		if (!uts->soft_fail)					\
 			return CMD_RET_FAILURE;				\
+	} else {							\
+		int _len = strlen(_val1);				\
+		if (memcmp(_val1, _val2, _len)) {			\
+			ut_failf(uts, __FILE__, __LINE__, __func__,	\
+				 #expr1 " = " #expr2,			\
+				 "Expected \"%.*s\", got \"%.*s\"",	\
+				 _len, _val1, _len, _val2);		\
+			if (!uts->soft_fail)				\
+				return CMD_RET_FAILURE;			\
+		}							\
 	}								\
 	__ret;								\
 })

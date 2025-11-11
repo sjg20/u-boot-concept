@@ -33,7 +33,7 @@ def copy_partition(ubman, fsfile, outname):
 
 
 def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
-                         script, part2_size=1, use_fde=0):
+                         script, part2_size=1, use_fde=0, luks_kdf='pbkdf2'):
     """Create a 20MB disk image with a single FAT partition
 
     Args:
@@ -47,6 +47,8 @@ def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
         script (str): Script to place in the extlinux.conf file
         part2_size (int): Size of second partition in MB (default: 1)
         use_fde (int): LUKS version for full-disk encryption (0=none, 1=LUKS1, 2=LUKS2)
+        luks_kdf (str): Key derivation function for LUKS2: 'pbkdf2' or 'argon2id'.
+            Defaults to 'pbkdf2'. Ignored for LUKS1.
     """
     fsh = FsHelper(config, 'vfat', 18, prefix=basename)
     fsh.setup()
@@ -82,8 +84,9 @@ def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
 
     ext4 = FsHelper(config, 'ext4', max(1, part2_size - 30), prefix=basename,
                     part_mb=part2_size,
-                    encrypt_passphrase='test' if use_fde else None,
-                    luks_version=use_fde if use_fde else 2)
+                    passphrase='test' if use_fde else None,
+                    luks_version=use_fde if use_fde else 2,
+                    luks_kdf=luks_kdf)
     ext4.setup()
 
     bindir = os.path.join(ext4.srcdir, 'bin')

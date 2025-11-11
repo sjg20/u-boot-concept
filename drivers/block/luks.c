@@ -8,6 +8,7 @@
 #include <blk.h>
 #include <blkmap.h>
 #include <dm.h>
+#include <dm/ofnode.h>
 #include <hash.h>
 #include <hexdump.h>
 #include <json.h>
@@ -21,17 +22,19 @@
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/string.h>
+#include <mbedtls/aes.h>
+#include <mbedtls/cipher.h>
 #include <mbedtls/md.h>
 #include <mbedtls/pkcs5.h>
 #include <u-boot/sha256.h>
 #include <u-boot/sha512.h>
+#include "luks_internal.h"
 
 int luks_get_version(struct udevice *blk, struct disk_partition *pinfo)
 {
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, buffer, desc->blksz);
 	int version;
-
 
 	/* Read first block of the partition */
 	if (blk_read(blk, pinfo->start, 1, buffer) != 1) {
@@ -113,19 +116,19 @@ int luks_show_info(struct udevice *blk, struct disk_partition *pinfo)
 		if (IS_ENABLED(CONFIG_JSON)) {
 			u64 json_size;
 			char *json_start;
-			int blocks;
+			int count;
 
 			/* Read the full header to get JSON area */
-			blocks = (hdr_size + desc->blksz - 1) / desc->blksz;
-			ALLOC_CACHE_ALIGN_BUFFER(unsigned char, full_hdr, blocks * desc->blksz);
+			count = (hdr_size + desc->blksz - 1) / desc->blksz;
+			ALLOC_CACHE_ALIGN_BUFFER(u8, hdr, count * desc->blksz);
 
-			if (blk_read(blk, pinfo->start, blocks, full_hdr) != blocks) {
-				printf("Error: failed to read full LUKS2 header\n");
+			if (blk_read(blk, pinfo->start, count, hdr) != count) {
+				printf("Error: can't read full LUKS2 header\n");
 				return -EIO;
 			}
 
 			/* JSON starts after the 4096-byte binary header */
-			json_start = (char *)(full_hdr + 4096);
+			json_start = (char *)(hdr + 4096);
 			json_size = hdr_size - 4096;
 
 			printf("\nJSON metadata (%llx bytes):\n", json_size);
@@ -195,9 +198,9 @@ static int af_hash(struct hash_algo *algo, size_t key_size, u8 *block_buf)
 /**
  * af_merge() - Merge anti-forensic split key into original key
  *
- * This performs the LUKS AF-merge operation to recover the original key from its
- * AF-split representation. The algorithm XORs all stripes together, applying
- * diffusion between each stripe.
+ * This performs the LUKS AF-merge operation to recover the original key from
+ * its AF-split representation. The algorithm XORs all stripes together,
+ * applying diffusion between each stripe.
  *
  * @src:	AF-split key material (key_size * stripes bytes)
  * @dst:	Output buffer for merged key (key_size bytes)
@@ -206,8 +209,8 @@ static int af_hash(struct hash_algo *algo, size_t key_size, u8 *block_buf)
  * @hash_spec:	Hash algorithm name (e.g., "sha256")
  * Return:	0 on success, -ve on error
  */
-static int af_merge(const u8 *src, u8 *dst, size_t key_size, uint stripes,
-		    const char *hash_spec)
+int af_merge(const u8 *src, u8 *dst, size_t key_size, uint stripes,
+	     const char *hash_spec)
 {
 	struct hash_algo *algo;
 	u8 block_buf[128];
@@ -248,25 +251,6 @@ static int af_merge(const u8 *src, u8 *dst, size_t key_size, uint stripes,
 }
 
 /**
- * try_keyslot() - Unlock a LUKS key slot with a passphrase
- *
- * @blk:		Block device
- * @pinfo:		Partition information
- * @hdr:		LUKS header
- * @slot_idx:		Key slot index to try
- * @passphrase:		Passphrase to try
- * @md_type:		Hash algorithm type
- * @key_size:		Size of the key
- * @derived_key:	Buffer for derived key (key_size bytes)
- * @km:			Buffer for encrypted key material
- * @km_blocks:		Size of km buffer in blocks
- * @split_key:		Buffer for AF-split key
- * @candidate_key:	Buffer to receive decrypted master key
- *
- * Return: 0 on success (correct passphrase), -EPROTO on mbedtls error, -ve on
- * other error
- */
-/**
  * essiv_decrypt() - Decrypt key material using ESSIV mode
  *
  * ESSIV (Encrypted Salt-Sector Initialization Vector) mode generates a unique
@@ -281,8 +265,8 @@ static int af_merge(const u8 *src, u8 *dst, size_t key_size, uint stripes,
  * @km_blocks: Number of blocks of key material
  * @blksz: Block size in bytes
  */
-static void essiv_decrypt(u8 *derived_key, uint key_size, u8 *expkey,
-			  u8 *km, u8 *split_key, uint km_blocks, uint blksz)
+static void essiv_decrypt(u8 *derived_key, uint key_size, u8 *expkey, u8 *km,
+			  u8 *split_key, uint km_blocks, uint blksz)
 {
 	u8 essiv_expkey[AES256_EXPAND_KEY_LENGTH];
 	u8 essiv_key_material[SHA256_SUM_LEN];
@@ -332,14 +316,33 @@ static void essiv_decrypt(u8 *derived_key, uint key_size, u8 *expkey,
 	}
 }
 
+/**
+ * try_keyslot() - Unlock a LUKS key slot with a passphrase
+ *
+ * @blk:		Block device
+ * @pinfo:		Partition information
+ * @hdr:		LUKS header
+ * @slot_idx:		Key slot index to try
+ * @pass:		Passphrase to try
+ * @md_type:		Hash algorithm type
+ * @key_size:		Size of the key
+ * @derived_key:	Buffer for derived key (key_size bytes)
+ * @km:			Buffer for encrypted key material
+ * @km_blocks:		Size of km buffer in blocks
+ * @split_key:		Buffer for AF-split key
+ * @candidate_key:	Buffer to receive decrypted master key
+ *
+ * Return: 0 on success (correct passphrase), -EPROTO on mbedtls error, -ve on
+ * other error
+ */
 static int try_keyslot(struct udevice *blk, struct disk_partition *pinfo,
 		       struct luks1_phdr *hdr, int slot_idx,
-		       const char *passphrase, mbedtls_md_type_t md_type,
+		       const char *pass, mbedtls_md_type_t md_type,
 		       uint key_size, u8 *derived_key, u8 *km, uint km_blocks,
 		       u8 *split_key, u8 *candidate_key)
 {
 	struct luks1_keyslot *slot = &hdr->key_slot[slot_idx];
-	uint iterations, km_offset, stripes, split_key_size;
+	uint iters, km_offset, stripes, split_key_size;
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	u8 expkey[AES256_EXPAND_KEY_LENGTH];
 	u8 key_digest[LUKS_DIGESTSIZE];
@@ -352,21 +355,20 @@ static int try_keyslot(struct udevice *blk, struct disk_partition *pinfo,
 
 	log_debug("trying key slot %d...\n", slot_idx);
 
-	iterations = be32_to_cpu(slot->iterations);
+	iters = be32_to_cpu(slot->iterations);
 	km_offset = be32_to_cpu(slot->key_material_offset);
 	stripes = be32_to_cpu(slot->stripes);
 	split_key_size = key_size * stripes;
 
 	/* Derive key from passphrase using PBKDF2 */
-	log_debug("PBKDF2(pass '%s'[len %zu], ", passphrase,
-		  strlen(passphrase));
+	log_debug("PBKDF2(pass '%s'[len %zu], ", pass, strlen(pass));
 	log_debug_hex("salt[0-7]", (u8 *)slot->salt, 8);
-	log_debug("iter %u, keylen %u)\n", iterations, key_size);
-	ret = mbedtls_pkcs5_pbkdf2_hmac_ext(md_type, (const u8 *)passphrase,
-					    strlen(passphrase),
+	log_debug("iter %u, keylen %u)\n", iters, key_size);
+	ret = mbedtls_pkcs5_pbkdf2_hmac_ext(md_type, (const u8 *)pass,
+					    strlen(pass),
 					    (const u8 *)slot->salt,
-					    LUKS_SALTSIZE, iterations,
-					    key_size, derived_key);
+					    LUKS_SALTSIZE, iters, key_size,
+					    derived_key);
 	if (ret) {
 		log_debug("PBKDF2 failed: %d\n", ret);
 		return -EPROTO;
@@ -388,7 +390,6 @@ static int try_keyslot(struct udevice *blk, struct disk_partition *pinfo,
 	log_debug_hex("input key (derived_key) full:", derived_key, key_size);
 
 	aes_expand_key(derived_key, key_size * 8, expkey);
-
 	log_debug_hex("expanded key [0-15]:", expkey, 16);
 
 	/* Decrypt with CBC mode: first check if ESSIV is used */
@@ -432,7 +433,7 @@ static int try_keyslot(struct udevice *blk, struct disk_partition *pinfo,
 	log_debug_hex("mk_digest[0-7]", (u8 *)hdr->mk_digest, 8);
 
 	/* Check if the digest matches */
-	if (memcmp(key_digest, hdr->mk_digest, LUKS_DIGESTSIZE) == 0) {
+	if (!memcmp(key_digest, hdr->mk_digest, LUKS_DIGESTSIZE)) {
 		log_debug("Uunlocked with key slot %d\n", slot_idx);
 		return 0;
 	}
@@ -442,20 +443,18 @@ static int try_keyslot(struct udevice *blk, struct disk_partition *pinfo,
 }
 
 int luks_unlock(struct udevice *blk, struct disk_partition *pinfo,
-		const char *passphrase, u8 *master_key, u32 *key_size)
+		const char *pass, u8 *master_key, u32 *key_size)
 {
 	uint version, split_key_size, km_blocks, hdr_blocks;
+	u8 *split_key, *derived_key;
 	struct hash_algo *hash_algo;
+	u8 candidate_key[128], *km;
 	mbedtls_md_type_t md_type;
 	struct luks1_phdr *hdr;
 	struct blk_desc *desc;
-	u8 candidate_key[128];
-	u8 *split_key = NULL;
-	u8 *derived_key = NULL;
-	u8 *km = NULL;
-	int i, ret = -EINVAL;
+	int i, ret;
 
-	if (!blk || !pinfo || !passphrase || !master_key || !key_size)
+	if (!blk || !pinfo || !pass || !master_key || !key_size)
 		return -EINVAL;
 
 	desc = dev_get_uclass_plat(blk);
@@ -480,15 +479,19 @@ int luks_unlock(struct udevice *blk, struct disk_partition *pinfo,
 	}
 
 	version = be16_to_cpu(*(__be16 *)(buffer + LUKS_MAGIC_LEN));
+	if (version == LUKS_VERSION_2)
+		return unlock_luks2(blk, pinfo, pass, master_key, key_size);
+
 	if (version != LUKS_VERSION_1) {
-		log_debug("only LUKS1 decryption is currently supported\n");
+		log_debug("unsupported LUKS version %d\n", version);
 		return -ENOTSUPP;
 	}
 
 	hdr = (struct luks1_phdr *)buffer;
 
 	/* Debug: show what we read from header */
-	log_debug("Read header at sector %llu, mk_digest[0-7] ", (unsigned long long)pinfo->start);
+	log_debug("Read header at sector %llu, mk_digest[0-7] ",
+		  (unsigned long long)pinfo->start);
 	log_debug_hex("", (u8 *)hdr->mk_digest, 8);
 
 	/* Verify cipher mode - only CBC supported */
@@ -517,7 +520,7 @@ int luks_unlock(struct udevice *blk, struct disk_partition *pinfo,
 			break;
 		}
 	}
-	if (stripes == 0) {
+	if (!stripes) {
 		log_debug("no active key slots found\n");
 		return -ENOENT;
 	}
@@ -540,7 +543,7 @@ int luks_unlock(struct udevice *blk, struct disk_partition *pinfo,
 
 	/* Try each key slot */
 	for (i = 0; i < LUKS_NUMKEYS; i++) {
-		ret = try_keyslot(blk, pinfo, hdr, i, passphrase, md_type,
+		ret = try_keyslot(blk, pinfo, hdr, i, pass, md_type,
 				  *key_size, derived_key, km, km_blocks,
 				  split_key, candidate_key);
 
@@ -585,22 +588,23 @@ out:
  * @master_key:	Unlocked master key
  * @key_size:	Size of the master key in bytes
  * @label:	Label for the blkmap device
- * @blkmap_dev:	Output pointer for created blkmap device
+ * @blkmapp:	Output pointer for created blkmap device
  * Return:	0 on success, -ve on error
  */
 int luks_create_blkmap(struct udevice *blk, struct disk_partition *pinfo,
 		       const u8 *master_key, u32 key_size, const char *label,
-		       struct udevice **blkmap_dev)
+		       struct udevice **blkmapp)
 {
 	u8 essiv_key[SHA256_SUM_LEN];  /* SHA-256 output */
 	struct luks1_phdr *hdr;
+	struct luks2_hdr *hdr2;
 	struct blk_desc *desc;
 	struct udevice *dev;
 	uint payload_offset;
+	int ret, version;
 	bool use_essiv;
-	int ret;
 
-	if (!blk || !pinfo || !master_key || !label || !blkmap_dev)
+	if (!blk || !pinfo || !master_key || !label || !blkmapp)
 		return -EINVAL;
 
 	desc = dev_get_uclass_plat(blk);
@@ -611,7 +615,107 @@ int luks_create_blkmap(struct udevice *blk, struct disk_partition *pinfo,
 		log_debug("failed to read LUKS header\n");
 		return -EIO;
 	}
-	hdr = (struct luks1_phdr *)buf;
+
+	/* Check version */
+	version = be16_to_cpu(*(__be16 *)(buf + LUKS_MAGIC_LEN));
+
+	if (version == LUKS_VERSION_2) {
+		/* LUKS2: Parse JSON for segment offset */
+		char *json_data;
+		u64 hdr_size, segment_offset;
+		int blocks;
+		struct abuf fdt_buf;
+		oftree tree;
+		ofnode root, segments_node, segment0_node;
+		const char *offset_str, *encryption;
+
+		abuf_init(&fdt_buf);
+
+		hdr2 = (struct luks2_hdr *)buf;
+		hdr_size = be64_to_cpu(hdr2->hdr_size);
+
+		/* Read full header with JSON */
+		blocks = (hdr_size + desc->blksz - 1) / desc->blksz;
+		json_data = malloc_cache_aligned(blocks * desc->blksz);
+		if (!json_data)
+			return -ENOMEM;
+
+		if (blk_read(blk, pinfo->start, blocks, json_data) != blocks) {
+			free(json_data);
+			return -EIO;
+		}
+
+		/* Convert JSON to FDT */
+		ret = json_to_fdt(json_data + 4096, &fdt_buf);
+		if (ret) {
+			log_err("Failed to convert JSON to FDT: %d\n", ret);
+			free(json_data);
+			return -EINVAL;
+		}
+
+		/* Create oftree from FDT */
+		tree = oftree_from_fdt(abuf_data(&fdt_buf));
+		if (!oftree_valid(tree)) {
+			abuf_uninit(&fdt_buf);
+			free(json_data);
+			return -EINVAL;
+		}
+
+		/* Get root node */
+		root = oftree_root(tree);
+		if (!ofnode_valid(root)) {
+			abuf_uninit(&fdt_buf);
+			free(json_data);
+			return -EINVAL;
+		}
+
+		/* Navigate to segments node */
+		segments_node = ofnode_find_subnode(root, "segments");
+		if (!ofnode_valid(segments_node)) {
+			abuf_uninit(&fdt_buf);
+			free(json_data);
+			return -EINVAL;
+		}
+
+		/* Get first segment (segment 0) */
+		segment0_node = ofnode_find_subnode(segments_node, "0");
+		if (!ofnode_valid(segment0_node)) {
+			abuf_uninit(&fdt_buf);
+			free(json_data);
+			return -EINVAL;
+		}
+
+		/* Get offset (string in LUKS2 JSON) */
+		offset_str = ofnode_read_string(segment0_node, "offset");
+		if (!offset_str) {
+			abuf_uninit(&fdt_buf);
+			free(json_data);
+			return -EINVAL;
+		}
+		segment_offset = simple_strtoull(offset_str, NULL, 10);
+
+		/* Convert byte offset to sectors */
+		payload_offset = segment_offset / desc->blksz;
+
+		/* Check if ESSIV mode is used */
+		encryption = ofnode_read_string(segment0_node, "encryption");
+		if (encryption)
+			use_essiv = strstr(encryption, "essiv");
+		else
+			use_essiv = false;
+
+		abuf_uninit(&fdt_buf);
+		free(json_data);
+	} else {
+		/* LUKS1 */
+		hdr = (struct luks1_phdr *)buf;
+
+		/* Check if ESSIV mode is used */
+		use_essiv = strstr(hdr->cipher_mode, "essiv");
+
+		/* Get payload offset */
+		payload_offset = be32_to_cpu(hdr->payload_offset);
+	}
 
 	/* Create blkmap device */
 	ret = blkmap_create(label, &dev);
@@ -620,9 +724,7 @@ int luks_create_blkmap(struct udevice *blk, struct disk_partition *pinfo,
 		return ret;
 	}
 
-	/* Check if ESSIV mode is used */
-	use_essiv = strstr(hdr->cipher_mode, "essiv");
-
+	/* Compute ESSIV key if needed */
 	if (use_essiv) {
 		int hash_size = SHA256_SUM_LEN;
 
@@ -635,7 +737,6 @@ int luks_create_blkmap(struct udevice *blk, struct disk_partition *pinfo,
 	}
 
 	/* Map the encrypted partition to the blkmap device */
-	payload_offset = be32_to_cpu(hdr->payload_offset);
 	log_debug("mapping blkmap: blknr 0 blkcnt %lx payload_offset %x essiv %d\n",
 		  (ulong)pinfo->size, payload_offset, use_essiv);
 	ret = blkmap_map_crypt(dev, 0, pinfo->size, blk, pinfo->start,
@@ -650,7 +751,7 @@ int luks_create_blkmap(struct udevice *blk, struct disk_partition *pinfo,
 	/* Wipe ESSIV key from stack */
 	if (use_essiv)
 		memset(essiv_key, '\0', sizeof(essiv_key));
-	*blkmap_dev = dev;
+	*blkmapp = dev;
 
 	return 0;
 }
