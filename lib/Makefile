@@ -80,7 +80,10 @@ obj-$(CONFIG_$(PHASE_)ACPI) += acpi/
 obj-$(CONFIG_ECDSA) += ecdsa/
 obj-$(CONFIG_$(PHASE_)RSA) += rsa/
 obj-$(CONFIG_HASH) += hash-checksum.o
+
+# argon2 provides its own blake2b; just build blake2s when ARGON2 is enabled
 obj-$(CONFIG_BLAKE2) += blake2/blake2b.o blake2/blake2s.o
+obj-$(CONFIG_ARGON2) += blake2/blake2s.o
 
 obj-$(CONFIG_$(PHASE_)MD5_LEGACY) += md5.o
 obj-$(CONFIG_$(PHASE_)SHA1_LEGACY) += sha1.o
@@ -89,6 +92,7 @@ obj-$(CONFIG_$(PHASE_)SHA256_LEGACY) += sha256.o
 obj-$(CONFIG_$(PHASE_)SHA512_LEGACY) += sha512.o
 
 obj-$(CONFIG_CRYPT_PW) += crypt/
+obj-$(CONFIG_ARGON2) += argon2/
 obj-$(CONFIG_$(PHASE_)ASN1_DECODER_LEGACY) += asn1_decoder.o
 
 obj-$(CONFIG_$(PHASE_)ZLIB) += zlib/

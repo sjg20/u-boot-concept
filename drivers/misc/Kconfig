@@ -37,7 +37,7 @@ config TKEY
 	bool "TKey security token support"
 	depends on DM
 	default y if SANDBOX
-	select BLAKE2
+	select BLAKE2 if !ARGON2
 	help
 	  Enable driver model support for Tillitis TKey security tokens.
 	  This provides a common interface for TKey operations including
