@@ -54,12 +54,20 @@ class FsHelper:
                 fsh.mk_fs()  # Creates and encrypts the filesystem with LUKS1
                 ...
 
+        To create an encrypted LUKS2 partition with Argon2id:
+
+            with FsHelper(ubman.config, 'ext4', 10, 'mmc1',
+                          passphrase='test', luks_kdf='argon2id') as fsh:
+                # create files in the fsh.srcdir directory
+                fsh.mk_fs()  # Creates and encrypts the FS with LUKS2+Argon2
+                ...
+
     Properties:
         fs_img (str): Filename for the filesystem image; this is set to a
             default value but can be overwritten
     """
     def __init__(self, config, fs_type, size_mb, prefix, part_mb=None,
-                 passphrase=None, luks_version=2):
+                 passphrase=None, luks_version=2, luks_kdf='pbkdf2'):
         """Set up a new object
 
         Args:
@@ -74,6 +82,8 @@ class FsHelper:
             passphrase (str, optional): If provided, encrypt the
                 filesystem with LUKS using this passphrase
             luks_version (int): LUKS version to use (1 or 2). Defaults to 2.
+            luks_kdf (str): Key derivation function for LUKS2: 'pbkdf2' or
+                'argon2id'. Defaults to 'pbkdf2'. Ignored for LUKS1.
         """
         if ('fat' not in fs_type and 'ext' not in fs_type and
              fs_type not in ['exfat', 'fs_generic']):
@@ -87,6 +97,7 @@ class FsHelper:
         self.quiet = True
         self.passphrase = passphrase
         self.luks_version = luks_version
+        self.luks_kdf = luks_kdf
 
         # Use a default filename; the caller can adjust it
         leaf = f'{prefix}.{fs_type}.img'
@@ -238,13 +249,26 @@ class FsHelper:
 
         try:
             # Format as LUKS (version determined by luks_type)
-            run(['cryptsetup', 'luksFormat',
-                 '--type', luks_type,
-                 '--cipher', cipher,
-                 '--key-size', key_size_str,
-                 '--hash', hash_alg,
-                 '--iter-time', '10',  # Very fast for testing (low security)
-                 luks_img],
+            cmd = ['cryptsetup', 'luksFormat',
+                   '--type', luks_type,
+                   '--cipher', cipher,
+                   '--key-size', key_size_str,
+                   '--hash', hash_alg,
+                   '--iter-time', '10']  # Very fast for testing (low security)
+
+            # For LUKS2, specify the KDF (pbkdf2 or argon2id)
+            if self.luks_version == 2:
+                cmd.extend(['--pbkdf', self.luks_kdf])
+                # For Argon2, use low memory/time settings suitable for testing
+                if self.luks_kdf == 'argon2id':
+                    cmd.extend([
+                        '--pbkdf-memory', '65536',  # 64MB
+                        '--pbkdf-parallel', '4',
+                    ])
+
+            cmd.append(luks_img)
+
+            run(cmd,
                 input=f'{passphrase}\n'.encode(),
                 stdout=DEVNULL if self.quiet else None,
                 stderr=DEVNULL if self.quiet else None,
