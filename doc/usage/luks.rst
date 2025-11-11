@@ -232,7 +232,7 @@ See ``test/py/tests/fs_helper.py`` for the ``FsHelper`` class::
     # Create encrypted filesystem
     with FsHelper(config, 'ext4', 30, 'test',
                   part_mb=60,
-                  encrypt_passphrase='mypassword') as fsh:
+                  passphrase='mypassword') as fsh:
         # Add files to fsh.srcdir
         with open(os.path.join(fsh.srcdir, 'hello.txt'), 'w') as f:
             f.write('Hello from LUKS!\n')

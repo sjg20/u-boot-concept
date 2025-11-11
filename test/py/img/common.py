@@ -82,7 +82,7 @@ def setup_extlinux_image(config, log, devnum, basename, vmlinux, initrd, dtbdir,
 
     ext4 = FsHelper(config, 'ext4', max(1, part2_size - 30), prefix=basename,
                     part_mb=part2_size,
-                    encrypt_passphrase='test' if use_fde else None,
+                    passphrase='test' if use_fde else None,
                     luks_version=use_fde if use_fde else 2)
     ext4.setup()
 

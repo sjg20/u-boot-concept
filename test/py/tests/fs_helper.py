@@ -41,7 +41,7 @@ class FsHelper:
         To create an encrypted LUKS2 partition (default):
 
             with FsHelper(ubman.config, 'ext4', 10, 'mmc1',
-                          encrypt_passphrase='test') as fsh:
+                          passphrase='test') as fsh:
                 # create files in the fsh.srcdir directory
                 fsh.mk_fs()  # Creates and encrypts the filesystem with LUKS2
                 ...
@@ -49,7 +49,7 @@ class FsHelper:
         To create an encrypted LUKS1 partition:
 
             with FsHelper(ubman.config, 'ext4', 10, 'mmc1',
-                          encrypt_passphrase='test', luks_version=1) as fsh:
+                          passphrase='test', luks_version=1) as fsh:
                 # create files in the fsh.srcdir directory
                 fsh.mk_fs()  # Creates and encrypts the filesystem with LUKS1
                 ...
@@ -59,7 +59,7 @@ class FsHelper:
             default value but can be overwritten
     """
     def __init__(self, config, fs_type, size_mb, prefix, part_mb=None,
-                 encrypt_passphrase=None, luks_version=2):
+                 passphrase=None, luks_version=2):
         """Set up a new object
 
         Args:
@@ -71,7 +71,7 @@ class FsHelper:
             part_mb (int, optional): Size of partition in MB. If None, defaults
                 to size_mb. This can be used to make the partition larger than
                 the filesystem, to create space for disk-encryption metadata
-            encrypt_passphrase (str, optional): If provided, encrypt the
+            passphrase (str, optional): If provided, encrypt the
                 filesystem with LUKS using this passphrase
             luks_version (int): LUKS version to use (1 or 2). Defaults to 2.
         """
@@ -85,7 +85,7 @@ class FsHelper:
         self.partition_mb = part_mb if part_mb is not None else size_mb
         self.prefix = prefix
         self.quiet = True
-        self.encrypt_passphrase = encrypt_passphrase
+        self.passphrase = passphrase
         self.luks_version = luks_version
 
         # Use a default filename; the caller can adjust it
@@ -159,8 +159,8 @@ class FsHelper:
                     shell=True)
 
         # Encrypt the filesystem if requested
-        if self.encrypt_passphrase:
-            self.encrypt_luks(self.encrypt_passphrase)
+        if self.passphrase:
+            self.encrypt_luks(self.passphrase)
 
     def setup(self):
         """Set up the srcdir ready to receive files"""
