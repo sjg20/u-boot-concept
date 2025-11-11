@@ -84,7 +84,8 @@ def test_ut_dm_init_bootstd(u_boot_config, u_boot_log):
     setup_localboot_image(u_boot_config, u_boot_log)
     setup_vbe_image(u_boot_config, u_boot_log)
     setup_ubuntu_image(u_boot_config, u_boot_log, 11, 'mmc', use_fde=1)
-    setup_ubuntu_image(u_boot_config, u_boot_log, 12, 'mmc', use_fde=2)
+    setup_ubuntu_image(u_boot_config, u_boot_log, 12, 'mmc', use_fde=2,
+                       luks_kdf='argon2id')
 
 def test_ut(ubman, ut_subtest):
     """Execute a "ut" subtest.
